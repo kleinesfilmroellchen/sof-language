@@ -6,6 +6,8 @@ An experimental programming language concieved and implemented by kleinesfilmrö
 
 This document will not explain the concept of a stack, please consult The Internet for information on stacks in computer science.
 
+**This is a Work In Progress (WIP). Currently, the language is not turing-complete (lacks any method of control flow divergence, decision-making etc.), which is the main goal at the present time. Also, the program is extremely buggy and should not be used for anything serious.** If you cause a nuclear war and the inevitable destruction of mankind by using this software, I am not to blame.
+
 ### Installation and CLI usage
 
 This is an Eclipse project, so I recommend cloning it with git and importing it into your workspace (again, there are great explanations for both of these). The command line tool currently supports the following arguments and options (taken from help output):
@@ -59,10 +61,10 @@ To get a taste of SOF, here are several sample programs written in SOF. Note tha
 	input int guess def
 	{
 		"You are correct!" writeln
-	} number . guess . = if
+	} { number . guess . = } if
 	{
 		"You are too low!" writeln
-	} number . guess . < elseif
+	} { number . guess . < } elseif
 	{
 		"You are too high!" writeln
 	} else
@@ -127,6 +129,41 @@ SOF is a tool for understanding programming languages. It is very usable, the le
 By creating a programming language which takes one concept to the extreme and sticks with it by any means, even when introducing new concepts, I want to explore programming in such a 'focused' language, which is so different from the mainstream of OOP and even from the other outliers such as FP and logical programming.
 
 I was surprised at how easy it was to create an immensly powerful programming language by just introducing some general features. For example, the code block construct powers all of OOP, FP, enables turing-completeness, makes SOF higher-order and makes not only functions, but code in general first-class objects.
+
+## 5. EBNF Syntax definition
+
+This formal syntax definition utilizes standard Extended Backus-Naur Form formal language grammar notation. An entire SOF program needs to conform to the syntax of `SofProgram`.
+
+```ebnf
+
+SofProgram = { Token } ;
+Token = "def" | "dup" | "write" | "writeln" | "pop"
+      | "if" | "else" | "elseif" | "while" | "for"
+      | "+" | "-" | "*" | "/" | "%" | "."
+      | "<" | "<=" | ">" | ">=" | "="
+      | "[" | "]"
+      | Number | String | Boolean
+      | Identifier | CodeBlock ;
+Identifier = ? any Unicode character with class "Alphabetical" ? { ? Unicode Alphabetical ? | DecimalDigits | "_" } ;
+CodeBlock = "{" { Token } "}" ;
+
+(* Literals *)
+String = '"' { ? any character, including the terminal sequence '\"' ? } '"' ;
+Boolean = "true" | "false" | "True" | "False" ;
+Number = [ "+" | "-" ] ( Integer | Decimal ) ;
+Integer = "0" ( "h" | "x" ) HexDigits { HexDigits }
+        | [ "0d" ] DecimalDigits { DecimalDigits }
+	| "0o" OctalDigits { DecimalDigits }
+	| "0b" BinaryDigits { BinaryDigits } ;
+Decimal = DecimalDigits { DecimalDigits } "." DecimalDigits { DecimalDigits }
+          [ ("e" | "E") [ "+" | "-" ] DecimalDigits { DecimalDigits } ] ;
+
+BinaryDigits = "0" | "1" ;
+OctalDigits = BinaryDigits | "2" | "3" | "4" | "5" | "6" | "7" ;
+DecimalDigits = OctalDigits | "8" | "9" ;
+HexDigits = DecimalDigits | "a" | "b" | "c" | "d" | "e" | "f" | "A" | "B" | "C" | "D" | "E" | "F" ;
+
+```
 
 ## The SOF interpreter
 
