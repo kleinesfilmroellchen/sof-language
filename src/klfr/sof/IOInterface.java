@@ -4,6 +4,8 @@ import java.io.*;
 import java.util.Locale;
 import java.util.Scanner;
 
+import klfr.sof.lang.Stack;
+
 /**
  * Wrapper for all I/O functionality that SOF has.
  * @author klfr
@@ -12,6 +14,8 @@ public class IOInterface {
 
 	public InputStream	input;
 	private OutputStream	output;
+	
+	public boolean debug;
 
 	public OutputStream getOutput() {
 		return output;
@@ -146,4 +150,25 @@ public class IOInterface {
 			return outputPrinter.printf(l, format, args);
 		return null;
 	}
+	
+	/**
+	 * Print the stack description if debug is enabled.
+	 * @param stack
+	 */
+	public void describeStack(Stack stack) {
+		if (debug) {
+			println("Stack: " + System.lineSeparator() + Interpreter.stackToDebugString(stack));
+			println("Global Nametable: " + System.lineSeparator() + stack.globalNametable().getDebugDisplay());
+		}
+	}
+	
+	/**
+	 * Only {@code println} the string when debug is enabled.
+	 * @param s
+	 */
+	public void debug(String s) {
+		if (debug)
+			println(s);
+	}
+	
 }

@@ -29,8 +29,8 @@ public class CompilationError extends RuntimeException {
 		infoPresent = true;
 	}
 
-	public CompilationError(String expression, int index, int line, String name, String reason) {
-		super(formatMessage(expression, index, line, name, reason));
+	public CompilationError(String expression, int index, int linenum, String name, String reason) {
+		super(formatMessage(expression, index, linenum, name, reason));
 		infoPresent = true;
 	}
 
@@ -56,8 +56,9 @@ public class CompilationError extends RuntimeException {
 
 	/** does the formatting for standard exceptions */
 	private static String formatMessage(String expression, int index, int line, String name, String reason) {
+		System.out.println(expression.length());
 		return String.format("%s Error in line %d at index %d:%n"
-				+ "%s%n"
+				+ "%s"
 				+ "%" + significantAfterTrimmed(index, expression.length()) + "s%n"
 				+ "    %s"
 				, name, line, index, trim(expression, index), "^", reason);

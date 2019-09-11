@@ -35,20 +35,15 @@ public class CodeBlock implements Callable {
 	@Override
 	public CallProvider getCallProvider() {
 		return (interpreter) -> {
-			Matcher interpreterMatcher = interpreter.getMatcher();
-			int returnIndexOfLastMatch = interpreterMatcher.start();
-			int returnStart = interpreterMatcher.regionStart(), returnEnd = interpreterMatcher.regionEnd();
+			interpreter.pushState();
 			
 			// set the region
-			interpreterMatcher.region(indexInFile, endIndex);
+			interpreter.setRegion(indexInFile, endIndex);
 			
 			while (interpreter.canExecute()) {
 				interpreter.executeOnce();
 			}
-			//reset the region to previous state
-			interpreterMatcher.region(returnStart, returnEnd);
-			//finds the last match again
-			interpreterMatcher.find(returnIndexOfLastMatch);
+			interpreter.popState();
 			
 			return null;
 		};
