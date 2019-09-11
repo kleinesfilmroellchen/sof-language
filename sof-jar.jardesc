@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<jardesc>
+    <jar path="SOF-language/sof.jar"/>
+    <options buildIfNeeded="true" compress="true" descriptionLocation="/SOF-language/sof-jar.jardesc" exportErrors="false" exportWarnings="true" includeDirectoryEntries="false" overwrite="false" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
+    <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
+    <selectedProjects/>
+    <manifest generateManifest="false" mainClassHandleIdentifier="=SOF-language/src&lt;klfr.sof.cli{CLI.java[CLI" manifestLocation="/SOF-language/sof-jar-manifest.mf" manifestVersion="1.0" reuseManifest="true" saveManifest="true" usesManifest="true">
+        <sealing sealJar="true">
+            <packagesToSeal>
+                <package handleIdentifier="=SOF-language/src&lt;klfr.sof"/>
+                <package handleIdentifier="=SOF-language/src&lt;klfr.sof.cli"/>
+                <package handleIdentifier="=SOF-language/src&lt;klfr.sof.lang"/>
+            </packagesToSeal>
+            <packagesToUnSeal/>
+        </sealing>
+    </manifest>
+    <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
+        <javaElement handleIdentifier="=SOF-language/src"/>
+    </selectedElements>
+</jardesc>
