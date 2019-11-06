@@ -1,8 +1,9 @@
-package klfr.sof.lang;
+package klfr.sof.test;
 
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 import klfr.sof.CompilationError;
+import klfr.sof.lang.Identifier;
 
 class IdentifierTest {
 
@@ -33,6 +34,20 @@ class IdentifierTest {
 		assertDoesNotThrow(() -> new Identifier("   abc__d9090efg''はるこ     "), "Valid Identifier test with non-alnum");
 		assertThrows(CompilationError.class, () -> new Identifier("90abc__d9090efg"),
 				"Invalid Identifier test with starting numeric");
+	}
+	
+	/**
+	 * Tests other methods such as equals(), clone() etc.
+	 */
+	@Test
+	void testOther() {
+		Identifier i = new Identifier("abc");
+		assertDoesNotThrow( () -> i.hashCode());
+		Identifier clone = (Identifier) assertDoesNotThrow( () -> i.clone());
+		assertTrue(i.equals(i));
+		assertFalse(i.equals(new Identifier("bcd")));
+		assertTrue(i.equals(clone));
+		assertDoesNotThrow( () -> i.toString() + i.toOutputString());
 	}
 
 }

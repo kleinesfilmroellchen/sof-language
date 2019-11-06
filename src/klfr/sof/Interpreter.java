@@ -64,6 +64,7 @@ public class Interpreter {
 		while (scanner.hasNextLine()) {
 			line = scanner.nextLine();
 			++lineIdx;
+			if (line.length() == 0) continue;
 			char c;
 			for (int i = 0; i < line.length(); ++i) {
 				c = line.charAt(i);

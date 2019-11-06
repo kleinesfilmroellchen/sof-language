@@ -1,11 +1,9 @@
 package klfr.sof.cli;
 
-import java.io.Console;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -17,11 +15,8 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
-import java.util.Properties;
 import java.util.Scanner;
 import klfr.sof.CompilationError;
 import klfr.sof.IOInterface;
@@ -122,13 +117,15 @@ public class CLI {
 		}
 
 		IOInterface io = new IOInterface();
-		io.debug = (opt.flags & opt.DEBUG) > 0;
+		io.debug = (opt.flags & Options.DEBUG) > 0;
 		io.setStreams(System.in, System.out);
 
 		// decide over execution type depending on argument count
 		if (opt.executionType == Options.ExecutionType.Interactive)
 			opt.executionType = idx < args.length ? Options.ExecutionType.File : Options.ExecutionType.Interactive;
+		
 		if (opt.executionType == Options.ExecutionType.File) {
+			//// File interpretation
 			while (idx < cmdLineArguments.size()) {
 				opt.executionStrings.add(cmdLineArguments.get(idx++));
 				String last = opt.executionStrings.get(opt.executionStrings.size() - 1);
@@ -152,11 +149,14 @@ public class CLI {
 			Interpreter interpreterPrototype = new Interpreter();
 			readers.forEach(reader -> doFullExecution(reader, interpreterPrototype.instantiateSelf(), io));
 			System.exit(0);
+			
 		} else if (opt.executionType == Options.ExecutionType.Literal) {
+			//// Single literal to be executed
 			Interpreter interpreter = new Interpreter();
 			doFullExecution(new StringReader(opt.executionStrings.get(0)), interpreter, io);
-		} else if (opt.executionType == Options.ExecutionType.Interactive) {
 			
+		} else if (opt.executionType == Options.ExecutionType.Interactive) {
+			//// Interactive interpretation
 			io.println(getInfoString());
 			Interpreter interpreter = new Interpreter().reset();
 			interpreter.setIO(io);
@@ -176,14 +176,11 @@ public class CLI {
 				}
 			};
 			SignalHandler handler = Signal.handle(new Signal("INT"), ctrlCHandler);
-			System.out.println(handler);
-			System.out.println(Signal.handle(new Signal("TERM"), ctrlCHandler));
-			System.out.println(Signal.handle(new Signal("ABRT"), ctrlCHandler));
 			
-			Scanner scanner = new Scanner(System.in);
-			scanner.useDelimiter("[[^\n]\\s+]");
-			io.print("> ");
-			while (scanner.hasNextLine()) {
+			Scanner scanner = io.newInputScanner();
+			// scanner.useDelimiter("[[^\n]\\s+]");
+			io.print(">>> ");
+			 while (scanner.hasNextLine()) {
 				String code = scanner.nextLine();
 				try {
 					interpreter.appendLine(code);
@@ -193,8 +190,8 @@ public class CLI {
 				} catch (CompilationError e) {
 					io.println(e.getLocalizedMessage());
 				}
-				io.print("> ");
-			}
+				io.print(">>> ");
+			};
 			scanner.close();
 		}
 	}

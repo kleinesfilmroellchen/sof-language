@@ -64,6 +64,14 @@ public class Primitive<T> implements Callable {
 	public Stackable clone() {
 		return new Primitive<>(this.value);
 	}
+	
+	public boolean equals(Object other) {
+		return other instanceof Primitive ? ((Primitive) other).equals(this) : false;
+	}
+	
+	public boolean equals(Primitive other) {
+		return other.value.equals(this.value);
+	}
 
 	public String toString() {
 		return this.getDebugDisplay();
@@ -82,6 +90,7 @@ public class Primitive<T> implements Callable {
 	 * @return a new Primitive with integer type and the parsed integer value.
 	 */
 	public static Primitive<Long> createInteger(String integerString) throws CompilationError {
+		integerString = integerString.strip();
 		int radix = 10;
 		long sign = 1;
 		//check zero

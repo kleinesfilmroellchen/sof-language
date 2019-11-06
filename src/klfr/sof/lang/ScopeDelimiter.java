@@ -7,4 +7,5 @@ package klfr.sof.lang;
  * @author klfr
  */
 public class ScopeDelimiter extends Nametable {
+	private static final long serialVersionUID = 1L;
 }

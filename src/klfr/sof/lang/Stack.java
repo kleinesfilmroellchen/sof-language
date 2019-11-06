@@ -7,11 +7,34 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import klfr.sof.CompilationError;
 import klfr.sof.Interpreter;
 
+/**
+ * The main data structure of SOF internally where all data resides. This is a
+ * thin wrapper around {@code ConcurrentLinkedDeque} which is de-generified to
+ * Stackables. The stack has the following special structure:
+ * 
+ * <pre>
+ *   |-------------------|
+ *   | (other elements)  |
+ *   |-------------------|
+ *   |       ...         |
+ * ( |-------------------| )
+ * ( | File namespace NT | )
+ * ( |-------------------| )
+ *   | Global Nametable  |
+ *   |                   |
+ * </pre>
+ * 
+ * This means that it is very easy to access the file's namespace Nametable and
+ * the global Nametable.
+ * 
+ * @author klfr
+ * @version 0.1a1
+ */
 public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
-	private Interpreter parent;
+	private transient Interpreter parent;
 
 	public Stack(Interpreter parent) {
 		this.parent = parent;
@@ -30,7 +53,8 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 	@Override
 	public Stackable peek() throws CompilationError {
 		Stackable elmt = super.peek();
-		if (elmt == null) throw parent.makeException("Stack", "Stack is empty.");
+		if (elmt == null)
+			throw parent.makeException("Stack", "Stack is empty.");
 		return elmt;
 	}
 
@@ -52,16 +76,15 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 	/**
 	 * Returns the global nametable, which is always the lowest element of the
 	 * stack.
+	 * 
 	 * @throws RuntimeException if you managed to delete or replace the global
-	 * nametable (ノಠ益ಠ)ノ彡 ┻━━┻
+	 *                          nametable (ノಠ益ಠ)ノ彡 ┻━━┻
 	 */
 	public Nametable globalNametable() throws RuntimeException {
 		try {
 			Stackable lowest = getLast();
 			return (Nametable) lowest;
-		} catch (ClassCastException e) {
-			throw new RuntimeException("Interpreter Exception: Global Nametable missing");
-		} catch (CompilationError e) {
+		} catch (ClassCastException | CompilationError e) {
 			throw new RuntimeException("Interpreter Exception: Global Nametable missing. ┻━━┻ ミ ヽ(ಠ益ಠ)ノ 彡  ┻━━┻");
 		}
 	}
@@ -72,21 +95,23 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 	 * returned by {@code globalNametable()}) if there is no namespace introduced,
 	 * or the namespace defined by the 'namespace' command (which resides on the
 	 * stack just above the global nametable)
-	 * @return
+	 * 
 	 * @throws RuntimeException
 	 */
 	public Nametable namingScope() throws RuntimeException {
 		Iterator<Stackable> helperIt = this.descendingIterator();
+		// skip global nametable
 		helperIt.next();
 		if (helperIt.hasNext()) {
 			Stackable maybeNamespace = helperIt.next();
 			// if it is a nametable but no local scope delimiter
 			if (maybeNamespace instanceof Nametable && !(maybeNamespace instanceof ScopeDelimiter)) {
-				//we found a namespace
+				// we found a namespace
 				return (Nametable) maybeNamespace;
 			}
 		}
-		//only end up here if no element above global nametable or no namespace above global nametable
+		// only end up here if no element above global nametable or no namespace above
+		// global nametable
 		return globalNametable();
 	}
 
@@ -98,9 +123,19 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 		Iterator<Stackable> elements = this.iterator();
 		while (elements.hasNext()) {
 			Stackable elmt = elements.next();
-			if (elmt instanceof Nametable) return (Nametable) elmt;
+			if (elmt instanceof Nametable)
+				return (Nametable) elmt;
 		}
-		//fallback (should not happen)
+		// fallback (should not happen, as the last iteration of the loop should find
+		// the global NT)
+		return globalNametable();
+	}
+
+	public Nametable functionScope() {
+		for (Stackable elmt : this) {
+			if (elmt instanceof FunctionDelimiter)
+				return (Nametable) elmt;
+		}
 		return globalNametable();
 	}
 
@@ -110,16 +145,20 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 	 * <strong>ATTENTION: Does not put the namespace into the global nametable for
 	 * reference from other locations! You have to insert the namespace as an entry
 	 * into the global nametable manually.</strong>
+	 * 
 	 * @return this stack
 	 */
 	public Stack setNamespace(Nametable namespace) {
 		Iterator<Stackable> helperIt = this.descendingIterator();
-		helperIt.next();//skip global nametable
+		helperIt.next();// skip global nametable
 		Stackable maybeOldNamespace = helperIt.next();
-		//take off global nametable temporarily
+		// take off global nametable temporarily
 		Nametable globalNametable = (Nametable) this.removeLast();
-		// if the second-to-last element is a nametable but no local scope delimiter, we found a namespace, replace it
-		if (maybeOldNamespace instanceof Nametable && !(maybeOldNamespace instanceof ScopeDelimiter)) this.removeLast();
+		// if the second-to-last element is a nametable but no local scope delimiter, we
+		// found a namespace, remove it
+		if (maybeOldNamespace instanceof Nametable && !(maybeOldNamespace instanceof ScopeDelimiter))
+			this.removeLast();
+		// add new namespace and global nametable
 		this.addLast(namespace);
 		this.addLast(globalNametable);
 

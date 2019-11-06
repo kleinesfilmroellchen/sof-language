@@ -2,6 +2,7 @@ package klfr.sof.lang;
 
 public class SObject extends Nametable {
 
+	private static final long serialVersionUID = 1L;
 	private Identifier name;
 
 	public String getName() {
