@@ -1,4 +1,4 @@
 module sof {
-	requires org.junit.jupiter.api;
+	requires java.base;
 	requires jdk.unsupported;
 }

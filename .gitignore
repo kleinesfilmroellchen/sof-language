@@ -28,3 +28,4 @@ vm/
 # others
 bin*/*.launch
 .vscode
+/testbins/
