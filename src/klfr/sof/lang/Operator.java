@@ -32,10 +32,21 @@ public interface Operator {
 	 */
 	public Stackable call(Stackable leftArg, Stackable rightArg) throws ClassCastException, CompilationError;
 
+	/**
+	 * Executes a numeric operation on the two argument primitives
+	 * @param a left operand
+	 * @param b right operand
+	 * @param longOperation Operation to execute if both numbers are long/integer
+	 * types
+	 * @param doubleOperation Operation to execute if any one of the numbers are
+	 * double/decimal type
+	 * @return The result of the operation. Operations should be the same, i.e.
+	 * supply the same lambda twice.
+	 */
 	public static Primitive<? extends Number> numericOperation(Primitive<? extends Number> a,
 			Primitive<? extends Number> b, BiFunction<Long, Long, Long> longOperation,
 			BiFunction<Double, Double, Double> doubleOperation) {
-		//oh heck java wtf is this ma
+		//oh heck java wtf is this madness
 		Class<? extends Number> bc = b.getValue().getClass(), ac = a.getValue().getClass();
 		if (bc.equals(Long.class) && ac.equals(Long.class)) {
 			return new Primitive<Long>(longOperation.apply(a.getValue().longValue(), b.getValue().longValue()));
