@@ -12,14 +12,39 @@ import klfr.sof.lang.Stack;
  * @author klfr
  */
 public class IOInterface {
+	
+	/**Number of milliseconds to wait between short prints until flushing anyways*/
+	public static final long FLUSH_MILLIS = 500;
 
 	public Readable input;
 	private Writer output;
 
 	public boolean debug;
+	
+	public IOInterface() {
+	}
+	
+	/**
+	 * Initializes the interface with basic I/O.
+	 */
+	public IOInterface(Readable in, Writer out) {
+		this();
+		this.setInOut(in, out);
+	}
+	/**
+	 * Initializes the interface with basic I/O streams which are wrapped in character encoding streams.
+	 */
+	public IOInterface(InputStream in, OutputStream out) {
+		this();
+		this.setInOut(in, out);
+	}
 
 	public Writer getOutput() {
 		return output;
+	}
+	
+	public Readable getInput() {
+		return input;
 	}
 
 	/**
@@ -28,7 +53,7 @@ public class IOInterface {
 	 * @param out
 	 */
 	public void setOut(OutputStream out) {
-		this.output = new OutputStreamWriter(out);
+		if (out != null) this.setOut(new OutputStreamWriter(out));
 	}
 	
 	/**
@@ -36,7 +61,48 @@ public class IOInterface {
 	 * @param out
 	 */
 	public void setOut(Writer out) {
-		this.output = out;
+		// hijack the output to do special auto-flushing
+		if (out != null) this.output = new Writer() {
+			
+			private Thread t = new Thread("StreamFlusher#" + this.hashCode());
+
+			@Override
+			public void write(char[] cbuf, int off, int len) throws IOException {
+				out.write(cbuf, off, len);
+				// interrupt the currently running thread
+				// if it had already ended, this has no effect
+				// if it didn't this will prevent the thread from executing the flush
+				if (!t.isAlive()) {
+					// create a thread that will wait FLUSH_MILLIS and flush the writer
+					t = new Thread(() -> {
+						try {
+							Thread.sleep(FLUSH_MILLIS);
+							out.flush();
+						} catch (InterruptedException | IOException e) {return;}
+					}, "StreamFlusher#" + this.hashCode());
+					t.setDaemon(true);
+					t.start();
+				}
+			}
+
+			@Override
+			public void flush() throws IOException {
+				out.flush();
+			}
+
+			@Override
+			public void close() throws IOException {
+				out.close();
+			}
+		};
+	}
+	
+	public void setIn(Readable in) {
+		if (in != null) this.input = in;
+	}
+	
+	public void setIn(InputStream in) {
+		if (in != null) this.setIn(new InputStreamReader(in));
 	}
 	
 	/**
@@ -46,8 +112,8 @@ public class IOInterface {
 	 * @param out The OutputStream to use. If this is null, the Output is not changed.
 	 */
 	public void setInOut(InputStream in, OutputStream out) {
-		if (in != null) this.input = new InputStreamReader(in);
-		if (out != null) this.output = new OutputStreamWriter(out);
+		this.setIn(in);
+		this.setOut(out);
 	}
 	
 	/**
@@ -56,8 +122,8 @@ public class IOInterface {
 	 * @param out The Writable (Character output) to use. If this is null, the Output is not changed.
 	 */
 	public void setInOut(Readable in, Writer out) {
-		if (in != null) this.input = in;
-		if (out != null) this.output = out;
+		this.setIn(in);
+		this.setOut(out);
 	}
 
 	/**
@@ -72,12 +138,10 @@ public class IOInterface {
 		println();
 	}
 	
-	/**
-	 * 
-	 */
 	public void println() {
 		try {
-			output.append(System.lineSeparator());
+			output.write(System.lineSeparator());
+			output.flush();
 		} catch (IOException e) {
 			// TODO handle this differently?
 			e.printStackTrace();
@@ -86,7 +150,7 @@ public class IOInterface {
 
 	public void print(String s) {
 		try {
-			output.append(s);
+			output.write(s);
 		} catch (IOException e) {
 			// TODO handle this differently?
 			e.printStackTrace();
@@ -101,6 +165,17 @@ public class IOInterface {
 	public void printf(Locale l, String format, Object... args) {
 		String toprint = String.format(l, format, args);
 		this.print(toprint);
+	}
+	
+
+	public void printfln(String format, Object... args) {
+		String toprint = String.format(format, args);
+		this.println(toprint);
+	}
+
+	public void printfln(Locale l, String format, Object... args) {
+		String toprint = String.format(l, format, args);
+		this.println(toprint);
 	}
 
 	/**
