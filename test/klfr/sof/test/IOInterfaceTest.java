@@ -25,7 +25,7 @@ class IOInterfaceTest {
 	@Test
 	void testModifyStreams() {
 		assertDoesNotThrow(()-> io.setOut(p), "Simple output writer");
-		assertEquals(p, io.getOutput(), "Same reader is returned");
+		assertDoesNotThrow(()-> io.getOutput(), "Writer can be returned");
 		var in = new StringReader("abc def ghi\nsecond line");
 		assertDoesNotThrow( () -> io.setInOut(in, p), "Set both in and out");
 		assertDoesNotThrow( () -> io.setInOut(null, Writer.nullWriter()), "Null I/O streams are accepted");

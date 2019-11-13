@@ -2,7 +2,6 @@ package klfr.sof;
 
 // ALL THE STANDARD LIBRARY
 import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
 import java.util.Deque;
 import java.util.Scanner;
 import java.util.regex.Matcher;
@@ -35,8 +34,8 @@ import klfr.sof.lang.*;
 public class Interpreter {
 	public static final String VERSION = "0.1";
 
-	/** Convenience constant for the 38-character line ─ */
-	public static final String line38 = String.format("%38s", " ").replace(" ", "─");
+	/** Convenience constant for the 38-character line â”€ */
+	public static final String line38 = String.format("%38s", " ").replace(" ", "â”€");
 
 	//// PATTERNS
 	public static final Pattern	intPattern			= Pattern.compile("((\\+|\\-)?(0[bhxod])?[0-9a-fA-F]+)|0");
@@ -51,7 +50,7 @@ public class Interpreter {
 
 	/**
 	 * Cleans the code of comments.
-	 * @throws CompilationError if block comments or string literals are not closed
+	 * @throws CompilationError if block comments, code blocks or string literals are not closed
 	 * properly.
 	 */
 	public static String cleanCode(String code) throws CompilationError {
@@ -60,6 +59,7 @@ public class Interpreter {
 		Scanner scanner = new Scanner(code);
 		String line = "";
 		boolean insideBlockComment = false;
+		int codeBlockDepth = 0;
 		int lineIdx = 0;
 		while (scanner.hasNextLine()) {
 			line = scanner.nextLine();
@@ -75,8 +75,10 @@ public class Interpreter {
 						++i;
 						insideBlockComment = false;
 					}
-				} //end of block comment 
+				} //end of block comment
 				else {
+					if (c == '{') ++codeBlockDepth;
+					else if (c == '}') --codeBlockDepth;
 					if (c == '"') {
 						//search for matching quote character TODO escapes
 						int j = i + 1;
@@ -106,6 +108,11 @@ public class Interpreter {
 		} //end of scan
 
 		scanner.close();
+		if (codeBlockDepth > 0) {
+			throw new CompilationError(newCode.toString(), newCode.lastIndexOf("{"), lineIdx, "Syntax", "Unclosed code block");
+		} else if (codeBlockDepth < 0) {
+			throw new CompilationError(newCode.toString(), newCode.lastIndexOf("}"), lineIdx, "Syntax", "Too many closing '}'");
+		}
 		return newCode.toString();
 	}
 
@@ -172,9 +179,9 @@ public class Interpreter {
 	 * Utility to format a string for debug output of a stack.
 	 */
 	public static String stackToDebugString(Deque<Stackable> stack) {
-		return "┌─" + line38 + "─┐" + System.lineSeparator() +
+		return "â”Œâ”€" + line38 + "â”€â”�" + System.lineSeparator() +
 				stack.stream().collect(() -> new StringBuilder(),
-						(str, elmt) -> str.append(String.format("│ %38s │%n├─" + Interpreter.line38 + "─┤%n", elmt, " ")),
+						(str, elmt) -> str.append(String.format("â”‚ %38s â”‚%nâ”œâ”€" + Interpreter.line38 + "â”€â”¤%n", elmt, " ")),
 						(e1, e2) -> e1.append(e2)).toString();
 	}
 

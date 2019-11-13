@@ -21,7 +21,6 @@ import java.util.Scanner;
 import klfr.sof.CompilationError;
 import klfr.sof.IOInterface;
 import klfr.sof.Interpreter;
-import sun.misc.*;
 
 public class CLI {
 
@@ -46,7 +45,7 @@ public class CLI {
 		public int flags;
 
 		public String toString() {
-			return "Options:" + executionType + executionStrings.toString() + "Flags:" + Integer.toBinaryString(flags);
+			return "Options:" + executionType + executionStrings.toString() + "flags:" + Integer.toBinaryString(flags);
 		}
 	}
 
@@ -69,26 +68,34 @@ public class CLI {
 				exitUnnormal(0);
 			case "-h":
 			case "--help":
-				System.out.printf("sof - Interpreter for Stack with Objects and Functions Language."
-						+ "%nusage: sof [-h|-v]"
-						+ "%n       sof [-d] [-c command]"
-						+ "%n       sof [-d] filename [...filenames]"
-						+ "%n       sof [-d]"
-						+ "%n%npositional arguments:"
-						+ "%n   filename  Path to a file to be read and executed. Can"
-						+ "%n             be a list of files that are executed in order."
-						+ "%n%noptions:"
-						+ "%n   --help, -h"
-						+ "%n             Display this help message and exit."
-						+ "%n   --version, -v"
-						+ "%n             Display version information and exit."
-						+ "%n   -d        Execute in debug mode. Read the manual for"
-						+ "%n             more information."
-						+ "%n   --command <command>, -c <command>"
-						+ "%n             Execute command and exit."
-						+ "%n%nWhen used without execution-starting arguments (-c or "
-						+ "%nfilename), sof is started in interactive mode."
-						+ "%n%nQuit the program with ^C.%n%n");
+				//                                                        |
+				// we want the new multiline strings here, but eclipse is not capable of java 13 yet
+				System.out.printf(
+						"sof - Interpreter for Stack with Objects and%n" +
+						"      Functions (SOF) Programming Language.%n" +
+						"usage: sof [-h|-v] [-d] [-c command]%n" +
+						"           filename [...filenames]%n" +
+						"%n" +
+						"positional arguments:%n" +
+						"   filename  Path to a file to be read and%n" +
+						"             executed. Can be a list of files that%n" +
+						"             are executed in order.%n" +
+						"             %n" +
+						"options:%n" +
+						"   --help, -h%n" +
+						"             Display this help message and exit.%n" +
+						"   --version, -v%n" +
+						"             Display version information and exit.%n" +
+						"   -d        Execute in debug mode. Read the manual%n" +
+						"             for more information.%n" +
+						"   --command=<command>, -c <command>%n" +
+						"             Execute <command> and exit.%n" +
+						"             %n" +
+						"When used without execution-starting arguments (-c%n" +
+						"or filename), sof is started in interactive mode.%n" +
+						"%n" +
+						"Quit the program with ^C.%n" +
+						"%n");
 				exitUnnormal(0);
 			case "-c":
 			case "--command":
@@ -161,34 +168,32 @@ public class CLI {
 			Interpreter interpreter = new Interpreter().reset();
 			interpreter.setIO(io);
 			
-			// prevent termination signals from ending the interactive program
-			SignalHandler ctrlCHandler = new SignalHandler() {
-				@Override
-				public void handle(Signal sig) {
-					String signame = sig.getName();
-					System.out.println("Recieved " + signame);
-					// only handle interactive and terminate
-					if (signame.equals("INT") || signame.equals("SIGINT") || signame.equals("SIGTERM") || signame.equals("TERM")) {
-						// stop interpreter
-						System.out.println("Ctrl-C");
-					} else
-						System.out.printf("cannot handle %s%n", sig);
-				}
-			};
-			SignalHandler handler = Signal.handle(new Signal("INT"), ctrlCHandler);
-			
 			Scanner scanner = io.newInputScanner();
 			// scanner.useDelimiter("[[^\n]\\s+]");
 			io.print(">>> ");
 			 while (scanner.hasNextLine()) {
 				String code = scanner.nextLine();
+				// catches all unwanted compilation errors
 				try {
-					interpreter.appendLine(code);
+					// catches "unclosed"-compilation errors which might be resolved by adding more content on another line
+					try {
+						interpreter.appendLine(code);
+					} catch (CompilationError e) {
+						// one invalid line: let user input as many continuation lines as they want
+						while (true) {
+							io.print("... ");
+							var nl = scanner.nextLine();
+							// end on blank line
+							if (nl.isBlank()) break;
+							code += System.lineSeparator() + nl;
+						}
+						interpreter.appendLine(code);
+					}
 					while (interpreter.canExecute()) {
 						interpreter.executeOnce();
 					}
 				} catch (CompilationError e) {
-					io.println(e.getLocalizedMessage());
+					io.println("!!! " + e.getLocalizedMessage());
 				}
 				io.print(">>> ");
 			};

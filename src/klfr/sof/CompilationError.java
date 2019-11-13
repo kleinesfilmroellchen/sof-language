@@ -26,12 +26,21 @@ public class CompilationError extends RuntimeException {
 	 * @param line       Line where exception occured
 	 * @param index      Location where exception occurred
 	 * @param reason     Short exception reason (without 'exception' string).
+	 * @param t          Internal throwable which was the reason for this compiler exception
 	 */
 	public CompilationError(String expression, int index, int line, String name, String reason, Throwable t) {
 		super(formatMessage(expression, index, line, name, reason), t);
 		infoPresent = true;
 	}
-
+	
+	/**
+	 * Nicely formatted compiler exception.
+	 * 
+	 * @param expression Full string (only include relevant line plz).
+	 * @param line       Line where exception occured
+	 * @param index      Location where exception occurred
+	 * @param reason     Short exception reason (without 'exception' string).
+	 */
 	public CompilationError(String expression, int index, int linenum, String name, String reason) {
 		super(formatMessage(expression, index, linenum, name, reason));
 		infoPresent = true;
@@ -59,9 +68,9 @@ public class CompilationError extends RuntimeException {
 
 	/** does the formatting for standard exceptions */
 	private static String formatMessage(String expression, int index, int line, String name, String reason) {
-		System.out.println(expression.length());
+//		System.out.println(expression.length());
 		return String.format("%s Error in line %d at index %d:%n" + "%s" + "%"
-				+ significantAfterTrimmed(index, expression.length()) + "s%n" + "    %s", name, line, index,
+				+ significantAfterTrimmed(index, expression.length()) + "s%n    %s", name, line, index,
 				trim(expression, index), "^", reason);
 	}
 
