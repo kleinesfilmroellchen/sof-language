@@ -1,6 +1,6 @@
 package klfr.sof.lang;
 
-import klfr.sof.CompilationError;
+import klfr.sof.CompilerException;
 import klfr.sof.Interpreter;
 
 /**
@@ -26,12 +26,12 @@ public class Identifier implements Stackable {
 
 	/**
 	 * Constructs an identifier with the string value.
-	 * @throws CompilationError If the given string value is not a valid SOF
+	 * @throws CompilerException If the given string value is not a valid SOF
 	 * identifier.
 	 */
-	public Identifier(String value) throws CompilationError {
+	public Identifier(String value) throws CompilerException {
 		value = value.trim();
-		if (!isValidIdentifier(value)) throw new CompilationError("\"" + value + "\" is not a valid identifier");
+		if (!isValidIdentifier(value)) throw CompilerException.fromIncompleteInfo("Syntax", "\"" + value + "\" is not a valid identifier");
 		this.value = value;
 	}
 

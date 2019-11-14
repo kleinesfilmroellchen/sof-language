@@ -8,7 +8,7 @@ import java.util.regex.Matcher;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 
-import klfr.sof.CompilationError;
+import klfr.sof.CompilerException;
 import klfr.sof.Tokenizer;
 import klfr.sof.Tokenizer.TokenizerState;
 
@@ -18,7 +18,7 @@ class TokenizerTest {
 	void testFromSourceCode() {
 		Tokenizer t = assertDoesNotThrow(() -> Tokenizer.fromSourceCode("hello code"));
 		assertEquals(String.format("hello code%n"), t.getCode());
-		assertThrows(CompilationError.class, () -> Tokenizer.fromSourceCode("\" unclosed string"), "illegal code");
+		assertThrows(CompilerException.class, () -> Tokenizer.fromSourceCode("\" unclosed string"), "illegal code");
 	}
 	
 	@Test

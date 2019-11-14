@@ -3,7 +3,7 @@ package klfr.sof.lang;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
-import klfr.sof.CompilationError;
+import klfr.sof.CompilerException;
 import klfr.sof.Interpreter;
 
 /**
@@ -89,7 +89,7 @@ public class Primitive<T> implements Callable {
 	 * format, to be converted.
 	 * @return a new Primitive with integer type and the parsed integer value.
 	 */
-	public static Primitive<Long> createInteger(String integerString) throws CompilationError {
+	public static Primitive<Long> createInteger(String integerString) throws CompilerException {
 		integerString = integerString.strip();
 		int radix = 10;
 		long sign = 1;
@@ -120,7 +120,7 @@ public class Primitive<T> implements Callable {
 				radix = 16;
 				break;
 			default:
-				throw new CompilationError(String.format("Syntax Invalid Integer literal \"%s\".", integerString));
+				throw CompilerException.fromIncompleteInfo("Syntax", String.format("Invalid Integer literal \"%s\".", integerString));
 			}
 			integerString = integerString.substring(2);
 		}
@@ -130,18 +130,18 @@ public class Primitive<T> implements Callable {
 		for (int place = 0; place < reverseInt.length(); ++place) {
 			char magnitude = reverseInt.charAt(place);
 			if (!numberChars.containsKey(magnitude) || numberChars.get(magnitude) >= radix) {
-				throw new CompilationError(
-						String.format("Syntax Character \"%c\" not allowed in base %d integer literal.", magnitude, radix));
+				throw CompilerException.fromIncompleteInfo("Syntax",
+						String.format("Character \"%c\" not allowed in base %d integer literal.", magnitude, radix));
 			}
 			value += numberChars.get(magnitude) * (long) (Math.pow(radix, place));
 		}
 		return new Primitive<Long>(value * sign);
 	}
 
-	public static Primitive<Boolean> createBoolean(String booleanString) throws CompilationError {
+	public static Primitive<Boolean> createBoolean(String booleanString) throws CompilerException {
 		if (booleanString.toLowerCase().equals("true")) return new Primitive<>(true);
 		if (booleanString.toLowerCase().equals("false")) return new Primitive<>(false);
-		throw new CompilationError(String.format("Syntax No boolean literal found in \"%s\"", booleanString));
+		throw CompilerException.fromIncompleteInfo("Syntax", String.format("No boolean literal found in \"%s\"", booleanString));
 	}
 
 }

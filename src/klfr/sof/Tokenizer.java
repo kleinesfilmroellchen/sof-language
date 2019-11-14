@@ -108,10 +108,10 @@ public class Tokenizer implements Iterator<String> {
 	 * 
 	 * @param code the SOF source code to be used with this Tokenizer
 	 * @return a new tokenizer
-	 * @throws CompilationError if the code contains malformed strings, comments
+	 * @throws CompilerException if the code contains malformed strings, comments
 	 *                          etc.
 	 */
-	public static Tokenizer fromSourceCode(String code) throws CompilationError {
+	public static Tokenizer fromSourceCode(String code) throws CompilerException {
 		String clean = cleanCode(code);
 		Matcher matcher = Interpreter.tokenPattern.matcher(clean);
 		Tokenizer t = new Tokenizer(clean, matcher);
@@ -176,7 +176,7 @@ public class Tokenizer implements Iterator<String> {
 	 * @return a new, independed Tokenizer with this tokenizer's state and the given
 	 *         code appended.
 	 */
-	public Tokenizer withCodeAppended(String code) throws CompilationError {
+	public Tokenizer withCodeAppended(String code) throws CompilerException {
 		Tokenizer nt = this.clone();
 		nt.appendCode(code);
 		return nt;
@@ -189,7 +189,7 @@ public class Tokenizer implements Iterator<String> {
 	 *             inserted between the current code and the new code.
 	 * @return this tokenizer
 	 */
-	public Tokenizer appendCode(String code) throws CompilationError {
+	public Tokenizer appendCode(String code) throws CompilerException {
 		TokenizerState state = this.getState();
 		this.code += this.code.endsWith(System.lineSeparator()) ? cleanCode(code)
 				: (System.lineSeparator() + cleanCode(code));
@@ -197,6 +197,38 @@ public class Tokenizer implements Iterator<String> {
 		this.m.region(state.regionStart, state.regionEnd);
 		this.lastMatchEnd = state.end;
 		return this;
+	}
+	
+	/**
+	 * Returns the current line the tokenizer points to.
+	 * @return the current line the tokenizer points to.
+	 */
+	public int getCurrentLine() {
+		Matcher linefinder = Interpreter.nlPat.matcher(getCode());
+		int realIndex = m.start();
+		int lastLineStart = 0, linenum = 0;
+		while (linefinder.find() && realIndex > lastLineStart) {
+			// System.out.println("Advancing to index " + linefinder.start() + " line " + (linenum+1));
+			lastLineStart = linefinder.start();
+			++linenum;
+		}
+		return linenum;
+	}
+	
+	/**
+	 * Returns the index of the current position inside (respective to) its line in the code.
+	 * @return the index of the current position inside (respective to) its line in the code.
+	 */
+	public int getIndexInsideLine() {
+		Matcher linefinder = Interpreter.nlPat.matcher(getCode());
+		int realIndex = m.start();
+		int lastLineStart = 0;
+		while (linefinder.find() && realIndex > lastLineStart) {
+			lastLineStart = linefinder.start();
+		}
+		//last line now contains the index where the line starts that begins before the matcher's index
+		//i.e. the line of the matcher
+		return realIndex - lastLineStart;
 	}
 
 	@Override

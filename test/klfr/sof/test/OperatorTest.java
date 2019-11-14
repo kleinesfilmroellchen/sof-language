@@ -3,7 +3,7 @@ package klfr.sof.test;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import klfr.sof.CompilationError;
+import klfr.sof.CompilerException;
 import klfr.sof.lang.Operator;
 import klfr.sof.lang.Primitive;
 
@@ -60,7 +60,7 @@ class OperatorTest {
 			assertEquals(new Primitive<Long>(Long.valueOf(15/3)), Operator.divide.call(
 				new Primitive<Long>(15l), new Primitive<Long>(3l))));
 		// check if division by zero is caught
-		assertThrows(CompilationError.class, () -> 
+		assertThrows(CompilerException.class, () -> 
 			Operator.divide.call(
 				new Primitive<Long>(15l), new Primitive<Long>(0l)));
 	}

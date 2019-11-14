@@ -4,8 +4,7 @@ import java.io.Serializable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import klfr.sof.CompilationError;
-import klfr.sof.Interpreter;
+import klfr.sof.CompilerException;
 
 /**
  * The main data structure of SOF internally where all data resides. This is a
@@ -34,42 +33,39 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 
 	private static final long serialVersionUID = 1L;
 
-	private transient Interpreter parent;
-
-	public Stack(Interpreter parent) {
-		this.parent = parent;
+	public Stack() {
 	}
 
 	@Override
-	public Stackable getLast() throws CompilationError {
+	public Stackable getLast() throws CompilerException {
 		try {
 			Stackable elmt = super.getLast();
 			return elmt;
 		} catch (NoSuchElementException e) {
-			throw parent.makeException("Stack", "Stack is empty.");
+			throw CompilerException.fromIncompleteInfo("Stack", "Stack is empty.");
 		}
 	}
 
 	@Override
-	public Stackable peek() throws CompilationError {
+	public Stackable peek() throws CompilerException {
 		Stackable elmt = super.peek();
 		if (elmt == null)
-			throw parent.makeException("Stack", "Stack is empty.");
+			throw CompilerException.fromIncompleteInfo("Stack", "Stack is empty.");
 		return elmt;
 	}
 
 	@Override
-	public Stackable pop() throws CompilationError {
+	public Stackable pop() throws CompilerException {
 		try {
 			Stackable elmt = super.pop();
 			if (elmt instanceof Nametable) {
 				super.push(elmt);
-				throw parent.makeException("Stack Access",
+				throw CompilerException.fromIncompleteInfo("Stack Access",
 						"Manipulation of Nametables and Stack delimiters on the stack is not allowed.");
 			}
 			return elmt;
 		} catch (NoSuchElementException e) {
-			throw parent.makeException("Stack", "Stack is empty.");
+			throw CompilerException.fromIncompleteInfo("Stack", "Stack is empty.");
 		}
 	}
 
@@ -84,7 +80,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 		try {
 			Stackable lowest = getLast();
 			return (Nametable) lowest;
-		} catch (ClassCastException | CompilationError e) {
+		} catch (ClassCastException | CompilerException e) {
 			throw new RuntimeException("Interpreter Exception: Global Nametable missing. ┻━━┻ ミ ヽ(ಠ益ಠ)ノ 彡  ┻━━┻");
 		}
 	}

@@ -72,7 +72,7 @@ class IOInterfaceTest {
 		}); p.getBuffer().setLength(0);
 		// test debugging
 		io.debug = true;
-		var s = new Stack(null); s.add(new Nametable());
+		var s = new Stack(); s.add(new Nametable());
 		assertDoesNotThrow( () -> io.describeStack(s)); p.getBuffer().setLength(0);
 		assertDoesNotThrow( () -> io.debug("abc"));
 		assertEquals("abc" + System.lineSeparator(), p.toString()); p.getBuffer().setLength(0);

@@ -8,7 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import klfr.sof.lang.Callable.CallProvider;
-import klfr.sof.CompilationError;
+import klfr.sof.CompilerException;
 import klfr.sof.lang.Primitive;
 
 @SuppressWarnings("unchecked")
@@ -53,10 +53,10 @@ class PrimitiveTest {
 		assertDoesNotThrow(() -> Primitive.createInteger("-0b1010011  "));
 		assertDoesNotThrow(() -> Primitive.createInteger(" +0o776352"));
 		assertDoesNotThrow(() -> Primitive.createInteger("		-0d490"));
-		assertThrows(CompilationError.class, () -> Primitive.createInteger("jksdf"));
-		assertThrows(CompilationError.class, () -> Primitive.createInteger("	0xiwo3i"));
-		assertThrows(CompilationError.class, () -> Primitive.createInteger("0b8373"));
-		assertThrows(CompilationError.class, () -> Primitive.createInteger("0f879"));
+		assertThrows(CompilerException.class, () -> Primitive.createInteger("jksdf"));
+		assertThrows(CompilerException.class, () -> Primitive.createInteger("	0xiwo3i"));
+		assertThrows(CompilerException.class, () -> Primitive.createInteger("0b8373"));
+		assertThrows(CompilerException.class, () -> Primitive.createInteger("0f879"));
 	}
 
 	@Test
@@ -65,8 +65,8 @@ class PrimitiveTest {
 		assertEquals(true, b.getValue());
 		assertDoesNotThrow(() -> Primitive.createBoolean("FALSE"));
 		assertDoesNotThrow(() -> Primitive.createBoolean("trUe"));
-		assertThrows(CompilationError.class, () -> Primitive.createBoolean("Trueblah"));
-		assertThrows(CompilationError.class, () -> Primitive.createBoolean("FALSEfalse"));
+		assertThrows(CompilerException.class, () -> Primitive.createBoolean("Trueblah"));
+		assertThrows(CompilerException.class, () -> Primitive.createBoolean("FALSEfalse"));
 	}
 
 }

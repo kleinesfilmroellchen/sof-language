@@ -34,8 +34,8 @@ import klfr.sof.lang.*;
 public class Interpreter {
 	public static final String VERSION = "0.1";
 
-	/** Convenience constant for the 38-character line â”€ */
-	public static final String line38 = String.format("%38s", " ").replace(" ", "â”€");
+	/** Convenience constant for the 38-character line ─ */
+	public static final String line38 = String.format("%38s", " ").replace(" ", "─");
 
 	//// PATTERNS
 	public static final Pattern	intPattern			= Pattern.compile("((\\+|\\-)?(0[bhxod])?[0-9a-fA-F]+)|0");
@@ -50,10 +50,10 @@ public class Interpreter {
 
 	/**
 	 * Cleans the code of comments.
-	 * @throws CompilationError if block comments, code blocks or string literals are not closed
+	 * @throws CompilerException if block comments, code blocks or string literals are not closed
 	 * properly.
 	 */
-	public static String cleanCode(String code) throws CompilationError {
+	public static String cleanCode(String code) throws CompilerException {
 		StringBuilder newCode = new StringBuilder();
 		@SuppressWarnings("resource")
 		Scanner scanner = new Scanner(code);
@@ -86,7 +86,7 @@ public class Interpreter {
 							++j;
 						//this is a syntax error of unclosed string literal
 						if (j == line.length())
-							throw new CompilationError(line, i + 1, lineIdx, "Syntax", "No closing '\"' for string literal.");
+							throw CompilerException.fromFormatMessage(line, i + 1, lineIdx, "Syntax", "No closing '\"' for string literal.");
 						//skip this section
 						newCode.append(line.substring(i, j + 1));
 						i = j;
@@ -109,9 +109,9 @@ public class Interpreter {
 
 		scanner.close();
 		if (codeBlockDepth > 0) {
-			throw new CompilationError(newCode.toString(), newCode.lastIndexOf("{"), lineIdx, "Syntax", "Unclosed code block");
+			throw CompilerException.fromCurrentPosition(newCode.toString(), newCode.lastIndexOf("{"), "Syntax", "Unclosed code block");
 		} else if (codeBlockDepth < 0) {
-			throw new CompilationError(newCode.toString(), newCode.lastIndexOf("}"), lineIdx, "Syntax", "Too many closing '}'");
+			throw CompilerException.fromCurrentPosition(newCode.toString(), newCode.lastIndexOf("}"), "Syntax", "Too many closing '}'");
 		}
 		return newCode.toString();
 	}
@@ -179,9 +179,9 @@ public class Interpreter {
 	 * Utility to format a string for debug output of a stack.
 	 */
 	public static String stackToDebugString(Deque<Stackable> stack) {
-		return "â”Œâ”€" + line38 + "â”€â”�" + System.lineSeparator() +
+		return "┌─" + line38 + "─┐" + System.lineSeparator() +
 				stack.stream().collect(() -> new StringBuilder(),
-						(str, elmt) -> str.append(String.format("â”‚ %38s â”‚%nâ”œâ”€" + Interpreter.line38 + "â”€â”¤%n", elmt, " ")),
+						(str, elmt) -> str.append(String.format("│ %38s │%n├─" + Interpreter.line38 + "─┤%n", elmt, " ")),
 						(e1, e2) -> e1.append(e2)).toString();
 	}
 
@@ -225,13 +225,13 @@ public class Interpreter {
 	}
 
 	private Stackable executeFunction(Stackable arg1, Stackable arg2, Operator function, String funcName)
-			throws CompilationError {
+			throws CompilerException {
 		try {
 			return function.call(arg1, arg2);
-		} catch (CompilationError e) {
-			throw makeException(e);
+		} catch (CompilerException e) {
+			throw CompilerException.fromIncomplete(tokenizer, e);
 		} catch (ClassCastException e) {
-			throw makeException("Type",
+			throw CompilerException.fromCurrentPosition(this.tokenizer, "Type",
 					String.format("Cannot perform function '%s' on arguments %s and %s: wrong type.",
 							funcName, arg1.toString(), arg2.toString()));
 		}
@@ -239,9 +239,9 @@ public class Interpreter {
 	/**
 	 * Does one execution step. Will do nothing if the end of the source code is
 	 * reached.
-	 * @throws CompilationError If something goes wrong at runtime.
+	 * @throws CompilerException If something goes wrong at runtime.
 	 */
-	public Interpreter executeOnce() throws CompilationError {
+	public Interpreter executeOnce() throws CompilerException {
 		String token = tokenizer.next();
 		if (token.length() == 0) return this;
 		//System.out.println(token);
@@ -280,7 +280,7 @@ public class Interpreter {
 			case "def":
 				Stackable idS = stack.pop();
 				if (!(idS instanceof Identifier)) {
-					throw makeException("Type", "\"" + idS.toString() + "\" is not an identifier.");
+					throw CompilerException.fromCurrentPosition(this.tokenizer, "Type", "\"" + idS.toString() + "\" is not an identifier.");
 				}
 				Identifier id = (Identifier) idS;
 				Stackable valS = stack.pop();
@@ -293,7 +293,7 @@ public class Interpreter {
 			case "dup":
 				param1 = stack.peek();
 				if (param1 instanceof Nametable)
-					throw makeException("StackAccess", "A nametable cannot be duplicated.");
+					throw CompilerException.fromCurrentPosition(this.tokenizer, "StackAccess", "A nametable cannot be duplicated.");
 				stack.push(param1);
 
 			case "describes":
@@ -333,13 +333,13 @@ public class Interpreter {
 							stack.push(val);
 							break;
 						} else if (reference == null) {
-							throw makeException("Reference",
+							throw CompilerException.fromCurrentPosition(this.tokenizer, "Reference",
 									"Identifier " + param1.toString() + " is not defined" +
 											(namespaceString.length() == 0 ? "" : (" in " + namespaceString)) + ".");
 						}
 					} else {
 						stack.push(param1);
-						throw makeException("Type", param1.toString() + " is not callable.");
+						throw CompilerException.fromCurrentPosition(this.tokenizer, "Type", param1.toString() + " is not callable.");
 					}
 				} while (true);
 				break;
@@ -369,8 +369,8 @@ public class Interpreter {
 					try {
 						Primitive<Long> literal = Primitive.createInteger(token.toLowerCase());
 						stack.push(literal);
-					} catch (CompilationError e) {
-						throw new CompilationError(e);//makeException("Syntax", "No integer literal found in \"" + token + "\".");
+					} catch (CompilerException e) {
+						throw CompilerException.fromCurrentPosition(this.tokenizer, "Syntax", f("No integer literal found in \"%s\".", token));
 					}
 				} else if (doublePattern.matcher(token).matches()) {
 					//					System.out.println("Double literal found");
@@ -378,7 +378,7 @@ public class Interpreter {
 						Primitive<Double> literal = new Primitive<Double>(Double.parseDouble(token.toLowerCase()));
 						stack.push(literal);
 					} catch (NumberFormatException e) {
-						throw makeException("Syntax", "No double literal found in \"" + token + "\".");
+						throw CompilerException.fromCurrentPosition(this.tokenizer, "Syntax", f("No double literal found in \"%s\".", token));
 					}
 				} else if (boolPattern.matcher(token).matches()) {
 					//				System.out.println("Bool literal found");
@@ -389,15 +389,15 @@ public class Interpreter {
 					stack.push(new Primitive<>(token.substring(1, token.length() - 1)));
 				} else {
 					//oh no, you have input invalid characters!
-					throw makeException("Syntax", "Unexpected character(s) \"" + token + "\".");
+					throw CompilerException.fromCurrentPosition(this.tokenizer, "Syntax", f("Unexpected characters \"%s\".", token));
 				}
 			}
 			}
-		} catch (CompilationError e) {
+		} catch (CompilerException e) {
 			if (e.isInfoPresent())
 				System.out.println(e.getLocalizedMessage());
 			else {
-				System.out.println(makeException(e).getLocalizedMessage());
+				System.out.println(CompilerException.fromIncomplete(tokenizer, e).getLocalizedMessage());
 			}
 		}
 		return this;
@@ -409,30 +409,6 @@ public class Interpreter {
 	 */
 	public String getCode() {
 		return tokenizer.getCode();
-	}
-
-	public int getCurrentLine() {
-		Matcher linefinder = nlPat.matcher(getCode());
-		int realIndex = tokenizer.getState().start;
-		int lastLineStart = 0, linenum = 0;
-		while (linefinder.find() && realIndex > lastLineStart) {
-			System.out.println("Advancing to index " + linefinder.start() + " line " + (linenum+1));
-			lastLineStart = linefinder.start();
-			++linenum;
-		}
-		return linenum;
-	}
-
-	public int getIndexInsideLine() {
-		Matcher linefinder = nlPat.matcher(getCode());
-		int realIndex = tokenizer.getState().start;
-		int lastLineStart = 0;
-		while (linefinder.find() && realIndex > lastLineStart) {
-			lastLineStart = linefinder.start();
-		}
-		//last line now contains the index where the line starts that begins before the matcher's index
-		//i.e. the line of the matcher
-		return realIndex - lastLineStart;
 	}
 
 	/**
@@ -457,49 +433,10 @@ public class Interpreter {
 		}
 	}
 
-	/**
-	 * Constructs a compiler exception with the given base exception that points to
-	 * the current place in code the interpreter is looking at. <br>
-	 * <br>
-	 * This method is intended to be used with exceptions thrown by other classes
-	 * unaware of the interpreter state. These classes can use the simple format "<
-	 * Name > < Description >" for their exception message to achieve suitable
-	 * formatting of the exception. As only one line of the exception message is
-	 * extracted, further lines can provide debug information to be used otherwise.
-	 * @param cause The cause of this exception. The first word of the exception
-	 * message is used as the name (such as "Syntax") and the rest as the long
-	 * reason.
-	 * @return The newly constructed compiler error.
-	 */
-	public CompilationError makeException(CompilationError cause) {
-		Scanner helper = new Scanner(cause.getLocalizedMessage());
-		//first part of any exception message is the exception name, which we don't want
-		helper.next();
-		String name = helper.next();
-		String reason = helper.nextLine();
-		helper.close();
-		return makeException(name, reason);
-	}
-
-	/**
-	 * Constructs a compiler exception with the given reason that points to the
-	 * current place in code the interpreter is looking at.
-	 * @param reason The reason or long description of the exception.
-	 * @param name The name of the exception. If null, a generic "Compiler Error"
-	 * name is used.
-	 * @return The newly constructed compiler error.
-	 */
-	public CompilationError makeException(String name, String reason) {
-		String code = getCode();
-		int linenum = getCurrentLine();
-		String line = code.split("\n")[linenum-1];
-		return new CompilationError(line, getIndexInsideLine(), getCurrentLine(),  name == null ? "Compiler" : name, reason);
-	}
-
 	/** Resets this interpreter by deleting and reinitializing all state. */
 	public Interpreter reset() {
 		//make the stack
-		stack = new Stack(this);
+		stack = new Stack();
 		//make the global nametable
 		Nametable globalNametable = new Nametable();
 		stack.push(globalNametable);
@@ -510,10 +447,10 @@ public class Interpreter {
 	 * Sets the code of this interpreter. Also prepares the code and regex utilities
 	 * for execution; this is why a compilation error can be thrown here.
 	 * @param code The SOF code to be used by this interpreter.
-	 * @throws CompilationError If something during the code preprocessing stages
+	 * @throws CompilerException If something during the code preprocessing stages
 	 * goes wrong.
 	 */
-	public Interpreter setCode(String code) throws CompilationError {
+	public Interpreter setCode(String code) throws CompilerException {
 		this.tokenizer = Tokenizer.fromSourceCode(code);
 		return this;
 	}
@@ -524,7 +461,7 @@ public class Interpreter {
 	 * @param string The line of code to be appended
 	 * @return this interpreter
 	 */
-	public Interpreter appendLine(String string) throws CompilationError {
+	public Interpreter appendLine(String string) throws CompilerException {
 		this.tokenizer.appendCode(string);
 		return this;
 	}
@@ -535,5 +472,9 @@ public class Interpreter {
 	 */
 	public void setIO(IOInterface io) {
 		this.io = io;
+	}
+	
+	private static String f(String s, Object... args) {
+		return String.format(s, args);
 	}
 }

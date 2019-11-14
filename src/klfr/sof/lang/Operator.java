@@ -1,7 +1,7 @@
 package klfr.sof.lang;
 
 import java.util.function.BiFunction;
-import klfr.sof.CompilationError;
+import klfr.sof.CompilerException;
 
 /**
  * Base class for operator functions. Operator functions differ from normal
@@ -28,9 +28,9 @@ public interface Operator {
 	 * stack.
 	 * @throws ClassCastException if the arguments are not of the correct type
 	 * (auto-thrown by the JVM if unchecked type casting fails).
-	 * @throws CompilationError if other stuff fails, such as arithmetic exceptions.
+	 * @throws CompilerException if other stuff fails, such as arithmetic exceptions.
 	 */
-	public Stackable call(Stackable leftArg, Stackable rightArg) throws ClassCastException, CompilationError;
+	public Stackable call(Stackable leftArg, Stackable rightArg) throws ClassCastException, CompilerException;
 
 	/**
 	 * Executes a numeric operation on the two argument primitives
@@ -61,7 +61,7 @@ public interface Operator {
 			return numericOperation((Primitive<? extends Number>) a, (Primitive<? extends Number>) b, (x, y) -> x / y,
 					(x, y) -> x / y);
 		} catch (ArithmeticException e) {
-			throw new CompilationError("Arithmetic Divide by zero.");
+			throw CompilerException.fromIncompleteInfo("Arithmetic", "Divide by zero.");
 		}
 	};
 

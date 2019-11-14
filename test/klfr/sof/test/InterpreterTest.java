@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static java.lang.String.format;
 import org.junit.jupiter.api.Test;
 
-import klfr.sof.CompilationError;
+import klfr.sof.CompilerException;
 import klfr.sof.Interpreter;
 
 class InterpreterTest {
@@ -21,10 +21,10 @@ class InterpreterTest {
 					Interpreter.cleanCode("abc \" def # here is no comment\"\n"));
 			assertEquals(format("abc \" def # here is no comment\"%n%n"),
 					Interpreter.cleanCode("abc \" def # here is no comment\"\n#but here is one \" with strings.\n"));
-		} catch (CompilationError e) {
+		} catch (CompilerException e) {
 			fail(e);
 		}
-		assertThrows(CompilationError.class, () -> Interpreter.cleanCode("abc def ghi jkl \"  "));
+		assertThrows(CompilerException.class, () -> Interpreter.cleanCode("abc def ghi jkl \"  "));
 		assertDoesNotThrow(() -> Interpreter.cleanCode("abc def ghi jkl \" jkjkk \""));
 	}
 

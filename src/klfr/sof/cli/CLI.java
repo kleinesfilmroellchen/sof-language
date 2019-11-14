@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
-import klfr.sof.CompilationError;
+import klfr.sof.CompilerException;
 import klfr.sof.IOInterface;
 import klfr.sof.Interpreter;
 
@@ -178,7 +178,7 @@ public class CLI {
 					// catches "unclosed"-compilation errors which might be resolved by adding more content on another line
 					try {
 						interpreter.appendLine(code);
-					} catch (CompilationError e) {
+					} catch (CompilerException e) {
 						// one invalid line: let user input as many continuation lines as they want
 						while (true) {
 							io.print("... ");
@@ -192,7 +192,7 @@ public class CLI {
 					while (interpreter.canExecute()) {
 						interpreter.executeOnce();
 					}
-				} catch (CompilationError e) {
+				} catch (CompilerException e) {
 					io.println("!!! " + e.getLocalizedMessage());
 				}
 				io.print(">>> ");
@@ -222,7 +222,7 @@ public class CLI {
 			interpreter.reset().setCode(code).setIO(io);
 			while (interpreter.canExecute())
 				interpreter.executeOnce();
-		} catch (CompilationError e) {
+		} catch (CompilerException e) {
 			System.out.println(e.getLocalizedMessage());
 			System.exit(-1);
 		}

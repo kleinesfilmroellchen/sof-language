@@ -2,7 +2,7 @@ package klfr.sof.test;
 
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
-import klfr.sof.CompilationError;
+import klfr.sof.CompilerException;
 import klfr.sof.lang.Identifier;
 
 class IdentifierTest {
@@ -27,12 +27,12 @@ class IdentifierTest {
 
 	@Test
 	void testIsValidIdentifier() {
-		assertThrows(CompilationError.class, () -> new Identifier("-abc-def"), "Invalid Identifier test");
-		assertThrows(CompilationError.class, () -> new Identifier("abc-def  kl"), "Invalid Identifier test spaces");
+		assertThrows(CompilerException.class, () -> new Identifier("-abc-def"), "Invalid Identifier test");
+		assertThrows(CompilerException.class, () -> new Identifier("abc-def  kl"), "Invalid Identifier test spaces");
 		assertDoesNotThrow(() -> new Identifier("abcdefgはるこ"), "Valid Identifier test");
 		assertDoesNotThrow(() -> new Identifier("   abcdefgはるこ     "), "Valid Identifier test with trim");
 		assertDoesNotThrow(() -> new Identifier("   abc__d9090efg''はるこ     "), "Valid Identifier test with non-alnum");
-		assertThrows(CompilationError.class, () -> new Identifier("90abc__d9090efg"),
+		assertThrows(CompilerException.class, () -> new Identifier("90abc__d9090efg"),
 				"Invalid Identifier test with starting numeric");
 	}
 	

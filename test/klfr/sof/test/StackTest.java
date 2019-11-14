@@ -3,7 +3,7 @@ package klfr.sof.test;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import klfr.sof.Interpreter;
+
 import klfr.sof.lang.Nametable;
 import klfr.sof.lang.Stack;
 
@@ -13,7 +13,7 @@ class StackTest {
 
 	@BeforeEach
 	void setUp() throws Exception {
-		stack = new Stack(new Interpreter());
+		stack = new Stack();
 		stack.push(new Nametable());
 	}
 	
@@ -22,7 +22,7 @@ class StackTest {
 	 */
 	@Test
 	void testStack() {
-		var s = assertDoesNotThrow( ()-> new Stack(new Interpreter()));
+		var s = assertDoesNotThrow( ()-> new Stack());
 	}
 
 	/**
