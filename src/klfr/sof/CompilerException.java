@@ -148,8 +148,10 @@ public class CompilerException extends RuntimeException {
 	 */
 	private static String formatMessage(String expression, int index, int line, String name, String reason) {
 //		System.out.println(expression.length());
-		return String.format("%s Error in line %d at index %d:%n%s"
-				+ "%" + significantAfterTrimmed(index, expression.length()) + "s%n    %s", name, line, index,
+		return String.format("%s Error in line %d at index %d:%n"
+				+ " %s%n"
+				+ " %" + significantAfterTrimmed(index, expression.length()) + "s%n"
+				+ "    %s", name, line, index,
 				trim(expression, index), "^", reason);
 	}
 

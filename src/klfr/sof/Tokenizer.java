@@ -65,6 +65,12 @@ public class Tokenizer implements Iterator<String> {
 			return other.start == this.start && other.end == this.end && other.regionStart == this.regionStart
 					&& other.regionEnd == this.regionEnd && other.code.equals(this.code);
 		}
+
+		@Override
+		public String toString() {
+			return String.format("TokenizerState(%d->%d, r%d->%d [%s])", this.start, this.end, this.regionStart, this.regionEnd,
+				this.code.substring(0, Math.min(10, this.code.length())));
+		}
 	}
 
 	private String code;
@@ -191,6 +197,7 @@ public class Tokenizer implements Iterator<String> {
 	 */
 	public Tokenizer appendCode(String code) throws CompilerException {
 		TokenizerState state = this.getState();
+		System.out.println(state);
 		this.code += this.code.endsWith(System.lineSeparator()) ? cleanCode(code)
 				: (System.lineSeparator() + cleanCode(code));
 		this.m = Interpreter.tokenPattern.matcher(this.code);
