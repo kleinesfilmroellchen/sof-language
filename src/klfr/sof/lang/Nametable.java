@@ -10,6 +10,7 @@ import klfr.sof.Interpreter;
  * @author klfr
  */
 public class Nametable implements Stackable {
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * Returns a stream over all the identifier-value mappings that this nametable

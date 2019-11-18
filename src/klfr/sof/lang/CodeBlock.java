@@ -1,8 +1,5 @@
 package klfr.sof.lang;
 
-import java.util.regex.Matcher;
-import klfr.sof.Interpreter;
-
 public class CodeBlock implements Callable {
 
 	private static final long serialVersionUID = 1L;

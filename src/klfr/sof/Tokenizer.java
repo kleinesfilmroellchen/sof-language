@@ -5,6 +5,7 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.logging.Logger;
 import java.util.regex.*;
 import static klfr.sof.Interpreter.cleanCode;
 
@@ -20,6 +21,8 @@ import static klfr.sof.Interpreter.cleanCode;
  * @author klfr
  */
 public class Tokenizer implements Iterator<String> {
+
+	private Logger log = Logger.getLogger(this.getClass().getCanonicalName());
 
 	/**
 	 * Represents internal state of a tokenizer for transfering such states between
@@ -164,8 +167,8 @@ public class Tokenizer implements Iterator<String> {
 	 */
 	public TokenizerState getState() {
 		int start = this.start(), end = lastMatchEnd;
-			return new TokenizerState(start, end, this.m.regionStart(), this.m.regionEnd(), code);
-		}
+		return new TokenizerState(start, end, this.m.regionStart(), this.m.regionEnd(), code);
+	}
 
 	/**
 	 * Sets the state's parameters on this tokenizer.
@@ -201,7 +204,7 @@ public class Tokenizer implements Iterator<String> {
 	 */
 	public Tokenizer appendCode(String code) throws CompilerException {
 		TokenizerState state = this.getState();
-		System.out.println(state);
+		this.log.finest("State before appending: " + state);
 		this.code += this.code.endsWith(System.lineSeparator()) ? cleanCode(code)
 				: (System.lineSeparator() + cleanCode(code));
 		this.m = Interpreter.tokenPattern.matcher(this.code);

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -15,17 +16,22 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.logging.*;
+
 import klfr.sof.CompilerException;
 import klfr.sof.IOInterface;
 import klfr.sof.Interpreter;
 
 public class CLI {
 
-	static class Options {
+	private static Logger log = Logger.getLogger(CLI.class.getCanonicalName());
 
+	static class Options {
+		/** Enum for execution string (ES) treatment. An ES is any CL argument without a '-'. */
 		static enum ExecutionType {
 			/** ES is treated as list of relative filenames. */
 			File,
@@ -45,14 +51,26 @@ public class CLI {
 		public int flags;
 
 		public String toString() {
-			return "Options:" + executionType + executionStrings.toString() + "flags:" + Integer.toBinaryString(flags);
+			return "Options:" + executionType + executionStrings.toString() + "f:" + Integer.toBinaryString(flags);
 		}
 	}
 
-	public static void main(String[] args) throws InvocationTargetException {
+	public static void main(String[] args) throws InvocationTargetException, UnsupportedEncodingException, IOException {
+		// setup console info logging
+		// LogManager.getLogManager().updateConfiguration(new ByteArrayInputStream(".level = FINEST".getBytes("UTF-8")), null);
+		LogManager.getLogManager().reset();
+		Logger.getLogger("").setLevel(Level.FINEST);
+		var ch = new ConsoleHandler();
+		ch.setLevel(Level.INFO);
+		Logger.getLogger("").addHandler(ch);
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+			Logger.getLogger("").info("SOF exiting.");
+		}));
+
 		int idx = 0;
 
 		// options
+		log.config(() -> Arrays.toString(args));
 		Options opt = new Options();
 		opt.executionType = Options.ExecutionType.Interactive;
 		opt.executionStrings = new LinkedList<String>();
@@ -119,13 +137,27 @@ public class CLI {
 				for (char c : remaining.toCharArray()) {
 					cmdLineArguments.add("-" + c);
 				}
-				System.out.println(cmdLineArguments.toString());
+				log.log(Level.FINE, () -> cmdLineArguments.toString());
 			}
 		}
 
 		IOInterface io = new IOInterface();
 		io.debug = (opt.flags & Options.DEBUG) > 0;
 		io.setInOut(System.in, System.out);
+
+		if (io.debug) {
+			try {
+				LogManager.getLogManager().reset();
+				Logger.getLogger("").setLevel(Level.FINEST);
+				ch = new ConsoleHandler();
+				ch.setLevel(Level.FINE);
+				Logger.getLogger("").addHandler(ch);
+				var handler = new FileHandler("sof-log.log");
+				handler.setFormatter(new SimpleFormatter());
+				handler.setLevel(Level.FINEST);
+				Logger.getLogger("").addHandler(handler);
+			} catch (IOException e) {e.printStackTrace();}
+		}
 
 		// decide over execution type depending on argument count
 		if (opt.executionType == Options.ExecutionType.Interactive)
@@ -141,7 +173,7 @@ public class CLI {
 					exitUnnormal(1);
 				}
 			}
-			System.out.println(opt.executionStrings);
+			log.log(Level.FINE, () -> opt.executionStrings.toString());
 			List<Reader> readers = new ArrayList<>(opt.executionStrings.size());
 			for (String filename : opt.executionStrings) {
 				try {
@@ -194,6 +226,10 @@ public class CLI {
 					}
 				} catch (CompilerException e) {
 					io.println("!!! " + e.getLocalizedMessage());
+					log.log(Level.SEVERE, 
+						("-----------\nCompiler Exception occurred.\nUser-friendly message: " +
+						e.getLocalizedMessage() +
+						"\nStack trace:\n" + Arrays.stream(e.getStackTrace()).map(ste -> ste.toString()).reduce("", (a,b) -> (a + "\n  " + b).strip()) + "\n").indent(2));
 				}
 				io.print(">>> ");
 			};

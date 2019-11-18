@@ -1,10 +1,8 @@
 package klfr.sof.lang;
 
-import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 import klfr.sof.CompilerException;
-import klfr.sof.Interpreter;
 
 /**
  * Primitive values in SOF are represented through this class.<br>

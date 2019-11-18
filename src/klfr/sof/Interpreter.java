@@ -6,6 +6,7 @@ import java.util.Deque;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.logging.*;
 import klfr.sof.lang.*;
 
 /**
@@ -32,6 +33,7 @@ import klfr.sof.lang.*;
  * @version 0.1
  */
 public class Interpreter {
+	private Logger log = Logger.getLogger(Interpreter.class.getCanonicalName());
 	public static final String VERSION = "0.1";
 
 	/** Convenience constant for the 38-character line ─ */
@@ -242,9 +244,10 @@ public class Interpreter {
 	 * @throws CompilerException If something goes wrong at runtime.
 	 */
 	public Interpreter executeOnce() throws CompilerException {
+		log.entering(this.getClass().getCanonicalName(), "executeOnce()");
 		String token = tokenizer.next();
 		if (token.length() == 0) return this;
-		//System.out.println(token);
+		log.finer(f("Executing token %s", token));
 
 		// TODO Execution time!
 		try {
@@ -362,10 +365,10 @@ public class Interpreter {
 			//					break;
 			default: {
 				if (identifierPattern.matcher(token).matches()) {
-					//				System.out.println("Identifier found");
+					log.finer("Identifier found");
 					stack.push(new Identifier(token));
 				} else if (intPattern.matcher(token).matches()) {
-					//				System.out.println("Int literal found");
+					log.finer("Int literal found");
 					try {
 						Primitive<Long> literal = Primitive.createInteger(token.toLowerCase());
 						stack.push(literal);
@@ -373,7 +376,7 @@ public class Interpreter {
 						throw CompilerException.fromCurrentPosition(this.tokenizer, "Syntax", f("No integer literal found in \"%s\".", token));
 					}
 				} else if (doublePattern.matcher(token).matches()) {
-					//					System.out.println("Double literal found");
+					log.finer("Double literal found");
 					try {
 						Primitive<Double> literal = new Primitive<Double>(Double.parseDouble(token.toLowerCase()));
 						stack.push(literal);
@@ -381,11 +384,11 @@ public class Interpreter {
 						throw CompilerException.fromCurrentPosition(this.tokenizer, "Syntax", f("No double literal found in \"%s\".", token));
 					}
 				} else if (boolPattern.matcher(token).matches()) {
-					//				System.out.println("Bool literal found");
+					log.finer("Bool literal found");
 					Primitive<Boolean> literal = Primitive.createBoolean(token);
 					stack.push(literal);
 				} else if (stringPattern.matcher(token).matches()) {
-					//				System.out.println("String literal found");
+					log.finer("String literal found");
 					stack.push(new Primitive<>(token.substring(1, token.length() - 1)));
 				} else {
 					//oh no, you have input invalid characters!
@@ -400,6 +403,8 @@ public class Interpreter {
 				throw CompilerException.fromIncomplete(tokenizer, e);
 			}
 		}
+		log.exiting(this.getClass().getCanonicalName(), "executeOnce()");
+		log.finest(() -> "S:\n" + Interpreter.stackToDebugString(stack) + "\nNT:\n" + stack.globalNametable().getDebugDisplay());
 		return this;
 	}
 
