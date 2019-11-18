@@ -395,9 +395,9 @@ public class Interpreter {
 			}
 		} catch (CompilerException e) {
 			if (e.isInfoPresent())
-				System.out.println(e.getLocalizedMessage());
+				throw e;
 			else {
-				System.out.println(CompilerException.fromIncomplete(tokenizer, e).getLocalizedMessage());
+				throw CompilerException.fromIncomplete(tokenizer, e);
 			}
 		}
 		return this;
