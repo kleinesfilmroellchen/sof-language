@@ -69,15 +69,15 @@ To get a taste of SOF, here are several sample programs written in SOF. Note tha
 0 guess def
 {
 	input int guess def
-	{
+	{ {
 		"You are correct!" writeln
-	} { number . guess . = } if
+	} number . guess . =
 	{
 		"You are too low!" writeln
-	} { number . guess . < } elseif
+	} ifelse } number . guess . <
 	{
 		"You are too high!" writeln
-	} else
+	} ifelse
 } { guess . number . /= } while
 ```
 
@@ -99,7 +99,7 @@ To get a taste of SOF, here are several sample programs written in SOF. Note tha
 	n def # arg1
 	# gauss formula
 	n . n . 1 + * 2 / return
-} sum 1 param function
+} sum 1 function
 
 "The result is: " 1 sum . cat writeln 
 ```
