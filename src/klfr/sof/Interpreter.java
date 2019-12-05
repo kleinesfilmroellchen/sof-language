@@ -377,7 +377,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 							stack.push(val);
 							break;
 						} else if (reference == null) {
-							throw CompilerException.fromCurrentPosition(this.tokenizer, "Reference",
+							throw CompilerException.fromCurrentPosition(this.tokenizer, "Name",
 									"Identifier " + param1.toString() + " is not defined"
 											+ (namespaceString.length() == 0 ? "" : (" in " + namespaceString)) + ".");
 						}

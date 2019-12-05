@@ -60,7 +60,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 			Stackable elmt = super.pop();
 			if (elmt instanceof Nametable) {
 				super.push(elmt);
-				throw CompilerException.fromIncompleteInfo("Stack Access",
+				throw CompilerException.fromIncompleteInfo("StackAccess",
 						"Manipulation of Nametables and Stack delimiters on the stack is not allowed.");
 			}
 			return elmt;
