@@ -18,7 +18,7 @@ import klfr.sof.CompilerException;
  *   |       ...         |
  * ( |-------------------| )
  * ( | File namespace NT | )
- * ( |-------------------| )
+ *   |-------------------|
  *   | Global Nametable  |
  *   |                   |
  * </pre>

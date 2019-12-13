@@ -30,17 +30,18 @@ public class CodeBlock implements Callable {
 	}
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public CallProvider getCallProvider() {
 		return (interpreter) -> {
-			interpreter.pushState();
+			interpreter.internal.pushState();
 			
 			// set the region
-			interpreter.setRegion(indexInFile, endIndex);
+			interpreter.internal.setRegion(indexInFile, endIndex);
 			
 			while (interpreter.canExecute()) {
 				interpreter.executeOnce();
 			}
-			interpreter.popState();
+			interpreter.internal.popState();
 			
 			return null;
 		};

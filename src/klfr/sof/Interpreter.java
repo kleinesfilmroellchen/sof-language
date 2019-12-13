@@ -2,10 +2,16 @@ package klfr.sof;
 
 // ALL THE STANDARD LIBRARY
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Deque;
+import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.logging.*;
@@ -36,6 +42,83 @@ import klfr.sof.lang.*;
  * @version 0.1
  */
 public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter> {
+	/**
+	 * Access Interpreter internals through this pseudo-class.
+	 * 
+	 * @deprecated This pseudo-class's accesses the Interpreter internals. Its usage
+	 *             may break the currently running SOF interpretation system.
+	 */
+	@Deprecated()
+	public Internal internal = new Internal();
+
+	/**
+	 * Access Interpreter internals through this pseudo-class.
+	 * 
+	 * @deprecated This pseudo-class's accesses the Interpreter internals. Its usage
+	 *             may break the currently running SOF interpretation system.
+	 */
+	@Deprecated()
+	public class Internal {
+		/**
+		 * Access the Interpreter's tokenizer.
+		 * 
+		 * @deprecated This method accesses the Interpreter internals. Its usage may
+		 *             break the currently running SOF interpretation system.
+		 */
+		@Deprecated()
+		public Tokenizer tokenizer() {
+			return tokenizer;
+		}
+
+		/**
+		 * Access the Interpreter's Input-output system.
+		 * 
+		 * @deprecated This method accesses the Interpreter internals. Its usage may
+		 *             break the currently running SOF interpretation system.
+		 */
+		@Deprecated()
+		public IOInterface io() {
+			return io;
+		}
+
+		/**
+		 * Push the current tokenizer state onto the tokenizer stack.
+		 * 
+		 * @deprecated This method accesses the Interpreter internals. Its usage may
+		 *             break the currently running SOF interpretation system.
+		 */
+		@Deprecated()
+		public void pushState() {
+			tokenizer.pushState();
+		}
+
+		/**
+		 * Pop the current tokenizer state from the tokenizer stack and activate it on
+		 * the tokenizer.
+		 * 
+		 * @deprecated This method accesses the Interpreter internals. Its usage may
+		 *             break the currently running SOF interpretation system.
+		 */
+		@Deprecated()
+		public void popState() {
+			tokenizer.popState();
+		}
+
+		/**
+		 * Sets the execution region for the interpreter; it is recommended to push the
+		 * interpreter state beforehand and popping it back afterwards.
+		 * 
+		 * @param start start of the region, inclusive.
+		 * @param end   end of the region, exclusive.
+		 * @deprecated This method accesses the Interpreter internals. Its usage may
+		 *             break the currently running SOF interpretation system.
+		 */
+		@Deprecated()
+		public void setRegion(int start, int end) {
+			tokenizer.getMatcher().region(start, end);
+		}
+	}
+
 	private Logger log = Logger.getLogger(Interpreter.class.getCanonicalName());
 	public static final String VERSION = "0.1";
 
@@ -212,26 +295,130 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 				(e1, e2) -> e1.append(e2)).toString();
 	}
 
-	private Tokenizer tokenizer = Tokenizer.fromSourceCode("");;
-
-	public void pushState() {
-		tokenizer.pushState();
-	}
-
-	public void popState() {
-		tokenizer.popState();
-	}
+	/**
+	 * Responsible for tokenizing the code and moving around when code blocks and
+	 * functions affect control flow.
+	 */
+	private Tokenizer tokenizer = Tokenizer.fromSourceCode("");
 
 	/**
-	 * Sets the execution region for the interpreter; it is recommended to push the
-	 * interpreter state beforehand and popping it back afterwards.
-	 * 
-	 * @param start start of the region, inclusive.
-	 * @param end   end of the region, exclusive.
+	 * Simple delegate for an action to be taken when a certain primitive token (PT)
+	 * is encountered.
 	 */
-	public void setRegion(int start, int end) {
-		tokenizer.getMatcher().region(start, end);
+	@FunctionalInterface private static interface PTAction {
+		/**
+		 * Execute this PTAction.
+		 * 
+	 * 
+		 * 
+	 * 
+		 * 
+		 * @param self The interpreter that asked for the action.
+		 */
+		public void execute(Interpreter self);
 	}
+	@FunctionalInterface private static interface Definer { public PTAction call(Function<Interpreter, Nametable> scopeGenerator); }
+	/**
+	 * The most important variable. Defines a mapping from primitive tokens (PTs) to
+	 * actions that correspond with them. Literals and code blocks are handled
+	 * differently.
+	 */
+	private static Map<String, PTAction> ptActions = new Hashtable<>(30);
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//// PT ACTION DEFINITION BEGIN
+	static {
+		ptActions.put("+", self -> {
+			// pop 2, add, push
+			Stackable paramright = self.stack.pop(), paramleft = self.stack.pop();
+			var result = self.executeFunction(paramright, paramleft, Operator.add, "+");
+			self.stack.push(result);
+		});
+		ptActions.put("-", self -> {
+			// pop 2, subtract, push
+			Stackable paramright = self.stack.pop(), paramleft = self.stack.pop();
+			var result = self.executeFunction(paramleft, paramright, Operator.subtract, "-");
+			self.stack.push(result);
+		});
+		ptActions.put("*", self -> {
+			// pop 2, multiply, push
+			Stackable paramright = self.stack.pop(), paramleft = self.stack.pop();
+			var result = self.executeFunction(paramleft, paramright, Operator.multiply, "*");
+			self.stack.push(result);
+		});
+		ptActions.put("/", self -> {
+			// pop 2, divide, push
+			Stackable paramright = self.stack.pop(), paramleft = self.stack.pop();
+			var result = self.executeFunction(paramleft, paramright, Operator.divide, "/");
+			self.stack.push(result);
+		});
+		// pop and discard
+		ptActions.put("pop", self -> self.stack.pop());
+		// peek and push, thereby duplicate
+		ptActions.put("dup", self -> {
+			var param = self.stack.peek();
+			if (param instanceof Nametable)
+				throw CompilerException.fromCurrentPosition(self.tokenizer, "StackAccess",
+						"A nametable cannot be duplicated.");
+			self.stack.push(param);
+		});
+		// debug commands that are effectively no-ops in terms of data and code
+		ptActions.put("describes", self -> self.io.describeStack(self.stack));
+		ptActions.put("describe", self -> self.io.debug(self.stack.peek().getDebugDisplay()));
+		// i/o
+		ptActions.put("write", self -> self.io.print(self.stack.pop().toOutputString()));
+		ptActions.put("writeln", self -> self.io.println(self.stack.pop().toOutputString()));
+		// define
+		Definer definer = scope -> self -> {
+			// pop identifier & value, define
+			var idS = self.stack.pop();
+			var valS = self.stack.pop();
+			if (!(idS instanceof Identifier)) {
+				throw CompilerException.fromCurrentPosition(self.tokenizer, "Type",
+						"\"" + idS.toString() + "\" is not an identifier.");
+			}
+			var id = (Identifier) idS;
+			var targetScope = scope.apply(self);
+			targetScope.put(id, valS);
+		};
+		// TODO change this to define into FNT if there exists a definition there
+		ptActions.put("def", definer.call(self -> self.stack.functionScope()));
+		ptActions.put("globaldef", definer.call(self -> self.stack.globalNametable()));
+		///// CALL OPERATOR /////
+		ptActions.put(".", self -> {
+			// start looking at the local scope
+			var currentNametable = self.stack.localScope();
+			// store the namespace string for future use
+			var namespaceString = "";
+			do {
+				var param = self.stack.pop();
+				if (param instanceof Identifier) {
+					var topId = (Identifier) param;
+					// look the identifier up in the current nametable
+					var reference = currentNametable.get(topId);
+					if (reference instanceof Nametable) {
+						// we found a namespace
+						currentNametable = (Nametable) reference;
+						namespaceString += reference.toString() + ".";
+					} else if (reference instanceof Callable) {
+						// we found the end of the chain
+						var val = ((Callable) reference).getCallProvider().call(self);
+						self.stack.push(val);
+						break;
+					} else if (reference == null) {
+						throw CompilerException.fromCurrentPosition(self.tokenizer, "Name",
+								"Identifier " + param.toString() + " is not defined"
+										+ (namespaceString.length() == 0 ? "" : (" in " + namespaceString)) + ".");
+					}
+				} else {
+					self.stack.push(param);
+					throw CompilerException.fromCurrentPosition(self.tokenizer, "Type",
+							param.toString() + " is not callable.");
+				}
+			} while (true);
+		});
+	}
+	//// PT ACTION DEFINITION END
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// I/O
 	private IOInterface io;
@@ -293,120 +480,17 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 			// BEHOLD THE SWITCH CASE OF DOOM!
 			switch (token) {
 			case "+":
-				// pop 2, add, push
-				Stackable param1 = stack.pop(), param2 = stack.pop();
-				Stackable result = executeFunction(param1, param2, Operator.add, "+");
-				stack.push(result);
-				break;
 			case "-":
-				// pop 2, subtract, push
-				Stackable paramright = stack.pop(), paramleft = stack.pop();
-				result = executeFunction(paramleft, paramright, Operator.subtract, "-");
-				stack.push(result);
-				break;
 			case "*":
-				// pop 2, subtract, push
-				paramright = stack.pop();
-				paramleft = stack.pop();
-				result = executeFunction(paramleft, paramright, Operator.multiply, "*");
-				stack.push(result);
-				break;
 			case "/":
-				// pop 2, subtract, push
-				paramright = stack.pop();
-				paramleft = stack.pop();
-				result = executeFunction(paramleft, paramright, Operator.divide, "/");
-				stack.push(result);
-				break;
-
 			case "def":
-				Stackable idS = stack.pop();
-				if (!(idS instanceof Identifier)) {
-					throw CompilerException.fromCurrentPosition(this.tokenizer, "Type",
-							"\"" + idS.toString() + "\" is not an identifier.");
-				}
-				Identifier id = (Identifier) idS;
-				Stackable valS = stack.pop();
-				Nametable definer = stack.localScope();
-				definer.put(id, valS);
-				break;
 			case "pop":
-				stack.pop();
-				break;
 			case "dup":
-				param1 = stack.peek();
-				if (param1 instanceof Nametable)
-					throw CompilerException.fromCurrentPosition(this.tokenizer, "StackAccess",
-							"A nametable cannot be duplicated.");
-				stack.push(param1);
-
 			case "describes":
-				// debug command for outputting stack and nametable
-				io.describeStack(stack);
-				break;
 			case "describe":
-				io.debug(stack.peek().getDebugDisplay());
-				break;
 			case "write":
-				Stackable toPrint = stack.pop();
-				io.print(toPrint.toOutputString());
-				break;
 			case "writeln":
-				toPrint = stack.pop();
-				io.println(toPrint.toOutputString());
-				break;
-
 			case ".":
-				// start looking at the local scope
-				Nametable currentNametable = stack.localScope();
-				// store the namespace string for future use
-				String namespaceString = "";
-				do {
-					param1 = stack.pop();
-					if (param1 instanceof Identifier) {
-						Identifier topId = (Identifier) param1;
-						// look the identifier up in the current nametable
-						Stackable reference = currentNametable.get(topId);
-						if (reference instanceof Nametable) {
-							// we found a namespace
-							currentNametable = (Nametable) reference;
-							namespaceString += reference.toString() + ".";
-						} else if (reference instanceof Callable) {
-							// we found the end of the chain
-							Stackable val = ((Callable) reference).getCallProvider().call(this);
-							stack.push(val);
-							break;
-						} else if (reference == null) {
-							throw CompilerException.fromCurrentPosition(this.tokenizer, "Name",
-									"Identifier " + param1.toString() + " is not defined"
-											+ (namespaceString.length() == 0 ? "" : (" in " + namespaceString)) + ".");
-						}
-					} else {
-						stack.push(param1);
-						throw CompilerException.fromCurrentPosition(this.tokenizer, "Type",
-								param1.toString() + " is not callable.");
-					}
-				} while (true);
-				break;
-
-			// // look the value up
-			// Identifier id = (Identifier) param1;
-			// //TODO traverse all available nametables from local to global
-			// Nametable nametable = stack.globalNametable();
-			// if (nametable.hasMapping(id)) {
-			// Stackable toCall = nametable.get(id);
-			// if (toCall instanceof Primitive<?>) {
-			// //put the value on the stack
-			// stack.push(toCall);
-			// //TODO call codeblocks and other callables (functions, constructors, methods
-			// etc.)
-			// } else {
-			// throw makeException("Call", param1.toString() + " does not refer to a
-			// callable value.");
-			// }
-			// } else {
-			// }
-			// break;
 			default: {
 				if (identifierPattern.matcher(token).matches()) {
 					log.finer("Identifier found");
@@ -455,10 +539,10 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 				+ stack.globalNametable().getDebugDisplay());
 		return this;
 	}
-	
+
 	// ------------------------------------------------------------------------------------------------------
 	// ITERATION AND EXECUTION METHODS
-	
+
 	/**
 	 * Returns whether the interpreter can execute further instructions.
 	 * 
@@ -467,6 +551,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	public boolean canExecute() {
 		return tokenizer.hasNext();
 	}
+
 	/**
 	 * Executes this interpreter until it either encounters an exception or the
 	 * tokenizer reaches the end of its searching range.<br>
@@ -484,14 +569,17 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		}
 		return this;
 	}
+
 	@Override
 	public Iterator<Interpreter> iterator() {
 		return this;
 	}
+
 	@Override
 	public boolean hasNext() {
 		return this.canExecute();
 	}
+
 	@Override
 	public Interpreter next() {
 		try {
