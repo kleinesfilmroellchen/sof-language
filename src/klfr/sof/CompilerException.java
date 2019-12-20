@@ -129,8 +129,7 @@ public class CompilerException extends RuntimeException {
 	 */
 	public static CompilerException fromIncomplete(Tokenizer expressionInfo, CompilerException cause) {
 		Scanner helper = new Scanner(cause.getLocalizedMessage());
-		//first part of any exception message is the exception name, which we don't want
-		helper.next();
+		//first part of the exception message is the "external" exception name
 		String name = helper.next();
 		String reason = helper.nextLine();
 		helper.close();

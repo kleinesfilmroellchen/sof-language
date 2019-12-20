@@ -2,19 +2,18 @@ package klfr.sof;
 
 // ALL THE STANDARD LIBRARY
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.Arrays;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Deque;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.*;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.logging.*;
+
 import klfr.sof.lang.*;
 
 /**
@@ -54,18 +53,23 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	/**
 	 * Access Interpreter internals through this pseudo-class.
 	 * 
-	 * @deprecated This pseudo-class's accesses the Interpreter internals. Its usage
+	 * @deprecated This pseudo-class accesses the Interpreter internals. Its usage
 	 *             may break the currently running SOF interpretation system.
 	 */
-	@Deprecated()
+	@Deprecated
 	public class Internal {
+		@Deprecated
+		public Stack stack() {
+			return stack;
+		}
+
 		/**
 		 * Access the Interpreter's tokenizer.
 		 * 
 		 * @deprecated This method accesses the Interpreter internals. Its usage may
 		 *             break the currently running SOF interpretation system.
 		 */
-		@Deprecated()
+		@Deprecated
 		public Tokenizer tokenizer() {
 			return tokenizer;
 		}
@@ -76,7 +80,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		 * @deprecated This method accesses the Interpreter internals. Its usage may
 		 *             break the currently running SOF interpretation system.
 		 */
-		@Deprecated()
+		@Deprecated
 		public IOInterface io() {
 			return io;
 		}
@@ -87,7 +91,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		 * @deprecated This method accesses the Interpreter internals. Its usage may
 		 *             break the currently running SOF interpretation system.
 		 */
-		@Deprecated()
+		@Deprecated
 		public void pushState() {
 			tokenizer.pushState();
 		}
@@ -99,7 +103,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		 * @deprecated This method accesses the Interpreter internals. Its usage may
 		 *             break the currently running SOF interpretation system.
 		 */
-		@Deprecated()
+		@Deprecated
 		public void popState() {
 			tokenizer.popState();
 		}
@@ -113,9 +117,14 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		 * @deprecated This method accesses the Interpreter internals. Its usage may
 		 *             break the currently running SOF interpretation system.
 		 */
-		@Deprecated()
+		@Deprecated
 		public void setRegion(int start, int end) {
 			tokenizer.getMatcher().region(start, end);
+		}
+
+		@Deprecated
+		public void setIO(IOInterface newio) {
+			io = newio;
 		}
 	}
 
@@ -133,6 +142,8 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	public static final Pattern tokenPattern = Pattern.compile("(" + stringPattern.pattern() + ")|(\\S+)");// \\b{g}
 	/** The pattern to which identifiers must match to be valid */
 	public static final Pattern identifierPattern = Pattern.compile("\\p{L}[\\p{L}0-9_']*");
+	public static final Pattern codeBlockStartPattern = Pattern.compile("\\{");
+	public static final Pattern codeBlockEndPattern = Pattern.compile("\\}");
 	public static final Pattern nlPat = Pattern.compile("^", Pattern.MULTILINE);
 
 	/**
@@ -308,22 +319,17 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	@FunctionalInterface private static interface PTAction {
 		/**
 		 * Execute this PTAction.
-		 * 
-	 * 
-		 * 
-	 * 
-		 * 
 		 * @param self The interpreter that asked for the action.
 		 */
 		public void execute(Interpreter self);
 	}
-	@FunctionalInterface private static interface Definer { public PTAction call(Function<Interpreter, Nametable> scopeGenerator); }
 	/**
 	 * The most important variable. Defines a mapping from primitive tokens (PTs) to
 	 * actions that correspond with them. Literals and code blocks are handled
 	 * differently.
 	 */
-	private static Map<String, PTAction> ptActions = new Hashtable<>(30);
+	// higher load factor can be used b/c of small number of entries where collisions are unlikely
+	private static Map<String, PTAction> ptActions = new Hashtable<>(30, 0.8f);
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//// PT ACTION DEFINITION BEGIN
 	static {
@@ -368,21 +374,29 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		ptActions.put("write", self -> self.io.print(self.stack.pop().toOutputString()));
 		ptActions.put("writeln", self -> self.io.println(self.stack.pop().toOutputString()));
 		// define
-		Definer definer = scope -> self -> {
-			// pop identifier & value, define
+		Function<Function<Interpreter, Nametable>, PTAction> definer = scope -> self -> {
+			// The scope lookup is only performed in this moment.
+			// The scope retrieval function should leave the
+			// actual identifier into the scope, whether actually provided by the user or not,
+			// as the topmost element of the stack and the value directly below that
+			var targetScope = scope.apply(self);
+			// pop value, define
 			var idS = self.stack.pop();
 			var valS = self.stack.pop();
-			if (!(idS instanceof Identifier)) {
-				throw CompilerException.fromCurrentPosition(self.tokenizer, "Type",
-						"\"" + idS.toString() + "\" is not an identifier.");
-			}
 			var id = (Identifier) idS;
-			var targetScope = scope.apply(self);
 			targetScope.put(id, valS);
 		};
 		// TODO change this to define into FNT if there exists a definition there
-		ptActions.put("def", definer.call(self -> self.stack.functionScope()));
-		ptActions.put("globaldef", definer.call(self -> self.stack.globalNametable()));
+		ptActions.put("def", definer.apply(self -> {
+			var idS = self.stack.pop();
+			self.check(idS instanceof Identifier, () -> new SimpleEntry<String, String>("Type", "\"" + idS.toString() + "\" is not an identifier."));
+			self.stack.push(idS);
+			if (self.stack.functionScope().hasMapping((Identifier) idS))
+				return self.stack.functionScope();
+			return self.stack.localScope();
+		}));
+		ptActions.put("globaldef", definer.apply(self -> self.stack.globalNametable()));
+
 		///// CALL OPERATOR /////
 		ptActions.put(".", self -> {
 			// start looking at the local scope
@@ -401,14 +415,20 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 						namespaceString += reference.toString() + ".";
 					} else if (reference instanceof Callable) {
 						// we found the end of the chain
-						var val = ((Callable) reference).getCallProvider().call(self);
-						self.stack.push(val);
+						var retval = ((Callable) reference).getCallProvider().call(self);
+						if (retval != null) self.stack.push(retval);
 						break;
 					} else if (reference == null) {
 						throw CompilerException.fromCurrentPosition(self.tokenizer, "Name",
 								"Identifier " + param.toString() + " is not defined"
 										+ (namespaceString.length() == 0 ? "" : (" in " + namespaceString)) + ".");
 					}
+				} else if (param instanceof Callable) {
+					// when we have a callable, it can of course be called directly
+					self.log.finer(f("@ CALL directly: %s", param));
+					var retval = ((Callable) param).getCallProvider().call(self);
+					if (retval != null) self.stack.push(retval);
+					break;
 				} else {
 					self.stack.push(param);
 					throw CompilerException.fromCurrentPosition(self.tokenizer, "Type",
@@ -470,28 +490,18 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	 * @throws CompilerException If something goes wrong at runtime.
 	 */
 	public Interpreter executeOnce() throws CompilerException {
-		log.entering(this.getClass().getCanonicalName(), "executeOnce()");
+		log.entering(this.getClass().getCanonicalName(), "executeOnce");
 		String token = tokenizer.next();
 		if (token.length() == 0)
 			return this;
-		log.finer(f("Executing token %s", token));
+		log.finer(f("@ TOKEN %s", token));
 
 		try {
-			// BEHOLD THE SWITCH CASE OF DOOM!
-			switch (token) {
-			case "+":
-			case "-":
-			case "*":
-			case "/":
-			case "def":
-			case "pop":
-			case "dup":
-			case "describes":
-			case "describe":
-			case "write":
-			case "writeln":
-			case ".":
-			default: {
+			if (ptActions.containsKey(token)) {
+				var toExec = ptActions.get(token);
+				log.finer(f("@ PT-EXEC %s", toExec));
+				toExec.execute(this);
+			} else {
 				if (identifierPattern.matcher(token).matches()) {
 					log.finer("Identifier found");
 					stack.push(new Identifier(token));
@@ -520,12 +530,21 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 				} else if (stringPattern.matcher(token).matches()) {
 					log.finer("String literal found");
 					stack.push(new Primitive<>(token.substring(1, token.length() - 1)));
+				} else if (codeBlockStartPattern.matcher(token).matches()) {
+					log.finer("Code block literal found");
+					var endPos = Interpreter.indexOfMatching(tokenizer.getCode(), tokenizer.start(), "{", "}") - 1;
+					this.check(endPos >= 0, () -> new SimpleEntry<>("Syntax", "Unclosed code block"));
+					var cb = new CodeBlock(tokenizer.start()+1, endPos, tokenizer.getCode());
+					this.stack.push(cb);
+					var newstate = tokenizer.getState();
+					newstate.start =  newstate.end = endPos;
+					tokenizer = Tokenizer.fromState(newstate);
+					tokenizer.next();
 				} else {
 					// oh no, you have input invalid characters!
 					throw CompilerException.fromCurrentPosition(this.tokenizer, "Syntax",
 							f("Unexpected characters \"%s\".", token));
 				}
-			}
 			}
 		} catch (CompilerException e) {
 			if (e.isInfoPresent())
@@ -638,12 +657,20 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		return this;
 	}
 
+	// ------------------------------------------------------------------------------------
+	// UTILITY
 	/**
-	 * <a href=
-	 * "https://www.reddit.com/r/ProgrammerHumor/comments/auz30h/when_you_make_documentation_for_a_settergetter/?utm_source=share&utm_medium=web2x">...</a>
+	 * Checks whether the given condition holds true; if <b>not</b>, throws a CompilerException with the given name and description
+	 * at the current location
+	 * @param b Check to validate.
+	 * @param errorCreator Function that creates a tuple with (name, description) format.
+	 * @throws CompilerException If the check fails.
 	 */
-	public void setIO(IOInterface io) {
-		this.io = io;
+	private void check(boolean b, Supplier<SimpleEntry<String, String>> errorCreator) throws CompilerException {
+		if(!b) {
+			var errortuple = errorCreator.get();
+			throw CompilerException.fromCurrentPosition(this.tokenizer, errortuple.getKey(), errortuple.getValue());
+		}
 	}
 
 	private static String f(String s, Object... args) {

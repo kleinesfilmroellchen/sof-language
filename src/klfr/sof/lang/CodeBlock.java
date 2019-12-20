@@ -37,10 +37,14 @@ public class CodeBlock implements Callable {
 			
 			// set the region
 			interpreter.internal.setRegion(indexInFile, endIndex);
+			// create the code block nametable
+			interpreter.internal.stack().push(new ScopeDelimiter());
 			
 			while (interpreter.canExecute()) {
 				interpreter.executeOnce();
 			}
+			// force removing the nametable
+			interpreter.internal.stack().forcePop();
 			interpreter.internal.popState();
 			
 			return null;

@@ -198,7 +198,7 @@ public class CLI {
 			//// Interactive interpretation
 			io.println(getInfoString());
 			Interpreter interpreter = new Interpreter().reset();
-			interpreter.setIO(io);
+			interpreter.internal.setIO(io);
 			
 			Scanner scanner = io.newInputScanner();
 			// scanner.useDelimiter("[[^\n]\\s+]");
@@ -255,7 +255,7 @@ public class CLI {
 		}
 
 		try {
-			interpreter.reset().setCode(code).setIO(io);
+			interpreter.reset().setCode(code).internal.setIO(io);
 			while (interpreter.canExecute())
 				interpreter.executeOnce();
 		} catch (CompilerException e) {

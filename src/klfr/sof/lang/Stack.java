@@ -70,6 +70,15 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 	}
 
 	/**
+	 * Forces the stack to pop its topmost element, regardless of stack access restrictions.
+	 * Users should use this function with great caution.
+	 * @return the popped value
+	 */
+	public Stackable forcePop() {
+		return super.pop();
+	}
+
+	/**
 	 * Returns the global nametable, which is always the lowest element of the
 	 * stack.
 	 * 
@@ -116,9 +125,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 	 * stack.
 	 */
 	public Nametable localScope() throws RuntimeException {
-		Iterator<Stackable> elements = this.iterator();
-		while (elements.hasNext()) {
-			Stackable elmt = elements.next();
+		for(var elmt : this) {
 			if (elmt instanceof Nametable)
 				return (Nametable) elmt;
 		}
@@ -126,9 +133,11 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 		// the global NT)
 		return globalNametable();
 	}
-
+	/**
+	 * Returns the current function scope, i.e. the topmost function nametable that is on the stack.
+	 */
 	public Nametable functionScope() {
-		for (Stackable elmt : this) {
+		for (var elmt : this) {
 			if (elmt instanceof FunctionDelimiter)
 				return (Nametable) elmt;
 		}
