@@ -131,7 +131,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 		}
 		// fallback (should not happen, as the last iteration of the loop should find
 		// the global NT)
-		return globalNametable();
+		return namingScope();
 	}
 	/**
 	 * Returns the current function scope, i.e. the topmost function nametable that is on the stack.
@@ -141,7 +141,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 			if (elmt instanceof FunctionDelimiter)
 				return (Nametable) elmt;
 		}
-		return globalNametable();
+		return namingScope();
 	}
 
 	/**
