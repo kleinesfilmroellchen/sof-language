@@ -389,7 +389,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		// TODO change this to define into FNT if there exists a definition there
 		ptActions.put("def", definer.apply(self -> {
 			var idS = self.stack.pop();
-			self.check(idS instanceof Identifier, () -> new SimpleEntry<String, String>("Type", "\"" + idS.toString() + "\" is not an identifier."));
+			self.check(idS instanceof Identifier, () -> err("Type", "\"" + idS.toString() + "\" is not an identifier."));
 			self.stack.push(idS);
 			if (self.stack.functionScope().hasMapping((Identifier) idS))
 				return self.stack.functionScope();
@@ -553,7 +553,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 				throw CompilerException.fromIncomplete(tokenizer, e);
 			}
 		}
-		log.exiting(this.getClass().getCanonicalName(), "executeOnce()");
+		log.exiting(this.getClass().getCanonicalName(), "executeOnce");
 		log.finest(() -> "S:\n" + Interpreter.stackToDebugString(stack) + "\nNT:\n"
 				+ stack.globalNametable().getDebugDisplay());
 		return this;
@@ -675,5 +675,8 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 
 	private static String f(String s, Object... args) {
 		return String.format(s, args);
+	}
+	private static SimpleEntry<String, String> err(String a, String b) {
+		return new SimpleEntry<String, String>(a, b);
 	}
 }
