@@ -72,7 +72,7 @@ public class CompilerException extends RuntimeException {
 		int linenum = expressionInfo.getCurrentLine();
 		var allCode = expressionInfo.getCode();
 		var expressionLine = allCode.split(System.lineSeparator())[linenum-1];
-		return CompilerException.fromFormatMessage(expressionLine, expressionInfo.getIndexInsideLine(), expressionInfo.getCurrentLine(),
+		return CompilerException.fromFormatMessage(expressionLine, expressionInfo.getIndexInsideLine()+1, expressionInfo.getCurrentLine(),
 				name == null ? "Interpreter" : name, reason);
 	}
 	/**

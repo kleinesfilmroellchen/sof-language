@@ -164,8 +164,10 @@ public class Tokenizer implements Iterator<String> {
 
 	/**
 	 * Sets the state's parameters on this tokenizer.
+	 * @deprecated This method will easily break the tokenizer's proper behavior.
 	 */
-	private void setState(TokenizerState state) {
+	@Deprecated
+	public void setState(TokenizerState state) {
 		this.currentState = state;
 		this.m = Interpreter.tokenPattern.matcher(this.currentState.code);
 		this.m.region(state.regionStart, state.regionEnd);

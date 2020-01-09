@@ -118,21 +118,24 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		 *             break the currently running SOF interpretation system.
 		 */
 		@Deprecated
-		public void setRegion(int start, int end) {
-			tokenizer.getMatcher().region(start, end);
+		public void setRegion(final int start, final int end) {
+			final var state = tokenizer.getState();
+			state.regionStart = start;
+			state.regionEnd = end;
+			tokenizer.setState(state);
 		}
 
 		@Deprecated
-		public void setIO(IOInterface newio) {
+		public void setIO(final IOInterface newio) {
 			io = newio;
 		}
 	}
 
-	private Logger log = Logger.getLogger(Interpreter.class.getCanonicalName());
+	private final Logger log = Logger.getLogger(Interpreter.class.getCanonicalName());
 	public static final String VERSION = "0.1";
 
-	/** Convenience constant for the 38-character line ─ */
-	public static final String line38 = String.format("%38s", " ").replace(" ", "─");
+	/** Convenience constant for the 66-character line ─ */
+	public static final String line66 = String.format("%66s", " ").replace(" ", "─");
 
 	//// PATTERNS
 	public static final Pattern intPattern = Pattern.compile("((\\+|\\-)?(0[bhxod])?[0-9a-fA-F]+)|0");
@@ -152,10 +155,10 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	 * @throws CompilerException if block comments, code blocks or string literals
 	 *                           are not closed properly.
 	 */
-	public static String cleanCode(String code) throws CompilerException {
-		StringBuilder newCode = new StringBuilder();
+	public static String cleanCode(final String code) throws CompilerException {
+		final StringBuilder newCode = new StringBuilder();
 		@SuppressWarnings("resource")
-		Scanner scanner = new Scanner(code);
+		final Scanner scanner = new Scanner(code);
 		String line = "";
 		boolean insideBlockComment = false;
 		int codeBlockDepth = 0;
@@ -186,14 +189,19 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 						// search for matching quote character TODO escapes
 						int j = i + 1;
 						while (j < line.length() && line.charAt(j) != '"') {
-							if (line.charAt(j) == '\\'&& j < line.length()-1) {
-								//delete backslash character at j
-								line = line.substring(0, j).concat(line.substring(j+1));
-								switch(line.charAt(j)) {
-									// skip escaped quotes
-									case '"': line = line.substring(0,j).concat(System.lineSeparator()).concat(line.substring(j+1));
-									case 'n': line = line.substring(0,j).concat(System.lineSeparator()).concat(line.substring(j+1));
-									case 't': line = line.substring(0,j).concat("\t").concat(line.substring(j+1));
+							if (line.charAt(j) == '\\' && j < line.length() - 1) {
+								// delete backslash character at j
+								line = line.substring(0, j).concat(line.substring(j + 1));
+								switch (line.charAt(j)) {
+								// skip escaped quotes
+								case '"':
+									line = line.substring(0, j).concat(System.lineSeparator())
+											.concat(line.substring(j + 1));
+								case 'n':
+									line = line.substring(0, j).concat(System.lineSeparator())
+											.concat(line.substring(j + 1));
+								case 't':
+									line = line.substring(0, j).concat("\t").concat(line.substring(j + 1));
 								}
 							}
 							++j;
@@ -252,9 +260,10 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	 *         If an error occurs, such as not finding matching characters or
 	 *         nesting level errors, the index returned is -1.
 	 */
-	public static int indexOfMatching(String toSearch, int indexOfFirst, String toMatchOpen, String toMatchClose) {
-		Matcher openingMatcher = Pattern.compile(Pattern.quote(toMatchOpen)).matcher(toSearch);
-		Matcher closingMatcher = Pattern.compile(Pattern.quote(toMatchClose)).matcher(toSearch);
+	public static int indexOfMatching(final String toSearch, final int indexOfFirst, final String toMatchOpen,
+			final String toMatchClose) {
+		final Matcher openingMatcher = Pattern.compile(Pattern.quote(toMatchOpen)).matcher(toSearch);
+		final Matcher closingMatcher = Pattern.compile(Pattern.quote(toMatchClose)).matcher(toSearch);
 		boolean openingAvailable = openingMatcher.find(indexOfFirst),
 				closingAvailable = closingMatcher.find(indexOfFirst);
 		if (!openingAvailable || !closingAvailable)
@@ -300,10 +309,12 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	/**
 	 * Utility to format a string for debug output of a stack.
 	 */
-	public static String stackToDebugString(Deque<Stackable> stack) {
-		return "┌─" + line38 + "─┐" + System.lineSeparator() + stack.stream().collect(() -> new StringBuilder(),
-				(str, elmt) -> str.append(String.format("│ %38s │%n├─" + Interpreter.line38 + "─┤%n", elmt, " ")),
-				(e1, e2) -> e1.append(e2)).toString();
+	public static String stackToDebugString(final Deque<Stackable> stack) {
+		return "┌─" + line66.substring(0, 37) + "─┐" + System.lineSeparator()
+				+ stack.stream().collect(() -> new StringBuilder(),
+						(str, elmt) -> str.append(
+								String.format("│%38s │%n├─" + line66.substring(0, 37) + "─┤%n", elmt.toString(), " ")),
+						(e1, e2) -> e1.append(e2)).toString();
 	}
 
 	/**
@@ -316,9 +327,11 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	 * Simple delegate for an action to be taken when a certain primitive token (PT)
 	 * is encountered.
 	 */
-	@FunctionalInterface private static interface PTAction {
+	@FunctionalInterface
+	private static interface PTAction {
 		/**
 		 * Execute this PTAction.
+		 * 
 		 * @param self The interpreter that asked for the action.
 		 */
 		public void execute(Interpreter self);
@@ -328,40 +341,41 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	 * actions that correspond with them. Literals and code blocks are handled
 	 * differently.
 	 */
-	// higher load factor can be used b/c of small number of entries where collisions are unlikely
+	// higher load factor can be used b/c of small number of entries where
+	// collisions are unlikely
 	private static Map<String, PTAction> ptActions = new Hashtable<>(30, 0.8f);
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//// PT ACTION DEFINITION BEGIN
 	static {
 		ptActions.put("+", self -> {
 			// pop 2, add, push
-			Stackable paramright = self.stack.pop(), paramleft = self.stack.pop();
-			var result = self.executeFunction(paramright, paramleft, Operator.add, "+");
+			final Stackable paramright = self.stack.pop(), paramleft = self.stack.pop();
+			final var result = self.executeFunction(paramright, paramleft, Operator.add, "+");
 			self.stack.push(result);
 		});
 		ptActions.put("-", self -> {
 			// pop 2, subtract, push
-			Stackable paramright = self.stack.pop(), paramleft = self.stack.pop();
-			var result = self.executeFunction(paramleft, paramright, Operator.subtract, "-");
+			final Stackable paramright = self.stack.pop(), paramleft = self.stack.pop();
+			final var result = self.executeFunction(paramleft, paramright, Operator.subtract, "-");
 			self.stack.push(result);
 		});
 		ptActions.put("*", self -> {
 			// pop 2, multiply, push
-			Stackable paramright = self.stack.pop(), paramleft = self.stack.pop();
-			var result = self.executeFunction(paramleft, paramright, Operator.multiply, "*");
+			final Stackable paramright = self.stack.pop(), paramleft = self.stack.pop();
+			final var result = self.executeFunction(paramleft, paramright, Operator.multiply, "*");
 			self.stack.push(result);
 		});
 		ptActions.put("/", self -> {
 			// pop 2, divide, push
-			Stackable paramright = self.stack.pop(), paramleft = self.stack.pop();
-			var result = self.executeFunction(paramleft, paramright, Operator.divide, "/");
+			final Stackable paramright = self.stack.pop(), paramleft = self.stack.pop();
+			final var result = self.executeFunction(paramleft, paramright, Operator.divide, "/");
 			self.stack.push(result);
 		});
 		// pop and discard
 		ptActions.put("pop", self -> self.stack.pop());
 		// peek and push, thereby duplicate
 		ptActions.put("dup", self -> {
-			var param = self.stack.peek();
+			final var param = self.stack.peek();
 			if (param instanceof Nametable)
 				throw CompilerException.fromCurrentPosition(self.tokenizer, "StackAccess",
 						"A nametable cannot be duplicated.");
@@ -374,22 +388,24 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		ptActions.put("write", self -> self.io.print(self.stack.pop().toOutputString()));
 		ptActions.put("writeln", self -> self.io.println(self.stack.pop().toOutputString()));
 		// define
-		Function<Function<Interpreter, Nametable>, PTAction> definer = scope -> self -> {
+		final Function<Function<Interpreter, Nametable>, PTAction> definer = scope -> self -> {
 			// The scope lookup is only performed in this moment.
 			// The scope retrieval function should leave the
-			// actual identifier into the scope, whether actually provided by the user or not,
-			// as the topmost element of the stack and the value directly below that
-			var targetScope = scope.apply(self);
+			// actual identifier into the scope, whether actually provided by the user or
+			// not,
+			// as the topmost element of the stack and the value directly below.
+			final var targetScope = scope.apply(self);
 			// pop value, define
-			var idS = self.stack.pop();
-			var valS = self.stack.pop();
-			var id = (Identifier) idS;
+			final var idS = self.stack.pop();
+			final var valS = self.stack.pop();
+			final var id = (Identifier) idS;
 			targetScope.put(id, valS);
 		};
 		// TODO change this to define into FNT if there exists a definition there
 		ptActions.put("def", definer.apply(self -> {
-			var idS = self.stack.pop();
-			self.check(idS instanceof Identifier, () -> err("Type", "\"" + idS.toString() + "\" is not an identifier."));
+			final var idS = self.stack.pop();
+			self.check(idS instanceof Identifier,
+					() -> err("Type", "\"" + idS.toString() + "\" is not an identifier."));
 			self.stack.push(idS);
 			if (self.stack.functionScope().hasMapping((Identifier) idS))
 				return self.stack.functionScope();
@@ -404,11 +420,11 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 			// store the namespace string for future use
 			var namespaceString = "";
 			do {
-				var param = self.stack.pop();
+				final var param = self.stack.pop();
 				if (param instanceof Identifier) {
-					var topId = (Identifier) param;
+					final var topId = (Identifier) param;
 					// look the identifier up in the current nametable
-					var reference = currentNametable.get(topId);
+					final var reference = currentNametable.get(topId);
 					if (reference instanceof Nametable) {
 						// we found a namespace
 						currentNametable = (Nametable) reference;
@@ -426,8 +442,9 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 				} else if (param instanceof Callable) {
 					// when we have a callable, it can of course be called directly
 					self.log.finer(f("@ CALL directly: %s", param));
-					var retval = ((Callable) param).getCallProvider().call(self);
-					if (retval != null) self.stack.push(retval);
+					final var retval = ((Callable) param).getCallProvider().call(self);
+					if (retval != null)
+						self.stack.push(retval);
 					break;
 				} else {
 					self.stack.push(param);
@@ -466,17 +483,17 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	// EXECUTION
 
 	@SuppressWarnings("unused")
-	private Stackable executeFunction(Stackable arg1, Stackable arg2, Operator function) {
+	private Stackable executeFunction(final Stackable arg1, final Stackable arg2, final Operator function) {
 		return executeFunction(arg1, arg2, function, "");
 	}
 
-	private Stackable executeFunction(Stackable arg1, Stackable arg2, Operator function, String funcName)
-			throws CompilerException {
+	private Stackable executeFunction(final Stackable arg1, final Stackable arg2, final Operator function,
+			final String funcName) throws CompilerException {
 		try {
 			return function.call(arg1, arg2);
-		} catch (CompilerException e) {
+		} catch (final CompilerException e) {
 			throw CompilerException.fromIncomplete(tokenizer, e);
-		} catch (ClassCastException e) {
+		} catch (final ClassCastException e) {
 			throw CompilerException.fromCurrentPosition(this.tokenizer, "Type",
 					String.format("Cannot perform function '%s' on arguments %s and %s: wrong type.", funcName,
 							arg1.toString(), arg2.toString()));
@@ -489,64 +506,66 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	 * 
 	 * @throws CompilerException If something goes wrong at runtime.
 	 */
+	@SuppressWarnings("deprecation")
 	public Interpreter executeOnce() throws CompilerException {
 		log.entering(this.getClass().getCanonicalName(), "executeOnce");
-		String token = tokenizer.next();
+		final String token = tokenizer.next();
 		if (token.length() == 0)
 			return this;
-		log.finer(f("@ TOKEN %s", token));
 
 		try {
 			if (ptActions.containsKey(token)) {
-				var toExec = ptActions.get(token);
-				log.finer(f("@ PT-EXEC %s", toExec));
+				final var toExec = ptActions.get(token);
+				log.finest(() -> f("PT-EXEC %30s :: %10s @ %4d", token, toExec, tokenizer.getState().start));
 				toExec.execute(this);
 			} else {
-				if (identifierPattern.matcher(token).matches()) {
-					log.finer("Identifier found");
-					stack.push(new Identifier(token));
-				} else if (intPattern.matcher(token).matches()) {
-					log.finer("Int literal found");
+				if (intPattern.matcher(token).matches()) {
+					log.finest(() -> f("LITERAL INT %30s @ %4d", token, tokenizer.getState().start));
 					try {
-						Primitive<Long> literal = Primitive.createInteger(token.toLowerCase());
+						final Primitive<Long> literal = Primitive.createInteger(token.toLowerCase());
 						stack.push(literal);
-					} catch (CompilerException e) {
+					} catch (final CompilerException e) {
 						throw CompilerException.fromCurrentPosition(this.tokenizer, "Syntax",
 								f("No integer literal found in \"%s\".", token));
 					}
 				} else if (doublePattern.matcher(token).matches()) {
-					log.finer("Double literal found");
+					log.finest(() -> f("LITERAL DOUBLE %30s @ %4d", token, tokenizer.getState().start));
 					try {
-						Primitive<Double> literal = new Primitive<Double>(Double.parseDouble(token.toLowerCase()));
+						final Primitive<Double> literal = new Primitive<Double>(
+								Double.parseDouble(token.toLowerCase()));
 						stack.push(literal);
-					} catch (NumberFormatException e) {
+					} catch (final NumberFormatException e) {
 						throw CompilerException.fromCurrentPosition(this.tokenizer, "Syntax",
 								f("No double literal found in \"%s\".", token));
 					}
 				} else if (boolPattern.matcher(token).matches()) {
-					log.finer("Bool literal found");
-					Primitive<Boolean> literal = Primitive.createBoolean(token);
+					log.finest(() -> f("LITERAL BOOL %30s @ %4d", token, tokenizer.getState().start));
+					final Primitive<Boolean> literal = Primitive.createBoolean(token);
 					stack.push(literal);
 				} else if (stringPattern.matcher(token).matches()) {
-					log.finer("String literal found");
+					log.finest(() -> f("LITERAL STRING %30s @ %4d", token, tokenizer.getState().start));
 					stack.push(new Primitive<>(token.substring(1, token.length() - 1)));
 				} else if (codeBlockStartPattern.matcher(token).matches()) {
-					log.finer("Code block literal found");
-					var endPos = Interpreter.indexOfMatching(tokenizer.getCode(), tokenizer.start(), "{", "}") - 1;
+					final var endPos = Interpreter.indexOfMatching(tokenizer.getCode(), tokenizer.start(), "{", "}")
+							- 1;
 					this.check(endPos >= 0, () -> new SimpleEntry<>("Syntax", "Unclosed code block"));
-					var cb = new CodeBlock(tokenizer.start()+1, endPos, tokenizer.getCode());
+					final var cb = new CodeBlock(tokenizer.getState().end, endPos, tokenizer.getCode());
 					this.stack.push(cb);
 					var newstate = tokenizer.getState();
 					newstate.start =  newstate.end = endPos;
 					tokenizer = Tokenizer.fromState(newstate);
+					log.finest(() -> f("CODE BLOCK %30s @ %4d", cb.getDebugDisplay(), tokenizer.getState().start));
 					tokenizer.next();
+				} else if (identifierPattern.matcher(token).matches()) {
+					log.finest(() -> f("IDENTIFIER %30s @ %4d", token, tokenizer.getState().start));
+					stack.push(new Identifier(token));
 				} else {
 					// oh no, you have input invalid characters!
 					throw CompilerException.fromCurrentPosition(this.tokenizer, "Syntax",
 							f("Unexpected characters \"%s\".", token));
 				}
 			}
-		} catch (CompilerException e) {
+		} catch (final CompilerException e) {
 			if (e.isInfoPresent())
 				throw e;
 			else {
@@ -603,7 +622,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	public Interpreter next() {
 		try {
 			return this.executeOnce();
-		} catch (CompilerException e) {
+		} catch (final CompilerException e) {
 			throw new NoSuchElementException("Iteration failed because a compiler exception was encountered.");
 		}
 	}
@@ -627,7 +646,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		// make the stack
 		stack = new Stack();
 		// make the global nametable
-		Nametable globalNametable = new Nametable();
+		final Nametable globalNametable = new Nametable();
 		stack.push(globalNametable);
 		return this;
 	}
@@ -640,7 +659,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	 * @throws CompilerException If something during the code preprocessing stages
 	 *                           goes wrong.
 	 */
-	public Interpreter setCode(String code) throws CompilerException {
+	public Interpreter setCode(final String code) throws CompilerException {
 		this.tokenizer = Tokenizer.fromSourceCode(code);
 		return this;
 	}
@@ -652,7 +671,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	 * @param string The line of code to be appended
 	 * @return this interpreter
 	 */
-	public Interpreter appendLine(String string) throws CompilerException {
+	public Interpreter appendLine(final String string) throws CompilerException {
 		this.tokenizer.appendCode(string);
 		return this;
 	}
@@ -660,23 +679,27 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	// ------------------------------------------------------------------------------------
 	// UTILITY
 	/**
-	 * Checks whether the given condition holds true; if <b>not</b>, throws a CompilerException with the given name and description
-	 * at the current location
-	 * @param b Check to validate.
-	 * @param errorCreator Function that creates a tuple with (name, description) format.
+	 * Checks whether the given condition holds true; if <b>not</b>, throws a
+	 * CompilerException with the given name and description at the current location
+	 * 
+	 * @param b            Check to validate.
+	 * @param errorCreator Function that creates a tuple with (name, description)
+	 *                     format.
 	 * @throws CompilerException If the check fails.
 	 */
-	private void check(boolean b, Supplier<SimpleEntry<String, String>> errorCreator) throws CompilerException {
-		if(!b) {
-			var errortuple = errorCreator.get();
+	private void check(final boolean b, final Supplier<SimpleEntry<String, String>> errorCreator)
+			throws CompilerException {
+		if (!b) {
+			final var errortuple = errorCreator.get();
 			throw CompilerException.fromCurrentPosition(this.tokenizer, errortuple.getKey(), errortuple.getValue());
 		}
 	}
 
-	private static String f(String s, Object... args) {
+	private static String f(final String s, final Object... args) {
 		return String.format(s, args);
 	}
-	private static SimpleEntry<String, String> err(String a, String b) {
+
+	private static SimpleEntry<String, String> err(final String a, final String b) {
 		return new SimpleEntry<String, String>(a, b);
 	}
 }

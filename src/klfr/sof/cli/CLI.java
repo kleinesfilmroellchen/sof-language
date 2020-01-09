@@ -205,6 +205,7 @@ public class CLI {
 			io.print(">>> ");
 			 while (scanner.hasNextLine()) {
 				String code = scanner.nextLine();
+				var curEnd = interpreter.internal.tokenizer().getState().end;
 				// catches all unwanted compilation errors
 				try {
 					// catches "unclosed"-compilation errors which might be resolved by adding more content on another line
@@ -221,13 +222,16 @@ public class CLI {
 						}
 						interpreter.appendLine(code);
 					}
+					var state = interpreter.internal.tokenizer().getState();
+					state.end = curEnd;
+					interpreter.internal.tokenizer().setState(state);
 					while (interpreter.canExecute()) {
 						interpreter.executeOnce();
 					}
 				} catch (CompilerException e) {
 					io.println("!!! " + e.getLocalizedMessage());
 					log.log(Level.SEVERE, 
-						("-----------\nCompiler Exception occurred.\nUser-friendly message: " +
+						("Compiler Exception occurred.\nUser-friendly message: " +
 						e.getLocalizedMessage() +
 						"\nStack trace:\n" + Arrays.stream(e.getStackTrace()).map(ste -> ste.toString()).reduce("", (a,b) -> (a + "\n  " + b).strip()) + "\n").indent(2));
 				}

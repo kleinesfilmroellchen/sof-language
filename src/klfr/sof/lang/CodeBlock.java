@@ -4,10 +4,10 @@ public class CodeBlock implements Callable {
 
 	private static final long serialVersionUID = 1L;
 
-	private int	indexInFile;
-	private int	endIndex;
+	protected int	indexInFile;
+	protected int	endIndex;
 
-	private String code;
+	protected String code;
 
 	public CodeBlock(int indexInFile, int endIndex, String code) {
 		this.indexInFile = indexInFile;
@@ -17,11 +17,15 @@ public class CodeBlock implements Callable {
 
 	@Override
 	public String getDebugDisplay() {
-		return "CodeBlock{" + code + "}";
+		return "CodeBlock{" + getCode() + "}";
 	}
 
 	public String toString() {
 		return "[CodeBlock " + this.hashCode() + "]";
+	}
+	/**Returns the actual code that the code block refers to. */
+	public String getCode() {
+		return code.substring(indexInFile, endIndex);
 	}
 
 	@Override
@@ -34,17 +38,14 @@ public class CodeBlock implements Callable {
 	public CallProvider getCallProvider() {
 		return (interpreter) -> {
 			interpreter.internal.pushState();
-			
-			// set the region
-			interpreter.internal.setRegion(indexInFile, endIndex);
-			// create the code block nametable
-			interpreter.internal.stack().push(new ScopeDelimiter());
+
+			interpreter.internal.setRegion(indexInFile, endIndex-1);
+			interpreter.internal.setExecutionPos(indexInFile);
 			
 			while (interpreter.canExecute()) {
 				interpreter.executeOnce();
 			}
-			// force removing the nametable
-			interpreter.internal.stack().forcePop();
+
 			interpreter.internal.popState();
 			
 			return null;

@@ -56,14 +56,14 @@ public class Nametable implements Stackable {
 
 	@Override
 	public String getDebugDisplay() {
-		return "┌" + Interpreter.line38.substring(2) + "┐" + System.lineSeparator() + //top of the table
+		return "┌" + Interpreter.line66.substring(2) + "┐" + System.lineSeparator() + //top of the table
 				mappingStream().collect( //the stream is parallel b/c order does not exist
-						() -> new StringBuilder(38), // create a new string builder as the starting point
+						() -> new StringBuilder(66), // create a new string builder as the starting point
 						(strb, entry) -> // for each new entry, append its formatted string to the string builder
-						strb.append(String.format("╞ %10s -> %20s ╡%n", entry.getKey().getDebugDisplay(),
-								entry.getValue().toString())),
+						strb.append(String.format("╞%20s ->%40s ╡%n", entry.getKey().getDebugDisplay(),
+								entry.getValue().getDebugDisplay())),
 						(strb1, strb2) -> strb1.append(strb2)) //combine stringbuilders with a newline
-				+ "└" + Interpreter.line38.substring(2) + "┘"; //bottom of the table
+				+ "└" + Interpreter.line66.substring(2) + "┘"; //bottom of the table
 	}
 
 	public String toString() {
