@@ -129,6 +129,16 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		public void setIO(final IOInterface newio) {
 			io = newio;
 		}
+
+		/**
+		 * Sets the execution position to the specified index in the code.
+		 */
+		@Deprecated
+		public void setExecutionPos(final int index) {
+			final var state = tokenizer.getState();
+			state.end = state.start = index;
+			tokenizer.setState(state);
+		}
 	}
 
 	private final Logger log = Logger.getLogger(Interpreter.class.getCanonicalName());
@@ -336,6 +346,17 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		 */
 		public void execute(Interpreter self);
 	}
+
+	/**
+	 * Helper function to execute call and push return value of callable to stack if
+	 * possible.
+	 */
+	private void doCall(final Stackable reference) {
+		final var retval = ((Callable) reference).getCallProvider().call(this);
+		if (retval != null)
+			this.stack.push(retval);
+	}
+
 	/**
 	 * The most important variable. Defines a mapping from primitive tokens (PTs) to
 	 * actions that correspond with them. Literals and code blocks are handled
@@ -413,6 +434,19 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		}));
 		ptActions.put("globaldef", definer.apply(self -> self.stack.globalNametable()));
 
+		ptActions.put("if", self -> {
+			final var cond = self.stack.pop();
+			final var callable = self.stack.pop();
+			self.check(cond instanceof Primitive && ((Primitive) cond).getValue() instanceof Boolean,
+					() -> err("Type", "\"" + cond.toString() + "\" is not a boolean."));
+			final Boolean tru = (Boolean) ((Primitive) cond).getValue();
+			if (tru) {
+				self.check(callable instanceof Callable,
+						() -> err("Type", "\"" + callable.toString() + "\" is not callable."));
+				self.doCall(callable);
+			}
+		});
+
 		///// CALL OPERATOR /////
 		ptActions.put(".", self -> {
 			// start looking at the local scope
@@ -431,8 +465,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 						namespaceString += reference.toString() + ".";
 					} else if (reference instanceof Callable) {
 						// we found the end of the chain
-						var retval = ((Callable) reference).getCallProvider().call(self);
-						if (retval != null) self.stack.push(retval);
+						self.doCall(reference);
 						break;
 					} else if (reference == null) {
 						throw CompilerException.fromCurrentPosition(self.tokenizer, "Name",
@@ -551,10 +584,12 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 					this.check(endPos >= 0, () -> new SimpleEntry<>("Syntax", "Unclosed code block"));
 					final var cb = new CodeBlock(tokenizer.getState().end, endPos, tokenizer.getCode());
 					this.stack.push(cb);
-					var newstate = tokenizer.getState();
-					newstate.start =  newstate.end = endPos;
-					tokenizer = Tokenizer.fromState(newstate);
+
 					log.finest(() -> f("CODE BLOCK %30s @ %4d", cb.getDebugDisplay(), tokenizer.getState().start));
+
+					// setup the tokenizer just before the curly brace...
+					internal.setExecutionPos(endPos);
+					// ...and skip it
 					tokenizer.next();
 				} else if (identifierPattern.matcher(token).matches()) {
 					log.finest(() -> f("IDENTIFIER %30s @ %4d", token, tokenizer.getState().start));
