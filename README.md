@@ -122,9 +122,7 @@ Every token can be seen as an action that operates on the stack. Some basic toke
 - Call operator: The special token `.` calls functions and code blocks, retrieves variable values and creates objects. Quite special, that little guy! As it turns out, the working principle of this operator is somewhat complicated, but at the same time can handle several apparently distinct language features. Therefore, an entire sub-section is devoted to it.
 - Identifier token: An identifier that will later be used to access some named code (a function), some named value (a variable) or some named constructor function (an object). Identifiers are normal data as they simply place themselves onto the stack like literals.
 
-### The Call Operator '.'
-
-TODO: this section is not written yet. Be ready for the mayhem!
+### For more information, [visit the wiki](https://github.com/kleinesfilmroellchen/sof-language/wiki).
 
 ## 4. The Simplicity of SOF - A Personal Note
 
