@@ -407,8 +407,8 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 			self.check(idS instanceof Identifier,
 					() -> err("Type", "\"" + idS.toString() + "\" is not an identifier."));
 			self.stack.push(idS);
-			if (self.stack.functionScope().hasMapping((Identifier) idS))
-				return self.stack.functionScope();
+			if (self.stack.namingScope().hasMapping((Identifier) idS))
+				return self.stack.namingScope();
 			return self.stack.localScope();
 		}));
 		ptActions.put("globaldef", definer.apply(self -> self.stack.globalNametable()));

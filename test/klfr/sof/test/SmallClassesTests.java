@@ -15,7 +15,6 @@ class SmallClassesTests {
 	 */
 	@Test
 	void testStubClasses() {
-		assertDoesNotThrow( () -> new ScopeDelimiter());
 		assertDoesNotThrow( () -> new FunctionDelimiter());
 	}
 	

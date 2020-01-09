@@ -99,7 +99,8 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 	 * are defined in the file-global scope. This is the global nametable (as
 	 * returned by {@code globalNametable()}) if there is no namespace introduced,
 	 * or the namespace defined by the 'namespace' command (which resides on the
-	 * stack just above the global nametable)
+	 * stack just above the global nametable).<br><br> {@code globaldef} always uses this
+	 * as do {@code def}'s outside of functions.
 	 * 
 	 * @throws RuntimeException
 	 */
@@ -110,7 +111,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 		if (helperIt.hasNext()) {
 			Stackable maybeNamespace = helperIt.next();
 			// if it is a nametable but no local scope delimiter
-			if (maybeNamespace instanceof Nametable && !(maybeNamespace instanceof ScopeDelimiter)) {
+			if (maybeNamespace instanceof Nametable && !(maybeNamespace instanceof FunctionDelimiter)) {
 				// we found a namespace
 				return (Nametable) maybeNamespace;
 			}
@@ -133,16 +134,6 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 		// the global NT)
 		return namingScope();
 	}
-	/**
-	 * Returns the current function scope, i.e. the topmost function nametable that is on the stack.
-	 */
-	public Nametable functionScope() {
-		for (var elmt : this) {
-			if (elmt instanceof FunctionDelimiter)
-				return (Nametable) elmt;
-		}
-		return namingScope();
-	}
 
 	/**
 	 * Sets the namespace where file global name definitions are put into. Replaces
@@ -161,7 +152,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 		Nametable globalNametable = (Nametable) this.removeLast();
 		// if the second-to-last element is a nametable but no local scope delimiter, we
 		// found a namespace, remove it
-		if (maybeOldNamespace instanceof Nametable && !(maybeOldNamespace instanceof ScopeDelimiter))
+		if (maybeOldNamespace instanceof Nametable && !(maybeOldNamespace instanceof FunctionDelimiter))
 			this.removeLast();
 		// add new namespace and global nametable
 		this.addLast(namespace);
