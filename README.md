@@ -86,8 +86,8 @@ To get a taste of SOF, here are several sample programs written in SOF. Note tha
 {
 	1 x def 1 y def 1 z def # counter
 	{
-		y . dup x . + z dup def . # yold ; znew
-		y def x def
+		y . dup x . + z def # yold
+		z . y def x def
 		dup writeln # counter
 	} { 1 - 0 > } while
 } 1 function fib def
