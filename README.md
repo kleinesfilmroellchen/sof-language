@@ -64,20 +64,63 @@ This means that SOF has the following main features:
 To get a taste of SOF, here are several sample programs written in SOF. Note that not every program might work with the current state of the interpreter, as the interpreter is in early alpha development and not complete by any means.
 
 ```
+# fibbonachi
+{
+	n def
+	0 i def
+	1 x def 1 y def 1 z def
+	{
+		z .
+		x . y . + z def
+		y . x def
+		z . y def
+		writeln
+		i . 1 + i def
+	} { i . n . < } while
+} 1 function fib def
+
+"enter a number: " write input convert:int . fib .
+
+# alternative function definition: heavier stack use, runs faster
+
+{
+	1 x def 1 y def 1 z def # counter
+	{
+		y . dup x . + z dup def . # yold ; znew
+		y def x def
+		dup writeln # counter
+	} { 1 - 0 > } while
+} 1 function fib def
+
+```
+
+```
+# factorial
+
+{
+	dup dup # arg*3
+	{ 1 return } { 2 < } if # arg*2
+	1 - fact . * return
+} 1 function fact def
+
+"enter a number: " write input convert:int . fact .
+```
+
+```
 # play a guessing game
 15 number def
 0 guess def
 {
-	input int guess def
-	{ {
+	input convert:int . guess def
+	switch:: {
 		"You are correct!" writeln
-	} number . guess . =
+	} { number . guess . = }
 	{
 		"You are too low!" writeln
-	} ifelse } number . guess . <
+	} { number . guess . < }
 	{
 		"You are too high!" writeln
-	} ifelse
+	} switch
 } { guess . number . /= } while
 ```
 
@@ -99,7 +142,7 @@ To get a taste of SOF, here are several sample programs written in SOF. Note tha
 	n def # arg1
 	# gauss formula
 	n . n . 1 + * 2 / return
-} sum 1 function
+} 1 function sum def
 
 "The result is: " 1 sum . cat writeln 
 ```
