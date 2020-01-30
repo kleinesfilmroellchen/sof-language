@@ -71,8 +71,9 @@ public class Tokenizer implements Iterator<String> {
 
 		@Override
 		public String toString() {
-			return String.format("TokenizerState(%d->%d, r%d->%d [%s])", this.start, this.end, this.regionStart, this.regionEnd,
-				this.code.replace("\n", "\\n").replace("\r", "\\r").replace("\b", "\\b").replace("\t", "\\t").replace("\f", "\\f"));
+			return String.format("TokenizerState(%d->%d, r%d->%d [%s])", this.start, this.end, this.regionStart,
+					this.regionEnd, this.code.replace("\n", "\\n").replace("\r", "\\r").replace("\b", "\\b")
+							.replace("\t", "\\t").replace("\f", "\\f"));
 		}
 	}
 
@@ -81,7 +82,7 @@ public class Tokenizer implements Iterator<String> {
 	 * stores the current state of the tokenizer
 	 */
 	private TokenizerState currentState;
-	/**Stores the last token that was found by the match methods */
+	/** Stores the last token that was found by the match methods */
 	private String lastMatchedToken;
 
 	/**
@@ -125,7 +126,7 @@ public class Tokenizer implements Iterator<String> {
 	 * @param code the SOF source code to be used with this Tokenizer
 	 * @return a new tokenizer
 	 * @throws CompilerException if the code contains malformed strings, comments
-	 *                          etc.
+	 *                           etc.
 	 */
 	public static Tokenizer fromSourceCode(String code) throws CompilerException {
 		String clean = cleanCode(code);
@@ -164,6 +165,7 @@ public class Tokenizer implements Iterator<String> {
 
 	/**
 	 * Sets the state's parameters on this tokenizer.
+	 * 
 	 * @deprecated This method will easily break the tokenizer's proper behavior.
 	 */
 	@Deprecated
@@ -199,8 +201,8 @@ public class Tokenizer implements Iterator<String> {
 	public Tokenizer appendCode(String code) throws CompilerException {
 		TokenizerState state = this.currentState;
 		this.log.finer("State before appending: " + state);
-		this.currentState.code += cleanCode(code) + (
-			this.currentState.code.endsWith(System.lineSeparator()) ? "" : System.lineSeparator());
+		this.currentState.code += cleanCode(code)
+				+ (this.currentState.code.endsWith(System.lineSeparator()) ? "" : System.lineSeparator());
 		this.m = Interpreter.tokenPattern.matcher(this.currentState.code);
 		this.currentState.end = state.end;
 		this.currentState.regionStart = 0;
@@ -208,34 +210,37 @@ public class Tokenizer implements Iterator<String> {
 		this.log.finer("State after appending: " + this.getState());
 		return this;
 	}
-	
+
 	/**
 	 * Returns the current line the tokenizer points to.
+	 * 
 	 * @return the current line the tokenizer points to.
 	 */
 	public int getCurrentLine() {
 		Matcher linefinder = Interpreter.nlPat.matcher(getCode());
-		int realIndex = this.start(),
-			linenum = 0;
+		int realIndex = this.start(), linenum = 0;
 		while (linefinder.find() && realIndex > linefinder.start())
 			++linenum;
 		return linenum;
 	}
-	
+
 	/**
-	 * Returns the index of the current position inside (respective to) its line in the code.
-	 * @return the index of the current position inside (respective to) its line in the code.
+	 * Returns the index of the current position inside (respective to) its line in
+	 * the code.
+	 * 
+	 * @return the index of the current position inside (respective to) its line in
+	 *         the code.
 	 */
 	public int getIndexInsideLine() {
 		Matcher linefinder = Interpreter.nlPat.matcher(getCode());
-		int realIndex = this.start(),
-			linenum = 0, linestart = 0;
+		int realIndex = this.start(), linenum = 0, linestart = 0;
 		while (linefinder.find() && realIndex > linefinder.start()) {
 			++linenum;
 			linestart = linefinder.start();
 		}
-		//last line now contains the index where the line starts that begins before the matcher's index
-		//i.e. the line of the matcher
+		// last line now contains the index where the line starts that begins before the
+		// matcher's index
+		// i.e. the line of the matcher
 		return realIndex - linestart;
 	}
 
@@ -251,15 +256,17 @@ public class Tokenizer implements Iterator<String> {
 
 	/**
 	 * Returns whether the tokenizer has exceeded its searching region.
+	 * 
 	 * @return whether the tokenizer has exceeded its searching region.
 	 */
 	public boolean regionExceeded() {
-		return this.currentState.regionEnd <= Math.max(this.currentState.start, this.currentState.end) ||
-			this.currentState.regionStart > Math.min(this.currentState.start, this.currentState.end);
+		return this.currentState.regionEnd <= Math.max(this.currentState.start, this.currentState.end)
+				|| this.currentState.regionStart > Math.min(this.currentState.start, this.currentState.end);
 	}
 
 	/**
 	 * Returns whether the tokenizer can provide more tokens.
+	 * 
 	 * @return whether the tokenizer can provide more tokens.
 	 */
 	public boolean hasNext() {
@@ -270,7 +277,8 @@ public class Tokenizer implements Iterator<String> {
 	 * Performs region- and state-safe find on the matcher from the given index.
 	 */
 	private boolean findNextToken() {
-		if (this.regionExceeded()) return false;
+		if (this.regionExceeded())
+			return false;
 		// whether there are more tokens to be found: perform one additional match
 		var hasMore = this.m.find(this.currentState.end);
 		if (hasMore) {
@@ -281,7 +289,8 @@ public class Tokenizer implements Iterator<String> {
 			this.lastMatchedToken = this.m.group();
 		}
 		// otherwise, we hit the end, position the last match at the end of the code
-		else this.currentState.end = this.currentState.code.length();
+		else
+			this.currentState.end = this.currentState.code.length();
 
 		return hasMore;
 	}

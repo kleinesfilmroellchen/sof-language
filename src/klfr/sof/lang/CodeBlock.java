@@ -4,8 +4,8 @@ public class CodeBlock implements Callable {
 
 	private static final long serialVersionUID = 1L;
 
-	protected int	indexInFile;
-	protected int	endIndex;
+	protected int indexInFile;
+	protected int endIndex;
 
 	protected String code;
 
@@ -23,7 +23,8 @@ public class CodeBlock implements Callable {
 	public String toString() {
 		return "[CodeBlock " + this.hashCode() + "]";
 	}
-	/**Returns the actual code that the code block refers to. */
+
+	/** Returns the actual code that the code block refers to. */
 	public String getCode() {
 		return code.substring(indexInFile, endIndex);
 	}
@@ -39,15 +40,15 @@ public class CodeBlock implements Callable {
 		return (interpreter) -> {
 			interpreter.internal.pushState();
 
-			interpreter.internal.setRegion(indexInFile, endIndex-1);
+			interpreter.internal.setRegion(indexInFile, endIndex - 1);
 			interpreter.internal.setExecutionPos(indexInFile);
-			
+
 			while (interpreter.canExecute()) {
 				interpreter.executeOnce();
 			}
 
 			interpreter.internal.popState();
-			
+
 			return null;
 		};
 	}

@@ -7,6 +7,7 @@ import klfr.sof.Interpreter;
 /**
  * A nametable is the second basic structure in SOF and contains values
  * identified by identifiers (duh)
+ * 
  * @author klfr
  */
 public class Nametable implements Stackable {
@@ -56,14 +57,14 @@ public class Nametable implements Stackable {
 
 	@Override
 	public String getDebugDisplay() {
-		return "┌" + Interpreter.line66.substring(2) + "┐" + System.lineSeparator() + //top of the table
-				mappingStream().collect( //the stream is parallel b/c order does not exist
+		return "┌" + Interpreter.line66.substring(2) + "┐" + System.lineSeparator() + // top of the table
+				mappingStream().collect( // the stream is parallel b/c order does not exist
 						() -> new StringBuilder(66), // create a new string builder as the starting point
 						(strb, entry) -> // for each new entry, append its formatted string to the string builder
 						strb.append(String.format("╞%20s ->%40s ╡%n", entry.getKey().getDebugDisplay(),
 								entry.getValue().getDebugDisplay())),
-						(strb1, strb2) -> strb1.append(strb2)) //combine stringbuilders with a newline
-				+ "└" + Interpreter.line66.substring(2) + "┘"; //bottom of the table
+						(strb1, strb2) -> strb1.append(strb2)) // combine stringbuilders with a newline
+				+ "└" + Interpreter.line66.substring(2) + "┘"; // bottom of the table
 	}
 
 	public String toString() {
@@ -71,10 +72,9 @@ public class Nametable implements Stackable {
 	}
 
 	public Stackable clone() {
-		//hell fucking yes 'functional' programming
-		return mappingStream().map(x -> Map.entry(x.getKey().clone(), x.getValue().clone()))
-				.collect(() -> new Nametable(),
-						(nt, entry) -> nt.put((Identifier) entry.getKey(), entry.getValue()),
-						(nt1, nt2) -> nt1.mappingStream().forEach(x -> nt2.put(x.getKey(), x.getValue())));
+		// hell fucking yes 'functional' programming
+		return mappingStream().map(x -> Map.entry(x.getKey().clone(), x.getValue().clone())).collect(
+				() -> new Nametable(), (nt, entry) -> nt.put((Identifier) entry.getKey(), entry.getValue()),
+				(nt1, nt2) -> nt1.mappingStream().forEach(x -> nt2.put(x.getKey(), x.getValue())));
 	}
 }

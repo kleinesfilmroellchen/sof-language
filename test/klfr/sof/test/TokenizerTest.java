@@ -20,7 +20,7 @@ class TokenizerTest {
 		assertEquals(String.format("hello code%n"), t.getCode());
 		assertThrows(CompilerException.class, () -> Tokenizer.fromSourceCode("\" unclosed string"), "illegal code");
 	}
-	
+
 	@Test
 	void testFromState() {
 		TokenizerState s = assertDoesNotThrow(() -> new TokenizerState(0, 0, 3, 5, "abc def ghi jkl mno p"));
@@ -34,7 +34,7 @@ class TokenizerTest {
 	}
 
 	@Test
-	@Order(Integer.MAX_VALUE-1)
+	@Order(Integer.MAX_VALUE - 1)
 	void testTokenizerState() {
 		TokenizerState s = assertDoesNotThrow(() -> new TokenizerState(0, 12, 3, 5, "abc def ghi jkl mno p"));
 		assertEquals(0, s.start);

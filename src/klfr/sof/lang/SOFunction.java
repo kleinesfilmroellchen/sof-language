@@ -3,8 +3,8 @@ package klfr.sof.lang;
 import java.util.LinkedList;
 
 /**
- * Function type, one of the most important callable types.
- * Functions are the most primitive scoped callable.
+ * Function type, one of the most important callable types. Functions are the
+ * most primitive scoped callable.
  */
 public class SOFunction extends CodeBlock {
 
@@ -27,33 +27,34 @@ public class SOFunction extends CodeBlock {
     }
 
     @Override
-	@SuppressWarnings("deprecation")
+    @SuppressWarnings("deprecation")
     public CallProvider getCallProvider() {
         return interpreter -> {
-			interpreter.internal.pushState();
+            interpreter.internal.pushState();
 
-			interpreter.internal.setRegion(indexInFile, endIndex-1);
+            interpreter.internal.setRegion(indexInFile, endIndex - 1);
             interpreter.internal.setExecutionPos(indexInFile);
 
             var stack = interpreter.internal.stack();
 
             // pop arguments and store temporarily
             var args = new LinkedList<Stackable>();
-            for (var i = 0; i<arguments; ++i) {
+            for (var i = 0; i < arguments; ++i) {
                 args.add(stack.pop());
             }
-            
+
             // create the FNT
             var fnt = new FunctionDelimiter();
             // place it followed by the arguments on the stack
             stack.push(fnt);
             var it = args.descendingIterator();
-            while (it.hasNext()) stack.push(it.next());
-            
+            while (it.hasNext())
+                stack.push(it.next());
+
             // execute
-			while (interpreter.canExecute()) {
-				interpreter.executeOnce();
-			}
+            while (interpreter.canExecute()) {
+                interpreter.executeOnce();
+            }
 
             // clean up: remove all elements above the fnt
             Stackable current = null;
@@ -61,7 +62,7 @@ public class SOFunction extends CodeBlock {
                 current = stack.forcePop();
 
             interpreter.internal.popState();
-            
+
             // is set by the return PT
             return fnt.returnValue;
 
@@ -82,9 +83,9 @@ public class SOFunction extends CodeBlock {
     public Stackable clone() {
         return new SOFunction(this.indexInFile, this.endIndex, this.code, this.arguments);
     }
+
     public static SOFunction fromCodeBlock(CodeBlock origin, int arguments) {
         return new SOFunction(origin.indexInFile, origin.endIndex, origin.code, arguments);
     }
 
-    
 }

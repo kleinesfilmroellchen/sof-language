@@ -12,18 +12,20 @@ import klfr.sof.lang.Stack;
  * @author klfr
  */
 public class IOInterface {
-	
-	/**Number of milliseconds to wait between short prints until flushing anyways*/
+
+	/**
+	 * Number of milliseconds to wait between short prints until flushing anyways.
+	 */
 	public static final long FLUSH_MILLIS = 500;
 
 	public Readable input;
 	private Writer output;
 
 	public boolean debug;
-	
+
 	public IOInterface() {
 	}
-	
+
 	/**
 	 * Initializes the interface with basic I/O.
 	 */
@@ -31,8 +33,10 @@ public class IOInterface {
 		this();
 		this.setInOut(in, out);
 	}
+
 	/**
-	 * Initializes the interface with basic I/O streams which are wrapped in character encoding streams.
+	 * Initializes the interface with basic I/O streams which are wrapped in
+	 * character encoding streams.
 	 */
 	public IOInterface(InputStream in, OutputStream out) {
 		this();
@@ -42,84 +46,97 @@ public class IOInterface {
 	public Writer getOutput() {
 		return output;
 	}
-	
+
 	public Readable getInput() {
 		return input;
 	}
 
 	/**
-	 * Sets the output of this I/O interface. Note that this method sets a
-	 * raw byte stream which is converted to an encoded character stream before use.
+	 * Sets the output of this I/O interface. Note that this method sets a raw byte
+	 * stream which is converted to an encoded character stream before use.
+	 * 
 	 * @param out
 	 */
 	public void setOut(OutputStream out) {
-		if (out != null) this.setOut(new OutputStreamWriter(out));
+		if (out != null)
+			this.setOut(new OutputStreamWriter(out));
 	}
-	
+
 	/**
 	 * Sets the output of this I/O interface.
+	 * 
 	 * @param out
 	 */
 	public void setOut(Writer out) {
 		// hijack the output to do special auto-flushing
-		if (out != null) this.output = new Writer() {
-			
-			private Thread t = new Thread("StreamFlusher#" + this.hashCode());
+		if (out != null)
+			this.output = new Writer() {
 
-			@Override
-			public void write(char[] cbuf, int off, int len) throws IOException {
-				out.write(cbuf, off, len);
-				// interrupt the currently running thread
-				// if it had already ended, this has no effect
-				// if it didn't this will prevent the thread from executing the flush
-				if (!t.isAlive()) {
-					// create a thread that will wait FLUSH_MILLIS and flush the writer
-					t = new Thread(() -> {
-						try {
-							Thread.sleep(FLUSH_MILLIS);
-							out.flush();
-						} catch (InterruptedException | IOException e) {return;}
-					}, "StreamFlusher#" + this.hashCode());
-					t.setDaemon(true);
-					t.start();
+				private Thread t = new Thread("StreamFlusher#" + this.hashCode());
+
+				@Override
+				public void write(char[] cbuf, int off, int len) throws IOException {
+					out.write(cbuf, off, len);
+					// interrupt the currently running thread
+					// if it had already ended, this has no effect
+					// if it didn't this will prevent the thread from executing the flush
+					if (!t.isAlive()) {
+						// create a thread that will wait FLUSH_MILLIS and flush the writer
+						t = new Thread(() -> {
+							try {
+								Thread.sleep(FLUSH_MILLIS);
+								out.flush();
+							} catch (InterruptedException | IOException e) {
+								return;
+							}
+						}, "StreamFlusher#" + this.hashCode());
+						t.setDaemon(true);
+						t.start();
+					}
 				}
-			}
 
-			@Override
-			public void flush() throws IOException {
-				out.flush();
-			}
+				@Override
+				public void flush() throws IOException {
+					out.flush();
+				}
 
-			@Override
-			public void close() throws IOException {
-				out.close();
-			}
-		};
+				@Override
+				public void close() throws IOException {
+					out.close();
+				}
+			};
 	}
-	
+
 	public void setIn(Readable in) {
-		if (in != null) this.input = in;
+		if (in != null)
+			this.input = in;
 	}
-	
+
 	public void setIn(InputStream in) {
-		if (in != null) this.setIn(new InputStreamReader(in));
+		if (in != null)
+			this.setIn(new InputStreamReader(in));
 	}
-	
+
 	/**
 	 * Utility method for setting both basic I/O streams. Note that this method sets
 	 * raw byte streams which are converted to encoded character streams before use.
-	 * @param in The InputStream to use. If this is null, the Input is not changed.
-	 * @param out The OutputStream to use. If this is null, the Output is not changed.
+	 * 
+	 * @param in  The InputStream to use. If this is null, the Input is not changed.
+	 * @param out The OutputStream to use. If this is null, the Output is not
+	 *            changed.
 	 */
 	public void setInOut(InputStream in, OutputStream out) {
 		this.setIn(in);
 		this.setOut(out);
 	}
-	
+
 	/**
 	 * Directly sets reader and writer of the I/O interface.
-	 * @param in The Readable (Character input) to use. If this is null, the Input is not changed.
-	 * @param out The Writable (Character output) to use. If this is null, the Output is not changed.
+	 * 
+	 * @param in  The Readable (Character input) to use. If this is null, the Input
+	 *            is not changed.
+	 * @param out The Writable (Character output) to use. If this is null, the
+	 *            Output is not changed.
 	 */
 	public void setInOut(Readable in, Writer out) {
 		this.setIn(in);
@@ -137,7 +154,7 @@ public class IOInterface {
 		print(x);
 		println();
 	}
-	
+
 	public void println() {
 		try {
 			output.write(System.lineSeparator());
@@ -166,13 +183,18 @@ public class IOInterface {
 		String toprint = String.format(l, format, args);
 		this.print(toprint);
 	}
-	
 
+	/**
+	 * Prints formatted (just as {@code printf} does) and terminates the line.
+	 */
 	public void printfln(String format, Object... args) {
 		String toprint = String.format(format, args);
 		this.println(toprint);
 	}
 
+	/**
+	 * Prints formatted (just as {@code printf} does) and terminates the line.
+	 */
 	public void printfln(Locale l, String format, Object... args) {
 		String toprint = String.format(l, format, args);
 		this.println(toprint);

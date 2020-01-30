@@ -13,16 +13,20 @@ public class CompilerException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * Whether this element has information about execution location and mischievous
+	 * code available.
+	 */
 	private boolean infoPresent = false;
 
 	/**
-	 * @return Whether this compilation error has a nice error message attached to
-	 *         it.
+	 * @return Whether this element has information about execution location and
+	 *         mischievous code available.
 	 */
 	public boolean isInfoPresent() {
 		return infoPresent;
 	}
-	
+
 	private CompilerException(String arg0, boolean infoPresent) {
 		super(arg0);
 		this.infoPresent = infoPresent;
@@ -42,76 +46,91 @@ public class CompilerException extends RuntimeException {
 		super(arg0, arg1, arg2, arg3);
 		infoPresent = false;
 	}
-	
+
 	/**
-	 * Makes a compiler exception that does not have all information for nice formatting.
-	 * @param name Name of exception
+	 * Makes a compiler exception that does not have all information for nice
+	 * formatting.
+	 * 
+	 * @param name   Name of exception
 	 * @param reason Why the exception occurred
 	 */
 	public static CompilerException fromIncompleteInfo(String name, String reason) {
 		return new CompilerException(name + " " + reason, false);
 	}
-	
+
 	/**
-	 * Passes its arguments directly to {@link #formatMessage(String, int, int, String, String)}.
-	 * The use of this method is discouraged as it often requires precise pre-processing of indices and strings.
-	 * However, it might be useful for very specific error cases.
+	 * Passes its arguments directly to
+	 * {@link #formatMessage(String, int, int, String, String)}. The use of this
+	 * method is discouraged as it often requires precise pre-processing of indices
+	 * and strings. However, it might be useful for very specific error cases.
 	 */
-	public static CompilerException fromFormatMessage(String expression, int index, int linenum, String name, String reason) {
+	public static CompilerException fromFormatMessage(String expression, int index, int linenum, String name,
+			String reason) {
 		return new CompilerException(formatMessage(expression, index, linenum, name, reason), true);
 	}
-	
+
 	/**
-	 * Makes a compiler exception that takes its positional information from a tokenizer
-	 * @param expressionInfo A tokenizer pointing to the position where the exception occurred
-	 * @param name Name of the exception
-	 * @param reason Why the exception occurred
+	 * Makes a compiler exception that takes its positional information from a
+	 * tokenizer
+	 * 
+	 * @param expressionInfo A tokenizer pointing to the position where the
+	 *                       exception occurred
+	 * @param name           Name of the exception
+	 * @param reason         Why the exception occurred
 	 * @return nicely formatted multi-line string
 	 */
 	public static CompilerException fromCurrentPosition(Tokenizer expressionInfo, String name, String reason) {
 		int linenum = expressionInfo.getCurrentLine();
 		var allCode = expressionInfo.getCode();
-		var expressionLine = allCode.split(System.lineSeparator())[linenum-1];
-		return CompilerException.fromFormatMessage(expressionLine, expressionInfo.getIndexInsideLine()+1, expressionInfo.getCurrentLine(),
-				name == null ? "Interpreter" : name, reason);
+		var expressionLine = allCode.split(System.lineSeparator())[linenum - 1];
+		return CompilerException.fromFormatMessage(expressionLine, expressionInfo.getIndexInsideLine() + 1,
+				expressionInfo.getCurrentLine(), name == null ? "Interpreter" : name, reason);
 	}
+
 	/**
-	 * Makes a compiler exception that takes its positional information from a tokenizer state
-	 * @param expressionInfo A tokenizer state pointing to the position where the exception occurred
-	 * @param name Name of the exception
-	 * @param reason Why the exception occurred
+	 * Makes a compiler exception that takes its positional information from a
+	 * tokenizer state
+	 * 
+	 * @param expressionInfo A tokenizer state pointing to the position where the
+	 *                       exception occurred
+	 * @param name           Name of the exception
+	 * @param reason         Why the exception occurred
 	 * @return nicely formatted multi-line string
 	 */
 	public static CompilerException fromCurrentPosition(TokenizerState expressionInfo, String name, String reason) {
 		return fromCurrentPosition(Tokenizer.fromState(expressionInfo), name, reason);
 	}
-	
+
 	/**
-	 * Makes a compiler exception that takes its positional information from tokenizer-like data (all code, index inside code)
+	 * Makes a compiler exception that takes its positional information from
+	 * tokenizer-like data (all code, index inside code)
+	 * 
 	 * @param fullExpression All the code
-	 * @param index Index inside fullExpression where the exception occurred
-	 * @param name Name of the exception
-	 * @param reason Why the exception occurred
+	 * @param index          Index inside fullExpression where the exception
+	 *                       occurred
+	 * @param name           Name of the exception
+	 * @param reason         Why the exception occurred
 	 * @return nicely formatted multi-line string
 	 */
 	public static CompilerException fromCurrentPosition(String fullExpression, int index, String name, String reason) {
-		var info = new TokenizerState(index, index+1, 0, fullExpression.length(), fullExpression);
+		var info = new TokenizerState(index, index + 1, 0, fullExpression.length(), fullExpression);
 		return fromCurrentPosition(info, name, reason);
 	}
-	
+
 	/**
 	 * Makes a compiler exception that refers to a single line expression.
+	 * 
 	 * @param expression expression where error occurred
-	 * @param index index in expression where error occurred
-	 * @param name type of exception, e.g. Syntax, Value
-	 * @param reason explanation why the exception occurred
+	 * @param index      index in expression where error occurred
+	 * @param name       type of exception, e.g. Syntax, Value
+	 * @param reason     explanation why the exception occurred
 	 * @return nicely formatted multi-line string
 	 */
 	public static CompilerException fromSingleLineExpression(String expression, int index, String name, String reason) {
 		var str = formatMessage(expression, index, 0, name, reason);
 		return new CompilerException(str, true);
 	}
-	
+
 	/**
 	 * Constructs a compiler exception with the given base exception that points to
 	 * the current place in code the tokenizer is looking at. <br>
@@ -121,15 +140,16 @@ public class CompilerException extends RuntimeException {
 	 * Name > < Description >" for their exception message to achieve suitable
 	 * formatting of the exception. As only one line of the exception message is
 	 * extracted, further lines can provide debug information to be used otherwise.
-	 * @param expressionInfo The tokenizer that points to the location where the exception occured
-	 * @param cause The cause of this exception. The first word of the exception
-	 * message is used as the name (such as "Syntax") and the rest as the long
-	 * reason.
+	 * 
+	 * @param expressionInfo The tokenizer that points to the location where the
+	 *                       exception occured
+	 * @param cause          The cause of this exception. The first word of the
+	 *                       exception message is used as the name (such as
+	 *                       "Syntax") and the rest as the long reason.
 	 * @return The newly constructed compiler error.
 	 */
 	public static CompilerException fromIncomplete(Tokenizer expressionInfo, CompilerException cause) {
 		Scanner helper = new Scanner(cause.getLocalizedMessage());
-		//first part of the exception message is the "external" exception name
 		String name = helper.next();
 		String reason = helper.nextLine();
 		helper.close();
@@ -137,21 +157,20 @@ public class CompilerException extends RuntimeException {
 	}
 
 	/**
-	 * Does the formatting for standard exceptions
+	 * Does the formatting for standard exceptions.
+	 * 
 	 * @param expression expression where error occurred
-	 * @param index index in expression where error occurred
-	 * @param line line where expression occurred, purely symbolic
-	 * @param name type of exception, e.g. Syntax, Value
-	 * @param reason explanation why the exception occurred
+	 * @param index      index in expression where error occurred
+	 * @param line       line where expression occurred, purely symbolic
+	 * @param name       type of exception, e.g. Syntax, Value
+	 * @param reason     explanation why the exception occurred
 	 * @return nicely formatted multi-line string
 	 */
 	private static String formatMessage(String expression, int index, int line, String name, String reason) {
-//		System.out.println(expression.length());
-		return String.format("%s Error in line %d at index %d:%n"
-				+ " %s%n"
-				+ " %" + significantAfterTrimmed(index, expression.length()) + "s%n"
-				+ "    %s", name, line, index,
-				trim(expression, index), "^", reason);
+		return String.format(
+				"%s Error in line %d at index %d:%n" + " %s%n" + " %"
+						+ significantAfterTrimmed(index, expression.length()) + "s%n" + "    %s",
+				name, line, index, trim(expression, index), "^", reason);
 	}
 
 	/** trims string to exact length 20 while respecting the significant index */

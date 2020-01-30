@@ -9,14 +9,15 @@ import klfr.sof.CompilerException;
  * Because there is no way of limiting the possible types to the ones that
  * should be allowed, one shall only use the following types as type arguments:
  * {@code Number, Boolean, Character, String}.
+ * 
  * @author klfr
  * @param <T> Type that the primitive refers down to.
  */
 public class Primitive<T> implements Callable {
 	private static final long serialVersionUID = 1L;
 
-	//all chars that can make up integers base 16 and lower, in ascending value
-	public static final Map<Character, Integer> numberChars = new Hashtable<>();// { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+	// all chars that can make up integers base 16 and lower, in ascending value
+	public static final Map<Character, Integer> numberChars = new Hashtable<>();
 	static {
 		numberChars.put('0', 0);
 		numberChars.put('1', 1);
@@ -48,7 +49,8 @@ public class Primitive<T> implements Callable {
 
 	@Override
 	public String getDebugDisplay() {
-		if (value instanceof String) return '"' + value.toString() + '"';
+		if (value instanceof String)
+			return '"' + value.toString() + '"';
 		return value.toString();
 	}
 
@@ -62,11 +64,11 @@ public class Primitive<T> implements Callable {
 	public Stackable clone() {
 		return new Primitive<>(this.value);
 	}
-	
+
 	public boolean equals(Object other) {
 		return other instanceof Primitive ? ((Primitive) other).equals(this) : false;
 	}
-	
+
 	public boolean equals(Primitive other) {
 		return other.value.equals(this.value);
 	}
@@ -74,7 +76,7 @@ public class Primitive<T> implements Callable {
 	public String toString() {
 		return this.getDebugDisplay();
 	}
-	
+
 	@Override
 	public String toOutputString() {
 		return value.toString();
@@ -83,17 +85,20 @@ public class Primitive<T> implements Callable {
 	/**
 	 * Helper method to create an integer primitive from a string that is a valid
 	 * integer literal according to SOF specs.
+	 * 
 	 * @param integerString The string that only contains the integer in text
-	 * format, to be converted.
+	 *                      format, to be converted.
 	 * @return a new Primitive with integer type and the parsed integer value.
 	 */
 	public static Primitive<Long> createInteger(String integerString) throws CompilerException {
 		integerString = integerString.strip();
 		int radix = 10;
 		long sign = 1;
-		//check zero
-		if (integerString.matches("0+")) { return new Primitive<Long>(0l); }
-		//check sign
+		// check zero
+		if (integerString.matches("0+")) {
+			return new Primitive<Long>(0l);
+		}
+		// check sign
 		if (integerString.charAt(0) == '+') {
 			integerString = integerString.substring(1);
 		} else if (integerString.charAt(0) == '-') {
@@ -118,7 +123,8 @@ public class Primitive<T> implements Callable {
 				radix = 16;
 				break;
 			default:
-				throw CompilerException.fromIncompleteInfo("Syntax", String.format("Invalid Integer literal \"%s\".", integerString));
+				throw CompilerException.fromIncompleteInfo("Syntax",
+						String.format("Invalid Integer literal \"%s\".", integerString));
 			}
 			integerString = integerString.substring(2);
 		}
@@ -137,9 +143,12 @@ public class Primitive<T> implements Callable {
 	}
 
 	public static Primitive<Boolean> createBoolean(String booleanString) throws CompilerException {
-		if (booleanString.toLowerCase().equals("true")) return new Primitive<>(true);
-		if (booleanString.toLowerCase().equals("false")) return new Primitive<>(false);
-		throw CompilerException.fromIncompleteInfo("Syntax", String.format("No boolean literal found in \"%s\"", booleanString));
+		if (booleanString.toLowerCase().equals("true"))
+			return new Primitive<>(true);
+		if (booleanString.toLowerCase().equals("false"))
+			return new Primitive<>(false);
+		throw CompilerException.fromIncompleteInfo("Syntax",
+				String.format("No boolean literal found in \"%s\"", booleanString));
 	}
 
 }

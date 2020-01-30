@@ -7,6 +7,7 @@ import klfr.sof.Interpreter;
  * Object which executes the action that the callable represents. Common
  * implementors include functions, code blocks and primitive values (which have
  * constant-value call methods)
+ * 
  * @author klfr
  */
 public interface Callable extends Stackable {
@@ -15,6 +16,7 @@ public interface Callable extends Stackable {
 	 * This functional interface provides the actual method to be called when
 	 * executing the callable. This makes it possible for internal and external
 	 * users to construct Callables with Lambda expressions.
+	 * 
 	 * @author klfr
 	 */
 	@FunctionalInterface
@@ -23,8 +25,9 @@ public interface Callable extends Stackable {
 		 * Executes the callable's action. As many callables depend on SOF language
 		 * interpretation or access to SOF code, the calling interpreter needs to
 		 * provide itself as a tool for executing the callable.
+		 * 
 		 * @return The stackable that is the result of the call, as callables are mainly
-		 * used to retrieve values.
+		 *         used to retrieve values.
 		 */
 		public Stackable call(Interpreter parent);
 	}

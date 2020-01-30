@@ -2,6 +2,12 @@ package klfr.sof.lang;
 
 import java.io.Serializable;
 
+/**
+ * Stackable is the name for all elements that can be put onto the SOF stack,
+ * meaning that every valid value in SOF is a Stackable. Stackables only have a
+ * couple of basic methods by default, as Stackable is the root of the SOF type
+ * hierarchy and therefore very general.
+ */
 public interface Stackable extends Serializable {
 	/**
 	 * Returns a string that represents this stackable in a debug view, in the most
@@ -24,5 +30,10 @@ public interface Stackable extends Serializable {
 		return this.toString();
 	}
 
+	/**
+	 * Every Stackable must be able to clone itself.
+	 * 
+	 * @return An exact copy of this Stackable.
+	 */
 	public Stackable clone();
 }

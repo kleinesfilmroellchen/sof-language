@@ -11,6 +11,7 @@ import klfr.sof.CompilerException;
  * <br>
  * Because this is a functional interface, operators can be constructed with a
  * Lambda expression.
+ * 
  * @author klfr
  */
 @FunctionalInterface
@@ -23,30 +24,35 @@ public interface Operator {
 	 * <br>
 	 * Implementors are free to apply unsafe class casting, as the callers catch the
 	 * resulting exceptions.
-	 * @param leftArg The left argument, or the argument that is lower on the stack.
+	 * 
+	 * @param leftArg  The left argument, or the argument that is lower on the
+	 *                 stack.
 	 * @param rightArg The right argument, or the argument that is higher on the
-	 * stack.
+	 *                 stack.
 	 * @throws ClassCastException if the arguments are not of the correct type
-	 * (auto-thrown by the JVM if unchecked type casting fails).
-	 * @throws CompilerException if other stuff fails, such as arithmetic exceptions.
+	 *                            (auto-thrown by the JVM if unchecked type casting
+	 *                            fails).
+	 * @throws CompilerException  if other stuff fails, such as arithmetic
+	 *                            exceptions.
 	 */
 	public Stackable call(Stackable leftArg, Stackable rightArg) throws ClassCastException, CompilerException;
 
 	/**
 	 * Executes a numeric operation on the two argument primitives
-	 * @param a left operand
-	 * @param b right operand
-	 * @param longOperation Operation to execute if both numbers are long/integer
-	 * types
+	 * 
+	 * @param a               left operand
+	 * @param b               right operand
+	 * @param longOperation   Operation to execute if both numbers are long/integer
+	 *                        types
 	 * @param doubleOperation Operation to execute if any one of the numbers are
-	 * double/decimal type
+	 *                        double/decimal type
 	 * @return The result of the operation. Operations should be the same, i.e.
-	 * supply the same lambda twice.
+	 *         supply the same lambda twice.
 	 */
 	public static Primitive<? extends Number> numericOperation(Primitive<? extends Number> a,
 			Primitive<? extends Number> b, BiFunction<Long, Long, Long> longOperation,
 			BiFunction<Double, Double, Double> doubleOperation) {
-		//oh heck java wtf is this madness
+		// oh heck java wtf is this madness
 		Class<? extends Number> bc = b.getValue().getClass(), ac = a.getValue().getClass();
 		if (bc.equals(Long.class) && ac.equals(Long.class)) {
 			return new Primitive<Long>(longOperation.apply(a.getValue().longValue(), b.getValue().longValue()));
@@ -66,14 +72,11 @@ public interface Operator {
 	};
 
 	public static final Operator add = (a, b) -> numericOperation((Primitive<? extends Number>) a,
-			(Primitive<? extends Number>) b, (x, y) -> x + y,
-			(x, y) -> x + y);
+			(Primitive<? extends Number>) b, (x, y) -> x + y, (x, y) -> x + y);
 
 	public static final Operator multiply = (a, b) -> numericOperation((Primitive<? extends Number>) a,
-			(Primitive<? extends Number>) b, (x, y) -> x * y,
-			(x, y) -> x * y);
+			(Primitive<? extends Number>) b, (x, y) -> x * y, (x, y) -> x * y);
 
 	public static final Operator subtract = (a, b) -> numericOperation((Primitive<? extends Number>) a,
-			(Primitive<? extends Number>) b, (x, y) -> x - y,
-			(x, y) -> x - y);
+			(Primitive<? extends Number>) b, (x, y) -> x - y, (x, y) -> x - y);
 }

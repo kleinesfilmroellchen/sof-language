@@ -31,7 +31,10 @@ public class CLI {
 	private static Logger log = Logger.getLogger(CLI.class.getCanonicalName());
 
 	static class Options {
-		/** Enum for execution string (ES) treatment. An ES is any CL argument without a '-'. */
+		/**
+		 * Enum for execution string (ES) treatment. An ES is any CL argument without a
+		 * '-'.
+		 */
 		static enum ExecutionType {
 			/** ES is treated as list of relative filenames. */
 			File,
@@ -57,7 +60,8 @@ public class CLI {
 
 	public static void main(String[] args) throws InvocationTargetException, UnsupportedEncodingException, IOException {
 		// setup console info logging
-		// LogManager.getLogManager().updateConfiguration(new ByteArrayInputStream(".level = FINEST".getBytes("UTF-8")), null);
+		// LogManager.getLogManager().updateConfiguration(new
+		// ByteArrayInputStream(".level = FINEST".getBytes("UTF-8")), null);
 		LogManager.getLogManager().reset();
 		Logger.getLogger("").setLevel(Level.FINEST);
 		var ch = new ConsoleHandler();
@@ -86,34 +90,23 @@ public class CLI {
 				exitUnnormal(0);
 			case "-h":
 			case "--help":
-				//                                                        |
-				// we want the new multiline strings here, but eclipse is not capable of java 13 yet
-				System.out.printf(
-						"sof - Interpreter for Stack with Objects and%n" +
-						"      Functions (SOF) Programming Language.%n" +
-						"usage: sof [-h|-v] [-d] [-c command]%n" +
-						"           filename [...filenames]%n" +
-						"%n" +
-						"positional arguments:%n" +
-						"   filename  Path to a file to be read and%n" +
-						"             executed. Can be a list of files that%n" +
-						"             are executed in order.%n" +
-						"             %n" +
-						"options:%n" +
-						"   --help, -h%n" +
-						"             Display this help message and exit.%n" +
-						"   --version, -v%n" +
-						"             Display version information and exit.%n" +
-						"   -d        Execute in debug mode. Read the manual%n" +
-						"             for more information.%n" +
-						"   --command=<command>, -c <command>%n" +
-						"             Execute <command> and exit.%n" +
-						"             %n" +
-						"When used without execution-starting arguments (-c%n" +
-						"or filename), sof is started in interactive mode.%n" +
-						"%n" +
-						"Quit the program with ^C.%n" +
-						"%n");
+				// |
+				// we want the new multiline strings here, but eclipse is not capable of java 13
+				// yet
+				System.out.printf("sof - Interpreter for Stack with Objects and%n"
+						+ "      Functions (SOF) Programming Language.%n" + "usage: sof [-h|-v] [-d] [-c command]%n"
+						+ "           filename [...filenames]%n" + "%n" + "positional arguments:%n"
+						+ "   filename  Path to a file to be read and%n"
+						+ "             executed. Can be a list of files that%n"
+						+ "             are executed in order.%n" + "             %n" + "options:%n" + "   --help, -h%n"
+						+ "             Display this help message and exit.%n" + "   --version, -v%n"
+						+ "             Display version information and exit.%n"
+						+ "   -d        Execute in debug mode. Read the manual%n"
+						+ "             for more information.%n" + "   --command=<command>, -c <command>%n"
+						+ "             Execute <command> and exit.%n" + "             %n"
+						+ "When used without execution-starting arguments (-c%n"
+						+ "or filename), sof is started in interactive mode.%n" + "%n" + "Quit the program with ^C.%n"
+						+ "%n");
 				exitUnnormal(0);
 			case "-c":
 			case "--command":
@@ -156,13 +149,15 @@ public class CLI {
 				handler.setFormatter(new SimpleFormatter());
 				handler.setLevel(Level.FINEST);
 				Logger.getLogger("").addHandler(handler);
-			} catch (IOException e) {e.printStackTrace();}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 
 		// decide over execution type depending on argument count
 		if (opt.executionType == Options.ExecutionType.Interactive)
 			opt.executionType = idx < args.length ? Options.ExecutionType.File : Options.ExecutionType.Interactive;
-		
+
 		if (opt.executionType == Options.ExecutionType.File) {
 			//// File interpretation
 			while (idx < cmdLineArguments.size()) {
@@ -188,27 +183,28 @@ public class CLI {
 			Interpreter interpreterPrototype = new Interpreter();
 			readers.forEach(reader -> doFullExecution(reader, interpreterPrototype.instantiateSelf(), io));
 			System.exit(0);
-			
+
 		} else if (opt.executionType == Options.ExecutionType.Literal) {
 			//// Single literal to be executed
 			Interpreter interpreter = new Interpreter();
 			doFullExecution(new StringReader(opt.executionStrings.get(0)), interpreter, io);
-			
+
 		} else if (opt.executionType == Options.ExecutionType.Interactive) {
 			//// Interactive interpretation
 			io.println(getInfoString());
 			Interpreter interpreter = new Interpreter().reset();
 			interpreter.internal.setIO(io);
-			
+
 			Scanner scanner = io.newInputScanner();
 			// scanner.useDelimiter("[[^\n]\\s+]");
 			io.print(">>> ");
-			 while (scanner.hasNextLine()) {
+			while (scanner.hasNextLine()) {
 				String code = scanner.nextLine();
 				var curEnd = interpreter.internal.tokenizer().getState().end;
 				// catches all unwanted compilation errors
 				try {
-					// catches "unclosed"-compilation errors which might be resolved by adding more content on another line
+					// catches "unclosed"-compilation errors which might be resolved by adding more
+					// content on another line
 					try {
 						interpreter.appendLine(code);
 					} catch (CompilerException e) {
@@ -217,7 +213,8 @@ public class CLI {
 							io.print("... ");
 							var nl = scanner.nextLine();
 							// end on blank line
-							if (nl.isBlank()) break;
+							if (nl.isBlank())
+								break;
 							code += System.lineSeparator() + nl;
 						}
 						interpreter.appendLine(code);
@@ -230,13 +227,15 @@ public class CLI {
 					}
 				} catch (CompilerException e) {
 					io.println("!!! " + e.getLocalizedMessage());
-					log.log(Level.SEVERE, 
-						("Compiler Exception occurred.\nUser-friendly message: " +
-						e.getLocalizedMessage() +
-						"\nStack trace:\n" + Arrays.stream(e.getStackTrace()).map(ste -> ste.toString()).reduce("", (a,b) -> (a + "\n  " + b).strip()) + "\n").indent(2));
+					log.log(Level.SEVERE,
+							("Compiler Exception occurred.\nUser-friendly message: "
+									+ e.getLocalizedMessage() + "\nStack trace:\n" + Arrays.stream(e.getStackTrace())
+											.map(ste -> ste.toString()).reduce("", (a, b) -> (a + "\n  " + b).strip())
+									+ "\n").indent(2));
 				}
 				io.print(">>> ");
-			};
+			}
+			;
 			scanner.close();
 		}
 	}
@@ -285,7 +284,7 @@ public class CLI {
 		try {
 			URI classuri = CLI.class.getClassLoader()
 					.getResource(CLI.class.getCanonicalName().replace(".", "/") + ".class").toURI();
-//			System.out.println(classuri.getScheme());
+			// System.out.println(classuri.getScheme());
 			if (classuri.getScheme().equals("rsrc") || classuri.getScheme().equals("jar")) {
 				// we are in a jar file
 				// returns the containing folder of the jar file
@@ -293,12 +292,13 @@ public class CLI {
 				// File(ClassLoader.getSystemResource(".").getFile()).getCanonicalPath();
 				String jarfilepath = new File(".").getCanonicalPath() + File.separator
 						+ System.getProperty("java.class.path");
-//				System.out.println(jarfilepath);
+				// System.out.println(jarfilepath);
 				return Instant.ofEpochMilli(new File(jarfilepath).lastModified());
 			} else if (classuri.getScheme().equals("file")) {
 				return Instant.ofEpochMilli(new File(classuri.getRawPath()).lastModified());
 			}
-		} catch (URISyntaxException e) {} catch (IOException e) {
+		} catch (URISyntaxException e) {
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return null;

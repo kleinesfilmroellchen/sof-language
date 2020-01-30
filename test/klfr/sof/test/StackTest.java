@@ -8,7 +8,7 @@ import klfr.sof.lang.Nametable;
 import klfr.sof.lang.Stack;
 
 class StackTest {
-	
+
 	private Stack stack;
 
 	@BeforeEach
@@ -16,13 +16,13 @@ class StackTest {
 		stack = new Stack();
 		stack.push(new Nametable());
 	}
-	
+
 	/**
 	 * Fundamental class tests.
 	 */
 	@Test
 	void testStack() {
-		var s = assertDoesNotThrow( ()-> new Stack());
+		var s = assertDoesNotThrow(() -> new Stack());
 	}
 
 	/**

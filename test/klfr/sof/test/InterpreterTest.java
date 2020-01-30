@@ -12,7 +12,8 @@ class InterpreterTest {
 	@Test
 	void testCleanCode() {
 		try {
-			assertEquals(format("abc def ghi jkl%n"), Interpreter.cleanCode("abc def ghi jkl"), "Basic code without cleaning required");
+			assertEquals(format("abc def ghi jkl%n"), Interpreter.cleanCode("abc def ghi jkl"),
+					"Basic code without cleaning required");
 			assertEquals(format("abc def ghi jkl %nand a newline%n"),
 					Interpreter.cleanCode("abc def ghi jkl # a simple comment\nand a newline"));
 			assertEquals(format("abc def ghi jkl %n%n%nthis comes after the blockcomment%n"), Interpreter.cleanCode(

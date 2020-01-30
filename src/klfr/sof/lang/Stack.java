@@ -70,8 +70,9 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 	}
 
 	/**
-	 * Forces the stack to pop its topmost element, regardless of stack access restrictions.
-	 * Users should use this function with great caution.
+	 * Forces the stack to pop its topmost element, regardless of stack access
+	 * restrictions. Users should use this function with great caution.
+	 * 
 	 * @return the popped value
 	 */
 	public Stackable forcePop() {
@@ -99,8 +100,9 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 	 * are defined in the file-global scope. This is the global nametable (as
 	 * returned by {@code globalNametable()}) if there is no namespace introduced,
 	 * or the namespace defined by the 'namespace' command (which resides on the
-	 * stack just above the global nametable).<br><br> {@code globaldef} always uses this
-	 * as do {@code def}'s outside of functions.
+	 * stack just above the global nametable).<br>
+	 * <br>
+	 * {@code globaldef} always uses this as do {@code def}'s outside of functions.
 	 * 
 	 * @throws RuntimeException
 	 */
@@ -126,7 +128,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 	 * stack.
 	 */
 	public Nametable localScope() throws RuntimeException {
-		for(var elmt : this) {
+		for (var elmt : this) {
 			if (elmt instanceof Nametable)
 				return (Nametable) elmt;
 		}

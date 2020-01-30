@@ -35,19 +35,19 @@ class IdentifierTest {
 		assertThrows(CompilerException.class, () -> new Identifier("90abc__d9090efg"),
 				"Invalid Identifier test with starting numeric");
 	}
-	
+
 	/**
 	 * Tests other methods such as equals(), clone() etc.
 	 */
 	@Test
 	void testOther() {
 		Identifier i = new Identifier("abc");
-		assertDoesNotThrow( () -> i.hashCode());
-		Identifier clone = (Identifier) assertDoesNotThrow( () -> i.clone());
+		assertDoesNotThrow(() -> i.hashCode());
+		Identifier clone = (Identifier) assertDoesNotThrow(() -> i.clone());
 		assertTrue(i.equals(i));
 		assertFalse(i.equals(new Identifier("bcd")));
 		assertTrue(i.equals(clone));
-		assertDoesNotThrow( () -> i.toString() + i.toOutputString());
+		assertDoesNotThrow(() -> i.toString() + i.toOutputString());
 	}
 
 }
