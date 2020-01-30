@@ -75,13 +75,17 @@ class TokenizerTest {
 	}
 
 	@Test
+	@SuppressWarnings("deprecation")
 	void testStateStack() {
 		Tokenizer t = assertDoesNotThrow(() -> Tokenizer.fromSourceCode("hello other code"));
-		String nextToken = assertDoesNotThrow(() -> t.next());
+		assertDoesNotThrow(() -> t.next());
 		Matcher m = t.getMatcher();
 		int regS = m.regionStart(), regE = m.regionEnd();
 		t.pushState();
-		m.region(3, 6);
+		var st = assertDoesNotThrow(() -> t.getState());
+		st.regionStart = 3;
+		st.regionEnd = 6;
+		assertDoesNotThrow(() -> t.setState(st));
 		assertEquals(3, t.getState().regionStart);
 		assertEquals(6, t.getState().regionEnd);
 		int currentStart = t.getState().start, currentEnd = t.getState().end;
@@ -93,8 +97,8 @@ class TokenizerTest {
 		assertEquals(3, t.getState().regionStart);
 		assertEquals(6, t.getState().regionEnd);
 		t.popState();
-		assertEquals(regS, t.getMatcher().regionStart());
-		assertEquals(regE, t.getMatcher().regionEnd());
+		assertEquals(regS, t.getState().regionStart);
+		assertEquals(regE, t.getState().regionEnd);
 		assertThrows(NoSuchElementException.class, () -> t.popState());
 	}
 

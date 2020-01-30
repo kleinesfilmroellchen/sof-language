@@ -107,10 +107,11 @@ public class Tokenizer implements Iterator<String> {
 	private Deque<TokenizerState> stateStack;
 
 	/**
-	 * Constructor for factory methods, do not use externally.
+	 * Constructor for factory methods, do not use externally. Code needs to be
+	 * cleaned beforehand
 	 */
-	private Tokenizer(String code, Matcher m) {
-		this.m = m;
+	private Tokenizer(String code) {
+		this.m = Interpreter.tokenPattern.matcher(code);
 		this.stateStack = new LinkedBlockingDeque<>();
 		this.currentState = new TokenizerState(0, 0, 0, code.length(), code);
 	}
@@ -129,10 +130,7 @@ public class Tokenizer implements Iterator<String> {
 	 *                           etc.
 	 */
 	public static Tokenizer fromSourceCode(String code) throws CompilerException {
-		String clean = cleanCode(code);
-		Matcher matcher = Interpreter.tokenPattern.matcher(clean);
-		Tokenizer t = new Tokenizer(clean, matcher);
-		return t;
+		return new Tokenizer(cleanCode(code));
 	}
 
 	/**
@@ -144,8 +142,8 @@ public class Tokenizer implements Iterator<String> {
 	 * @return a new tokenizer without a state stack
 	 */
 	public static Tokenizer fromState(TokenizerState state) {
-		Matcher matcher = Interpreter.tokenPattern.matcher(state.code);
-		Tokenizer t = new Tokenizer(state.code, matcher);
+		Tokenizer t = new Tokenizer(state.code);
+		t.currentState = state;
 		return t;
 	}
 
