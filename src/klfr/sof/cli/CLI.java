@@ -284,7 +284,7 @@ public class CLI {
 		try {
 			URI classuri = CLI.class.getClassLoader()
 					.getResource(CLI.class.getCanonicalName().replace(".", "/") + ".class").toURI();
-			// System.out.println(classuri.getScheme());
+			// log.finest(classuri.getScheme() + "  " + classuri.getPath());
 			if (classuri.getScheme().equals("rsrc") || classuri.getScheme().equals("jar")) {
 				// we are in a jar file
 				// returns the containing folder of the jar file
@@ -292,10 +292,10 @@ public class CLI {
 				// File(ClassLoader.getSystemResource(".").getFile()).getCanonicalPath();
 				String jarfilepath = new File(".").getCanonicalPath() + File.separator
 						+ System.getProperty("java.class.path");
-				// System.out.println(jarfilepath);
+				// log.finest(jarfilepath);
 				return Instant.ofEpochMilli(new File(jarfilepath).lastModified());
 			} else if (classuri.getScheme().equals("file")) {
-				return Instant.ofEpochMilli(new File(classuri.getRawPath()).lastModified());
+				return Instant.ofEpochMilli(new File(classuri.getPath()).lastModified());
 			}
 		} catch (URISyntaxException e) {
 		} catch (IOException e) {
