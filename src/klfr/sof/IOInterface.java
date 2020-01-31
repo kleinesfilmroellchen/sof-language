@@ -90,7 +90,7 @@ public class IOInterface {
 								return;
 							}
 						}, "StreamFlusher#" + this.hashCode());
-						t.setDaemon(true);
+						t.setDaemon(false);
 						t.start();
 					}
 				}
