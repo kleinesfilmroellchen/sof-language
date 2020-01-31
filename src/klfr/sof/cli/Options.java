@@ -159,10 +159,11 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 		}
 		case VersionInfo: {
 			io.println(CLI.getInfoString());
+			io.printf("This program is licensed under GNU General Public License 3.0.%nSee the project LICENSE for details.%n");
 			break;
 		}
 		case HelpInfo: {
-			System.out.printf("sof - Interpreter for Stack with Objects and%n"
+			io.printf("sof - Interpreter for Stack with Objects and%n"
 					+ "      Functions (SOF) Programming Language.%n" + "usage: sof [-h|-v] [-d] [-c command]%n"
 					+ "           filename [...filenames]%n" + "%n" + "positional arguments:%n"
 					+ "   filename  Path to a file to be read and%n"
