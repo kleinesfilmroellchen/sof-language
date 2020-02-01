@@ -2,7 +2,11 @@ package klfr.sof.lang;
 
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import klfr.sof.CompilerException;
+import klfr.sof.Interpreter;
 
 /**
  * Primitive values in SOF are represented through this class.<br>
@@ -15,6 +19,7 @@ import klfr.sof.CompilerException;
  */
 public class Primitive<T> implements Callable {
 	private static final long serialVersionUID = 1L;
+	private static final Logger log = Logger.getLogger(Primitive.class.getCanonicalName());
 
 	// all chars that can make up integers base 16 and lower, in ascending value
 	public static final Map<Character, Integer> numberChars = new Hashtable<>();
@@ -95,7 +100,7 @@ public class Primitive<T> implements Callable {
 		int radix = 10;
 		long sign = 1;
 		// check zero
-		if (integerString.matches("0+")) {
+		if (integerString.matches("[\\+\\-]?0+")) {
 			return new Primitive<Long>(0l);
 		}
 		// check sign
@@ -149,6 +154,32 @@ public class Primitive<T> implements Callable {
 			return new Primitive<>(false);
 		throw CompilerException.fromIncompleteInfo("Syntax",
 				String.format("No boolean literal found in \"%s\"", booleanString));
+	}
+
+	public static Primitive<Double> createDouble(String doubleString) throws CompilerException {
+		final var m = Interpreter.doublePattern.matcher(doubleString);
+		if (m.matches()) {
+			log.finest(() -> String.format("%s %s %s %s", m.group(1), m.group(2), m.group(3), m.group(4)));
+			// split the parts of the double up
+			final byte sign = (byte) ((m.group(1) == null ? "+" : m.group(1)).contentEquals("-") ? -1 : 1);
+			final long integerPart = createInteger(m.group(2)).value;
+			String decimalPartStr = m.group(3), exponentStr = m.group(4) == null ? "" : m.group(4);
+			double decimalPart = 0d; long exponent = 0L;
+
+			exponentStr = exponentStr.length() > 0 ? exponentStr.substring(1) : "";
+			if (exponentStr.length() > 0) {
+				exponent = createInteger(exponentStr).value;
+			}
+
+			for (var i = 0; i < decimalPartStr.length(); ++i) {
+				decimalPart += numberChars.get(decimalPartStr.charAt(i)) * Math.pow(10, -(i+1));
+			}
+			log.finest(String.format("%d * ( %d + %f ) * 10 ^ %d", sign, integerPart, decimalPart, exponent));
+			return new Primitive<Double>(sign * Math.pow(10, exponent) * (integerPart + decimalPart));
+		} else {
+			throw CompilerException.fromIncompleteInfo("Syntax",
+					String.format("No float literal found in\"%s\".", doubleString));
+		}
 	}
 
 }

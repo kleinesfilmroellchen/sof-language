@@ -149,7 +149,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 
 	//// PATTERNS
 	public static final Pattern intPattern = Pattern.compile("((\\+|\\-)?(0[bhxod])?[0-9a-fA-F]+)|0");
-	public static final Pattern doublePattern = Pattern.compile("(\\+|\\-)?([0-9]+\\.[0-9]+([eE][\\-\\+][0-9]+)?)|0");
+	public static final Pattern doublePattern = Pattern.compile("(\\+|\\-)?(?:([0-9]+)\\.([0-9]+)([eE][\\-\\+][0-9]+)?)|0");
 	public static final Pattern stringPattern = Pattern.compile("\"[^\"]*\"");
 	public static final Pattern boolPattern = Pattern.compile("True|False|true|false");
 	public static final Pattern tokenPattern = Pattern.compile("(" + stringPattern.pattern() + ")|(\\S+)");// \\b{g}
@@ -563,8 +563,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 				} else if (doublePattern.matcher(token).matches()) {
 					log.finest(() -> f("LITERAL DOUBLE %30s @ %4d", token, tokenizer.getState().start));
 					try {
-						final Primitive<Double> literal = new Primitive<Double>(
-								Double.parseDouble(token.toLowerCase()));
+						final Primitive<Double> literal = Primitive.createDouble(token);
 						stack.push(literal);
 					} catch (final NumberFormatException e) {
 						throw CompilerException.fromCurrentPosition(this.tokenizer, "Syntax",
