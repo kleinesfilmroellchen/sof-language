@@ -1,0 +1,5 @@
+# SOF test file - basic tests
+2 -1 1902903 0xff77 0o566 0b10011   # integer literals
+2.5 -3.0478 4.81e+7                  # float literals
+3 4 + # addition
+describes writeln

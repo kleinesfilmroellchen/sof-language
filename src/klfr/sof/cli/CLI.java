@@ -45,29 +45,29 @@ public class CLI {
 		var opt = Options.parseOptions(args);
 
 		IOInterface io = new IOInterface();
-		io.debug = (opt.flags & Options.DEBUG) > 0;
 		io.setInOut(System.in, System.out);
 
-		if (io.debug) {
+		if ((opt.flags & Options.DEBUG) > 0) {
 			try {
 				LogManager.getLogManager().reset();
-				Logger.getLogger("").setLevel(Level.FINEST);
+				var rootLog = Logger.getLogger("");
+				rootLog.setLevel(Level.FINEST);
 				ch = new ConsoleHandler();
 				ch.setLevel(Level.FINE);
-				Logger.getLogger("").addHandler(ch);
+				rootLog.addHandler(ch);
 				var handler = new FileHandler("sof-log.log");
 				handler.setFormatter(new SimpleFormatter());
 				handler.setLevel(Level.FINEST);
-				Logger.getLogger("").addHandler(handler);
+				rootLog.addHandler(handler);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
 
 		// execute
-		try {
-			opt.apply(io);
-		} catch (Throwable t) {
+		var error = opt.apply(io);
+		if (error.isPresent()) {
+			var t = error.get();
 			log.log(Level.SEVERE, String.format("Uncaught Interpreter exception: %s%nStack trace:%n%s",
 					t.getLocalizedMessage(),
 					Arrays.asList(t.getStackTrace()).stream().map(ste -> ste.toString()).reduce((a,b) -> a + System.lineSeparator() + b).orElse("")));
@@ -81,6 +81,7 @@ public class CLI {
 	 * @param interpreter The interpreter to use for the execution.
 	 */
 	public static void doFullExecution(Reader codeStream, Interpreter interpreter, IOInterface io) throws Exception {
+		log.entering(CLI.class.getCanonicalName(), "doFullExecution");
 		String code = "";
 		try {
 			StringWriter writer = new StringWriter();
@@ -93,6 +94,8 @@ public class CLI {
 		interpreter.reset().setCode(code).internal.setIO(io);
 		while (interpreter.canExecute())
 			interpreter.executeOnce();
+		
+		log.exiting(CLI.class.getCanonicalName(), "doFullExecution");
 	}
 
 	public static void exitUnnormal(int status) {

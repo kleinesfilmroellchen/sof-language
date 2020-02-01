@@ -58,10 +58,12 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 	 */
 	@Override
 	public Optional<Throwable> apply(IOInterface io) {
+		io.debug = (this.flags & DEBUG) > 0;
+		log.config(() -> String.format("FLAG :: DEBUG %5s", io.debug ? "on" : "off"));
 		switch (executionType) {
 		case File: {
 			//// File interpretation
-			CLI.log.log(Level.FINE, () -> this.executionStrings.toString());
+			log.log(Level.FINE, () -> this.executionStrings.toString());
 			List<Reader> readers = new ArrayList<>(this.executionStrings.size());
 			for (String filename : this.executionStrings) {
 				try {
@@ -80,6 +82,7 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 			// pipeline ever written *haskell cringing in the corner*
 			return readers.stream().map(reader -> {
 				try {
+					log.log(Level.INFO, () -> String.format("EXECUTE :: %30s", reader));
 					CLI.doFullExecution(reader, interpreterPrototype.instantiateSelf(), io);
 					return null;
 				} catch (Throwable t) {

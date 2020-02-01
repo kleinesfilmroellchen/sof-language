@@ -539,7 +539,6 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	 * 
 	 * @throws CompilerException If something goes wrong at runtime.
 	 */
-	@SuppressWarnings("deprecation")
 	public Interpreter executeOnce() throws CompilerException {
 		log.entering(this.getClass().getCanonicalName(), "executeOnce");
 		final String token = tokenizer.next();
