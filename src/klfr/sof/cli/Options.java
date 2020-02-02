@@ -122,7 +122,7 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 			io.print(">>> ");
 			while (scanner.hasNextLine()) {
 				String code = scanner.nextLine();
-				var curEnd = interpreter.internal.tokenizer().getState().end;
+				var curEnd = interpreter.internal.tokenizer().getState().code.length();
 				// catches all unwanted compilation errors
 				try {
 					// catches "unclosed"-compilation errors which might be resolved by adding more
@@ -149,7 +149,7 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 					}
 				} catch (CompilerException e) {
 					io.println("!!! " + e.getLocalizedMessage());
-					CLI.log.log(Level.SEVERE,
+					log.log(Level.SEVERE,
 							("Compiler Exception occurred.\nUser-friendly message: "
 									+ e.getLocalizedMessage() + "\nStack trace:\n" + Arrays.stream(e.getStackTrace())
 											.map(ste -> ste.toString()).reduce("", (a, b) -> (a + "\n  " + b).strip())

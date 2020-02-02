@@ -404,7 +404,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 			if (param instanceof Nametable)
 				throw CompilerException.fromCurrentPosition(self.tokenizer, "StackAccess",
 						"A nametable cannot be duplicated.");
-			self.stack.push(param);
+			self.stack.push(param.clone());
 		});
 		// debug commands that are effectively no-ops in terms of data and code
 		ptActions.put("describes", self -> self.io.describeStack(self.stack));
