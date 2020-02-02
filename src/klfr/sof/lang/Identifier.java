@@ -45,7 +45,7 @@ public class Identifier implements Stackable {
 		return value;
 	}
 
-	public String toString() {
+	public String tostring() {
 		return getDebugDisplay();
 	}
 

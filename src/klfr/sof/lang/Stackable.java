@@ -8,7 +8,7 @@ import java.io.Serializable;
  * couple of basic methods by default, as Stackable is the root of the SOF type
  * hierarchy and therefore very general.
  */
-public interface Stackable extends Serializable {
+public interface Stackable extends Serializable, Cloneable {
 	/**
 	 * Returns a string that represents this stackable in a debug view, in the most
 	 * extended form.
@@ -19,15 +19,19 @@ public interface Stackable extends Serializable {
 	 * Returns a string that represents this stackable in a concise manner, but
 	 * still in a 'debuggy' way, so with more information than for normal output.
 	 */
-	public String toString();
+	public default String tostring() {
+		return String.format("[%s %h]", this.getClass().getSimpleName(), hashCode());
+	}
 
 	/**
-	 * Returns a string that represents this stackable for output with 'write' etc.
-	 * By default this method will simply return the same result as
-	 * {@code toString()}, but implementors are encouraged to change this behavior.
+	 * Returns a string that represents this stackable for output with 'write' etc.,
+	 * i.e. the normal human/end-user-readable form. Refrain from showing
+	 * interpreter internals through this method. By default this method will simply
+	 * return the same result as {@code tostring()}, but implementors are encouraged
+	 * to change this behavior.
 	 */
 	public default String toOutputString() {
-		return this.toString();
+		return this.tostring();
 	}
 
 	/**

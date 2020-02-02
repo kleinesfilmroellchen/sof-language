@@ -78,7 +78,7 @@ public class Primitive<T> implements Callable {
 		return other.value.equals(this.value);
 	}
 
-	public String toString() {
+	public String tostring() {
 		return this.getDebugDisplay();
 	}
 

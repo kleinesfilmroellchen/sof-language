@@ -67,10 +67,6 @@ public class Nametable implements Stackable {
 				+ "└" + Interpreter.line66.substring(2) + "┘"; // bottom of the table
 	}
 
-	public String toString() {
-		return "[Nametable " + Integer.toHexString(hashCode()) + "]";
-	}
-
 	public Stackable clone() {
 		// hell fucking yes 'functional' programming
 		return mappingStream().map(x -> Map.entry(x.getKey().clone(), x.getValue().clone())).collect(

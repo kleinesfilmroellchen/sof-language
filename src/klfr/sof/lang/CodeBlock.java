@@ -17,11 +17,11 @@ public class CodeBlock implements Callable {
 
 	@Override
 	public String getDebugDisplay() {
-		return "CodeBlock{" + getCode() + "}";
+		return String.format("[CodeBlock { %s } %h]", getCode(), hashCode());
 	}
 
-	public String toString() {
-		return "[CodeBlock " + this.hashCode() + "]";
+	public String tostring() {
+		return "[CodeBlock { " + (code.length() > 10 ? (code.substring(0, 10) + " /...") : code) + " } ]";
 	}
 
 	/** Returns the actual code that the code block refers to. */

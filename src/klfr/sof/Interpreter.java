@@ -6,9 +6,11 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.Deque;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
+import java.util.TreeMap;
 import java.util.function.*;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -149,7 +151,8 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 
 	//// PATTERNS
 	public static final Pattern intPattern = Pattern.compile("((\\+|\\-)?(0[bhxod])?[0-9a-fA-F]+)|0");
-	public static final Pattern doublePattern = Pattern.compile("(\\+|\\-)?(?:([0-9]+)\\.([0-9]+)([eE][\\-\\+][0-9]+)?)|0");
+	public static final Pattern doublePattern = Pattern
+			.compile("(\\+|\\-)?(?:([0-9]+)\\.([0-9]+)([eE][\\-\\+][0-9]+)?)|0");
 	public static final Pattern stringPattern = Pattern.compile("\"[^\"]*\"");
 	public static final Pattern boolPattern = Pattern.compile("True|False|true|false");
 	public static final Pattern tokenPattern = Pattern.compile("(" + stringPattern.pattern() + ")|(\\S+)");// \\b{g}
@@ -323,7 +326,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		return "┌─" + line66.substring(0, 37) + "─┐" + System.lineSeparator()
 				+ stack.stream().collect(() -> new StringBuilder(),
 						(str, elmt) -> str.append(
-								String.format("│%38s │%n├─" + line66.substring(0, 37) + "─┤%n", elmt.toString(), " ")),
+								String.format("│%38s │%n├─" + line66.substring(0, 37) + "─┤%n", elmt.tostring(), " ")),
 						(e1, e2) -> e1.append(e2)).toString();
 	}
 
@@ -351,8 +354,8 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	 * Helper function to execute call and push return value of callable to stack if
 	 * possible.
 	 */
-	private void doCall(final Stackable reference) {
-		final var retval = ((Callable) reference).getCallProvider().call(this);
+	private void doCall(final Callable reference) {
+		final var retval = reference.getCallProvider().call(this);
 		if (retval != null)
 			this.stack.push(retval);
 	}
@@ -364,10 +367,11 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	 */
 	// higher load factor can be used b/c of small number of entries where
 	// collisions are unlikely
-	private static Map<String, PTAction> ptActions = new Hashtable<>(30, 0.8f);
+	private static Map<String, PTAction> ptActions = new Hashtable<>(30, 0.9f);
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//// PT ACTION DEFINITION BEGIN
 	static {
+		/// OPERATIONS
 		ptActions.put("+", self -> {
 			// pop 2, add, push
 			final Stackable paramright = self.stack.pop(), paramleft = self.stack.pop();
@@ -462,14 +466,14 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 					if (reference instanceof Nametable) {
 						// we found a namespace
 						currentNametable = (Nametable) reference;
-						namespaceString += reference.toString() + ".";
+						namespaceString += reference.tostring() + ".";
 					} else if (reference instanceof Callable) {
 						// we found the end of the chain
-						self.doCall(reference);
+						self.doCall((Callable) reference);
 						break;
 					} else if (reference == null) {
 						throw CompilerException.fromCurrentPosition(self.tokenizer, "Name",
-								"Identifier " + param.toString() + " is not defined"
+								"Identifier " + param.tostring() + " is not defined"
 										+ (namespaceString.length() == 0 ? "" : (" in " + namespaceString)) + ".");
 					}
 				} else if (param instanceof Callable) {
@@ -482,7 +486,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 				} else {
 					self.stack.push(param);
 					throw CompilerException.fromCurrentPosition(self.tokenizer, "Type",
-							param.toString() + " is not callable.");
+							param.tostring() + " is not callable.");
 				}
 			} while (true);
 		});
@@ -529,7 +533,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		} catch (final ClassCastException e) {
 			throw CompilerException.fromCurrentPosition(this.tokenizer, "Type",
 					String.format("Cannot perform function '%s' on arguments %s and %s: wrong type.", funcName,
-							arg1.toString(), arg2.toString()));
+							arg1.tostring(), arg2.tostring()));
 		}
 	}
 

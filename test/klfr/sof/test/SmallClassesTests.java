@@ -33,7 +33,7 @@ class SmallClassesTests {
 		assertEquals(recievedP, p);
 		assertTrue(nt.identifiers().contains(id));
 		assertDoesNotThrow(() -> nt.getDebugDisplay());
-		assertDoesNotThrow(() -> nt.toString());
+		assertDoesNotThrow(() -> nt.tostring());
 		Nametable clone = (Nametable) assertDoesNotThrow(() -> nt.clone());
 		assertTrue(clone.identifiers().contains(id));
 		assertTrue(nt.hasMapping(id));
@@ -44,7 +44,7 @@ class SmallClassesTests {
 	void testCodeBlock() {
 		var cb = assertDoesNotThrow(() -> new CodeBlock(0, 12, "abc def ghi j k"));
 		assertDoesNotThrow(() -> cb.getDebugDisplay());
-		assertDoesNotThrow(() -> cb.toString());
+		assertDoesNotThrow(() -> cb.tostring());
 		// TODO insert equals test
 		var clone = assertDoesNotThrow(() -> cb.clone());
 		// TODO test call provider somewhere else

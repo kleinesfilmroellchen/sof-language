@@ -17,7 +17,7 @@ public class SObject extends Nametable {
 		return getName() + ":" + System.lineSeparator() + super.getDebugDisplay();
 	}
 
-	public String toString() {
+	public String tostring() {
 		return "[" + getName() + " Object]";
 	}
 

@@ -47,7 +47,7 @@ class IdentifierTest {
 		assertTrue(i.equals(i));
 		assertFalse(i.equals(new Identifier("bcd")));
 		assertTrue(i.equals(clone));
-		assertDoesNotThrow(() -> i.toString() + i.toOutputString());
+		assertDoesNotThrow(() -> i.tostring() + i.toOutputString());
 	}
 
 }

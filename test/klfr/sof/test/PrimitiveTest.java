@@ -31,7 +31,7 @@ class PrimitiveTest {
 		assertTrue(() -> nums.size() > 0);
 		assertDoesNotThrow(() -> i.getValue());
 		assertDoesNotThrow(() -> i.getDebugDisplay());
-		assertDoesNotThrow(() -> i.toString());
+		assertDoesNotThrow(() -> i.tostring());
 		assertDoesNotThrow(() -> i.toOutputString());
 		Primitive<Long> clone = (Primitive<Long>) assertDoesNotThrow(() -> i.clone());
 		assertTrue(i.equals(clone));
