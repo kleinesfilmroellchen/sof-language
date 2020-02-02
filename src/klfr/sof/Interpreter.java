@@ -396,6 +396,36 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 			final var result = self.executeFunction(paramleft, paramright, Operator.divide, "/");
 			self.stack.push(result);
 		});
+		// generic function that executes a numeric comparison given to it.
+		final Function<BiFunction<Double, Double, Boolean>, PTAction> comparison = operator -> self -> {
+			// pop 2, compare by greater than
+			final var rightS = self.stack.popTyped(Primitive.class, "Number");
+			final var leftS = self.stack.popTyped(Primitive.class, "Number");
+			self.check(
+					rightS.getValue() instanceof Double || rightS.getValue() instanceof Long
+							|| leftS.getValue() instanceof Double || leftS.getValue() instanceof Long,
+					() -> err("Type",
+							f("\"%s\" or \"%s\" is not a Number.", leftS.toOutputString(), rightS.toOutputString())));
+			// retrieve values, first unbox into Number, then unbox into primitive type
+			final var right = ((Number) rightS.getValue()).doubleValue();
+			final var left = ((Number) leftS.getValue()).doubleValue();
+			// apply the given operator and push onto stack
+			self.stack.push(new Primitive<Boolean>(operator.apply(left, right)));
+		};
+		// use the upper generic function for short specification:
+		// 1 | HASKELL: *laughs at Java* You fool! This is my business, /
+		// | | | you shall not rob me of my ideas! /
+		// | | JAVA: *whimsically* But I wish to be functional! /
+		// | | | I improve this way, am safer and DRYer! /
+		// 5 | HASKELL: But behold! /
+		// | | | Observe this mess--no proper Functional Language /
+		// | | | looks like this! I shall not speak to you again, /
+		// | | | for my eyes bleed in your presence! /
+		// | | [Exit HASKELL]
+		ptActions.put(">", comparison.apply(Operator.greaterThan));
+		ptActions.put("<", comparison.apply(Operator.lessThan));
+		ptActions.put(">=", comparison.apply(Operator.greaterEqualThan));
+		ptActions.put("<=", comparison.apply(Operator.lessEqualThan));
 		// pop and discard
 		ptActions.put("pop", self -> self.stack.pop());
 		// peek and push, thereby duplicate
@@ -405,6 +435,12 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 				throw CompilerException.fromCurrentPosition(self.tokenizer, "StackAccess",
 						"A nametable cannot be duplicated.");
 			self.stack.push(param.clone());
+		});
+		ptActions.put("swap", self -> {
+			var eltop = self.stack.pop();
+			var elbot = self.stack.pop();
+			self.stack.push(elbot);
+			self.stack.push(eltop);
 		});
 		// debug commands that are effectively no-ops in terms of data and code
 		ptActions.put("describes", self -> self.io.describeStack(self.stack));
@@ -421,33 +457,73 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 			// as the topmost element of the stack and the value directly below.
 			final var targetScope = scope.apply(self);
 			// pop value, define
-			final var idS = self.stack.pop();
+			final var id = self.stack.popTyped(Identifier.class, "Identifier");
 			final var valS = self.stack.pop();
-			final var id = (Identifier) idS;
 			targetScope.put(id, valS);
 		};
-		// TODO change this to define into FNT if there exists a definition there
 		ptActions.put("def", definer.apply(self -> {
-			final var idS = self.stack.pop();
-			self.check(idS instanceof Identifier,
-					() -> err("Type", "\"" + idS.toString() + "\" is not an identifier."));
+			final var idS = self.stack.popTyped(Identifier.class, "Identifier");
 			self.stack.push(idS);
-			if (self.stack.namingScope().hasMapping((Identifier) idS))
+			if (self.stack.namingScope().hasMapping(idS))
 				return self.stack.namingScope();
 			return self.stack.localScope();
 		}));
 		ptActions.put("globaldef", definer.apply(self -> self.stack.globalNametable()));
 
 		ptActions.put("if", self -> {
-			final var cond = self.stack.pop();
-			final var callable = self.stack.pop();
-			self.check(cond instanceof Primitive && ((Primitive) cond).getValue() instanceof Boolean,
-					() -> err("Type", "\"" + cond.toString() + "\" is not a boolean."));
-			final Boolean tru = (Boolean) ((Primitive) cond).getValue();
+			final var cond = self.stack.popTyped(Primitive.class, "Boolean");
+			final var callable = self.stack.popTyped(Callable.class, "Callable");
+			self.check(cond.getValue() instanceof Boolean,
+					() -> err("Type", "\"" + cond.tostring() + "\" is not a Boolean."));
+			final Boolean tru = (Boolean) cond.getValue();
 			if (tru) {
-				self.check(callable instanceof Callable,
-						() -> err("Type", "\"" + callable.toString() + "\" is not callable."));
 				self.doCall(callable);
+			}
+		});
+
+		ptActions.put("ifelse", self -> {
+			final var elseCallable = self.stack.popTyped(Callable.class, "Callable");
+			final var cond = self.stack.popTyped(Primitive.class, "Boolean");
+			final var callable = self.stack.popTyped(Callable.class, "Callable");
+			self.check(cond.getValue() instanceof Boolean,
+					() -> err("Type", "\"" + cond.tostring() + "\" is not a Boolean."));
+			final Boolean tru = (Boolean) cond.getValue();
+			if (tru) {
+				self.doCall(callable);
+			} else {
+				self.doCall(elseCallable);
+			}
+		});
+
+		ptActions.put("switch", self -> {
+			// first argument is the default action callable
+			final var defaultCallable = self.stack.popTyped(Callable.class, "Callable");
+			// loop to throw or switch end marker
+			while (true) {
+				// get case and corresponding body
+				Callable _case = self.stack.popTyped(Callable.class, "Callable"),
+						body = self.stack.popTyped(Callable.class, "Callable");
+				// execute case
+				self.doCall(_case);
+				final var result = self.stack.popTyped(Primitive.class, "Boolean");
+				self.check(result.getValue() instanceof Boolean,
+						() -> err("Type", "\"" + result.tostring() + "\" is not a Boolean."));
+				final Boolean tru = (Boolean) result.getValue();
+				// ... and check if successful; if so, exit
+				if (tru) {
+					self.doCall(body);
+					break;
+				} else {
+					final var elt = self.stack.pop();
+					if (elt instanceof Identifier && ((Identifier) elt).getValue().equals("switch::")) {
+						// switch end was reached without executing any case: execute default callable
+						self.doCall(defaultCallable);
+						break;
+					} else {
+						// just another pair of case and body; do that in the next loop
+						self.stack.push(elt);
+					}
+				}
 			}
 		});
 

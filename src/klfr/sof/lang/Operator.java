@@ -79,4 +79,12 @@ public interface Operator {
 
 	public static final Operator subtract = (a, b) -> numericOperation((Primitive<? extends Number>) a,
 			(Primitive<? extends Number>) b, (x, y) -> x - y, (x, y) -> x - y);
+
+	public static final BiFunction<Double, Double, Boolean> lessThan = (a,b) -> a < b;
+
+	public static final BiFunction<Double, Double, Boolean> greaterThan = (a, b) -> a > b;
+
+	public static final BiFunction<Double, Double, Boolean> greaterEqualThan = (a, b) -> a >= b;
+
+	public static final BiFunction<Double, Double, Boolean> lessEqualThan = (a, b) -> a <= b;
 }

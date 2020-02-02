@@ -70,6 +70,28 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 	}
 
 	/**
+	 * Pops a value with given type from the stack, or fails if the type does not
+	 * match.
+	 * 
+	 * @param <T> The Stackable subtype expected.
+	 * @param t   The class of the type, to allow for runtime generic type checking.
+	 *            Thanks, type erasure! /s
+	 * @param name The human-readable name of the type, to generate error messages.
+	 * @return The topmost element on the stack; of type T.
+	 * @throws CompilerException if the popped element is not of type T, or if pop()
+	 *                           itself failed.
+	 */
+	@SuppressWarnings("unchecked")
+	public <T extends Stackable> T popTyped(Class<T> t, String name) throws CompilerException {
+		final Stackable val = pop();
+		if (t.isInstance(val)) {
+			return (T) val;
+		} else
+			throw CompilerException.fromIncompleteInfo("Type",
+					String.format("\"%s\" is not a %s.", val.toOutputString(), name));
+	}
+
+	/**
 	 * Forces the stack to pop its topmost element, regardless of stack access
 	 * restrictions. Users should use this function with great caution.
 	 * 
