@@ -6,17 +6,17 @@ An experimental programming language concieved and implemented by kleinesfilmrö
 
 This document will not explain the concept of a stack, please consult The Internet for information on stacks in computer science.
 
-**This is a Work In Progress (WIP). Currently, the language is not turing-complete (lacks any method of control flow divergence, decision-making etc.), which is the main goal at the present time. Also, the program is extremely buggy and should not be used for anything serious.** If you cause a nuclear war and the inevitable destruction of mankind by using this software, I am not to blame.
+**This is a Work In Progress (WIP). The program is extremely buggy and should not be used for anything serious.** If you cause a nuclear war and the inevitable destruction of mankind by using this software, I am not to blame.
 
 ### Installation and CLI usage
 
-This is an Eclipse project, so I recommend cloning it with git and importing it into your workspace (again, there are great explanations for both of these). After building normally into the `/bin` folder, you should be able to execute the main CLI with a normal launch configuration. Alternatively, use the command line
+This is an Eclipse project, so I recommend cloning it with git and importing it into your workspace (again, there are great explanations for both of these). After building normally into the `/bin` folder, you should be able to execute the main CLI class with a normal launch configuration. Alternatively, use the command line
 
 ```
 java -p bin -m sof/klfr.sof.cli.CLI [arguments]
 ```
 
-assuming that you have java 12+ on your $PATH and you are inside the root folder of the project. Replace \[arguments\] with whatever arguments you want to give to SOF
+assuming that you have java 12+ on your $PATH and you are inside the root folder of the project. Replace \[arguments\] with whatever arguments you want to give to SOF.
 
 The command line tool currently supports the following arguments and options (taken from help output):
 
@@ -42,7 +42,7 @@ options:
              Execute <command> and exit.
              
 When used without execution-starting arguments (-c
-or filename), sof is started in interactive mode.
+or filename), SOF is started in interactive mode.
 
 Quit the program with ^C.
 ```
