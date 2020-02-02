@@ -10,15 +10,13 @@ This document will not explain the concept of a stack, please consult The Intern
 
 ### Installation and CLI usage
 
-This is an Eclipse project, so I recommend cloning it with git and importing it into your workspace (again, there are great explanations for both of these). After building normally into the `/bin` folder, you should be able to execute the main CLI with the specified launch configuration. Alternatively, use the command line
+This is an Eclipse project, so I recommend cloning it with git and importing it into your workspace (again, there are great explanations for both of these). After building normally into the `/bin` folder, you should be able to execute the main CLI with a normal launch configuration. Alternatively, use the command line
 
 ```
-"Path\To\java.exe" -Dfile.encoding=UTF-8 -p "Path\To\sof-language\bin" -classpath "USERDIR\.p2\pool\plugins\org.junit.jupiter.api_5.5.1.v20190826-0900.jar;USERDIR\.p2\pool\plugins\org.junit.jupiter.engine_5.5.1.v20190826-0900.jar;USERDIR\.p2\pool\plugins\org.junit.jupiter.migrationsupport_5.5.1.v20190826-0900.jar;USERDIR\.p2\pool\plugins\org.junit.jupiter.params_5.5.1.v20190826-0900.jar;USERDIR\.p2\pool\plugins\org.junit.platform.commons_1.5.1.v20190826-0900.jar;USERDIR\.p2\pool\plugins\org.junit.platform.engine_1.5.1.v20190826-0900.jar;USERDIR\.p2\pool\plugins\org.junit.platform.launcher_1.5.1.v20190826-0900.jar;USERDIR\.p2\pool\plugins\org.junit.platform.runner_1.5.1.v20190826-0900.jar;USERDIR\.p2\pool\plugins\org.junit.platform.suite.api_1.5.1.v20190826-0900.jar;USERDIR\.p2\pool\plugins\org.junit.vintage.engine_5.5.1.v20190826-0900.jar;USERDIR\.p2\pool\plugins\org.opentest4j_1.2.0.v20190826-0900.jar;USERDIR\.p2\pool\plugins\org.apiguardian_1.1.0.v20190826-0900.jar;USERDIR\.p2\pool\plugins\org.junit_4.12.0.v201504281640\junit.jar;USERDIR\.p2\pool\plugins\org.hamcrest.core_1.3.0.v20180420-1519.jar" -m sof/klfr.sof.cli.CLI -d
+java -p bin -m sof/klfr.sof.cli.CLI [arguments]
 ```
 
-where you need to input your java directory (if the java bin folder is not on your PATH), the path to your compiled class files and your USERDIR which is where the JUnit5 jars should reside. If you are on Mac or Linux, replace the 'java.exe' with the appropriate binary's name.
-
-Alternatively, do a JAR export based on the `sof.jardesc` JAR description file and the `manifest.mf` JAR manifest and run the jar with a simple `java -jar sof.jar`. This is the best solution as it makes for a very small archive without test files or the need to install JUnit5.
+assuming that you have java 12+ on your $PATH and you are inside the root folder of the project. Replace \[arguments\] with whatever arguments you want to give to SOF
 
 The command line tool currently supports the following arguments and options (taken from help output):
 
@@ -63,7 +61,7 @@ This means that SOF has the following main features:
 
 To get a taste of SOF, here are several sample programs written in SOF. Note that not every program might work with the current state of the interpreter, as the interpreter is in early alpha development and not complete by any means.
 
-```
+```sof
 # fibbonachi
 {
 	n def
@@ -94,19 +92,19 @@ To get a taste of SOF, here are several sample programs written in SOF. Note tha
 
 ```
 
-```
+```sof
 # factorial
 
 {
 	dup dup # arg*3
-	{ 1 return } { 2 < } if # arg*2
+	{ 1 return } 2 < if # arg*2
 	1 - fact . * return
 } 1 function fact def
 
 "enter a number: " write input convert:int . fact .
 ```
 
-```
+```sof
 # play a guessing game
 15 number def
 0 guess def
