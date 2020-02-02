@@ -1,6 +1,7 @@
 package klfr.sof;
 
 import java.util.Scanner;
+import java.util.regex.Pattern;
 
 import klfr.sof.Tokenizer.TokenizerState;
 
@@ -82,9 +83,9 @@ public class CompilerException extends RuntimeException {
 	public static CompilerException fromCurrentPosition(Tokenizer expressionInfo, String name, String reason) {
 		int linenum = expressionInfo.getCurrentLine();
 		var allCode = expressionInfo.getCode();
-		var expressionLine = allCode.split(System.lineSeparator())[linenum - 1];
-		return CompilerException.fromFormatMessage(expressionLine, expressionInfo.getIndexInsideLine() + 1,
-				expressionInfo.getCurrentLine(), name == null ? "Interpreter" : name, reason);
+		var expressionLine = Pattern.compile("$", Pattern.MULTILINE).split(allCode)[linenum - 1];
+		return CompilerException.fromFormatMessage(expressionLine, expressionInfo.getIndexInsideLine(),
+				linenum, name == null ? "Interpreter" : name, reason);
 	}
 
 	/**
