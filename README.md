@@ -21,24 +21,30 @@ assuming that you have java 12+ on your $PATH and you are inside the root folder
 The command line tool currently supports the following arguments and options (taken from help output):
 
 ```
-usage: sof [-h|-v]
-       sof [-d] [-c command]
-       sof [-d] filename [...filenames]
-       sof [-d]
+sof - Interpreter for Stack with Objects and
+      Functions (SOF) Programming Language.
+usage: sof [-h|-v] [-d] [-c command]
+           filename [...filenames]
 
 positional arguments:
-   filename  Path to a file to be read and executed. Can
-             be a list of files that are executed in order.
-
+   filename  Path to a file to be read and
+             executed. Can be a list of files that
+             are executed in order.
+             
 options:
    --help, -h
              Display this help message and exit.
    --version, -v
              Display version information and exit.
-   -d        Execute in debug mode. Read the manual for
-             more information.
-   --command <command>, -c <command>
-             Execute command and exit.
+   -d        Execute in debug mode. Read the manual
+             for more information.
+   --command=<command>, -c <command>
+             Execute <command> and exit.
+             
+When used without execution-starting arguments (-c
+or filename), sof is started in interactive mode.
+
+Quit the program with ^C.
 ```
 
 ## 1. What is SOF?
