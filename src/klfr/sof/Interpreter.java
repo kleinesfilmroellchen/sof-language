@@ -512,6 +512,10 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 				// ... and check if successful; if so, exit
 				if (tru) {
 					self.doCall(body);
+					// remove elements until identifier "switch"
+					var elt = self.stack.pop();
+					while (!(elt instanceof Identifier && ((Identifier) elt).getValue().equals("switch::")))
+						elt = self.stack.pop();
 					break;
 				} else {
 					final var elt = self.stack.pop();
