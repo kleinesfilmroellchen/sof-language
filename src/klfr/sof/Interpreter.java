@@ -468,7 +468,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 				return self.stack.namingScope();
 			return self.stack.localScope();
 		}));
-		ptActions.put("globaldef", definer.apply(self -> self.stack.globalNametable()));
+		ptActions.put("globaldef", definer.apply(self -> self.stack.namingScope()));
 
 		ptActions.put("if", self -> {
 			final var cond = self.stack.popTyped(Primitive.class, "Boolean");
