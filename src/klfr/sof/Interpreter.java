@@ -439,8 +439,8 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		ptActions.put("swap", self -> {
 			var eltop = self.stack.pop();
 			var elbot = self.stack.pop();
-			self.stack.push(elbot);
 			self.stack.push(eltop);
+			self.stack.push(elbot);
 		});
 		// debug commands that are effectively no-ops in terms of data and code
 		ptActions.put("describes", self -> self.io.describeStack(self.stack));
