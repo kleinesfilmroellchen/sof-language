@@ -530,6 +530,20 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 				}
 			}
 		});
+		ptActions.put("while", self -> {
+			final var condCallable = self.stack.popTyped(Callable.class, "Callable");
+			final var bodyCallable = self.stack.popTyped(Callable.class, "Callable");
+			var _continue = true;
+			while (_continue) {
+				self.doCall(condCallable);
+				var preContinue = self.stack.popTyped(Primitive.class, "Callable");
+				self.check(preContinue.getValue() instanceof Boolean,
+						() -> err("Type", f("\"%s\" is not a Callable", preContinue.tostring())));
+				_continue = (Boolean) preContinue.getValue();
+				if (_continue)
+					self.doCall(bodyCallable);
+			}
+		});
 
 		///// CALL OPERATOR /////
 		ptActions.put(".", self -> {
