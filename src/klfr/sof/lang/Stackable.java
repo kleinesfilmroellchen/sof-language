@@ -112,7 +112,7 @@ public interface Stackable extends Serializable, Cloneable, Comparable<Stackable
 	 *         annotation.
 	 */
 	public default String typename() {
-		return this.getClass().getAnnotation(StackableName.class).value();
+		return this.getClass().getAnnotation(StackableName.class) != null ? this.getClass().getAnnotation(StackableName.class).value() : "Stackable";
 	}
 
 	/**
