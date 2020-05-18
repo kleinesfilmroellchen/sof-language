@@ -8,36 +8,119 @@ import java.io.Serializable;
  * couple of basic methods by default, as Stackable is the root of the SOF type
  * hierarchy and therefore very general.
  */
-public interface Stackable extends Serializable, Cloneable {
-	/**
-	 * Returns a string that represents this stackable in a debug view, in the most
-	 * extended form.
-	 */
-	public String getDebugDisplay();
+@StackableName("Value")
+public interface Stackable extends Serializable, Cloneable, Comparable<Stackable> {
 
 	/**
-	 * Returns a string that represents this stackable in a concise manner, but
-	 * still in a 'debuggy' way, so with more information than for normal output.
+	 * An enum which represents the different extensivenesses for debug strings of
+	 * Stackables. Each extensiveness has a character limit and Stackables should
+	 * only return that many characters for their debug string in that particular
+	 * extensiveness. The main use of this enum is in
+	 * {@link Callable#toDebugString(DebugStringExtensiveness)}.
 	 */
-	public default String tostring() {
-		return String.format("[%s %h]", this.getClass().getSimpleName(), hashCode());
+	public static enum DebugStringExtensiveness {
+		/**
+		 * Most extensive debug string, to be used when viewing individual values. No
+		 * length restriction.
+		 */
+		Full("Most extensive debug string, to be used when viewing individual values. No length restriction.",
+				Integer.MAX_VALUE),
+		/**
+		 * Compact debug string with important information, to be used in value lists
+		 * like Stack and NTs.
+		 */
+		Compact("Compact debug string with important information, to be used in value lists like Stack and NTs.", 30),
+		/** Only show internal type descriptor; shortest debug string. */
+		Type("Only show internal type descriptor; shortest debug string.", 10);
+
+		public final String description;
+		public final int maxlength;
+
+		private DebugStringExtensiveness(String description, int maxlength) {
+			this.description = description;
+			this.maxlength = maxlength;
+		}
+
+		/**
+		 * Enforces this extensiveness' length restriction onto the given string by
+		 * trimming from the end.
+		 */
+		public String ensureLength(String s) {
+			return s.substring(0, Math.min(s.length(), maxlength));
+		}
 	}
 
 	/**
-	 * Returns a string that represents this stackable for output with 'write' etc.,
-	 * i.e. the normal human/end-user-readable form. Refrain from showing
-	 * interpreter internals through this method. By default this method will simply
-	 * return the same result as {@code tostring()}, but implementors are encouraged
-	 * to change this behavior.
+	 * Returns the debug string for this Stackable. The extensiveness of the string
+	 * is determined by the enum parameter.
+	 * 
+	 * @param e The debug string extensiveness. Refer to the enum documentation for
+	 *          information about the different extensivenesses.
+	 * @return A debug string for displayal to the SOF interpreter system developer,
+	 *         as in logger output, describe(s) PT calls etc.
 	 */
-	public default String toOutputString() {
-		return this.tostring();
+	public default String toDebugString(DebugStringExtensiveness e) {
+		return toDebugString(this, e);
 	}
 
 	/**
-	 * Every Stackable must be able to clone itself.
+	 * Returns the (default implementation) debug string for a Stackable. The
+	 * extensiveness of the string is determined by the enum parameter.
+	 * 
+	 * @param e The debug string extensiveness. Refer to the enum documentation for
+	 *          information about the different extensivenesses.
+	 * @param s The Stackable to compute the debug string for.
+	 * @return A debug string for displayal to the SOF interpreter system developer,
+	 *         as in logger output, describe(s) PT calls etc.
+	 */
+	public static String toDebugString(Stackable s, DebugStringExtensiveness e) {
+		// TODO: use Java 14 and expression switches
+		switch (e) {
+			case Type:
+				return e.ensureLength(s.typename());
+			case Compact:
+			case Full:
+				return e.ensureLength(String.format("[%s %h]", s.getClass().getSimpleName(), s.hashCode()));
+		}
+		// never hit, otherwise the switch won't compile
+		return "";
+	}
+
+	/**
+	 * Return the end-user representation of this Stackable, to be used for printing
+	 * and converting to String type (StringPrimitive).
+	 * 
+	 * @return the end-user representation of this Stackable, to be used for
+	 *         printing and converting to String type (StringPrimitive).
+	 */
+	public default String print() {
+		return this.toDebugString(DebugStringExtensiveness.Full);
+	}
+
+	/**
+	 * Every Stackable must be able to make a copy of itself.
 	 * 
 	 * @return An exact copy of this Stackable.
 	 */
-	public Stackable clone();
+	public Stackable copy();
+
+	/**
+	 * Returns the internal type name of this Stackable given with the StackableName
+	 * annotation.
+	 * 
+	 * @return the internal type name of this Stackable given with the StackableName
+	 *         annotation.
+	 */
+	public default String typename() {
+		return this.getClass().getAnnotation(StackableName.class).value();
+	}
+
+	/**
+	 * Compares this stackable to another stackable, with the ususal Comparable
+	 * rules: greater than zero if self greater than other
+	 */
+	@Override
+	public default int compareTo(Stackable o) {
+		return this.hashCode() - o.hashCode();
+	}
 }

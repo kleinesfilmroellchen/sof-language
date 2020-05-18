@@ -55,7 +55,7 @@ public class CompilerException extends RuntimeException {
 	 * @param name   Name of exception
 	 * @param reason Why the exception occurred
 	 */
-	public static CompilerException fromIncompleteInfo(String name, String reason) {
+	public static CompilerException makeIncomplete(String name, String reason) {
 		return new CompilerException(name + " " + reason, false);
 	}
 

@@ -13,12 +13,16 @@ public class SObject extends Nametable {
 		this.name = name;
 	}
 
-	public String getDebugDisplay() {
-		return getName() + ":" + System.lineSeparator() + super.getDebugDisplay();
-	}
-
-	public String tostring() {
-		return "[" + getName() + " Object]";
+	@Override
+	public String toDebugString(DebugStringExtensiveness e) {
+		switch (e) {
+			case Full:
+				return "Object " + getName() + ":" + System.lineSeparator() + super.toDebugString(e);
+			case Compact:
+				return "Obj(" + super.toDebugString(e) + ")";
+			default:
+				return super.toDebugString(e);
+		}
 	}
 
 }

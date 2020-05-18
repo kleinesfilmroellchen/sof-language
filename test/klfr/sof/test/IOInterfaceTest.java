@@ -7,6 +7,7 @@ import java.util.Locale;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import klfr.sof.IOInterface;
+import klfr.sof.lang.BoolPrimitive;
 import klfr.sof.lang.Nametable;
 import klfr.sof.lang.Primitive;
 import klfr.sof.lang.Stack;
@@ -66,7 +67,7 @@ class IOInterfaceTest {
 		io.print(new char[] { 'a', 'b', 'c' });
 		assertEquals("abc", p.toString(), "Char array print");
 		p.getBuffer().setLength(0);
-		var b = new Primitive<Boolean>(false);
+		var b = BoolPrimitive.createBoolPrimitive(false);
 		io.print(b);
 		assertEquals(b.toString(), p.toString(), "Object print");
 		p.getBuffer().setLength(0);

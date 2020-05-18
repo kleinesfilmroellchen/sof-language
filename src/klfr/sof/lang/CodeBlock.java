@@ -16,12 +16,15 @@ public class CodeBlock implements Callable {
 	}
 
 	@Override
-	public String getDebugDisplay() {
-		return String.format("[CodeBlock { %s } %h]", getCode(), hashCode());
-	}
-
-	public String tostring() {
-		return "[CodeBlock { " + (code.length() > 10 ? (code.substring(0, 10) + " /...") : code) + " } ]";
+	public String toDebugString(DebugStringExtensiveness e) {
+		switch (e) {
+			case Full:
+				return String.format("[CodeBlock { %s } %h]", getCode(), hashCode());
+			case Compact:
+				return "[CodeBlk { " + (code.length() > 16 ? (code.substring(0, 12) + " ...") : code) + " } ]";
+			default:
+				return Stackable.toDebugString(this, e);
+		}
 	}
 
 	/** Returns the actual code that the code block refers to. */

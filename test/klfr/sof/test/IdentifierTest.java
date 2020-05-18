@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 import klfr.sof.CompilerException;
 import klfr.sof.lang.Identifier;
+import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 
 class IdentifierTest {
 
@@ -22,7 +23,7 @@ class IdentifierTest {
 	@Test
 	void testGetDebugDisplay() {
 		Identifier i = assertDoesNotThrow(() -> new Identifier("test'"));
-		assertEquals("test'", i.getDebugDisplay(), "Basic identifier getdebug test");
+		assertEquals("test'", i.print(), "Basic identifier print test");
 	}
 
 	@Test
@@ -43,11 +44,11 @@ class IdentifierTest {
 	void testOther() {
 		Identifier i = new Identifier("abc");
 		assertDoesNotThrow(() -> i.hashCode());
-		Identifier clone = (Identifier) assertDoesNotThrow(() -> i.clone());
+		Identifier clone = (Identifier) assertDoesNotThrow(() -> i.copy());
 		assertTrue(i.equals(i));
 		assertFalse(i.equals(new Identifier("bcd")));
 		assertTrue(i.equals(clone));
-		assertDoesNotThrow(() -> i.tostring() + i.toOutputString());
+		assertDoesNotThrow(() -> i.print() + i.toDebugString(DebugStringExtensiveness.Full));
 	}
 
 }

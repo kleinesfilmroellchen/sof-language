@@ -70,7 +70,8 @@ public class SOFunction extends CodeBlock {
     }
 
     @Override
-    public String getDebugDisplay() {
+    public String toDebugString(DebugStringExtensiveness e) {
+        // TODO: comebak
         return String.format("Function/%d{", this.arguments) + this.getCode() + "}";
     }
 

@@ -11,7 +11,7 @@ import klfr.sof.Interpreter;
  * 
  * @author klfr
  */
-public class Identifier implements Stackable {
+public class Identifier implements Callable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -35,18 +35,26 @@ public class Identifier implements Stackable {
 	public Identifier(String value) throws CompilerException {
 		value = value.trim();
 		if (!isValidIdentifier(value))
-			throw CompilerException.fromIncompleteInfo("Syntax", "\"" + value + "\" is not a valid identifier");
+			throw CompilerException.makeIncomplete("Syntax", "\"" + value + "\" is not a valid identifier");
 		this.value = value;
 	}
 
 	@Override
-	public String getDebugDisplay() {
-		// literally this is it
-		return value;
+	public String toDebugString(DebugStringExtensiveness e) {
+		switch (e) {
+			case Full:
+				return "Identifier(" + value + ")";
+			case Compact:
+				return value;
+			case Type:
+			default:
+				return Stackable.toDebugString(this, e);
+		}
 	}
 
-	public String tostring() {
-		return getDebugDisplay();
+	@Override
+	public String print() {
+		return value;
 	}
 
 	@Override
@@ -55,7 +63,7 @@ public class Identifier implements Stackable {
 	}
 
 	@Override
-	public Stackable clone() {
+	public Stackable copy() {
 		return new Identifier(this.value);
 	}
 
@@ -67,6 +75,20 @@ public class Identifier implements Stackable {
 
 	public static boolean isValidIdentifier(String id) {
 		return Interpreter.identifierPattern.matcher(id).matches();
+	}
+
+	@Override
+	public CallProvider getCallProvider() {
+		return interpreter -> {
+			// look up this identifier in the innermost nametable
+			final var value = interpreter.internal.stack().lookup(this);
+			// if no mapping, throw error
+			if (value == null) {
+				throw CompilerException.fromCurrentPosition(interpreter.internal.tokenizer(), "Name", "Identifier " + this.print()
+						+ " is not defined.");
+			}
+			return value;
+		};
 	}
 
 }

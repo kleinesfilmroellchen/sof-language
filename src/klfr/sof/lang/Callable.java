@@ -1,5 +1,9 @@
 package klfr.sof.lang;
 
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
 import klfr.sof.Interpreter;
 
 /**
@@ -10,6 +14,7 @@ import klfr.sof.Interpreter;
  * 
  * @author klfr
  */
+@StackableName("Callable")
 public interface Callable extends Stackable {
 
 	/**
@@ -20,7 +25,7 @@ public interface Callable extends Stackable {
 	 * @author klfr
 	 */
 	@FunctionalInterface
-	public interface CallProvider {
+	public static interface CallProvider {
 		/**
 		 * Executes the callable's action. As many callables depend on SOF language
 		 * interpretation or access to SOF code, the calling interpreter needs to
@@ -39,4 +44,153 @@ public interface Callable extends Stackable {
 	 * this method is usually only invoked once when using the Callable.
 	 */
 	public CallProvider getCallProvider();
+
+	public default Stackable copy() {
+		return this;
+	}
+
+	/**
+	 * Create a simple Callable from a Stackable -> Stackable function. The callable
+	 * pops one argument and pushes the result.
+	 * 
+	 * @param f The function to construct the callable from.
+	 * @return A callable whose call provider pops one argument, passes that to the
+	 *         function and pushes the result of the function.
+	 */
+	public static Callable fromFunction(Function<? super Stackable, ? extends Stackable> f) {
+		return new Callable() {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public String toDebugString(DebugStringExtensiveness e) {
+				switch (e) {
+					case Type:
+						return "NativCbl'1";
+					default:
+						return "NativeCallable'1:" + f.toString();
+				}
+			}
+
+			@Override
+			public CallProvider getCallProvider() {
+				return self -> {
+					final var stack = self.internal.stack();
+					final var arg = stack.pop();
+					return f.apply(arg);
+				};
+			}
+		};
+	}
+
+	/**
+	 * Create a simple Callable from a Stackable -> Stackable -> Stackable function.
+	 * The callable pops two arguments and pushes the result.
+	 * 
+	 * @param f The function to construct the callable from. First argument is lower
+	 *          on the stack.
+	 * @return A callable whose call provider pops two arguments, passes them to the
+	 *         function and pushes the result of the function.
+	 */
+	public static Callable fromFunction(BiFunction<? super Stackable, ? super Stackable, ? extends Stackable> f) {
+		return new Callable() {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public String toDebugString(DebugStringExtensiveness e) {
+				switch (e) {
+					case Type:
+						return "NativCbl'2";
+					default:
+						return "NativeCallable'2:" + f.toString();
+				}
+			}
+
+			@Override
+			public CallProvider getCallProvider() {
+				return self -> {
+					final var stack = self.internal.stack();
+					final var arg1 = stack.pop();
+					final var arg2 = stack.pop();
+					return f.apply(arg2, arg1);
+				};
+			}
+		};
+	}
+
+	/**
+	 * Create a simple Callable from a Stackable -> Stackable -> Stackable ->
+	 * Stackable function. The callable pops three arguments and pushes the result.
+	 * 
+	 * @param f The function to construct the callable from. First argument is
+	 *          lowest on the stack.
+	 * @return A callable whose call provider pops three arguments, passes them to
+	 *         the function and pushes the result of the function.
+	 */
+	public static Callable fromFunction(
+			TriFunction<? super Stackable, ? super Stackable, ? super Stackable, ? extends Stackable> f) {
+		return new Callable() {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public String toDebugString(DebugStringExtensiveness e) {
+				switch (e) {
+					case Type:
+						return "NativCbl'3";
+					default:
+						return "NativeCallable'3:" + f.toString();
+				}
+			}
+
+			@Override
+			public CallProvider getCallProvider() {
+				return self -> {
+					final var stack = self.internal.stack();
+					final var arg1 = stack.pop();
+					final var arg2 = stack.pop();
+					final var arg3 = stack.pop();
+					return f.apply(arg3, arg2, arg1);
+				};
+			}
+		};
+	}
+
+	/**
+	 * Create a simple Callable from a Stackable supplier function. The callable
+	 * pushes the result.
+	 * 
+	 * @param f The function to construct the callable from.
+	 * @return A callable whose call provider calls the function and pushes its
+	 *         result.
+	 */
+	public static Callable fromFunction(Supplier<? extends Stackable> f) {
+		return new Callable() {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public String toDebugString(DebugStringExtensiveness e) {
+				switch (e) {
+					case Type:
+						return "NativCbl'0";
+					default:
+						return "NativeCallable'0:" + f.toString();
+				}
+			}
+
+			@Override
+			public CallProvider getCallProvider() {
+				return self -> {
+					return f.get();
+				};
+			}
+		};
+	}
+
+	@FunctionalInterface
+	public static interface TriFunction<T, U, V, R> {
+		public R apply(T t, U u, V v);
+
+		public default <Q> TriFunction<T, U, V, Q> andThen(Function<? super R, ? extends Q> f) {
+			return (a, b, c) -> f.apply(this.apply(a, b, c));
+		}
+	}
 }

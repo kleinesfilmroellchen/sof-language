@@ -4,9 +4,7 @@ package klfr.sof;
 import java.lang.reflect.InvocationTargetException;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Deque;
-import java.util.Hashtable;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
@@ -17,6 +15,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import klfr.sof.lang.*;
+import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 
 /**
  * The most basic type of an SOF language interpreter without special
@@ -143,24 +142,75 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		}
 	}
 
-	private final Logger log = Logger.getLogger(Interpreter.class.getCanonicalName());
+	private static final Logger log = Logger.getLogger(Interpreter.class.getCanonicalName());
 	public static final String VERSION = "0.1";
 
 	/** Convenience constant for the 66-character line ─ */
 	public static final String line66 = String.format("%66s", " ").replace(" ", "─");
 
-	//// PATTERNS
+	//// #region PATTERNS
+	/**
+	 * Pattern for integer number literals. Group 1 matches the entire number if not
+	 * the simple '0' literal, group 2 matches the sign, if present. Group 3 matches
+	 * the base prefix, if present.
+	 */
 	public static final Pattern intPattern = Pattern.compile("((\\+|\\-)?(0[bhxod])?[0-9a-fA-F]+)|0");
+	/**
+	 * Pattern for floating point number literals (represented with 64-bit "double"
+	 * values internally). Group 1 matches the sign, if present, group 2 matches the
+	 * integer section of the number, group 3 matches the fractional section of the
+	 * number. Group 4 matches the scientific exponent, if present.
+	 */
 	public static final Pattern doublePattern = Pattern
-			.compile("(\\+|\\-)?(?:([0-9]+)\\.([0-9]+)([eE][\\-\\+][0-9]+)?)|0");
-	public static final Pattern stringPattern = Pattern.compile("\"[^\"]*\"");
+			.compile("(\\+|\\-)?(?:([0-9]+)\\.([0-9]+)([eE][\\-\\+][0-9]+)?)");
+	/**
+	 * String pattern. Matches a starting quote character followed by any number of
+	 * arbitrary characters followed by an ending quote character. The quote escape
+	 * works in the way that a {@code \"} sequence is accepted as an "arbitrary
+	 * character" (while single quote is, of course, not) and the ending quote
+	 * character cannot be preceded by a {@code \} (may otherwise cause issues on
+	 * end of string). This pattern does not match other escape sequences, see
+	 * {@link Interpreter#escapeSequencePattern}.
+	 */
+	public static final Pattern stringPattern = Pattern.compile("\"(?:[^\"]|(\\\\\"))*?(?<!\\\\)\"");
+	/**
+	 * String escape sequence pattern. Matches the entire escape sequence except the
+	 * leading backslash as group 1 and the unicode code point for {@code \ u}
+	 * escapes as group 2. Does not match the escaped quote, which is not treated by
+	 * the "preprocessor".
+	 */
+	public static final Pattern escapeSequencePattern = Pattern.compile("\\\\(n|t|(?:u([0-9a-fA-F]{4})))");
+	/**
+	 * Boolean literal pattern. Matches "true" and "false", capitalized as well.
+	 */
 	public static final Pattern boolPattern = Pattern.compile("True|False|true|false");
+	/**
+	 * (Basic) Token pattern. Matches all contiguous non-space text as well as the
+	 * pattern for string literals.
+	 */
 	public static final Pattern tokenPattern = Pattern.compile("(" + stringPattern.pattern() + ")|(\\S+)");// \\b{g}
-	/** The pattern to which identifiers must match to be valid */
-	public static final Pattern identifierPattern = Pattern.compile("\\p{L}[\\p{L}0-9_']*");
+	/**
+	 * Identifier pattern. An identifier is any unicode letter possibly followed by
+	 * more unicode letters, numbers or the punctuation <{@code : _ '} >. Note that
+	 * using <code>\p{L}</code> allows for inter-language identifiers; one could
+	 * write variable names completely with Chinese logographs, for example.
+	 */
+	public static final Pattern identifierPattern = Pattern.compile("\\p{L}[\\p{L}0-9_'\\:]*");
+	/**
+	 * The start of a code block; the single character <code>{</code>.
+	 */
 	public static final Pattern codeBlockStartPattern = Pattern.compile("\\{");
+	/**
+	 * The end of a code block; the single character <code>}</code>.
+	 */
 	public static final Pattern codeBlockEndPattern = Pattern.compile("\\}");
+	/**
+	 * The start of a line; pattern created by compiling the start of string flag
+	 * "^" in MULTILINE mode.
+	 */
 	public static final Pattern nlPat = Pattern.compile("^", Pattern.MULTILINE);
+
+	// #endregion Patterns
 
 	/**
 	 * Cleans the code of comments.
@@ -199,33 +249,33 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 					else if (c == '}')
 						--codeBlockDepth;
 					if (c == '"') {
-						// search for matching quote character TODO escapes
-						int j = i + 1;
-						while (j < line.length() && line.charAt(j) != '"') {
-							if (line.charAt(j) == '\\' && j < line.length() - 1) {
-								// delete backslash character at j
-								line = line.substring(0, j).concat(line.substring(j + 1));
-								switch (line.charAt(j)) {
-								// skip escaped quotes
-								case '"':
-									line = line.substring(0, j).concat(System.lineSeparator())
-											.concat(line.substring(j + 1));
-								case 'n':
-									line = line.substring(0, j).concat(System.lineSeparator())
-											.concat(line.substring(j + 1));
-								case 't':
-									line = line.substring(0, j).concat("\t").concat(line.substring(j + 1));
-								}
+						// use string pattern to ensure valid string literal
+						final var toSearch = line.substring(i);
+						final var m = stringPattern.matcher(toSearch);
+						if (!m.find())
+							throw CompilerException.fromCurrentPosition(line, i, "Syntax",
+									"Invalid string literal, maybe a missing \" or wrong escapes?");
+						final var escapedString = escapeSequencePattern.matcher(m.group()).replaceAll(match -> {
+							if (match.group(2) != null) {
+								// unicode escape sequence
+								final int codepoint = Integer.parseInt(match.group(2), 16);
+								return String.valueOf(Character.toChars(codepoint));
 							}
-							++j;
-						}
-						// this is a syntax error of unclosed string literal
-						if (j == line.length())
-							throw CompilerException.fromFormatMessage(line, i + 1, lineIdx, "Syntax",
-									"No closing '\"' for string literal.");
-						// skip this section
-						newCode.append(line.substring(i, j + 1));
-						i = j;
+							switch (match.group(1)) {
+								case "n":
+									return System.lineSeparator();
+								case "t":
+									return "\t";
+								case "f":
+									return "\f";
+								case "\\":
+									return "\\";
+								default:
+									return "";
+							}
+						});
+						line = line.substring(0, i).concat(escapedString).concat(toSearch.substring(m.end()));
+						log.finer(line);
 					} else if (c == '#') {
 						if (i < line.length() - 1)
 							if (line.charAt(i + 1) == '*') {
@@ -324,10 +374,12 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	 */
 	public static String stackToDebugString(final Deque<Stackable> stack) {
 		return "┌─" + line66.substring(0, 37) + "─┐" + System.lineSeparator()
-				+ stack.stream().collect(() -> new StringBuilder(),
-						(str, elmt) -> str.append(
-								String.format("│%38s │%n├─" + line66.substring(0, 37) + "─┤%n", elmt.tostring(), " ")),
-						(e1, e2) -> e1.append(e2)).toString();
+				+ stack.stream()
+						.collect(() -> new StringBuilder(),
+								(str, elmt) -> str.append(String.format("│%38s │%n├─" + line66.substring(0, 37) + "─┤%n",
+										elmt.toDebugString(DebugStringExtensiveness.Compact), " ")),
+								(e1, e2) -> e1.append(e2))
+						.toString();
 	}
 
 	/**
@@ -347,7 +399,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		 * 
 		 * @param self The interpreter that asked for the action.
 		 */
-		public void execute(Interpreter self);
+		public void execute(Interpreter self) throws CompilerException;
 	}
 
 	/**
@@ -367,65 +419,19 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	 */
 	// higher load factor can be used b/c of small number of entries where
 	// collisions are unlikely
-	private static Map<String, PTAction> ptActions = new Hashtable<>(30, 0.9f);
+	private static Map<String, PTAction> ptActions = new TreeMap<>();
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	//// PT ACTION DEFINITION BEGIN
+	// #region PT ACTION DEFINITION
 	static {
 		/// OPERATIONS
-		ptActions.put("+", self -> {
-			// pop 2, add, push
-			final Stackable paramright = self.stack.pop(), paramleft = self.stack.pop();
-			final var result = self.executeFunction(paramright, paramleft, Operator.add, "+");
-			self.stack.push(result);
-		});
-		ptActions.put("-", self -> {
-			// pop 2, subtract, push
-			final Stackable paramright = self.stack.pop(), paramleft = self.stack.pop();
-			final var result = self.executeFunction(paramleft, paramright, Operator.subtract, "-");
-			self.stack.push(result);
-		});
-		ptActions.put("*", self -> {
-			// pop 2, multiply, push
-			final Stackable paramright = self.stack.pop(), paramleft = self.stack.pop();
-			final var result = self.executeFunction(paramleft, paramright, Operator.multiply, "*");
-			self.stack.push(result);
-		});
-		ptActions.put("/", self -> {
-			// pop 2, divide, push
-			final Stackable paramright = self.stack.pop(), paramleft = self.stack.pop();
-			final var result = self.executeFunction(paramleft, paramright, Operator.divide, "/");
-			self.stack.push(result);
-		});
-		// generic function that executes a numeric comparison given to it.
-		final Function<BiFunction<Double, Double, Boolean>, PTAction> comparison = operator -> self -> {
-			// pop 2, compare by greater than
-			final var rightS = self.stack.popTyped(Primitive.class, "Number");
-			final var leftS = self.stack.popTyped(Primitive.class, "Number");
-			self.check(
-					rightS.getValue() instanceof Double || rightS.getValue() instanceof Long
-							|| leftS.getValue() instanceof Double || leftS.getValue() instanceof Long,
-					() -> err("Type",
-							f("\"%s\" or \"%s\" is not a Number.", leftS.toOutputString(), rightS.toOutputString())));
-			// retrieve values, first unbox into Number, then unbox into primitive type
-			final var right = ((Number) rightS.getValue()).doubleValue();
-			final var left = ((Number) leftS.getValue()).doubleValue();
-			// apply the given operator and push onto stack
-			self.stack.push(new Primitive<Boolean>(operator.apply(left, right)));
-		};
-		// use the upper generic function for short specification:
-		// 1 | HASKELL: *laughs at Java* You fool! This is my business, /
-		// | | | you shall not rob me of my ideas! /
-		// | | JAVA: *whimsically* But I wish to be functional! /
-		// | | | I improve this way, am safer and DRYer! /
-		// 5 | HASKELL: But behold! /
-		// | | | Observe this mess--no proper Functional Language /
-		// | | | looks like this! I shall not speak to you again, /
-		// | | | for my eyes bleed in your presence! /
-		// | | [Exit HASKELL]
-		ptActions.put(">", comparison.apply(Operator.greaterThan));
-		ptActions.put("<", comparison.apply(Operator.lessThan));
-		ptActions.put(">=", comparison.apply(Operator.greaterEqualThan));
-		ptActions.put("<=", comparison.apply(Operator.lessEqualThan));
+		ptActions.put("+", self -> self.doCall(BuiltinPTs.add));
+		ptActions.put("-", self -> self.doCall(BuiltinPTs.subtract));
+		ptActions.put("*", self -> self.doCall(BuiltinPTs.multiply));
+		ptActions.put("/", self -> self.doCall(BuiltinPTs.divide));
+		ptActions.put(">", self -> self.doCall(BuiltinPTs.greaterThan));
+		ptActions.put("<", self -> self.doCall(BuiltinPTs.lessThan));
+		ptActions.put(">=", self -> self.doCall(BuiltinPTs.greaterEqualThan));
+		ptActions.put("<=", self -> self.doCall(BuiltinPTs.lessEqualThan));
 		// pop and discard
 		ptActions.put("pop", self -> self.stack.pop());
 		// peek and push, thereby duplicate
@@ -434,7 +440,8 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 			if (param instanceof Nametable)
 				throw CompilerException.fromCurrentPosition(self.tokenizer, "StackAccess",
 						"A nametable cannot be duplicated.");
-			self.stack.push(param.clone());
+			// IMPORTANT: No copy() call is made here. The duplicate is the same reference!
+			self.stack.push(param);
 		});
 		ptActions.put("swap", self -> {
 			var eltop = self.stack.pop();
@@ -444,25 +451,23 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		});
 		// debug commands that are effectively no-ops in terms of data and code
 		ptActions.put("describes", self -> self.io.describeStack(self.stack));
-		ptActions.put("describe", self -> self.io.debug(self.stack.peek().getDebugDisplay()));
+		ptActions.put("describe", self -> self.io.debug(self.stack.peek().toDebugString(DebugStringExtensiveness.Full)));
 		// i/o
-		ptActions.put("write", self -> self.io.print(self.stack.pop().toOutputString()));
-		ptActions.put("writeln", self -> self.io.println(self.stack.pop().toOutputString()));
+		ptActions.put("write", self -> self.io.print(self.stack.pop().print()));
+		ptActions.put("writeln", self -> self.io.println(self.stack.pop().print()));
 		// define
 		final Function<Function<Interpreter, Nametable>, PTAction> definer = scope -> self -> {
-			// The scope lookup is only performed in this moment.
-			// The scope retrieval function should leave the
-			// actual identifier into the scope, whether actually provided by the user or
-			// not,
-			// as the topmost element of the stack and the value directly below.
+			// The scope lookup is only performed in this moment. The scope retrieval
+			// function should leave the identifier, whether actually provided by the user
+			// or not, as the topmost element of the stack and the value directly below.
 			final var targetScope = scope.apply(self);
 			// pop value, define
-			final var id = self.stack.popTyped(Identifier.class, "Identifier");
+			final var id = self.stack.popTyped(Identifier.class);
 			final var valS = self.stack.pop();
 			targetScope.put(id, valS);
 		};
 		ptActions.put("def", definer.apply(self -> {
-			final var idS = self.stack.popTyped(Identifier.class, "Identifier");
+			final var idS = self.stack.popTyped(Identifier.class);
 			self.stack.push(idS);
 			if (self.stack.namingScope().hasMapping(idS))
 				return self.stack.namingScope();
@@ -471,46 +476,32 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		ptActions.put("globaldef", definer.apply(self -> self.stack.namingScope()));
 
 		ptActions.put("if", self -> {
-			final var cond = self.stack.popTyped(Primitive.class, "Boolean");
-			final var callable = self.stack.popTyped(Callable.class, "Callable");
-			self.check(cond.getValue() instanceof Boolean,
-					() -> err("Type", "\"" + cond.tostring() + "\" is not a Boolean."));
-			final Boolean tru = (Boolean) cond.getValue();
-			if (tru) {
+			final var cond = self.stack.popTyped(BoolPrimitive.class);
+			final var callable = self.stack.popTyped(Callable.class);
+			if (cond.value()) {
 				self.doCall(callable);
 			}
 		});
 
 		ptActions.put("ifelse", self -> {
-			final var elseCallable = self.stack.popTyped(Callable.class, "Callable");
-			final var cond = self.stack.popTyped(Primitive.class, "Boolean");
-			final var callable = self.stack.popTyped(Callable.class, "Callable");
-			self.check(cond.getValue() instanceof Boolean,
-					() -> err("Type", "\"" + cond.tostring() + "\" is not a Boolean."));
-			final Boolean tru = (Boolean) cond.getValue();
-			if (tru) {
-				self.doCall(callable);
-			} else {
-				self.doCall(elseCallable);
-			}
+			final var elseCallable = self.stack.popTyped(Callable.class);
+			final var cond = self.stack.popTyped(BoolPrimitive.class);
+			final var callable = self.stack.popTyped(Callable.class);
+			self.doCall(cond.value() ? callable : elseCallable);
 		});
 
 		ptActions.put("switch", self -> {
 			// first argument is the default action callable
-			final var defaultCallable = self.stack.popTyped(Callable.class, "Callable");
+			final var defaultCallable = self.stack.popTyped(Callable.class);
 			// loop to throw or switch end marker
 			while (true) {
 				// get case and corresponding body
-				Callable _case = self.stack.popTyped(Callable.class, "Callable"),
-						body = self.stack.popTyped(Callable.class, "Callable");
+				Callable _case = self.stack.popTyped(Callable.class), body = self.stack.popTyped(Callable.class);
 				// execute case
 				self.doCall(_case);
-				final var result = self.stack.popTyped(Primitive.class, "Boolean");
-				self.check(result.getValue() instanceof Boolean,
-						() -> err("Type", "\"" + result.tostring() + "\" is not a Boolean."));
-				final Boolean tru = (Boolean) result.getValue();
+				final var result = self.stack.popTyped(BoolPrimitive.class);
 				// ... and check if successful; if so, exit
-				if (tru) {
+				if (result.value()) {
 					self.doCall(body);
 					// remove elements until identifier "switch"
 					var elt = self.stack.pop();
@@ -531,61 +522,43 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 			}
 		});
 		ptActions.put("while", self -> {
-			final var condCallable = self.stack.popTyped(Callable.class, "Callable");
-			final var bodyCallable = self.stack.popTyped(Callable.class, "Callable");
-			var _continue = true;
-			while (_continue) {
+			final var condCallable = self.stack.popTyped(Callable.class);
+			final var bodyCallable = self.stack.popTyped(Callable.class);
+			while (true) {
 				self.doCall(condCallable);
-				var preContinue = self.stack.popTyped(Primitive.class, "Callable");
-				self.check(preContinue.getValue() instanceof Boolean,
-						() -> err("Type", f("\"%s\" is not a Callable", preContinue.tostring())));
-				_continue = (Boolean) preContinue.getValue();
-				if (_continue)
+				var preContinue = self.stack.popTyped(BoolPrimitive.class);
+				if (preContinue.value())
 					self.doCall(bodyCallable);
 			}
 		});
 
 		///// CALL OPERATOR /////
 		ptActions.put(".", self -> {
-			// start looking at the local scope
-			var currentNametable = self.stack.localScope();
-			// store the namespace string for future use
-			var namespaceString = "";
-			do {
-				final var param = self.stack.pop();
-				if (param instanceof Identifier) {
-					final var topId = (Identifier) param;
-					// look the identifier up in the current nametable
-					final var reference = currentNametable.get(topId);
-					if (reference instanceof Nametable) {
-						// we found a namespace
-						currentNametable = (Nametable) reference;
-						namespaceString += reference.tostring() + ".";
-					} else if (reference instanceof Callable) {
-						// we found the end of the chain
-						self.doCall((Callable) reference);
-						break;
-					} else if (reference == null) {
-						throw CompilerException.fromCurrentPosition(self.tokenizer, "Name",
-								"Identifier " + param.tostring() + " is not defined"
-										+ (namespaceString.length() == 0 ? "" : (" in " + namespaceString)) + ".");
-					}
-				} else if (param instanceof Callable) {
-					// when we have a callable, it can of course be called directly
-					self.log.finer(f("@ CALL directly: %s", param));
-					final var retval = ((Callable) param).getCallProvider().call(self);
-					if (retval != null)
-						self.stack.push(retval);
-					break;
-				} else {
-					self.stack.push(param);
-					throw CompilerException.fromCurrentPosition(self.tokenizer, "Type",
-							param.tostring() + " is not callable.");
-				}
-			} while (true);
+			final var param = self.stack.popTyped(Callable.class);
+			log.finer(f("@ CALL: %s", param));
+			self.doCall(param);
+		});
+
+		// double call operator; convenience for function and method invocations
+		ptActions.put(":", self -> {
+			final var param = self.stack.popTyped(Callable.class);
+			log.finer(f("@ DOUBLE CALL: %s", param));
+			final var retval = param.getCallProvider().call(self);
+			// try to call again
+			if (retval instanceof Callable) {
+				self.doCall((Callable) retval);
+			} else {
+				if (retval == null)
+					throw CompilerException.fromCurrentPosition(self.tokenizer, "Call",
+							"Cannot complete double-call operator \":\" : First call didn't return anything.");
+				else
+					throw CompilerException.fromCurrentPosition(self.tokenizer, "Call",
+							"Cannot complete double-call operator \":\" : First call returned non-Callable \"" + retval.print()
+									+ "\".");
+			}
 		});
 	}
-	//// PT ACTION DEFINITION END
+	// #endregion PT ACTION DEFINITION END
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// I/O
@@ -613,24 +586,6 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	// ------------------------------------------------------------------------------------------------------
 	// EXECUTION
 
-	@SuppressWarnings("unused")
-	private Stackable executeFunction(final Stackable arg1, final Stackable arg2, final Operator function) {
-		return executeFunction(arg1, arg2, function, "");
-	}
-
-	private Stackable executeFunction(final Stackable arg1, final Stackable arg2, final Operator function,
-			final String funcName) throws CompilerException {
-		try {
-			return function.call(arg1, arg2);
-		} catch (final CompilerException e) {
-			throw CompilerException.fromIncomplete(tokenizer, e);
-		} catch (final ClassCastException e) {
-			throw CompilerException.fromCurrentPosition(this.tokenizer, "Type",
-					String.format("Cannot perform function '%s' on arguments %s and %s: wrong type.", funcName,
-							arg1.tostring(), arg2.tostring()));
-		}
-	}
-
 	/**
 	 * Does one execution step. Will do nothing if the end of the source code is
 	 * reached.
@@ -652,7 +607,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 				if (intPattern.matcher(token).matches()) {
 					log.finest(() -> f("LITERAL INT %30s @ %4d", token, tokenizer.getState().start));
 					try {
-						final Primitive<Long> literal = Primitive.createInteger(token.toLowerCase());
+						final IntPrimitive literal = IntPrimitive.createIntegerFromString(token.toLowerCase());
 						stack.push(literal);
 					} catch (final CompilerException e) {
 						throw CompilerException.fromCurrentPosition(this.tokenizer, "Syntax",
@@ -661,7 +616,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 				} else if (doublePattern.matcher(token).matches()) {
 					log.finest(() -> f("LITERAL DOUBLE %30s @ %4d", token, tokenizer.getState().start));
 					try {
-						final Primitive<Double> literal = Primitive.createDouble(token);
+						final FloatPrimitive literal = FloatPrimitive.createFloatFromString(token);
 						stack.push(literal);
 					} catch (final NumberFormatException e) {
 						throw CompilerException.fromCurrentPosition(this.tokenizer, "Syntax",
@@ -669,19 +624,19 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 					}
 				} else if (boolPattern.matcher(token).matches()) {
 					log.finest(() -> f("LITERAL BOOL %30s @ %4d", token, tokenizer.getState().start));
-					final Primitive<Boolean> literal = Primitive.createBoolean(token);
+					final BoolPrimitive literal = BoolPrimitive.createBoolFromString(token);
 					stack.push(literal);
 				} else if (stringPattern.matcher(token).matches()) {
 					log.finest(() -> f("LITERAL STRING %30s @ %4d", token, tokenizer.getState().start));
-					stack.push(new Primitive<>(token.substring(1, token.length() - 1)));
+					stack.push(StringPrimitive.createStringPrimitive(token.substring(1, token.length() - 1)));
 				} else if (codeBlockStartPattern.matcher(token).matches()) {
-					final var endPos = Interpreter.indexOfMatching(tokenizer.getCode(), tokenizer.start(), "{", "}")
-							- 1;
+					final var endPos = Interpreter.indexOfMatching(tokenizer.getCode(), tokenizer.start(), "{", "}") - 1;
 					this.check(endPos >= 0, () -> new SimpleEntry<>("Syntax", "Unclosed code block"));
 					final var cb = new CodeBlock(tokenizer.getState().end, endPos, tokenizer.getCode());
 					this.stack.push(cb);
 
-					log.finest(() -> f("CODE BLOCK %30s @ %4d", cb.getDebugDisplay(), tokenizer.getState().start));
+					log.finest(() -> f("CODE BLOCK %30s @ %4d", cb.toDebugString(DebugStringExtensiveness.Full),
+							tokenizer.getState().start));
 
 					// setup the tokenizer just before the curly brace...
 					internal.setExecutionPos(endPos);
@@ -705,7 +660,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		}
 		log.exiting(this.getClass().getCanonicalName(), "executeOnce");
 		log.finest(() -> "S:\n" + Interpreter.stackToDebugString(stack) + "\nNT:\n"
-				+ stack.globalNametable().getDebugDisplay());
+				+ stack.globalNametable().toDebugString(DebugStringExtensiveness.Full));
 		return this;
 	}
 

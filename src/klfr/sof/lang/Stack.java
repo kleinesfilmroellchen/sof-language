@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentLinkedDeque;
+
 import klfr.sof.CompilerException;
 
 /**
@@ -29,8 +30,7 @@ import klfr.sof.CompilerException;
  * @author klfr
  * @version 0.1a1
  */
-public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializable {
-
+public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	private static final long serialVersionUID = 1L;
 
 	public Stack() {
@@ -42,7 +42,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 			Stackable elmt = super.getLast();
 			return elmt;
 		} catch (NoSuchElementException e) {
-			throw CompilerException.fromIncompleteInfo("Stack", "Stack is empty.");
+			throw CompilerException.makeIncomplete("Stack", "Stack is empty.");
 		}
 	}
 
@@ -50,7 +50,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 	public Stackable peek() throws CompilerException {
 		Stackable elmt = super.peek();
 		if (elmt == null)
-			throw CompilerException.fromIncompleteInfo("Stack", "Stack is empty.");
+			throw CompilerException.makeIncomplete("Stack", "Stack is empty.");
 		return elmt;
 	}
 
@@ -60,12 +60,12 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 			Stackable elmt = super.pop();
 			if (elmt instanceof Nametable) {
 				super.push(elmt);
-				throw CompilerException.fromIncompleteInfo("StackAccess",
+				throw CompilerException.makeIncomplete("StackAccess",
 						"Manipulation of Nametables and Stack delimiters on the stack is not allowed.");
 			}
 			return elmt;
 		} catch (NoSuchElementException e) {
-			throw CompilerException.fromIncompleteInfo("Stack", "Stack is empty.");
+			throw CompilerException.makeIncomplete("Stack", "Stack is empty.");
 		}
 	}
 
@@ -74,21 +74,18 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 	 * match.
 	 * 
 	 * @param <T> The Stackable subtype expected.
-	 * @param t   The class of the type, to allow for runtime generic type checking.
-	 *            Thanks, type erasure! /s
-	 * @param name The human-readable name of the type, to generate error messages.
-	 * @return The topmost element on the stack; of type T.
+	 * @param t   The class of the type, to allow for runtime type checking.
 	 * @throws CompilerException if the popped element is not of type T, or if pop()
 	 *                           itself failed.
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends Stackable> T popTyped(Class<T> t, String name) throws CompilerException {
+	public <T extends Stackable> T popTyped(Class<T> t) throws CompilerException {
 		final Stackable val = pop();
 		if (t.isInstance(val)) {
 			return (T) val;
 		} else
-			throw CompilerException.fromIncompleteInfo("Type",
-					String.format("\"%s\" is not a %s.", val.toOutputString(), name));
+			throw CompilerException.makeIncomplete("Type",
+					String.format("\"%s\" is not a %s.", val.print(), t.getAnnotation(StackableName.class).value()));
 	}
 
 	/**
@@ -157,6 +154,24 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> implements Serializa
 		// fallback (should not happen, as the last iteration of the loop should find
 		// the global NT)
 		return namingScope();
+	}
+
+	/**
+	 * Performs fallback-enabled lookup of the identifier. This means that when the
+	 * identifier is not found in one nametable, the next lower one is searched and
+	 * so on. May return null when the identifier is not found at all.
+	 * 
+	 * @param id the identifier to search for
+	 * @return the most local value that is associated with the identifier
+	 */
+	public Stackable lookup(Identifier id) {
+		for (var elmt : this) {
+			if (elmt instanceof Nametable) {
+				final var nt = (Nametable) elmt;
+				if (nt.hasMapping(id)) return nt.get(id);
+			}
+		}
+		return null;
 	}
 
 	/**

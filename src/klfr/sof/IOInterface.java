@@ -5,6 +5,7 @@ import java.util.Locale;
 import java.util.Scanner;
 
 import klfr.sof.lang.Stack;
+import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 
 /**
  * Wrapper for all I/O functionality that SOF has.
@@ -208,7 +209,7 @@ public class IOInterface {
 	public void describeStack(Stack stack) {
 		if (debug) {
 			println("Stack: " + System.lineSeparator() + Interpreter.stackToDebugString(stack));
-			println("Global Nametable: " + System.lineSeparator() + stack.globalNametable().getDebugDisplay());
+			println("Global Nametable: " + System.lineSeparator() + stack.globalNametable().toDebugString(DebugStringExtensiveness.Full));
 		}
 	}
 
