@@ -11,6 +11,7 @@ import klfr.sof.Interpreter;
  * 
  * @author klfr
  */
+@StackableName("Identifier")
 public class Identifier implements Callable {
 
 	private static final long serialVersionUID = 1L;

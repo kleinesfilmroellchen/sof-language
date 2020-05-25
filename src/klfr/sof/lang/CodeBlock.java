@@ -1,5 +1,6 @@
 package klfr.sof.lang;
 
+@StackableName("Code block")
 public class CodeBlock implements Callable {
 
 	private static final long serialVersionUID = 1L;

@@ -49,6 +49,35 @@ public interface Callable extends Stackable {
 		return this;
 	}
 
+	@StackableName("Callable")
+	static class FunctionCallable1 implements Callable {
+		private static final long serialVersionUID = 1L;
+		private final Function<? super Stackable, ? extends Stackable> f;
+
+		public FunctionCallable1(Function<? super Stackable, ? extends Stackable> f) {
+			this.f = f;
+		}
+
+		@Override
+		public String toDebugString(DebugStringExtensiveness e) {
+			switch (e) {
+				case Type:
+					return "NativCbl'1";
+				default:
+					return "NativeCallable'1:" + f.toString();
+			}
+		}
+
+		@Override
+		public CallProvider getCallProvider() {
+			return self -> {
+				final var stack = self.internal.stack();
+				final var arg = stack.pop();
+				return f.apply(arg);
+			};
+		}
+	}
+
 	/**
 	 * Create a simple Callable from a Stackable -> Stackable function. The callable
 	 * pops one argument and pushes the result.
@@ -58,28 +87,37 @@ public interface Callable extends Stackable {
 	 *         function and pushes the result of the function.
 	 */
 	public static Callable fromFunction(Function<? super Stackable, ? extends Stackable> f) {
-		return new Callable() {
-			private static final long serialVersionUID = 1L;
+		return new FunctionCallable1(f);
+	}
 
-			@Override
-			public String toDebugString(DebugStringExtensiveness e) {
-				switch (e) {
-					case Type:
-						return "NativCbl'1";
-					default:
-						return "NativeCallable'1:" + f.toString();
-				}
-			}
+	@StackableName("Callable")
+	static class FunctionCallable2 implements Callable {
+		private static final long serialVersionUID = 1L;
+		private final BiFunction<? super Stackable, ? super Stackable, ? extends Stackable> f;
 
-			@Override
-			public CallProvider getCallProvider() {
-				return self -> {
-					final var stack = self.internal.stack();
-					final var arg = stack.pop();
-					return f.apply(arg);
-				};
+		public FunctionCallable2(BiFunction<? super Stackable, ? super Stackable, ? extends Stackable> f) {
+			this.f = f;
+		}
+
+		@Override
+		public String toDebugString(DebugStringExtensiveness e) {
+			switch (e) {
+				case Type:
+					return "NativCbl'2";
+				default:
+					return "NativeCallable'2:" + f.toString();
 			}
-		};
+		}
+
+		@Override
+		public CallProvider getCallProvider() {
+			return self -> {
+				final var stack = self.internal.stack();
+				final var arg1 = stack.pop();
+				final var arg2 = stack.pop();
+				return f.apply(arg2, arg1);
+			};
+		}
 	}
 
 	/**
@@ -92,29 +130,39 @@ public interface Callable extends Stackable {
 	 *         function and pushes the result of the function.
 	 */
 	public static Callable fromFunction(BiFunction<? super Stackable, ? super Stackable, ? extends Stackable> f) {
-		return new Callable() {
-			private static final long serialVersionUID = 1L;
+		return new FunctionCallable2(f);
+	}
 
-			@Override
-			public String toDebugString(DebugStringExtensiveness e) {
-				switch (e) {
-					case Type:
-						return "NativCbl'2";
-					default:
-						return "NativeCallable'2:" + f.toString();
-				}
-			}
+	@StackableName("Callable")
+	static class FunctionCallable3 implements Callable {
+		private static final long serialVersionUID = 1L;
+		private TriFunction<? super Stackable, ? super Stackable, ? super Stackable, ? extends Stackable> f;
 
-			@Override
-			public CallProvider getCallProvider() {
-				return self -> {
-					final var stack = self.internal.stack();
-					final var arg1 = stack.pop();
-					final var arg2 = stack.pop();
-					return f.apply(arg2, arg1);
-				};
+		public FunctionCallable3(
+				TriFunction<? super Stackable, ? super Stackable, ? super Stackable, ? extends Stackable> f) {
+			this.f = f;
+		}
+
+		@Override
+		public String toDebugString(DebugStringExtensiveness e) {
+			switch (e) {
+				case Type:
+					return "NativCbl'3";
+				default:
+					return "NativeCallable'3:" + f.toString();
 			}
-		};
+		}
+
+		@Override
+		public CallProvider getCallProvider() {
+			return self -> {
+				final var stack = self.internal.stack();
+				final var arg1 = stack.pop();
+				final var arg2 = stack.pop();
+				final var arg3 = stack.pop();
+				return f.apply(arg3, arg2, arg1);
+			};
+		}
 	}
 
 	/**
@@ -128,30 +176,34 @@ public interface Callable extends Stackable {
 	 */
 	public static Callable fromFunction(
 			TriFunction<? super Stackable, ? super Stackable, ? super Stackable, ? extends Stackable> f) {
-		return new Callable() {
-			private static final long serialVersionUID = 1L;
+		return new FunctionCallable3(f);
+	}
 
-			@Override
-			public String toDebugString(DebugStringExtensiveness e) {
-				switch (e) {
-					case Type:
-						return "NativCbl'3";
-					default:
-						return "NativeCallable'3:" + f.toString();
-				}
-			}
+	@StackableName("Callable")
+	static class FunctionCallable0 implements Callable {
+		private static final long serialVersionUID = 1L;
+		private Supplier<? extends Stackable> f;
 
-			@Override
-			public CallProvider getCallProvider() {
-				return self -> {
-					final var stack = self.internal.stack();
-					final var arg1 = stack.pop();
-					final var arg2 = stack.pop();
-					final var arg3 = stack.pop();
-					return f.apply(arg3, arg2, arg1);
-				};
+		public FunctionCallable0(Supplier<? extends Stackable> f) {
+			this.f = f;
+		}
+
+		@Override
+		public String toDebugString(DebugStringExtensiveness e) {
+			switch (e) {
+				case Type:
+					return "NativCbl'0";
+				default:
+					return "NativeCallable'0:" + f.toString();
 			}
-		};
+		}
+
+		@Override
+		public CallProvider getCallProvider() {
+			return self -> {
+				return f.get();
+			};
+		}
 	}
 
 	/**
@@ -163,26 +215,7 @@ public interface Callable extends Stackable {
 	 *         result.
 	 */
 	public static Callable fromFunction(Supplier<? extends Stackable> f) {
-		return new Callable() {
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public String toDebugString(DebugStringExtensiveness e) {
-				switch (e) {
-					case Type:
-						return "NativCbl'0";
-					default:
-						return "NativeCallable'0:" + f.toString();
-				}
-			}
-
-			@Override
-			public CallProvider getCallProvider() {
-				return self -> {
-					return f.get();
-				};
-			}
-		};
+		return new FunctionCallable0(f);
 	}
 
 	@FunctionalInterface

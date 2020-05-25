@@ -8,6 +8,7 @@ import klfr.sof.Interpreter;
 /**
  * floating point decimal primitive type
  */
+@StackableName("Float")
 public class FloatPrimitive extends Primitive {
 	private static final long serialVersionUID = 1L;
 	private static final Logger log = Logger.getLogger(FloatPrimitive.class.getCanonicalName());

@@ -7,6 +7,7 @@ import klfr.sof.CompilerException;
  * 
  * @author klfr
  */
+@StackableName("Integer")
 public class IntPrimitive extends Primitive {
 
    private static final long serialVersionUID = 1L;
