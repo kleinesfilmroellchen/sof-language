@@ -25,7 +25,7 @@ public final class BuiltinPTs {
 				return FloatPrimitive.createFloatPrimitive(((FloatPrimitive) a).value() / ((IntPrimitive) b).value());
 			}
 			if (b instanceof FloatPrimitive && a instanceof IntPrimitive) {
-				return FloatPrimitive.createFloatPrimitive(((FloatPrimitive) b).value() / ((IntPrimitive) a).value());
+				return FloatPrimitive.createFloatPrimitive(((IntPrimitive) a).value() / ((FloatPrimitive) b).value());
 			}
 			throw CompilerException.makeIncomplete("Type",
 					String.format("Cannot divide types %s and %s.", a.typename(), b.typename()));
@@ -79,7 +79,7 @@ public final class BuiltinPTs {
 			return FloatPrimitive.createFloatPrimitive(((FloatPrimitive) a).value() - ((IntPrimitive) b).value());
 		}
 		if (b instanceof FloatPrimitive && a instanceof IntPrimitive) {
-			return FloatPrimitive.createFloatPrimitive(((FloatPrimitive) b).value() - ((IntPrimitive) a).value());
+			return FloatPrimitive.createFloatPrimitive(((IntPrimitive) a).value() - ((FloatPrimitive) b).value());
 		}
 		throw CompilerException.makeIncomplete("Type",
 				String.format("Cannot subtract types %s and %s.", a.typename(), b.typename()));
