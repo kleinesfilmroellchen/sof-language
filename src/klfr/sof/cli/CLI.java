@@ -14,10 +14,13 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.Arrays;
+import java.util.MissingResourceException;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
+import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
+import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
@@ -54,9 +57,35 @@ public class CLI {
 				rootLog.setLevel(Level.FINEST);
 				ch = new ConsoleHandler();
 				ch.setLevel(Level.FINE);
+
+				ch.setFormatter(new Formatter() {
+					@Override
+					public String format(LogRecord record) {
+						final var msg = record.getMessage();
+						try {
+							record.getResourceBundle().getString(record.getMessage());
+						} catch (MissingResourceException | NullPointerException e) {
+							// do nothing
+						}
+						final var time = DateTimeFormatter.ofLocalizedTime(FormatStyle.MEDIUM)
+								.format(record.getInstant().atZone(ZoneId.systemDefault()));
+						final var level = record.getLevel().getLocalizedName().substring(0,
+								Math.min(record.getLevel().getLocalizedName().length(), 6));
+						final var logName = record.getLoggerName().replace("klfr.sof", "~");
+
+						return String.format("[%s %-20s |%6s] %s%n", time, logName, level, msg) + (record.getThrown() == null
+								? ""
+								: String.format("EXCEPTION: %s | Stack trace:%n%s", record.getThrown().toString(),
+										Arrays.asList(record.getThrown().getStackTrace()).stream().map(x -> x.toString()).collect(
+												() -> new StringBuilder(),
+												(builder, str) -> builder.append("in ").append(str).append(System.lineSeparator()),
+												(b1, b2) -> b1.append(b2))));
+					}
+				});
 				rootLog.addHandler(ch);
 				var handler = new FileHandler("sof-log.log");
 				handler.setFormatter(new SimpleFormatter());
+				handler.setEncoding("utf-8");
 				handler.setLevel(Level.FINEST);
 				rootLog.addHandler(handler);
 			} catch (IOException e) {
@@ -68,9 +97,10 @@ public class CLI {
 		var error = opt.apply(io);
 		if (error.isPresent()) {
 			var t = error.get();
-			log.log(Level.SEVERE, String.format("Uncaught Interpreter exception: %s%nStack trace:%n%s",
-					t.getLocalizedMessage(),
-					Arrays.asList(t.getStackTrace()).stream().map(ste -> ste.toString()).reduce((a,b) -> a + System.lineSeparator() + b).orElse("")));
+			log.log(Level.SEVERE,
+					String.format("Uncaught Interpreter exception: %s%nStack trace:%n%s", t.getLocalizedMessage(),
+							Arrays.asList(t.getStackTrace()).stream().map(ste -> ste.toString())
+									.reduce((a, b) -> a + System.lineSeparator() + b).orElse("")));
 		}
 	}
 
@@ -94,7 +124,7 @@ public class CLI {
 		interpreter.reset().setCode(code).internal.setIO(io);
 		while (interpreter.canExecute())
 			interpreter.executeOnce();
-		
+
 		log.exiting(CLI.class.getCanonicalName(), "doFullExecution");
 	}
 
@@ -114,7 +144,7 @@ public class CLI {
 		try {
 			URI classuri = CLI.class.getClassLoader()
 					.getResource(CLI.class.getCanonicalName().replace(".", "/") + ".class").toURI();
-			// log.finest(classuri.getScheme() + "  " + classuri.getPath());
+			// log.finest(classuri.getScheme() + " " + classuri.getPath());
 			if (classuri.getScheme().equals("rsrc") || classuri.getScheme().equals("jar")) {
 				// we are in a jar file
 				// returns the containing folder of the jar file
