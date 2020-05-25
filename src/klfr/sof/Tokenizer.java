@@ -199,7 +199,7 @@ public class Tokenizer implements Iterator<String> {
 	public Tokenizer appendCode(String code) throws CompilerException {
 		TokenizerState state = this.currentState;
 		this.log.finer("State before appending: " + state);
-		var needsNewline = ! this.currentState.code.endsWith(System.lineSeparator());
+		var needsNewline = !this.currentState.code.endsWith(System.lineSeparator());
 		this.currentState.code += (needsNewline ? System.lineSeparator() : "") + cleanCode(code);
 		this.m = Interpreter.tokenPattern.matcher(this.currentState.code);
 		this.currentState.end = state.end;
@@ -210,16 +210,21 @@ public class Tokenizer implements Iterator<String> {
 	}
 
 	/**
-	 * Returns the current line the tokenizer points to.
+	 * Returns the current line the tokenizer points to. This is in human-readable
+	 * form, i.e. line number 1 is actually the first line of code (and not the
+	 * second).
 	 * 
 	 * @return the current line the tokenizer points to.
 	 */
 	public int getCurrentLine() {
 		Matcher linefinder = Interpreter.nlPat.matcher(getCode());
-		int realIndex = this.start(), linenum = 1;
+		int realIndex = this.start(), linenum = 0;
+		// increment line number while the text index is still after the searched line
+		// beginning
 		while (linefinder.find() && realIndex > linefinder.start())
 			++linenum;
-		return linenum;
+		// return line number - 1 because we advanced past the
+		return linenum - 1;
 	}
 
 	/**
@@ -233,7 +238,7 @@ public class Tokenizer implements Iterator<String> {
 		Matcher linefinder = Interpreter.nlPat.matcher(getCode());
 		int realIndex = this.start(), linestart = 0;
 		while (linefinder.find() && realIndex > linefinder.start()) {
-			linestart = linefinder.start()+1;
+			linestart = linefinder.start() + 1;
 		}
 		// last line now contains the index where the line starts that begins before the
 		// matcher's index

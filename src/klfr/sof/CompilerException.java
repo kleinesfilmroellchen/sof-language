@@ -83,9 +83,10 @@ public class CompilerException extends RuntimeException {
 	public static CompilerException fromCurrentPosition(Tokenizer expressionInfo, String name, String reason) {
 		int linenum = expressionInfo.getCurrentLine();
 		var allCode = expressionInfo.getCode();
+		// index linenum-1 because linenum is human-readable "one-based"
 		var expressionLine = Pattern.compile("$", Pattern.MULTILINE).split(allCode)[linenum - 1];
-		return CompilerException.fromFormatMessage(expressionLine, expressionInfo.getIndexInsideLine(),
-				linenum, name == null ? "Interpreter" : name, reason);
+		return CompilerException.fromFormatMessage(expressionLine, expressionInfo.getIndexInsideLine(), linenum,
+				name == null ? "Interpreter" : name, reason);
 	}
 
 	/**
@@ -168,10 +169,11 @@ public class CompilerException extends RuntimeException {
 	 * @return nicely formatted multi-line string
 	 */
 	private static String formatMessage(String expression, int index, int line, String name, String reason) {
-		return String.format(
-				"%s Error in line %d at index %d:%n" + " %s%n" + " %"
-						+ significantAfterTrimmed(index, expression.length()) + "s%n" + "    %s",
-				name, line, index, trim(expression, index), "^", reason);
+		return String
+				.format(
+						"%s Error in line %d at index %d:%n %s%n %"
+								+ (significantAfterTrimmed(index, expression.length()) + 1) + "s%n    %s",
+						name, line, index, trim(expression, index), "^", reason);
 	}
 
 	/** trims string to exact length 20 while respecting the significant index */
@@ -193,20 +195,22 @@ public class CompilerException extends RuntimeException {
 	/**
 	 * Calculates position in trimmed string where the significant index lies.
 	 * 
-	 * @param significantIndex The index where the important bit is in the actual
+	 * @param significantIndex The index where the character is in the actual
 	 *                         string.
 	 * @param length           The actual string's length.
+	 * @return An index (zero-based) that points to the position in the final
+	 *         trimmed string where the indexed character lies
 	 */
 	private static int significantAfterTrimmed(int significantIndex, int length) {
 		int min = significantIndex - 10, max = significantIndex + 10;
-		// there is no trim from the start
-		if (min <= 0)
-			return significantIndex + 1;
-		// no trim from the end: distance to end is the new location
+		if (min < 0)
+			// case 1: there is no trim from the start, index valid as-is
+			return significantIndex;
 		if (max >= length)
+			// case 2: no trim from the end: compute end offset and
 			return 20 - (length - significantIndex);
 		// trim from the start and end means that the char is always at index 10
-		return 11;
+		return 10;
 	}
 
 }
