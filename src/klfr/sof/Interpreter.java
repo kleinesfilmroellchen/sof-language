@@ -2,7 +2,6 @@ package klfr.sof;
 
 // ALL THE STANDARD LIBRARY
 import java.lang.reflect.InvocationTargetException;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.Map;
@@ -14,6 +13,7 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import klfr.Tuple;
 import klfr.sof.lang.*;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 
@@ -242,7 +242,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 							++i;
 							insideBlockComment = false;
 						}
-				} // end of block comment
+				} // end of block comment check
 				else {
 					if (c == '{')
 						++codeBlockDepth;
@@ -252,9 +252,11 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 						// use string pattern to ensure valid string literal
 						final var toSearch = line.substring(i);
 						final var m = stringPattern.matcher(toSearch);
-						if (!m.find())
+						if (!m.find()) {
+							System.err.printf("Invalid string literal in '%s' at %d line %d%n", line, i, lineIdx);
 							throw CompilerException.fromCurrentPosition(line, i, "Syntax",
 									"Invalid string literal, maybe a missing \" or wrong escapes?");
+						}
 						final var escapedString = escapeSequencePattern.matcher(m.group()).replaceAll(match -> {
 							if (match.group(2) != null) {
 								// unicode escape sequence
@@ -268,15 +270,15 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 									return "\t";
 								case "f":
 									return "\f";
-								case "\\":
-									return "\\";
 								default:
 									return "";
 							}
 						});
-						line = line.substring(0, i).concat(escapedString).concat(toSearch.substring(m.end()));
-						log.finer(line);
-					} else if (c == '#') {
+						newCode.append(escapedString);
+						i = m.end() + i -1;
+						//System.out.printf("%s | %s @ %d", line, escapedString, i);
+					} // end of string match
+					else if (c == '#') {
 						if (i < line.length() - 1)
 							if (line.charAt(i + 1) == '*') {
 								++i;
@@ -631,7 +633,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 					stack.push(StringPrimitive.createStringPrimitive(token.substring(1, token.length() - 1)));
 				} else if (codeBlockStartPattern.matcher(token).matches()) {
 					final var endPos = Interpreter.indexOfMatching(tokenizer.getCode(), tokenizer.start(), "{", "}") - 1;
-					this.check(endPos >= 0, () -> new SimpleEntry<>("Syntax", "Unclosed code block"));
+					this.check(endPos >= 0, () -> new Tuple<>("Syntax", "Unclosed code block"));
 					final var cb = new CodeBlock(tokenizer.getState().end, endPos, tokenizer.getCode());
 					this.stack.push(cb);
 
@@ -773,11 +775,11 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	 *                     format.
 	 * @throws CompilerException If the check fails.
 	 */
-	private void check(final boolean b, final Supplier<SimpleEntry<String, String>> errorCreator)
+	private void check(final boolean b, final Supplier<Tuple<String, String>> errorCreator)
 			throws CompilerException {
 		if (!b) {
 			final var errortuple = errorCreator.get();
-			throw CompilerException.fromCurrentPosition(this.tokenizer, errortuple.getKey(), errortuple.getValue());
+			throw CompilerException.fromCurrentPosition(this.tokenizer, errortuple.getLeft(), errortuple.getRight());
 		}
 	}
 
@@ -785,7 +787,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		return String.format(s, args);
 	}
 
-	private static SimpleEntry<String, String> err(final String a, final String b) {
-		return new SimpleEntry<String, String>(a, b);
+	private static Tuple<String, String> err(final String a, final String b) {
+		return new Tuple<String, String>(a, b);
 	}
 }

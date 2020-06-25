@@ -92,4 +92,11 @@ public class Identifier implements Callable {
 		};
 	}
 
+	@Override
+	public int compareTo(Stackable other) {
+		if (other instanceof Identifier)
+			return this.getValue().compareTo(((Identifier)other).getValue());
+		throw new ClassCastException("Cannot compare Identifier " + this.toString() + " to " + other.getClass().toString());
+	}
+
 }

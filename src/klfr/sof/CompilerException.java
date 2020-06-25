@@ -82,9 +82,10 @@ public class CompilerException extends RuntimeException {
 	 */
 	public static CompilerException fromCurrentPosition(Tokenizer expressionInfo, String name, String reason) {
 		int linenum = expressionInfo.getCurrentLine();
+		System.out.println(linenum);
 		var allCode = expressionInfo.getCode();
 		// index linenum-1 because linenum is human-readable "one-based"
-		var expressionLine = Pattern.compile("$", Pattern.MULTILINE).split(allCode)[linenum - 1];
+		var expressionLine = Pattern.compile("$", Pattern.MULTILINE).split(allCode)[linenum];
 		return CompilerException.fromFormatMessage(expressionLine, expressionInfo.getIndexInsideLine(), linenum,
 				name == null ? "Interpreter" : name, reason);
 	}

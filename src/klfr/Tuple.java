@@ -19,7 +19,8 @@ public class Tuple<A extends Comparable<A>, B extends Comparable<B>>
    }
 
    /**
-    * The Tuple comparison first compares the left two elements and only if they are equal, compares the right two elements.
+    * The Tuple comparison first compares the left two elements and only if they
+    * are equal, compares the right two elements.
     */
    @Override
    public int compareTo(Tuple<A, B> other) throws ClassCastException {
@@ -33,12 +34,14 @@ public class Tuple<A extends Comparable<A>, B extends Comparable<B>>
    @Override
    public Iterator<Object> iterator() {
       return new Iterator<Object>() {
-         final Object[] vals = new Object[]{left, right};
+         final Object[] vals = new Object[] { left, right };
          byte idx = 0;
+
          @Override
          public boolean hasNext() {
             return idx < 2;
          }
+
          @Override
          public Object next() {
             return vals[idx++];
@@ -49,11 +52,12 @@ public class Tuple<A extends Comparable<A>, B extends Comparable<B>>
    @Override
    public boolean equals(Object other) {
       try {
-         return this.equals((Tuple<A,B>)other);
+         return this.equals((Tuple<A, B>) other);
       } catch (ClassCastException e) {
          return false;
       }
    }
+
    public boolean equals(Tuple<A, B> other) {
       return other.left.equals(this.left) && other.right.equals(this.right);
    }
@@ -62,15 +66,31 @@ public class Tuple<A extends Comparable<A>, B extends Comparable<B>>
       return this.left.hashCode() ^ this.right.hashCode();
    }
 
-   public Tuple<A,B> clone() throws CloneNotSupportedException {
+   public Tuple<A, B> clone() throws CloneNotSupportedException {
       try {
-         return new Tuple<A,B>((A)(left), (B)(right));
+         return new Tuple<A, B>((A) (left), (B) (right));
       } catch (ClassCastException e) {
-         throw new CloneNotSupportedException(String.format("Tuple parts %s <%s> and %s <%s> do not clone into their own type", left, right, left.getClass(), right.getClass()));
+         throw new CloneNotSupportedException(
+               String.format("Tuple parts %s <%s> and %s <%s> do not clone into their own type", left, right,
+                     left.getClass(), right.getClass()));
       }
    }
 
    public String toString() {
       return String.format("(%s, %s)", left, right);
+   }
+
+   /**
+    * Returns the left, or first element of the tuple.
+    */
+   public A getLeft() {
+      return left;
+   }
+
+   /**
+    * Returns the right, or second element of the tuple.
+    */
+   public B getRight() {
+      return right;
    }
 }

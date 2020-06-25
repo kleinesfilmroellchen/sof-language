@@ -12,7 +12,7 @@ import klfr.sof.lang.Nametable;
 import klfr.sof.lang.Primitive;
 import klfr.sof.lang.Stack;
 
-class IOInterfaceTest {
+class IOInterfaceTest extends SofTestSuper {
 
 	private IOInterface io;
 	private StringWriter p;

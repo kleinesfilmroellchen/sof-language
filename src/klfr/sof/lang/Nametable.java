@@ -53,7 +53,7 @@ public class Nametable implements Callable {
 		return entries.keySet();
 	}
 
-	private Map<Identifier, Stackable> entries = new Hashtable<>();
+	private final Map<Identifier, Stackable> entries = new TreeMap<>();
 
 	@Override
 	public String toDebugString(DebugStringExtensiveness e) {

@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import klfr.sof.lang.*;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 
-class SmallClassesTests {
+class SmallClassesTests extends SofTestSuper {
 
 	/**
 	 * Tests the stub classes in all packages. These are: ScopeDelimiter

@@ -15,7 +15,7 @@ import klfr.sof.lang.IntPrimitive;
 import klfr.sof.lang.Primitive;
 
 @SuppressWarnings("unchecked")
-class PrimitiveTest {
+class PrimitiveTest extends SofTestSuper {
 
 	static IntPrimitive i;
 

@@ -168,7 +168,8 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 		for (var elmt : this) {
 			if (elmt instanceof Nametable) {
 				final var nt = (Nametable) elmt;
-				if (nt.hasMapping(id)) return nt.get(id);
+				if (nt.hasMapping(id))
+					return nt.get(id);
 			}
 		}
 		return null;

@@ -6,8 +6,9 @@ import org.junit.jupiter.api.Test;
 
 import klfr.sof.CompilerException;
 import klfr.sof.Interpreter;
+import klfr.sof.Tokenizer;
 
-class InterpreterTest {
+class InterpreterTest extends SofTestSuper {
 
 	@Test
 	void testCleanCode() {
@@ -18,14 +19,15 @@ class InterpreterTest {
 					Interpreter.cleanCode("abc def ghi jkl # a simple comment\nand a newline"));
 			assertEquals(format("abc def ghi jkl %n%n%nthis comes after the blockcomment%n"), Interpreter.cleanCode(
 					"abc def ghi jkl #* a multiline comment\nand a newline\nand another one*#\nthis comes after the blockcomment"));
-			assertEquals(format("abc \" def # here is no comment\"%n"),
-					Interpreter.cleanCode("abc \" def # here is no comment\"\n"));
+			assertEquals(format("abc \" def # here is no comment\" ghi%n"),
+					Interpreter.cleanCode("abc \" def # here is no comment\" ghi\n"));
 			assertEquals(format("abc \" def # here is no comment\"%n%n"),
 					Interpreter.cleanCode("abc \" def # here is no comment\"\n#but here is one \" with strings.\n"));
 		} catch (CompilerException e) {
 			fail(e);
 		}
 		assertThrows(CompilerException.class, () -> Interpreter.cleanCode("abc def ghi jkl \"  "));
+		assertThrows(CompilerException.class, () -> Interpreter.cleanCode("\" unclosed string"));
 		assertDoesNotThrow(() -> Interpreter.cleanCode("abc def ghi jkl \" jkjkk \""));
 	}
 

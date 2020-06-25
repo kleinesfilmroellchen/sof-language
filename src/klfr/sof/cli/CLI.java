@@ -54,7 +54,7 @@ public class CLI {
 			try {
 				LogManager.getLogManager().reset();
 				var rootLog = Logger.getLogger("");
-				rootLog.setLevel(Level.FINEST);
+				rootLog.setLevel(Level.ALL);
 				ch = new ConsoleHandler();
 				ch.setLevel(Level.FINE);
 

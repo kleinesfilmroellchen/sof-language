@@ -6,7 +6,7 @@ import klfr.sof.CompilerException;
 import klfr.sof.lang.Identifier;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 
-class IdentifierTest {
+class IdentifierTest extends SofTestSuper {
 
 	@Test
 	void testGetValue() {

@@ -13,7 +13,7 @@ import klfr.sof.lang.BuiltinPTs;
 import klfr.sof.lang.Primitive;
 
 @SuppressWarnings("unchecked")
-class OperatorTest {
+class OperatorTest extends SofTestSuper {
 
 	// private Callable operationTest;
 

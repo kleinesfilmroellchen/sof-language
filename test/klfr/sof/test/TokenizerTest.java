@@ -12,7 +12,7 @@ import klfr.sof.CompilerException;
 import klfr.sof.Tokenizer;
 import klfr.sof.Tokenizer.TokenizerState;
 
-class TokenizerTest {
+class TokenizerTest extends SofTestSuper {
 
 	@Test
 	void testFromSourceCode() {
