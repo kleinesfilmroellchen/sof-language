@@ -199,7 +199,7 @@ public class Tokenizer implements Iterator<String> {
 	public Tokenizer appendCode(String code) throws CompilerException {
 		TokenizerState state = this.currentState;
 		this.log.finer("State before appending: " + state);
-		var needsNewline = !this.currentState.code.endsWith(System.lineSeparator());
+		var needsNewline = !this.currentState.code.isEmpty() && !this.currentState.code.endsWith(System.lineSeparator());
 		this.currentState.code += (needsNewline ? System.lineSeparator() : "") + cleanCode(code);
 		this.m = Interpreter.tokenPattern.matcher(this.currentState.code);
 		this.currentState.end = state.end;
@@ -221,9 +221,10 @@ public class Tokenizer implements Iterator<String> {
 		int realIndex = this.start(), linenum = 0;
 		// increment line number while the text index is still after the searched line
 		// beginning
-		while (linefinder.find() && realIndex > linefinder.start())
+		while (linefinder.find() && 
+			realIndex > linefinder.start() - 1)
 			++linenum;
-		// return line number - 1 because we advanced past the
+		// return line number - 1 because we advanced past the line itself
 		return linenum - 1;
 	}
 
