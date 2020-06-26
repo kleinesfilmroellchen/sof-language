@@ -34,12 +34,10 @@ public class CLI {
 
 	public static void main(String[] args) throws InvocationTargetException, UnsupportedEncodingException, IOException {
 		// setup console info logging
-		// LogManager.getLogManager().updateConfiguration(new
-		// ByteArrayInputStream(".level = FINEST".getBytes("UTF-8")), null);
 		LogManager.getLogManager().reset();
 		Logger.getLogger("").setLevel(Level.FINEST);
 		var ch = new ConsoleHandler();
-		ch.setLevel(Level.SEVERE);
+		ch.setLevel(Level.OFF);
 		Logger.getLogger("").addHandler(ch);
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 			Logger.getLogger("").info("SOF exiting.");
