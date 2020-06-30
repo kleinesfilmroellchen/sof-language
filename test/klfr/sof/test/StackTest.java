@@ -14,7 +14,7 @@ import klfr.sof.lang.Stackable;
 import klfr.sof.lang.StackableName;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 
-class StackTest extends SofTestSuper {
+public class StackTest extends SofTestSuper {
 
 	private Stack stack;
 	private Nametable nt;

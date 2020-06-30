@@ -6,29 +6,34 @@ import org.junit.jupiter.api.Test;
 
 import klfr.sof.CompilerException;
 import klfr.sof.Interpreter;
-import klfr.sof.Tokenizer;
+import klfr.sof.Preprocessor;
 
+/**
+ * Tests the interpreter and preprocessor basic functionality.
+ */
 class InterpreterTest extends SofTestSuper {
 
 	@Test
-	void testCleanCode() {
+	void testPreprocessor() {
 		try {
-			assertEquals(format("abc def ghi jkl%n"), Interpreter.cleanCode("abc def ghi jkl"),
+			assertEquals(format("abc def ghi jkl%n"), Preprocessor.preprocessCode("abc def ghi jkl"),
 					"Basic code without cleaning required");
 			assertEquals(format("abc def ghi jkl %nand a newline%n"),
-					Interpreter.cleanCode("abc def ghi jkl # a simple comment\nand a newline"));
-			assertEquals(format("abc def ghi jkl %n%n%nthis comes after the blockcomment%n"), Interpreter.cleanCode(
+					Preprocessor.preprocessCode("abc def ghi jkl # a simple comment\nand a newline"));
+			assertEquals(format("abc def ghi jkl %n%n%nthis comes after the blockcomment%n"), Preprocessor.preprocessCode(
 					"abc def ghi jkl #* a multiline comment\nand a newline\nand another one*#\nthis comes after the blockcomment"));
 			assertEquals(format("abc \" def # here is no comment\" ghi%n"),
-					Interpreter.cleanCode("abc \" def # here is no comment\" ghi\n"));
+					Preprocessor.preprocessCode("abc \" def # here is no comment\" ghi\n"));
 			assertEquals(format("abc \" def # here is no comment\"%n%n"),
-					Interpreter.cleanCode("abc \" def # here is no comment\"\n#but here is one \" with strings.\n"));
+					Preprocessor.preprocessCode("abc \" def # here is no comment\"\n#but here is one \" with strings.\n"));
 		} catch (CompilerException e) {
 			fail(e);
 		}
-		assertThrows(CompilerException.class, () -> Interpreter.cleanCode("abc def ghi jkl \"  "));
-		assertThrows(CompilerException.class, () -> Interpreter.cleanCode("\" unclosed string"));
-		assertDoesNotThrow(() -> Interpreter.cleanCode("abc def ghi jkl \" jkjkk \""));
+		assertThrows(CompilerException.class, () -> Preprocessor.preprocessCode("abc def ghi jkl \"  "));
+		assertThrows(CompilerException.class, () -> Preprocessor.preprocessCode("\" unclosed string"));
+		assertThrows(CompilerException.class, () -> Preprocessor.preprocessCode("{ } unclosed { codeblock"));
+		assertDoesNotThrow(() -> Preprocessor.preprocessCode("abc def ghi jkl \" jkjkk \""));
+		assertDoesNotThrow(() -> Preprocessor.preprocessCode("abc def ghi jkl { jkjkk }"));
 	}
 
 	@Test
