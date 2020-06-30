@@ -10,4 +10,10 @@ There are three main ways of contributing:
 
 4. Write tutorials and examples for SOF and submit them for inclusion in the documentation by making a pull request to the wiki.
 
-Code should follow the general Java code style as well as being readable and well-documented.
+Code should follow the general Java code conventions, but isn't as strictly regulated as elsewhere. More specifically:
+
+- Tabs instead of spaces, everywhere.
+- Readable names in CamelCase everywhere. The general rule "Classes are nouns, methods are verbs" applies.
+- Limit non-comment lines to about 100-120 characters.
+- No code containing warnings, unless good reasons are given. This, most importantly, includes imports and wildcard imports, unsafe typecasting and unused variables.
+- **Good documentation**. If a method, class, member, non-trivial variable is undocumented, it should not be part of a commit. File bug reports for any undocumented code you can find. Good documentation includes stating intent, noting edge cases, documenting parameters, throws, and return values.
