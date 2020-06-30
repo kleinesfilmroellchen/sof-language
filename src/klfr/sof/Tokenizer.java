@@ -7,7 +7,6 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.logging.Logger;
 import java.util.regex.*;
-import static klfr.sof.Interpreter.cleanCode;
 
 /**
  * The tokenizer class wraps the regular expression matching functionality to
@@ -130,7 +129,7 @@ public class Tokenizer implements Iterator<String> {
 	 *                           etc.
 	 */
 	public static Tokenizer fromSourceCode(String code) throws CompilerException {
-		return new Tokenizer(cleanCode(code));
+		return new Tokenizer(Preprocessor.preprocessCode(code));
 	}
 
 	/**
@@ -200,7 +199,7 @@ public class Tokenizer implements Iterator<String> {
 		TokenizerState state = this.currentState;
 		this.log.finer("State before appending: " + state);
 		var needsNewline = !this.currentState.code.isEmpty() && !this.currentState.code.endsWith(System.lineSeparator());
-		this.currentState.code += (needsNewline ? System.lineSeparator() : "") + cleanCode(code);
+		this.currentState.code += (needsNewline ? System.lineSeparator() : "") + Preprocessor.preprocessCode(code);
 		this.m = Interpreter.tokenPattern.matcher(this.currentState.code);
 		this.currentState.end = state.end;
 		this.currentState.regionStart = 0;

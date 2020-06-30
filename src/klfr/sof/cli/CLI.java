@@ -119,7 +119,9 @@ public class CLI {
 			throw new Exception("Unknown exception occurred during input reading.", e);
 		}
 
-		interpreter.reset().setCode(code).internal.setIO(io);
+		interpreter.reset() // reset interpreter
+			.setCode(code)   // set the code to execute
+			.internal.setIO(io); // set the I/O system to use
 		while (interpreter.canExecute())
 			interpreter.executeOnce();
 

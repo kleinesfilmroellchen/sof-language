@@ -6,7 +6,6 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Scanner;
 import java.util.TreeMap;
 import java.util.function.*;
 import java.util.logging.Logger;
@@ -142,7 +141,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		}
 	}
 
-	private static final Logger log = Logger.getLogger(Interpreter.class.getCanonicalName());
+	static final Logger log = Logger.getLogger(Interpreter.class.getCanonicalName());
 	public static final String VERSION = "0.1";
 
 	/** Convenience constant for the 66-character line ─ */
@@ -172,14 +171,14 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	 * end of string). This pattern does not match other escape sequences, see
 	 * {@link Interpreter#escapeSequencePattern}.
 	 */
-	public static final Pattern stringPattern = Pattern.compile("\"(?:[^\"]|(\\\\\"))*?(?<!\\\\)\"");
+	public static final Pattern stringPattern = Pattern.compile("\"((?:[^\"]|(\\\\\"))*?(?<!\\\\))\"");
 	/**
 	 * String escape sequence pattern. Matches the entire escape sequence except the
 	 * leading backslash as group 1 and the unicode code point for {@code \ u}
 	 * escapes as group 2. Does not match the escaped quote, which is not treated by
 	 * the "preprocessor".
 	 */
-	public static final Pattern escapeSequencePattern = Pattern.compile("\\\\(n|t|(?:u([0-9a-fA-F]{4})))");
+	public static final Pattern escapeSequencePattern = Pattern.compile("\\\\(f|t|(?:u([0-9a-fA-F]{4})))");
 	/**
 	 * Boolean literal pattern. Matches "true" and "false", capitalized as well.
 	 */
@@ -211,101 +210,6 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	public static final Pattern nlPat = Pattern.compile("^", Pattern.MULTILINE);
 
 	// #endregion Patterns
-
-	/**
-	 * Cleans the code of comments.
-	 * 
-	 * @throws CompilerException if block comments, code blocks or string literals
-	 *                           are not closed properly.
-	 */
-	public static String cleanCode(final String code) throws CompilerException {
-		final StringBuilder newCode = new StringBuilder();
-		@SuppressWarnings("resource")
-		final Scanner scanner = new Scanner(code);
-		String line = "";
-		boolean insideBlockComment = false;
-		int codeBlockDepth = 0;
-		int lineIdx = 0;
-		while (scanner.hasNextLine()) {
-			line = scanner.nextLine();
-			++lineIdx;
-			if (line.length() == 0)
-				continue;
-			char c;
-			for (int i = 0; i < line.length(); ++i) {
-				c = line.charAt(i);
-
-				if (insideBlockComment) {
-					// if we have the ending character
-					if (c == '*' && i < line.length() - 1)
-						if (line.charAt(i + 1) == '#') {
-							++i;
-							insideBlockComment = false;
-						}
-				} // end of block comment check
-				else {
-					if (c == '{')
-						++codeBlockDepth;
-					else if (c == '}')
-						--codeBlockDepth;
-					if (c == '"') {
-						// use string pattern to ensure valid string literal
-						final var toSearch = line.substring(i);
-						final var m = stringPattern.matcher(toSearch);
-						if (!m.find()) {
-							System.err.printf("Invalid string literal in '%s' at %d line %d%n", line, i, lineIdx);
-							throw CompilerException.fromCurrentPosition(line, i, "Syntax",
-									"Invalid string literal, maybe a missing \" or wrong escapes?");
-						}
-						final var escapedString = escapeSequencePattern.matcher(m.group()).replaceAll(match -> {
-							if (match.group(2) != null) {
-								// unicode escape sequence
-								final int codepoint = Integer.parseInt(match.group(2), 16);
-								return String.valueOf(Character.toChars(codepoint));
-							}
-							switch (match.group(1)) {
-								case "n":
-									return System.lineSeparator();
-								case "t":
-									return "\t";
-								case "f":
-									return "\f";
-								default:
-									return "";
-							}
-						});
-						newCode.append(escapedString);
-						i = m.end() + i -1;
-						//System.out.printf("%s | %s @ %d", line, escapedString, i);
-					} // end of string match
-					else if (c == '#') {
-						if (i < line.length() - 1)
-							if (line.charAt(i + 1) == '*') {
-								++i;
-								// we found a block comment
-								insideBlockComment = true;
-							} else {
-								// skip the single-line comment
-								i = line.length();
-							}
-					} else {
-						newCode.append(c);
-					}
-				} // end of non-block comment
-			} // end of single line
-			newCode.append(System.lineSeparator());
-		} // end of scan
-
-		scanner.close();
-		if (codeBlockDepth > 0) {
-			throw CompilerException.fromCurrentPosition(newCode.toString(), newCode.lastIndexOf("{"), "Syntax",
-					"Unclosed code block");
-		} else if (codeBlockDepth < 0) {
-			throw CompilerException.fromCurrentPosition(newCode.toString(), newCode.lastIndexOf("}"), "Syntax",
-					"Too many closing '}'");
-		}
-		return newCode.toString();
-	}
 
 	/**
 	 * Searches the String for two matching (open&close, like parenthesis) character
@@ -630,7 +534,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 					stack.push(literal);
 				} else if (stringPattern.matcher(token).matches()) {
 					log.finest(() -> f("LITERAL STRING %30s @ %4d", token, tokenizer.getState().start));
-					stack.push(StringPrimitive.createStringPrimitive(token.substring(1, token.length() - 1)));
+					stack.push(StringPrimitive.createStringPrimitive(Preprocessor.preprocessSofString(token)));
 				} else if (codeBlockStartPattern.matcher(token).matches()) {
 					final var endPos = Interpreter.indexOfMatching(tokenizer.getCode(), tokenizer.start(), "{", "}") - 1;
 					this.check(endPos >= 0, () -> new Tuple<>("Syntax", "Unclosed code block"));

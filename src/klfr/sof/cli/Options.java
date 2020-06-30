@@ -54,7 +54,7 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 	}
 
 	/**
-	 * Run the interpreter with this Options
+	 * Run the interpreter with the given Options
 	 */
 	@Override
 	public Optional<Throwable> apply(IOInterface io) {
