@@ -1,0 +1,14 @@
+# SOF test file - number and arithmetic tests
+
+2 -1 1902903 0xff77 0o566 0b10011  # integer literals
+2.5 -3.0478 4.81e+7  730.7781E-10  # float literals
+
+3 4 + 7 = assert # addition (int & int)
+6 19.4 + 25.4 = assert # addition (int & float)
+70.5 42.5 + 113.0 = assert # addition (float & float)
+
+200 81 - 119 = assert # subtraction (int & int)
+60 73 - -13 = assert # subtraction (negative result)
+70 42.5 - 27.5 = assert # subtraction (int & float)
+300.75 60.25 - 240.5 = assert # subtraction (float & float)
+

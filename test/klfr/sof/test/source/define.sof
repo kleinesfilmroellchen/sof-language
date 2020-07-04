@@ -1,0 +1,21 @@
+# SOF test file - definition and retrieval tests
+
+# basic def and retrieval
+"3" x def
+x . "3" = writeln
+
+# rebind possible
+"hello" x def
+x . "hello" = writeln
+# not old value
+x . "3" /= writeln
+
+# bind other value
+42 blah def
+# sanity-check
+blah . x . /= writeln
+blah . 42 = writeln
+
+{
+	# inside codeblocks, scope does not change
+	x . "hello" = writeln} .
