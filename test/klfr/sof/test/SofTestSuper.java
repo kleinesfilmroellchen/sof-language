@@ -8,7 +8,8 @@ import java.util.logging.Logger;
 import org.junit.jupiter.api.*;
 
 /**
- * Basic superclass of all tests. Sets a logger up that logs messages from this module to the console.
+ * Basic superclass of all tests. Sets a logger up that logs messages from this
+ * module to the console.
  */
 public class SofTestSuper {
 
@@ -19,18 +20,22 @@ public class SofTestSuper {
     */
    private static final Handler ch = new TestLogHandler();
 
+   private static boolean hasRunInit = false;
+
    @BeforeAll
    public static void hyperSetup() throws Exception {
+      if (hasRunInit)
+         return;
+
       // reset and unlock the root logger
       LogManager.getLogManager().reset();
-      var rootLog = Logger.getLogger("");
+      final var rootLog = Logger.getLogger("");
       rootLog.setLevel(Level.ALL);
 
       // log the module-internal stuff to the console
       Logger.getLogger("klfr.sof").addHandler(ch);
-   }
 
-   @Test
-   public void stub() {
+      // prevent initializer from running a second time
+      hasRunInit = true;
    }
 }

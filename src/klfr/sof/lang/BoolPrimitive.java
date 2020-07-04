@@ -33,4 +33,33 @@ public class BoolPrimitive extends Primitive {
             String.format("No boolean literal found in \"%s\"", booleanString));
    }
 
+   public boolean equals(Stackable other) {
+      if (other instanceof BoolPrimitive) {
+         return ((BoolPrimitive) other).value == this.value;
+      } else if (other instanceof IntPrimitive) {
+         return this.value ? (((IntPrimitive) other).value() != 0) : (((IntPrimitive) other).value() == 0);
+      } else if (other instanceof FloatPrimitive) {
+         return this.value ? (((FloatPrimitive) other).value() != 0) : (((FloatPrimitive) other).value() == 0);
+      }
+      return false;
+   }
+
+   /**
+    * Returns whether the value represented by this boolean primitive is true.
+    * 
+    * @return whether the value represented by this boolean primitive is true.
+    */
+   public boolean isTrue() {
+      return this.value;
+   }
+
+   /**
+    * Returns whether the value represented by this boolean primitive is false.
+    * 
+    * @return whether the value represented by this boolean primitive is false.
+    */
+   public boolean isFalse() {
+      return !this.value;
+   }
+
 }

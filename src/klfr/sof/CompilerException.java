@@ -28,22 +28,22 @@ public class CompilerException extends RuntimeException {
 		return infoPresent;
 	}
 
-	private CompilerException(String arg0, boolean infoPresent) {
+	protected CompilerException(String arg0, boolean infoPresent) {
 		super(arg0);
 		this.infoPresent = infoPresent;
 	}
 
-	private CompilerException(Throwable arg0, boolean infoPresent) {
+	protected CompilerException(Throwable arg0, boolean infoPresent) {
 		super(arg0);
 		this.infoPresent = infoPresent;
 	}
 
-	private CompilerException(String arg0, Throwable arg1) {
+	protected CompilerException(String arg0, Throwable arg1) {
 		super(arg0, arg1);
 		infoPresent = false;
 	}
 
-	private CompilerException(String arg0, Throwable arg1, boolean arg2, boolean arg3) {
+	protected CompilerException(String arg0, Throwable arg1, boolean arg2, boolean arg3) {
 		super(arg0, arg1, arg2, arg3);
 		infoPresent = false;
 	}

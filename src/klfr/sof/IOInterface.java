@@ -208,7 +208,7 @@ public class IOInterface {
 	 */
 	public void describeStack(Stack stack) {
 		if (debug) {
-			println("Stack: " + System.lineSeparator() + Interpreter.stackToDebugString(stack));
+			println("Stack: " + System.lineSeparator() + stack.toStringExtended());
 			println("Global Nametable: " + System.lineSeparator() + stack.globalNametable().toDebugString(DebugStringExtensiveness.Full));
 		}
 	}

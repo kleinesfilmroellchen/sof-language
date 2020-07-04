@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="src">
+	</classpathentry>
 	<classpathentry kind="src" output="testbins" path="test">
 		<attributes>
 			<attribute name="test" value="true"/>

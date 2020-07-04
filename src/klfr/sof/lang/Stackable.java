@@ -112,7 +112,26 @@ public interface Stackable extends Serializable, Cloneable, Comparable<Stackable
 	 *         annotation.
 	 */
 	public default String typename() {
-		return this.getClass().getAnnotation(StackableName.class) != null ? this.getClass().getAnnotation(StackableName.class).value() : "Stackable";
+		return this.getClass().getAnnotation(StackableName.class) != null
+				? this.getClass().getAnnotation(StackableName.class).value()
+				: "Stackable";
+	}
+
+	/**
+	 * Checks the stackables for logical SOF-internal equality. This check should be
+	 * permissive, meaning that incompatible types return {@code false} rather than
+	 * failing. This is also the behavior of the default implementation.<br>
+	 * <br>
+	 * As for usual with equality, this check should be commutative, i.e.
+	 * {@code a.equals(b) == b.equals(a)}.
+	 * 
+	 * @param other Other stackable to check against
+	 * @return true if the Stackables are considered equal according to SOF logic,
+	 *         false if they aren't or the types are generally not comparable for
+	 *         equality.
+	 */
+	public default boolean equals(Stackable other) {
+		return false;
 	}
 
 	/**

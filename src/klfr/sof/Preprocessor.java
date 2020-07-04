@@ -2,6 +2,8 @@ package klfr.sof;
 
 import java.util.Scanner;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * The SOF preprocessor is a collection of static methods that normalize and
@@ -83,6 +85,7 @@ public class Preprocessor {
                   }
             } // end of block comment check
             else {
+               // BUG: detects all curly braces
                if (c == '{')
                   ++codeBlockDepth;
                else if (c == '}')
@@ -143,5 +146,69 @@ public class Preprocessor {
       }
       return newCode.toString();
    }
+
+/**
+ * Searches the String for two matching (open&close, like parenthesis) character
+ * pairs and returns the index after the closing character. Also keeps track of
+ * nesting levels.
+ * 
+ * @param toSearch     The String through which is searched.
+ * @param indexOfFirst The index where the opening character combination starts.
+ *                     The method will search for the closing character
+ *                     combination that matches with this combination.
+ * @param toMatchOpen  The character combination that denotes the opening or
+ *                     introduction of a new nesting level.
+ * @param toMatchClose The character combination that denotes the closing or
+ *                     finalization of a nesting level.
+ * @return The index directly after the closing character combination that
+ *         matches the given opening character combination at the given index.
+ *         If an error occurs, such as not finding matching characters or
+ *         nesting level errors, the index returned is -1.
+ */
+public static int indexOfMatching(final String toSearch, final int indexOfFirst, final String toMatchOpen,
+		final String toMatchClose) {
+	final Matcher openingMatcher = Pattern.compile(Pattern.quote(toMatchOpen)).matcher(toSearch);
+	final Matcher closingMatcher = Pattern.compile(Pattern.quote(toMatchClose)).matcher(toSearch);
+	boolean openingAvailable = openingMatcher.find(indexOfFirst),
+			closingAvailable = closingMatcher.find(indexOfFirst);
+	if (!openingAvailable || !closingAvailable)
+		return -1;
+	int openingStart = openingMatcher.start(), closingStart = closingMatcher.start();
+	int indentationLevel = 0;
+	int lastValidClosing;
+
+	do {
+		lastValidClosing = closingMatcher.end();
+		// only do this if there was an opening available in the last search.
+		// if not, then it is useless to try further.
+		if (openingStart < closingStart && openingAvailable) {
+			// the opening occurs first, so advance it
+			++indentationLevel;
+			openingAvailable = openingMatcher.find();
+			if (openingAvailable)
+				openingStart = openingMatcher.start();
+			// set the start of the next opening to a high value so the second clause is
+			// definitely triggered next time
+			else
+				openingStart = Integer.MAX_VALUE;
+		} else
+		// only do this if there was a closing available in the last search.
+		// if not, then it is useless to try further.
+		if (closingAvailable) {
+			// the closing occurs first, so advance it
+			--indentationLevel;
+			closingAvailable = closingMatcher.find();
+			if (closingAvailable)
+				closingStart = closingMatcher.start();
+			// set the start of the next closing to a low value so the first clause is
+			// definitely triggered next time
+			else
+				closingStart = Integer.MIN_VALUE;
+		}
+	} while ((openingAvailable || closingAvailable) && indentationLevel > 0);
+	if (indentationLevel != 0)
+		return -1;
+	return lastValidClosing;
+}
 
 }

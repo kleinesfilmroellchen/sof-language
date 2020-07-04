@@ -106,14 +106,36 @@ public class IntPrimitive extends Primitive {
       return createIntPrimitive(this.value / other.value);
    }
 
-	public IntPrimitive multiply(IntPrimitive other) {
-		return this.value == 1 ? other : (other.value == 1 ? this : createIntPrimitive(this.value * other.value));
-	}
+   public IntPrimitive multiply(IntPrimitive other) {
+      return this.value == 1 ? other : (other.value == 1 ? this : createIntPrimitive(this.value * other.value));
+   }
 
-	public IntPrimitive subtract(IntPrimitive other) {
-		if (other.value == 0)
-			return this;
-		return createIntPrimitive(this.value - other.value);
-	}
+   public IntPrimitive subtract(IntPrimitive other) {
+      if (other.value == 0)
+         return this;
+      return createIntPrimitive(this.value - other.value);
+   }
+
+   @Override
+   public int compareTo(Stackable o) {
+      if (o instanceof IntPrimitive) {
+         return this.value().compareTo(((IntPrimitive) o).value);
+      } else if (o instanceof FloatPrimitive) {
+         // invert the comparison result, therefore effectively switching sides
+         return -((FloatPrimitive) o).compareTo(this);
+      }
+      throw CompilerException.makeIncomplete("Type",
+            String.format("%s and %s cannot be compared.", this.typename(), o.typename()));
+   }
+
+   @Override
+   public boolean equals(Stackable other) {
+      if(other instanceof IntPrimitive) {
+         return ((IntPrimitive)other).value == this.value;
+      } else if(other instanceof FloatPrimitive || other instanceof BoolPrimitive) {
+         return other.equals(this);
+      }
+      return false;
+   }
 
 }

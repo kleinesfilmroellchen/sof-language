@@ -1,5 +1,7 @@
 package klfr.sof.lang;
 
+import klfr.sof.CompilerException;
+
 @StackableName("String")
 public class StringPrimitive extends Primitive {
    private static final long serialVersionUID = 1L;
@@ -40,6 +42,23 @@ public class StringPrimitive extends Primitive {
    @Override
    public String print() {
       return s;
+   }
+
+   @Override
+   public int compareTo(Stackable o) {
+      if (o instanceof StringPrimitive) {
+         return this.s.compareTo(((StringPrimitive) o).s);
+      }
+      throw CompilerException.makeIncomplete("Type",
+            String.format("%s and %s cannot be compared.", this.typename(), o.typename()));
+   }
+
+   @Override
+   public boolean equals(Stackable other) {
+      if (other instanceof StringPrimitive)
+         return this.s.equals(((StringPrimitive) other).s);
+      else
+         return other.print().equals(this.s);
    }
 
 }

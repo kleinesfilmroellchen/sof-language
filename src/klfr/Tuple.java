@@ -18,6 +18,10 @@ public class Tuple<A extends Comparable<A>, B extends Comparable<B>>
       right = r;
    }
 
+   public static <D extends Comparable<D>, C extends Comparable<C>> Tuple<C, D> t(C l, D r) {
+      return new Tuple<C, D>(l, r);
+   }
+
    /**
     * The Tuple comparison first compares the left two elements and only if they
     * are equal, compares the right two elements.

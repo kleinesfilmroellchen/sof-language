@@ -12,6 +12,15 @@ import klfr.sof.Interpreter;
 public class FloatPrimitive extends Primitive {
 	private static final long serialVersionUID = 1L;
 	private static final Logger log = Logger.getLogger(FloatPrimitive.class.getCanonicalName());
+	/**
+	 * Because this float implementation uses double as its basis, equality
+	 * comparisons for many common ratios will be imprecise. For this reason,
+	 * equality testing between two sof floats is done after rounding to this
+	 * specified number of decimal places. As doubles have about 12 significant
+	 * decimal places, a number closely below this may be ideal to preserve accuracy
+	 * of comparisons.
+	 */
+	public static final int EQUALITY_PRECISION = 10;
 
 	private final Double v;
 
@@ -84,6 +93,29 @@ public class FloatPrimitive extends Primitive {
 		}
 	}
 
+	/**
+	 * Round to specified number of decimal points.
+	 * 
+	 * @param d        number to round.
+	 * @param decimals number of decimals to round to. 0 = round to integer,
+	 *                 negative = round to tens, 100's etc.
+	 * @return rounded number.
+	 */
+	public static strictfp double round(double d, int decimals) {
+		return Math.round(d * Math.pow(10, decimals)) / Math.pow(10, decimals);
+	}
+
+	public boolean equals(Stackable other) {
+		if (other instanceof FloatPrimitive) {
+			return round(((FloatPrimitive) other).v, EQUALITY_PRECISION) == round(this.v, EQUALITY_PRECISION);
+		} else if (other instanceof IntPrimitive) {
+			return ((IntPrimitive) other).value().doubleValue() == this.v;
+		} else if (other instanceof BoolPrimitive) {
+			return other.equals(this);
+		}
+		return false;
+	}
+
 	@Override
 	public int compareTo(Stackable x) {
 		if (x instanceof FloatPrimitive) {
@@ -95,5 +127,13 @@ public class FloatPrimitive extends Primitive {
 		}
 		throw CompilerException.makeIncomplete("Type",
 				String.format("%s and %s cannot be compared.", this.typename(), x.typename()));
+	}
+
+	public String print() {
+		// Java float tostring is almost fine, except for allowing exponents with simple
+		// "E###" format, where ### is the actual positive exponent. Using this simple
+		// regex replacement puts the tostring in an acceptable format re-parseable by
+		// the above custom SOF float parser.
+		return Double.toString(this.v).replaceAll("[eE](?!\\-)", "e+");
 	}
 }

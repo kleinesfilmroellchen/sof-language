@@ -24,9 +24,9 @@ import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
-import klfr.sof.CompilerException;
 import klfr.sof.IOInterface;
 import klfr.sof.Interpreter;
+import klfr.sof.Preprocessor;
 
 public class CLI {
 
@@ -126,6 +126,24 @@ public class CLI {
 			interpreter.executeOnce();
 
 		log.exiting(CLI.class.getCanonicalName(), "doFullExecution");
+	}
+
+	/**
+	 * Runs the SOF preprocessor on the reader and prints the result to the given IO
+	 * interface output
+	 * 
+	 * @param reader A reader that reads SOF source code.
+	 */
+	public static void runPreprocessor(Reader reader, IOInterface io) throws Exception {
+		String code = "";
+		try {
+			StringWriter writer = new StringWriter();
+			reader.transferTo(writer);
+			code = writer.getBuffer().toString();
+		} catch (IOException e) {
+			throw new Exception("Unknown exception occurred during input reading.", e);
+		}
+		io.print(Preprocessor.preprocessCode(code));
 	}
 
 	public static void exitUnnormal(int status) {

@@ -42,7 +42,7 @@ public class TestLogHandler extends StreamHandler {
                                     (b1, b2) -> b1.append(b2))));
                }
             });
-      this.setLevel(Level.FINER);
+      this.setLevel(Level.FINE);
    }
 
    /// -----------------------------------------------------------------------------------------------------

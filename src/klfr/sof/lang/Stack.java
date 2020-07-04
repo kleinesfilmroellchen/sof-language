@@ -1,11 +1,13 @@
 package klfr.sof.lang;
 
-import java.io.Serializable;
+import java.util.Deque;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 import klfr.sof.CompilerException;
+import klfr.sof.Interpreter;
+import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 
 /**
  * The main data structure of SOF internally where all data resides. This is a
@@ -39,16 +41,16 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	@Override
 	public Stackable getLast() throws CompilerException {
 		try {
-			Stackable elmt = super.getLast();
+			final Stackable elmt = super.getLast();
 			return elmt;
-		} catch (NoSuchElementException e) {
+		} catch (final NoSuchElementException e) {
 			throw CompilerException.makeIncomplete("Stack", "Stack is empty.");
 		}
 	}
 
 	@Override
 	public Stackable peek() throws CompilerException {
-		Stackable elmt = super.peek();
+		final Stackable elmt = super.peek();
 		if (elmt == null)
 			throw CompilerException.makeIncomplete("Stack", "Stack is empty.");
 		return elmt;
@@ -57,14 +59,14 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	@Override
 	public Stackable pop() throws CompilerException {
 		try {
-			Stackable elmt = super.pop();
+			final Stackable elmt = super.pop();
 			if (elmt instanceof Nametable) {
 				super.push(elmt);
 				throw CompilerException.makeIncomplete("StackAccess",
 						"Manipulation of Nametables and Stack delimiters on the stack is not allowed.");
 			}
 			return elmt;
-		} catch (NoSuchElementException e) {
+		} catch (final NoSuchElementException e) {
 			throw CompilerException.makeIncomplete("Stack", "Stack is empty.");
 		}
 	}
@@ -79,7 +81,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 *                           itself failed.
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends Stackable> T popTyped(Class<T> t) throws CompilerException {
+	public <T extends Stackable> T popTyped(final Class<T> t) throws CompilerException {
 		final Stackable val = pop();
 		if (t.isInstance(val)) {
 			return (T) val;
@@ -107,7 +109,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 */
 	public Nametable globalNametable() throws RuntimeException {
 		try {
-			Stackable lowest = getLast();
+			final Stackable lowest = getLast();
 			return (Nametable) lowest;
 		} catch (ClassCastException | CompilerException e) {
 			throw new RuntimeException("Interpreter Exception: Global Nametable missing. ┻━━┻ ミ ヽ(ಠ益ಠ)ノ 彡  ┻━━┻");
@@ -126,11 +128,11 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 * @throws RuntimeException
 	 */
 	public Nametable namingScope() throws RuntimeException {
-		Iterator<Stackable> helperIt = this.descendingIterator();
+		final Iterator<Stackable> helperIt = this.descendingIterator();
 		// skip global nametable
 		helperIt.next();
 		if (helperIt.hasNext()) {
-			Stackable maybeNamespace = helperIt.next();
+			final Stackable maybeNamespace = helperIt.next();
 			// if it is a nametable but no local scope delimiter
 			if (maybeNamespace instanceof Nametable && !(maybeNamespace instanceof FunctionDelimiter)) {
 				// we found a namespace
@@ -147,7 +149,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 * stack.
 	 */
 	public Nametable localScope() throws RuntimeException {
-		for (var elmt : this) {
+		for (final var elmt : this) {
 			if (elmt instanceof Nametable)
 				return (Nametable) elmt;
 		}
@@ -164,8 +166,8 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 * @param id the identifier to search for
 	 * @return the most local value that is associated with the identifier
 	 */
-	public Stackable lookup(Identifier id) {
-		for (var elmt : this) {
+	public Stackable lookup(final Identifier id) {
+		for (final var elmt : this) {
 			if (elmt instanceof Nametable) {
 				final var nt = (Nametable) elmt;
 				if (nt.hasMapping(id))
@@ -184,12 +186,12 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 * 
 	 * @return this stack
 	 */
-	public Stack setNamespace(Nametable namespace) {
-		Iterator<Stackable> helperIt = this.descendingIterator();
+	public Stack setNamespace(final Nametable namespace) {
+		final Iterator<Stackable> helperIt = this.descendingIterator();
 		helperIt.next();// skip global nametable
-		Stackable maybeOldNamespace = helperIt.next();
+		final Stackable maybeOldNamespace = helperIt.next();
 		// take off global nametable temporarily
-		Nametable globalNametable = (Nametable) this.removeLast();
+		final Nametable globalNametable = (Nametable) this.removeLast();
 		// if the second-to-last element is a nametable but no local scope delimiter, we
 		// found a namespace, remove it
 		if (maybeOldNamespace instanceof Nametable && !(maybeOldNamespace instanceof FunctionDelimiter))
@@ -199,6 +201,19 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 		this.addLast(globalNametable);
 
 		return this;
+	}
+
+	/**
+	 * toString method that creates a visual multiline representation of the stack and its contents.
+	 */
+	public String toStringExtended() {
+		return "┌─" + Interpreter.line66.substring(0, 37) + "─┐" + System.lineSeparator()
+				+ this.stream()
+						.collect(() -> new StringBuilder(),
+								(str, elmt) -> str.append(String.format("│%38s │%n├─" + Interpreter.line66.substring(0, 37) + "─┤%n",
+										elmt.toDebugString(DebugStringExtensiveness.Compact), " ")),
+								(e1, e2) -> e1.append(e2))
+						.toString();
 	}
 
 }

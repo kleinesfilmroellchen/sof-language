@@ -5,7 +5,6 @@ import static java.lang.String.format;
 import org.junit.jupiter.api.Test;
 
 import klfr.sof.CompilerException;
-import klfr.sof.Interpreter;
 import klfr.sof.Preprocessor;
 
 /**
@@ -38,10 +37,10 @@ class InterpreterTest extends SofTestSuper {
 
 	@Test
 	void testIndexOfMatching() {
-		assertEquals(28, Interpreter.indexOfMatching("( blah blah ( sjfjdk)    xx) )))", 0, "(", ")"));
-		assertEquals(32, Interpreter.indexOfMatching("( blah blah ( sjfjdk)    xxdd)dd    dddd", 2, "blah", "dd"));
-		assertEquals(21, Interpreter.indexOfMatching("( blah blah ( sjfjdk)    xx) )))))", 12, "(", ")"));
-		assertEquals(-1, Interpreter.indexOfMatching("( blah blah ( sjfjdk    xx", 12, "(", ")"));
+		assertEquals(28, Preprocessor.indexOfMatching("( blah blah ( sjfjdk)    xx) )))", 0, "(", ")"));
+		assertEquals(32, Preprocessor.indexOfMatching("( blah blah ( sjfjdk)    xxdd)dd    dddd", 2, "blah", "dd"));
+		assertEquals(21, Preprocessor.indexOfMatching("( blah blah ( sjfjdk)    xx) )))))", 12, "(", ")"));
+		assertEquals(-1, Preprocessor.indexOfMatching("( blah blah ( sjfjdk    xx", 12, "(", ")"));
 	}
 
 }

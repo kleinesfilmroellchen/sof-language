@@ -1,18 +1,23 @@
 package klfr.sof;
 
 // ALL THE STANDARD LIBRARY
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Deque;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.*;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static klfr.Tuple.t;
+
 import klfr.Tuple;
+import klfr.sof.Interpreter.InterpreterAction;
 import klfr.sof.lang.*;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 
@@ -40,11 +45,18 @@ import klfr.sof.lang.Stackable.DebugStringExtensiveness;
  * @author klfr
  * @version 0.1
  */
-public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter> {
+public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>, Serializable {
+	private static final long serialVersionUID = 1L;
+	protected static final Logger log = Logger.getLogger(Interpreter.class.getCanonicalName());
+	/** Version of the interpreter. */
+	public static final String VERSION = "0.1";
+
+	// #region Nested classes
+
 	/**
 	 * Access Interpreter internals through this pseudo-class.
 	 * 
-	 * @deprecated This pseudo-class's accesses the Interpreter internals. Its usage
+	 * @deprecated This pseudo-class accesses the Interpreter internals. Its usage
 	 *             may break the currently running SOF interpretation system.
 	 */
 	@Deprecated()
@@ -141,13 +153,51 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		}
 	}
 
-	static final Logger log = Logger.getLogger(Interpreter.class.getCanonicalName());
-	public static final String VERSION = "0.1";
+	/**
+	 * Simple functional interface for an action with side-effects that operates on
+	 * an interpreter.
+	 */
+	@FunctionalInterface
+	public static interface InterpreterAction {
+		/**
+		 * Execute this PTAction.
+		 * 
+		 * @param self The interpreter that asked for the action.
+		 */
+		public void execute(Interpreter self) throws CompilerException;
+	}
+
+	// #endregion
+
+	// #region Utility
+
+	private static String f(final String s, final Object... args) {
+		return String.format(s, args);
+	}
 
 	/** Convenience constant for the 66-character line ─ */
 	public static final String line66 = String.format("%66s", " ").replace(" ", "─");
 
-	//// #region PATTERNS
+	/**
+	 * <a href=
+	 * "https://www.reddit.com/r/ProgrammerHumor/comments/auz30h/when_you_make_documentation_for_a_settergetter/?utm_source=share&utm_medium=web2x">...</a>
+	 */
+	public String getCode() {
+		return tokenizer.getCode();
+	}
+
+	/**
+	 * <a href=
+	 * "https://www.reddit.com/r/ProgrammerHumor/comments/auz30h/when_you_make_documentation_for_a_settergetter/?utm_source=share&utm_medium=web2x">...</a>
+	 */
+	public IOInterface getIO() {
+		return io;
+	}
+
+	// #endregion
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// #region PATTERNS
 	/**
 	 * Pattern for integer number literals. Group 1 matches the entire number if not
 	 * the simple '0' literal, group 2 matches the sign, if present. Group 3 matches
@@ -210,124 +260,17 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	public static final Pattern nlPat = Pattern.compile("^", Pattern.MULTILINE);
 
 	// #endregion Patterns
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	/**
-	 * Searches the String for two matching (open&close, like parenthesis) character
-	 * pairs and returns the index after the closing character. Also keeps track of
-	 * nesting levels.
-	 * 
-	 * @param toSearch     The String through which is searched.
-	 * @param indexOfFirst The index where the opening character combination starts.
-	 *                     The method will search for the closing character
-	 *                     combination that matches with this combination.
-	 * @param toMatchOpen  The character combination that denotes the opening or
-	 *                     introduction of a new nesting level.
-	 * @param toMatchClose The character combination that denotes the closing or
-	 *                     finalization of a nesting level.
-	 * @return The index directly after the closing character combination that
-	 *         matches the given opening character combination at the given index.
-	 *         If an error occurs, such as not finding matching characters or
-	 *         nesting level errors, the index returned is -1.
-	 */
-	public static int indexOfMatching(final String toSearch, final int indexOfFirst, final String toMatchOpen,
-			final String toMatchClose) {
-		final Matcher openingMatcher = Pattern.compile(Pattern.quote(toMatchOpen)).matcher(toSearch);
-		final Matcher closingMatcher = Pattern.compile(Pattern.quote(toMatchClose)).matcher(toSearch);
-		boolean openingAvailable = openingMatcher.find(indexOfFirst),
-				closingAvailable = closingMatcher.find(indexOfFirst);
-		if (!openingAvailable || !closingAvailable)
-			return -1;
-		int openingStart = openingMatcher.start(), closingStart = closingMatcher.start();
-		int indentationLevel = 0;
-		int lastValidClosing;
-
-		do {
-			lastValidClosing = closingMatcher.end();
-			// only do this if there was an opening available in the last search.
-			// if not, then it is useless to try further.
-			if (openingStart < closingStart && openingAvailable) {
-				// the opening occurs first, so advance it
-				++indentationLevel;
-				openingAvailable = openingMatcher.find();
-				if (openingAvailable)
-					openingStart = openingMatcher.start();
-				// set the start of the next opening to a high value so the second clause is
-				// definitely triggered next time
-				else
-					openingStart = Integer.MAX_VALUE;
-			} else
-			// only do this if there was a closing available in the last search.
-			// if not, then it is useless to try further.
-			if (closingAvailable) {
-				// the closing occurs first, so advance it
-				--indentationLevel;
-				closingAvailable = closingMatcher.find();
-				if (closingAvailable)
-					closingStart = closingMatcher.start();
-				// set the start of the next closing to a low value so the first clause is
-				// definitely triggered next time
-				else
-					closingStart = Integer.MIN_VALUE;
-			}
-		} while ((openingAvailable || closingAvailable) && indentationLevel > 0);
-		if (indentationLevel != 0)
-			return -1;
-		return lastValidClosing;
-	}
-
-	/**
-	 * Utility to format a string for debug output of a stack.
-	 */
-	public static String stackToDebugString(final Deque<Stackable> stack) {
-		return "┌─" + line66.substring(0, 37) + "─┐" + System.lineSeparator()
-				+ stack.stream()
-						.collect(() -> new StringBuilder(),
-								(str, elmt) -> str.append(String.format("│%38s │%n├─" + line66.substring(0, 37) + "─┤%n",
-										elmt.toDebugString(DebugStringExtensiveness.Compact), " ")),
-								(e1, e2) -> e1.append(e2))
-						.toString();
-	}
-
-	/**
-	 * Responsible for tokenizing the code and moving around when code blocks and
-	 * functions affect control flow.
-	 */
-	private Tokenizer tokenizer = Tokenizer.fromSourceCode("");
-
-	/**
-	 * Simple delegate for an action to be taken when a certain primitive token (PT)
-	 * is encountered.
-	 */
-	@FunctionalInterface
-	private static interface PTAction {
-		/**
-		 * Execute this PTAction.
-		 * 
-		 * @param self The interpreter that asked for the action.
-		 */
-		public void execute(Interpreter self) throws CompilerException;
-	}
-
-	/**
-	 * Helper function to execute call and push return value of callable to stack if
-	 * possible.
-	 */
-	private void doCall(final Callable reference) {
-		final var retval = reference.getCallProvider().call(this);
-		if (retval != null)
-			this.stack.push(retval);
-	}
-
-	/**
-	 * The most important variable. Defines a mapping from primitive tokens (PTs) to
-	 * actions that correspond with them. Literals and code blocks are handled
-	 * differently.
+	 * Defines a mapping from primitive tokens (PTs) to actions that correspond with
+	 * them.
 	 */
 	// higher load factor can be used b/c of small number of entries where
 	// collisions are unlikely
-	private static Map<String, PTAction> ptActions = new TreeMap<>();
+	private static Map<String, InterpreterAction> ptActions = new TreeMap<>();
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// #region PT ACTION DEFINITION
+	// #region PRIMITIVE TOKEN ACTIONS
 	static {
 		/// OPERATIONS
 		ptActions.put("+", self -> self.doCall(BuiltinPTs.add));
@@ -338,6 +281,8 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		ptActions.put("<", self -> self.doCall(BuiltinPTs.lessThan));
 		ptActions.put(">=", self -> self.doCall(BuiltinPTs.greaterEqualThan));
 		ptActions.put("<=", self -> self.doCall(BuiltinPTs.lessEqualThan));
+		ptActions.put("=", self -> self.doCall(BuiltinPTs.equals));
+		ptActions.put("/=", self -> self.doCall(BuiltinPTs.notEquals));
 		// pop and discard
 		ptActions.put("pop", self -> self.stack.pop());
 		// peek and push, thereby duplicate
@@ -362,7 +307,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		ptActions.put("write", self -> self.io.print(self.stack.pop().print()));
 		ptActions.put("writeln", self -> self.io.println(self.stack.pop().print()));
 		// define
-		final Function<Function<Interpreter, Nametable>, PTAction> definer = scope -> self -> {
+		final Function<Function<Interpreter, Nametable>, InterpreterAction> definer = scope -> self -> {
 			// The scope lookup is only performed in this moment. The scope retrieval
 			// function should leave the identifier, whether actually provided by the user
 			// or not, as the topmost element of the stack and the value directly below.
@@ -464,39 +409,175 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 			}
 		});
 	}
-	// #endregion PT ACTION DEFINITION END
+	// #endregion PT actions
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	// #region TOKEN HANDLERS
+
+	/**
+	 * Token handler for all primitive, i.e. immediate-action tokens.
+	 */
+	public static Optional<InterpreterAction> primitiveTokenHandler(String token) {
+		if (ptActions.containsKey(token)) {
+			return Optional.of(self -> {
+				final var toExec = ptActions.get(token);
+				log.finest(() -> f("PT-EXEC %30s :: %10s @ %4d", token, toExec, self.tokenizer.getState().start));
+				toExec.execute(self);
+			});
+		}
+		return Optional.empty();
+	}
+
+	/**
+	 * Token handler for all kinds of literals.
+	 */
+	public static Optional<InterpreterAction> literalTokenHandler(String token) {
+		if (intPattern.matcher(token).matches()) {
+			return Optional.of(self -> {
+				log.finest(() -> f("LITERAL INT %30s @ %4d", token, self.tokenizer.getState().start));
+				try {
+					final IntPrimitive literal = IntPrimitive.createIntegerFromString(token.toLowerCase());
+					self.stack.push(literal);
+				} catch (final CompilerException e) {
+					throw CompilerException.fromCurrentPosition(self.tokenizer, "Syntax",
+							f("No integer literal found in \"%s\".", token));
+				}
+			});
+		}
+		if (doublePattern.matcher(token).matches()) {
+			return Optional.of(self -> {
+				log.finest(() -> f("LITERAL DOUBLE %30s @ %4d", token, self.tokenizer.getState().start));
+				try {
+					final FloatPrimitive literal = FloatPrimitive.createFloatFromString(token);
+					self.stack.push(literal);
+				} catch (final NumberFormatException e) {
+					throw CompilerException.fromCurrentPosition(self.tokenizer, "Syntax",
+							f("No double literal found in \"%s\".", token));
+				}
+			});
+		}
+		if (boolPattern.matcher(token).matches()) {
+			return Optional.of(self -> {
+				log.finest(() -> f("LITERAL BOOL %30s @ %4d", token, self.tokenizer.getState().start));
+				final BoolPrimitive literal = BoolPrimitive.createBoolFromString(token);
+				self.stack.push(literal);
+			});
+		}
+		if (stringPattern.matcher(token).matches()) {
+			return Optional.of(self -> {
+				log.finest(() -> f("LITERAL STRING %30s @ %4d", token, self.tokenizer.getState().start));
+				self.stack.push(StringPrimitive.createStringPrimitive(Preprocessor.preprocessSofString(token)));
+			});
+		}
+		return Optional.empty();
+	}
+
+	public static Optional<InterpreterAction> codeBlockTokenHandler(String token) {
+		if (codeBlockStartPattern.matcher(token).matches()) {
+			return Optional.of(self -> {
+				final var endPos = Preprocessor.indexOfMatching(self.tokenizer.getCode(), self.tokenizer.start(), "{", "}")
+						- 1;
+				self.check(endPos >= 0, () -> t("Syntax", "Unclosed code block"));
+				final var cb = new CodeBlock(self.tokenizer.getState().end, endPos, self.tokenizer.getCode());
+				self.stack.push(cb);
+
+				log.finest(() -> f("CODE BLOCK %30s @ %4d", cb.toDebugString(DebugStringExtensiveness.Full),
+						self.tokenizer.getState().start));
+
+				// setup the tokenizer just before the curly brace...
+				self.internal.setExecutionPos(endPos);
+				// ...and skip it
+				self.tokenizer.next();
+			});
+		}
+		return Optional.empty();
+	}
+
+	public static Optional<InterpreterAction> identifierTokenHandler(String token) {
+		if (identifierPattern.matcher(token).matches()) {
+			return Optional.of(self -> {
+				log.finest(() -> f("IDENTIFIER %30s @ %4d", token, self.tokenizer.getState().start));
+				self.stack.push(new Identifier(token));
+			});
+		}
+		return Optional.empty();
+	}
+
+	// #endregion TOKEN HANDLERS
+
+	/**
+	 * Constructs an uninitialized reset interpreter. Use methods such as
+	 * {@link Interpreter#setCode(String)}, {@link Interpreter#appendLine(String)}
+	 * to initialize the interpreter to your desired state.
+	 */
+	public Interpreter() {
+		this.reset();
+		// the last handler is the first to be invoked.
+		tokenHandlers.add(Interpreter::primitiveTokenHandler);
+		tokenHandlers.add(Interpreter::literalTokenHandler);
+		tokenHandlers.add(Interpreter::codeBlockTokenHandler);
+		tokenHandlers.add(Interpreter::identifierTokenHandler);
+	}
+
+	/**
+	 * Responsible for tokenizing the code and moving around when code blocks and
+	 * functions affect control flow.
+	 */
+	protected Tokenizer tokenizer = Tokenizer.fromSourceCode("");
+
 	// I/O
-	private IOInterface io;
+	protected IOInterface io;
 
 	// all da memory
-	private Stack stack;
+	protected Stack stack;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// #region EXECUTION
 
 	/**
-	 * <a href=
-	 * "https://www.reddit.com/r/ProgrammerHumor/comments/auz30h/when_you_make_documentation_for_a_settergetter/?utm_source=share&utm_medium=web2x">...</a>
+	 * The list of token handlers that the interpreter uses to resolve a given token
+	 * to an action. This is at the core of the Interpreter extension mechanism and
+	 * facilitates easy future modifications. The most important handlers present in
+	 * this list by default is the primitive token handler, the handlers for each
+	 * literal token type, and the code block handler. Token handlers are always
+	 * considered in the inverse order that they appear in the list. Adding a token
+	 * with the {@link Interpreter#registerTokenHandler(TokenHandler)} interface
+	 * will append it to the end of the list, therefore making it the first invoked
+	 * handler.
 	 */
-	public String getCode() {
-		return tokenizer.getCode();
-	}
+	private List<TokenHandler> tokenHandlers = new ArrayList<>(20);
 
 	/**
-	 * <a href=
-	 * "https://www.reddit.com/r/ProgrammerHumor/comments/auz30h/when_you_make_documentation_for_a_settergetter/?utm_source=share&utm_medium=web2x">...</a>
+	 * Register a new token handler that will be used by this interpreter to handle
+	 * tokens it recieves from the SOF source code. Token handlers added through
+	 * this method are placed at the top of the handler hierarchy, meaning that they
+	 * are the first handler to be recieving the token. This means that generic
+	 * (possibly regex-based) handlers should be added first, followed by more and
+	 * more specific handlers that will trigger on less and less tokens. For
+	 * example, in the default token handler hierarchy, the primitive token
+	 * handlers, which only match one exact token each, are at the very top of the
+	 * hierarchy, i.e. added last; while the identifier token handler, which matches
+	 * a lot of tokens including some literals and primitive tokens, is at the very
+	 * bottom of the hierarchy, making it the last handler to ever be invoked.
+	 * 
+	 * @param newHandler A new token handler to be registered in this interpreter.
+	 *                   It is possible to add one handler multiple times, which
+	 *                   will have no effect other than effectively increasing the
+	 *                   importance of the token handler in the hierarchy.
+	 * @return self
 	 */
-	public IOInterface getIO() {
-		return io;
+	public Interpreter registerTokenHandler(TokenHandler newHandler) {
+		log.config(() -> f("New token handler registered: %s", newHandler));
+		this.tokenHandlers.add(0, newHandler);
+		return this;
 	}
-
-	// ------------------------------------------------------------------------------------------------------
-	// EXECUTION
 
 	/**
 	 * Does one execution step. Will do nothing if the end of the source code is
 	 * reached.
 	 * 
 	 * @throws CompilerException If something goes wrong at runtime.
+	 * @return self
 	 */
 	public Interpreter executeOnce() throws CompilerException {
 		log.entering(this.getClass().getCanonicalName(), "executeOnce");
@@ -505,57 +586,25 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 			return this;
 
 		try {
-			if (ptActions.containsKey(token)) {
-				final var toExec = ptActions.get(token);
-				log.finest(() -> f("PT-EXEC %30s :: %10s @ %4d", token, toExec, tokenizer.getState().start));
-				toExec.execute(this);
+			// Use stream processing to find the first token handler that can handle the
+			// current token. This is not inefficient, as the terminal operation 'findFirst'
+			// only executes the intermediate maps and filters when required. As soon as the
+			// first applicable token handler is found, all others are discarded.
+			final var applicableHandler = this.tokenHandlers.stream()
+					// handle the token
+					.map(th -> th.handle(token))
+					// filter out all handlers that couldn't handle the token
+					.filter(op -> op.isPresent())
+					// map to remove the optional from the handle operation (checked above)
+					.map(op -> op.get())
+					// find the first token handler, only processes as many handlers as needed
+					.findFirst();
+			if (applicableHandler.isPresent()) {
+				applicableHandler.get().execute(this);
 			} else {
-				if (intPattern.matcher(token).matches()) {
-					log.finest(() -> f("LITERAL INT %30s @ %4d", token, tokenizer.getState().start));
-					try {
-						final IntPrimitive literal = IntPrimitive.createIntegerFromString(token.toLowerCase());
-						stack.push(literal);
-					} catch (final CompilerException e) {
-						throw CompilerException.fromCurrentPosition(this.tokenizer, "Syntax",
-								f("No integer literal found in \"%s\".", token));
-					}
-				} else if (doublePattern.matcher(token).matches()) {
-					log.finest(() -> f("LITERAL DOUBLE %30s @ %4d", token, tokenizer.getState().start));
-					try {
-						final FloatPrimitive literal = FloatPrimitive.createFloatFromString(token);
-						stack.push(literal);
-					} catch (final NumberFormatException e) {
-						throw CompilerException.fromCurrentPosition(this.tokenizer, "Syntax",
-								f("No double literal found in \"%s\".", token));
-					}
-				} else if (boolPattern.matcher(token).matches()) {
-					log.finest(() -> f("LITERAL BOOL %30s @ %4d", token, tokenizer.getState().start));
-					final BoolPrimitive literal = BoolPrimitive.createBoolFromString(token);
-					stack.push(literal);
-				} else if (stringPattern.matcher(token).matches()) {
-					log.finest(() -> f("LITERAL STRING %30s @ %4d", token, tokenizer.getState().start));
-					stack.push(StringPrimitive.createStringPrimitive(Preprocessor.preprocessSofString(token)));
-				} else if (codeBlockStartPattern.matcher(token).matches()) {
-					final var endPos = Interpreter.indexOfMatching(tokenizer.getCode(), tokenizer.start(), "{", "}") - 1;
-					this.check(endPos >= 0, () -> new Tuple<>("Syntax", "Unclosed code block"));
-					final var cb = new CodeBlock(tokenizer.getState().end, endPos, tokenizer.getCode());
-					this.stack.push(cb);
-
-					log.finest(() -> f("CODE BLOCK %30s @ %4d", cb.toDebugString(DebugStringExtensiveness.Full),
-							tokenizer.getState().start));
-
-					// setup the tokenizer just before the curly brace...
-					internal.setExecutionPos(endPos);
-					// ...and skip it
-					tokenizer.next();
-				} else if (identifierPattern.matcher(token).matches()) {
-					log.finest(() -> f("IDENTIFIER %30s @ %4d", token, tokenizer.getState().start));
-					stack.push(new Identifier(token));
-				} else {
-					// oh no, you have input invalid characters!
-					throw CompilerException.fromCurrentPosition(this.tokenizer, "Syntax",
-							f("Unexpected characters \"%s\".", token));
-				}
+				// oh no, you have input invalid characters!
+				throw CompilerException.fromCurrentPosition(this.tokenizer, "Syntax",
+						f("Unexpected characters \"%s\".", token));
 			}
 		} catch (final CompilerException e) {
 			if (e.isInfoPresent())
@@ -565,12 +614,11 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 			}
 		}
 		log.exiting(this.getClass().getCanonicalName(), "executeOnce");
-		log.finest(() -> "S:\n" + Interpreter.stackToDebugString(stack) + "\nNT:\n"
+		log.finest(() -> "S:\n" + stack.toStringExtended() + "\nNT:\n"
 				+ stack.globalNametable().toDebugString(DebugStringExtensiveness.Full));
 		return this;
 	}
 
-	// ------------------------------------------------------------------------------------------------------
 	// ITERATION AND EXECUTION METHODS
 
 	/**
@@ -599,6 +647,37 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		}
 		return this;
 	}
+
+	/**
+	 * Checks whether the given condition holds true; if <b>not</b>, throws a
+	 * CompilerException with the given name and description at the current location
+	 * 
+	 * @param b            Check to validate.
+	 * @param errorCreator Function that creates a tuple with (name, description)
+	 *                     format.
+	 * @throws CompilerException If the check fails.
+	 */
+	private void check(final boolean b, final Supplier<Tuple<String, String>> errorCreator) throws CompilerException {
+		if (!b) {
+			final var errortuple = errorCreator.get();
+			throw CompilerException.fromCurrentPosition(this.tokenizer, errortuple.getLeft(), errortuple.getRight());
+		}
+	}
+
+	/**
+	 * Helper function to execute call and push return value of callable to stack if
+	 * possible.
+	 */
+	private void doCall(final Callable reference) {
+		final var retval = reference.getCallProvider().call(this);
+		if (retval != null)
+			this.stack.push(retval);
+	}
+
+	// #endregion Execution
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	// #region Iterable and utility methods
 
 	@Override
 	public Iterator<Interpreter> iterator() {
@@ -632,6 +711,10 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 			throw new RuntimeException("VERY DANGEROUS EXCEPTION", e);
 		}
 	}
+
+	// #endregion
+
+	// #region API and state modification
 
 	/** Resets this interpreter by deleting and reinitializing all state. */
 	public Interpreter reset() {
@@ -668,30 +751,6 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		return this;
 	}
 
-	// ------------------------------------------------------------------------------------
-	// UTILITY
-	/**
-	 * Checks whether the given condition holds true; if <b>not</b>, throws a
-	 * CompilerException with the given name and description at the current location
-	 * 
-	 * @param b            Check to validate.
-	 * @param errorCreator Function that creates a tuple with (name, description)
-	 *                     format.
-	 * @throws CompilerException If the check fails.
-	 */
-	private void check(final boolean b, final Supplier<Tuple<String, String>> errorCreator)
-			throws CompilerException {
-		if (!b) {
-			final var errortuple = errorCreator.get();
-			throw CompilerException.fromCurrentPosition(this.tokenizer, errortuple.getLeft(), errortuple.getRight());
-		}
-	}
+	// #endregion
 
-	private static String f(final String s, final Object... args) {
-		return String.format(s, args);
-	}
-
-	private static Tuple<String, String> err(final String a, final String b) {
-		return new Tuple<String, String>(a, b);
-	}
 }

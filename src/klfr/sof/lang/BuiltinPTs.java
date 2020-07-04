@@ -10,7 +10,6 @@ import klfr.sof.CompilerException;
  * 
  * @author klfr
  */
-@SuppressWarnings("unchecked")
 public final class BuiltinPTs {
 
 	public static final Callable divide = Callable.fromFunction((a, b) -> {
@@ -85,11 +84,22 @@ public final class BuiltinPTs {
 				String.format("Cannot subtract types %s and %s.", a.typename(), b.typename()));
 	});
 
-	public static final Callable lessThan = Callable.fromFunction((a, b) -> BoolPrimitive.createBoolPrimitive(a.compareTo(b) < 0));
+	public static final Callable lessThan = Callable
+			.fromFunction((a, b) -> BoolPrimitive.createBoolPrimitive(a.compareTo(b) < 0));
 
-	public static final Callable greaterThan = Callable.fromFunction((a, b) -> BoolPrimitive.createBoolPrimitive(a.compareTo(b) > 0));
+	public static final Callable greaterThan = Callable
+			.fromFunction((a, b) -> BoolPrimitive.createBoolPrimitive(a.compareTo(b) > 0));
 
-	public static final Callable greaterEqualThan = Callable.fromFunction((a, b) -> BoolPrimitive.createBoolPrimitive(a.compareTo(b) >= 0));
+	public static final Callable greaterEqualThan = Callable
+			.fromFunction((a, b) -> BoolPrimitive.createBoolPrimitive(a.compareTo(b) >= 0));
 
-	public static final Callable lessEqualThan = Callable.fromFunction((a, b) -> BoolPrimitive.createBoolPrimitive(a.compareTo(b) <= 0));
+	public static final Callable lessEqualThan = Callable
+			.fromFunction((a, b) -> BoolPrimitive.createBoolPrimitive(a.compareTo(b) <= 0));
+
+	public static final Callable equals = Callable
+			.fromFunction((a, b) -> BoolPrimitive.createBoolPrimitive(a.equals(b)));
+
+	public static final Callable notEquals = Callable
+			.fromFunction((a, b) -> BoolPrimitive.createBoolPrimitive(!a.equals(b)));
+
 }
