@@ -17,6 +17,7 @@ import java.util.logging.Logger;
 import klfr.sof.CompilerException;
 import klfr.sof.IOInterface;
 import klfr.sof.Interpreter;
+import klfr.sof.Preprocessor;
 
 @SuppressWarnings("deprecation")
 class Options implements Function<IOInterface, Optional<Throwable>> {
@@ -44,6 +45,8 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 	public static final int DEBUG = 0b1;
 	/** Preprocessor flag constant. */
 	public static final int ONLY_PREPROCESSOR = 0b10;
+	/** No preprocessor flag constant. */
+	public static final int NO_PREPROCESSOR = 0b100;
 	public Options.ExecutionType executionType;
 	public List<String> executionStrings;
 	/**
@@ -89,7 +92,7 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 							CLI.runPreprocessor(reader, io);
 							io.println("^D");
 						} else
-							CLI.doFullExecution(reader, interpreterPrototype.instantiateSelf(), io);
+							CLI.doFullExecution(reader, interpreterPrototype.instantiateSelf(), io, (flags & NO_PREPROCESSOR) == 0);
 						return null;
 					} catch (Throwable t) {
 						io.println(t.getMessage());
@@ -112,7 +115,7 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 				//// Single literal to be executed
 				Interpreter interpreter = new Interpreter();
 				try {
-					CLI.doFullExecution(new StringReader(this.executionStrings.get(0)), interpreter, io);
+					CLI.doFullExecution(new StringReader(this.executionStrings.get(0)), interpreter, io, (flags & NO_PREPROCESSOR) == 0);
 				} catch (Throwable t) {
 					return Optional.of(t);
 				}
@@ -120,7 +123,7 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 			}
 			case Interactive: {
 				//// Interactive interpretation
-				io.println(CLI.getInfoString());
+				io.println(CLI.INFO_STRING);
 				Interpreter interpreter = new Interpreter().reset();
 				interpreter.internal.setIO(io);
 
@@ -135,7 +138,7 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 						// catches "unclosed"-compilation errors which might be resolved by adding more
 						// content on another line
 						try {
-							interpreter.appendLine(code);
+							interpreter.appendLine(Preprocessor.preprocessCode(code));
 						} catch (CompilerException e) {
 							// one invalid line: let user input as many continuation lines as they want
 							while (true) {
@@ -146,7 +149,7 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 									break;
 								code += System.lineSeparator() + nl;
 							}
-							interpreter.appendLine(code);
+							interpreter.appendLine(Preprocessor.preprocessCode(code));
 						}
 						var state = interpreter.internal.tokenizer().getState();
 						state.end = curEnd;
@@ -168,24 +171,13 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 				break;
 			}
 			case VersionInfo: {
-				io.println(CLI.getInfoString());
+				io.println(CLI.INFO_STRING);
 				io.printf(
 						"This program is licensed under GNU General Public License 3.0.%nSee the project LICENSE for details.%n");
 				break;
 			}
 			case HelpInfo: {
-				io.printf("sof - Interpreter for Stack with Objects and%n" + "      Functions (SOF) Programming Language.%n"
-						+ "usage: sof [-h|-v] [-d] [-c command]%n" + "           filename [...filenames]%n" + "%n"
-						+ "positional arguments:%n" + "   filename  Path to a file to be read and%n"
-						+ "             executed. Can be a list of files that%n" + "             are executed in order.%n"
-						+ "             %n" + "options:%n" + "   --help, -h%n"
-						+ "             Display this help message and exit.%n" + "   --version, -v%n"
-						+ "             Display version information and exit.%n"
-						+ "   -d        Execute in debug mode. Read the manual%n" + "             for more information.%n"
-						+ "   --command=<command>, -c <command>%n" + "             Execute <command> and exit.%n"
-						+ "             %n" + "When used without execution-starting arguments (-c%n"
-						+ "or filename), sof is started in interactive mode.%n" + "%n" + "Quit the program with ^C.%n"
-						+ "%n");
+				io.printf(CLI.HELP_STRING);
 				break;
 			}
 		}
@@ -212,7 +204,7 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 
 		var idx = 0;
 		while (idx < cmdLineArguments.size() && cmdLineArguments.get(idx).startsWith("-")) {
-			String s = cmdLineArguments.get(idx++).toLowerCase();
+			String s = cmdLineArguments.get(idx++);
 			switch (s) {
 				case "-v":
 				case "--version":
@@ -235,6 +227,9 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 					break;
 				case "-p":
 					opt.flags |= Options.ONLY_PREPROCESSOR;
+					break;
+				case "-P":
+					opt.flags |= Options.NO_PREPROCESSOR;
 					break;
 				default:
 					// extract combined option flags into separate options

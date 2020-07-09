@@ -2,20 +2,21 @@
 
 # basic def and retrieval
 "3" x def
-x . "3" = writeln
+x . "3" = assert
 
 # rebind possible
 "hello" x def
-x . "hello" = writeln
+x . "hello" = assert
 # not old value
-x . "3" /= writeln
+x . "3" /= assert
 
 # bind other value
 42 blah def
 # sanity-check
-blah . x . /= writeln
-blah . 42 = writeln
+blah . x . /= assert
+blah . 42 = assert
 
 {
 	# inside codeblocks, scope does not change
-	x . "hello" = writeln} .
+	x . "hello" = assert
+} .

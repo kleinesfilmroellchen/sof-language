@@ -30,7 +30,39 @@ import klfr.sof.Preprocessor;
 
 public class CLI {
 
-	static Logger log = Logger.getLogger(CLI.class.getCanonicalName());
+	public static final String HELP_STRING = "sof - Interpreter for Stack with Objects and%n"
+			+ "      Functions (SOF) Programming Language.                                  %n"
+			+ "usage: sof [-hvdpP] [-c COMMAND]                                             %n"
+			+ "           FILENAME [...FILENAMES]                                           %n"
+			+ "                                                                             %n"
+			+ "positional arguments:                                                        %n"
+			+ "   filename  Path to a file to be read and                                   %n"
+			+ "             executed. Can be a list of files that                           %n"
+			+ "             are executed in order.                                          %n"
+			+ "                                                                             %n"
+			+ "options:                                                                     %n"
+			+ "   --help, -h                                                                %n"
+			+ "             Display this help message and exit.                             %n"
+			+ "   --version, -v                                                             %n"
+			+ "             Display version information and exit.                           %n"
+			+ "   -d        Execute in debug mode. Read the manual                          %n"
+			+ "             for more information.                                           %n"
+			+ "   -p        Run the preprocessor and exit.                                  %n"
+			+ "   -P        Do not run the preprocessor.                                    %n"
+			+ "   --command, -c COMMAND                                                     %n"
+			+ "             Execute COMMAND and exit.                                       %n"
+			+ "                                                                             %n"
+			+ "When used without execution-starting arguments (-c                           %n"
+			+ "or filename), sof is started in interactive mode.                            %n"
+			+ "                                                                             %n"
+			+ "Quit the program with ^C.                                                    %n"
+			+ "                                                                             %n";
+
+	public static final String INFO_STRING = String.format("sof version %s (built %s)", Interpreter.VERSION,
+			// awww yesss, the Java Time API 😋
+			DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).format(buildTime().atZone(ZoneId.systemDefault())));
+
+	private static final Logger log = Logger.getLogger(CLI.class.getCanonicalName());
 
 	public static void main(String[] args) throws InvocationTargetException, UnsupportedEncodingException, IOException {
 		// setup console info logging
@@ -103,12 +135,18 @@ public class CLI {
 	}
 
 	/**
-	 * Does full execution on one reader's input
+	 * Does full execution on SOF source code given the environment.
 	 * 
-	 * @param codeStream  A reader that reads source code.
-	 * @param interpreter The interpreter to use for the execution.
+	 * @param codeStream      A reader that reads source code.
+	 * @param interpreter     The interpreter to use for the execution. It is reset
+	 *                        and its source code replaced.
+	 * @param io              The Input-Output interface that the full execution
+	 *                        should use.
+	 * @param doPreprocessing Whether to execute the preprocessor on the source code
+	 *                        before passing it into the interpreter.
 	 */
-	public static void doFullExecution(Reader codeStream, Interpreter interpreter, IOInterface io) throws Exception {
+	public static void doFullExecution(Reader codeStream, Interpreter interpreter, IOInterface io,
+			boolean doPreprocessing) throws Exception {
 		log.entering(CLI.class.getCanonicalName(), "doFullExecution");
 		String code = "";
 		try {
@@ -119,9 +157,12 @@ public class CLI {
 			throw new Exception("Unknown exception occurred during input reading.", e);
 		}
 
+		if (doPreprocessing)
+			code = Preprocessor.preprocessCode(code);
+
 		interpreter.reset() // reset interpreter
-			.setCode(code)   // set the code to execute
-			.internal.setIO(io); // set the I/O system to use
+				.setCode(code) // set the code to execute
+						.internal.setIO(io); // set the I/O system to use
 		while (interpreter.canExecute())
 			interpreter.executeOnce();
 
@@ -149,13 +190,6 @@ public class CLI {
 	public static void exitUnnormal(int status) {
 		System.out.println("So long, and thank's for all the fish...");
 		System.exit(status);
-	}
-
-	public static String getInfoString() {
-		return String.format("sof version %s (built %s)", Interpreter.VERSION,
-				// awww yesss, the Java Time API 😋
-				DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT)
-						.format(buildTime().atZone(ZoneId.systemDefault())));
 	}
 
 	public static Instant buildTime() {

@@ -1,6 +1,7 @@
 package klfr.sof;
 
 import java.util.Scanner;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 import klfr.sof.Tokenizer.TokenizerState;
@@ -13,6 +14,7 @@ import klfr.sof.Tokenizer.TokenizerState;
 public class CompilerException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
+	private static final Logger log = Logger.getLogger(CompilerException.class.getCanonicalName());
 
 	/**
 	 * Whether this element has information about execution location and mischievous
@@ -81,11 +83,12 @@ public class CompilerException extends RuntimeException {
 	 * @return nicely formatted multi-line string
 	 */
 	public static CompilerException fromCurrentPosition(Tokenizer expressionInfo, String name, String reason) {
-		int linenum = expressionInfo.getCurrentLine();
+		// left = line, right = index in line
+		final var codePosition = expressionInfo.getCurrentPosition();
 		var allCode = expressionInfo.getCode();
-		// index linenum-1 because linenum is human-readable "one-based"
-		var expressionLine = Pattern.compile("$", Pattern.MULTILINE).split(allCode)[linenum];
-		return CompilerException.fromFormatMessage(expressionLine, expressionInfo.getIndexInsideLine(), linenum,
+		// line number-1 because is human-readable "one-based"
+		var expressionLine = Pattern.compile("$", Pattern.MULTILINE).split(allCode)[codePosition.getLeft()-1];
+		return CompilerException.fromFormatMessage(expressionLine, codePosition.getRight(), codePosition.getLeft(),
 				name == null ? "Interpreter" : name, reason);
 	}
 
@@ -155,7 +158,9 @@ public class CompilerException extends RuntimeException {
 		String name = helper.next();
 		String reason = helper.nextLine();
 		helper.close();
-		return fromCurrentPosition(expressionInfo, name, reason);
+		final var exc = fromCurrentPosition(expressionInfo, name, reason);
+		exc.initCause(cause);
+		return exc;
 	}
 
 	/**
@@ -169,11 +174,10 @@ public class CompilerException extends RuntimeException {
 	 * @return nicely formatted multi-line string
 	 */
 	private static String formatMessage(String expression, int index, int line, String name, String reason) {
-		return String
-				.format(
-						"%s Error in line %d at index %d:%n %s%n %"
-								+ (significantAfterTrimmed(index, expression.length()) + 1) + "s%n    %s",
-						name, line, index, trim(expression, index), "^", reason);
+		final var formatStr = "%s Error in line %d at index %d:%n %s%n %"
+				+ (significantAfterTrimmed(index, expression.length()) + 1) + "s%n    %s";
+		// log.fine(String.format("index %d, exprlen %d, fstring %s", index, expression.length(), formatStr));
+		return String.format(formatStr, name, line, index, trim(expression, index), "^", reason);
 	}
 
 	/** trims string to exact length 20 while respecting the significant index */

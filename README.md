@@ -23,14 +23,14 @@ The command line tool currently supports the following arguments and options (ta
 ```
 sof - Interpreter for Stack with Objects and
       Functions (SOF) Programming Language.
-usage: sof [-h|-v] [-d] [-c command]
-           filename [...filenames]
+usage: sof [-hvdpP] [-c COMMAND]
+           FILENAME [...FILENAMES]
 
 positional arguments:
    filename  Path to a file to be read and
              executed. Can be a list of files that
              are executed in order.
-             
+
 options:
    --help, -h
              Display this help message and exit.
@@ -38,11 +38,13 @@ options:
              Display version information and exit.
    -d        Execute in debug mode. Read the manual
              for more information.
-   --command=<command>, -c <command>
-             Execute <command> and exit.
-             
+   -p        Run the preprocessor and exit.
+   -P        Do not run the preprocessor.
+   --command, -c COMMAND
+             Execute COMMAND and exit.
+
 When used without execution-starting arguments (-c
-or filename), SOF is started in interactive mode.
+or filename), sof is started in interactive mode.
 
 Quit the program with ^C.
 ```

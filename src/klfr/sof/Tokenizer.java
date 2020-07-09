@@ -8,6 +8,8 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.logging.Logger;
 import java.util.regex.*;
 
+import klfr.Tuple;
+
 /**
  * The tokenizer class wraps the regular expression matching functionality to
  * provide an interpreter or other SOF source code analysis tool with easy
@@ -125,11 +127,9 @@ public class Tokenizer implements Iterator<String> {
 	 * 
 	 * @param code the SOF source code to be used with this Tokenizer
 	 * @return a new tokenizer
-	 * @throws CompilerException if the code contains malformed strings, comments
-	 *                           etc.
 	 */
-	public static Tokenizer fromSourceCode(String code) throws CompilerException {
-		return new Tokenizer(Preprocessor.preprocessCode(code));
+	public static Tokenizer fromSourceCode(String code) {
+		return new Tokenizer(code);
 	}
 
 	/**
@@ -195,11 +195,11 @@ public class Tokenizer implements Iterator<String> {
 	 *             inserted between the current code and the new code.
 	 * @return this tokenizer
 	 */
-	public Tokenizer appendCode(String code) throws CompilerException {
+	public Tokenizer appendCode(String code) {
 		TokenizerState state = this.currentState;
 		this.log.finer("State before appending: " + state);
 		var needsNewline = !this.currentState.code.isEmpty() && !this.currentState.code.endsWith(System.lineSeparator());
-		this.currentState.code += (needsNewline ? System.lineSeparator() : "") + Preprocessor.preprocessCode(code);
+		this.currentState.code += (needsNewline ? System.lineSeparator() : "") + code;
 		this.m = Interpreter.tokenPattern.matcher(this.currentState.code);
 		this.currentState.end = state.end;
 		this.currentState.regionStart = 0;
@@ -208,42 +208,69 @@ public class Tokenizer implements Iterator<String> {
 		return this;
 	}
 
-	/**
-	 * Returns the current line the tokenizer points to. This is in human-readable
-	 * form, i.e. line number 1 is actually the first line of code (and not the
-	 * second).
-	 * 
-	 * @return the current line the tokenizer points to.
-	 */
-	public int getCurrentLine() {
-		Matcher linefinder = Interpreter.nlPat.matcher(getCode());
-		int realIndex = this.start(), linenum = 0;
-		// increment line number while the text index is still after the searched line
-		// beginning
-		while (linefinder.find() && 
-			realIndex > linefinder.start() - 1)
-			++linenum;
-		// return line number - 1 because we advanced past the line itself
-		return linenum - 1;
-	}
+	// /**
+	// * Returns the current line the tokenizer points to. This is in human-readable
+	// * form, i.e. line number 1 is actually the first line of code (and not the
+	// * second).
+	// *
+	// * @return the current line the tokenizer points to.
+	// */
+	// public int getCurrentLine() {
+	// Matcher linefinder = Interpreter.nlPat.matcher(getCode());
+	// int realIndex = this.start(), linenum = 0;
+	// // increment line number while the text index is still after the searched
+	// line
+	// // beginning
+	// while (linefinder.find() &&
+	// realIndex > linefinder.start() - 1)
+	// ++linenum;
+	// // return line number - 1 because we advanced past the line itself
+	// return linenum - 1;
+	// }
+
+	// /**
+	// * Returns the index of the current position inside (respective to) its line
+	// in
+	// * the code.
+	// *
+	// * @return the index of the current position inside (respective to) its line
+	// in
+	// * the code.
+	// */
+	// public int getIndexInsideLine() {
+	// Matcher linefinder = Interpreter.nlPat.matcher(getCode());
+	// int realIndex = this.start(), linestart = 0;
+	// while (linefinder.find() && realIndex > linefinder.start()) {
+	// linestart = linefinder.start() + 1;
+	// }
+	// // last line now contains the index where the line starts that begins before
+	// the
+	// // matcher's index
+	// // i.e. the line of the matcher
+	// return realIndex - linestart;
+	// }
 
 	/**
-	 * Returns the index of the current position inside (respective to) its line in
-	 * the code.
+	 * Returns the current execution position of the Tokenizer, as a <Line, Index>
+	 * number tuple. While the line number is one-based (as in text editors), the
+	 * index (inside the line) is zero-based (as in strings).
 	 * 
-	 * @return the index of the current position inside (respective to) its line in
-	 *         the code.
+	 * @return A tuple with two integers that represent the line position and index
+	 *         inside the line; see above notes.
 	 */
-	public int getIndexInsideLine() {
+	public Tuple<Integer, Integer> getCurrentPosition() {
 		Matcher linefinder = Interpreter.nlPat.matcher(getCode());
-		int realIndex = this.start(), linestart = 0;
-		while (linefinder.find() && realIndex > linefinder.start()) {
-			linestart = linefinder.start() + 1;
+		int realIndex = this.start(), linenum = 0, lineStart = 0;
+		// increment line number while the text index is still after the searched line
+		// beginning
+		while (linefinder.find() && realIndex > linefinder.start() - 1) {
+			++linenum;
+			lineStart = linefinder.start() + 1;
 		}
-		// last line now contains the index where the line starts that begins before the
-		// matcher's index
-		// i.e. the line of the matcher
-		return realIndex - linestart;
+		// linenum -1 because we advanced past the actual line
+		log.fine(String.format("tuple current index %d computed to line %d starting at %d line-inside-index %d",
+				realIndex, linenum, lineStart, realIndex - (lineStart - 1)));
+		return new Tuple<>(linenum, realIndex - (lineStart - 1));
 	}
 
 	@Override

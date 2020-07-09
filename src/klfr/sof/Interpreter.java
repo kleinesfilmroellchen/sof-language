@@ -240,19 +240,36 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	public static final Pattern tokenPattern = Pattern.compile("(" + stringPattern.pattern() + ")|(\\S+)");// \\b{g}
 	/**
 	 * Identifier pattern. An identifier is any unicode letter possibly followed by
-	 * more unicode letters, numbers or the punctuation <{@code : _ '} >. Note that
+	 * more unicode letters, numbers or the punctuation {@code : _ '} Note that
 	 * using <code>\p{L}</code> allows for inter-language identifiers; one could
 	 * write variable names completely with Chinese logographs, for example.
 	 */
 	public static final Pattern identifierPattern = Pattern.compile("\\p{L}[\\p{L}0-9_'\\:]*");
 	/**
-	 * The start of a code block; the single character <code>{</code>.
+	 * The start of a code block; the single character <code>{</code>. Positive
+	 * lookbehinds and lookaheads are used to ensure that the character is either
+	 * before the end of input or any number of whitespace; and either after the
+	 * beginning of input or any number of whitespace.
 	 */
-	public static final Pattern codeBlockStartPattern = Pattern.compile("\\{");
+	public static final Pattern codeBlockStartPattern = Pattern.compile("(?<=^|\\s+)\\{(?=$|\\s+)");
 	/**
-	 * The end of a code block; the single character <code>}</code>.
+	 * The end of a code block; the single character <code>}</code>. Positive
+	 * lookbehinds and lookaheads are used to ensure that the character is either
+	 * before the end of input or any number of whitespace; and either after the
+	 * beginning of input or any number of whitespace.
 	 */
-	public static final Pattern codeBlockEndPattern = Pattern.compile("\\}");
+	public static final Pattern codeBlockEndPattern = Pattern.compile("(?<=^|\\s+)\\}(?=$|\\s+)");
+
+	/**
+	 * Single-line comment; starting with a # and ending with a newline.
+	 */
+	public static final Pattern commentOneLinePattern = Pattern.compile("\\#.*?$", Pattern.MULTILINE);
+
+	/**
+	 * Multi-line comment; starting with a #* and ending with *#
+	 */
+	public static final Pattern commentMultilinePattern = Pattern.compile("\\#\\*.*?\\*\\#", Pattern.DOTALL);
+
 	/**
 	 * The start of a line; pattern created by compiling the start of string flag
 	 * "^" in MULTILINE mode.
@@ -475,8 +492,8 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	public static Optional<InterpreterAction> codeBlockTokenHandler(String token) {
 		if (codeBlockStartPattern.matcher(token).matches()) {
 			return Optional.of(self -> {
-				final var endPos = Preprocessor.indexOfMatching(self.tokenizer.getCode(), self.tokenizer.start(), "{", "}")
-						- 1;
+				final var endPos = Preprocessor.indexOfMatching(self.tokenizer.getCode(), self.tokenizer.start(),
+						codeBlockStartPattern, codeBlockEndPattern) - 1;
 				self.check(endPos >= 0, () -> t("Syntax", "Unclosed code block"));
 				final var cb = new CodeBlock(self.tokenizer.getState().end, endPos, self.tokenizer.getCode());
 				self.stack.push(cb);
@@ -727,14 +744,11 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	}
 
 	/**
-	 * Sets the code of this interpreter. Also prepares the code and regex utilities
-	 * for execution; this is why a compilation error can be thrown here.
+	 * Sets the code of this interpreter.
 	 * 
 	 * @param code The SOF code to be used by this interpreter.
-	 * @throws CompilerException If something during the code preprocessing stages
-	 *                           goes wrong.
 	 */
-	public Interpreter setCode(final String code) throws CompilerException {
+	public Interpreter setCode(final String code) {
 		this.tokenizer = Tokenizer.fromSourceCode(code);
 		return this;
 	}
@@ -746,7 +760,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	 * @param string The line of code to be appended
 	 * @return this interpreter
 	 */
-	public Interpreter appendLine(final String string) throws CompilerException {
+	public Interpreter appendLine(final String string) {
 		this.tokenizer.appendCode(string);
 		return this;
 	}
