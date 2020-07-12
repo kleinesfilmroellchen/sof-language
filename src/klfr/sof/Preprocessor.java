@@ -1,10 +1,18 @@
 package klfr.sof;
 
+import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 /**
  * The SOF preprocessor is a collection of static methods that normalize and
@@ -15,7 +23,8 @@ import java.util.regex.Pattern;
 public class Preprocessor {
 
 	private static String replaceBySpace(MatchResult comment) {
-		return String.format("%" + comment.group().length() + "s", "");
+		return comment.group().replaceAll("[^\n]", " ");
+		// return String.format("%" + comment.group().length() + "s", "");
 	}
 
 	/**
@@ -65,8 +74,16 @@ public class Preprocessor {
 	 *                           are not closed properly.
 	 */
 	public static String preprocessCode(final String code) throws CompilerException {
-		return Interpreter.commentOneLinePattern
-				.matcher(Interpreter.commentMultilinePattern.matcher(Interpreter.stringPattern.matcher(code)
+		// split the code into the raw strings and everything else
+		// non raw string parts have comments removed
+		final var nonStringParts = Interpreter.stringPattern.splitAsStream(code)
+				.map(dirtyS -> Interpreter.commentOneLinePattern
+						.matcher(Interpreter.commentMultilinePattern.matcher(dirtyS).replaceAll(Preprocessor::replaceBySpace))
+						.replaceAll(Preprocessor::replaceBySpace))
+				.iterator();
+		// raw strings have their escape sequences processed.
+		final var stringParts = Interpreter.stringPattern.matcher(code).results().map(mr -> mr.group())
+				.map(dirtyLiteralString -> Interpreter.stringPattern.matcher(dirtyLiteralString)
 						// 1. replace string escape sequences
 						.replaceAll(string -> Interpreter.escapeSequencePattern.matcher(string.group()).replaceAll(escape -> {
 							if (escape.group(2) != null) {
@@ -83,10 +100,40 @@ public class Preprocessor {
 									return "";
 							}
 						})))
-						// 2. replace multiline comments
-						.replaceAll(Preprocessor::replaceBySpace))
-				// 3. replace single line comments
-				.replaceAll(Preprocessor::replaceBySpace);
+				.iterator();
+
+		final StringBuilder cleanCode = new StringBuilder(code.length());
+		while (nonStringParts.hasNext() || stringParts.hasNext()) {
+			if (nonStringParts.hasNext())
+				cleanCode.append(nonStringParts.next());
+			if (stringParts.hasNext())
+				cleanCode.append(stringParts.next());
+		}
+		return cleanCode.toString();
+		// return Interpreter.commentOneLinePattern
+		// .matcher(Interpreter.commentMultilinePattern.matcher(Interpreter.stringPattern.matcher(code)
+		// // 1. replace string escape sequences
+		// .replaceAll(string ->
+		// Interpreter.escapeSequencePattern.matcher(string.group()).replaceAll(escape
+		// -> {
+		// if (escape.group(2) != null) {
+		// // unicode escape sequence
+		// final int codepoint = Integer.parseInt(escape.group(2), 16);
+		// return String.valueOf(Character.toChars(codepoint));
+		// }
+		// switch (escape.group(1)) {
+		// case "t":
+		// return "\t";
+		// case "f":
+		// return "\f";
+		// default:
+		// return "";
+		// }
+		// })))
+		// // 2. replace multiline comments
+		// .replaceAll(Preprocessor::replaceBySpace))
+		// // 3. replace single line comments
+		// .replaceAll(Preprocessor::replaceBySpace);
 	}
 
 	@Deprecated
@@ -261,7 +308,8 @@ public class Preprocessor {
 	 *         nesting level errors, the index returned is -1.
 	 */
 	public static Integer indexOfMatching(String toSearch, int indexOfFirst, String toMatchOpen, String toMatchClose) {
-		return indexOfMatching(toSearch, indexOfFirst, Pattern.quote(toMatchOpen), Pattern.quote(toMatchClose));
+		return indexOfMatching(toSearch, indexOfFirst, Pattern.compile(Pattern.quote(toMatchOpen)),
+				Pattern.compile(Pattern.quote(toMatchClose)));
 	}
 
 }

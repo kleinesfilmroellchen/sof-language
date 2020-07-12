@@ -45,7 +45,7 @@ class PrimitiveTest extends SofTestSuper {
 	void testGetCallProvider() {
 		CallProvider lambda = assertDoesNotThrow(() -> i.getCallProvider());
 		IntPrimitive result = (IntPrimitive) assertDoesNotThrow(() -> lambda.call(null));
-		assertEquals(i, result, "Primitive calling should return the primitive itself");
+		assertTrue(i.equals(result), "Primitive calling should return the primitive itself copied");
 	}
 
 	@Test

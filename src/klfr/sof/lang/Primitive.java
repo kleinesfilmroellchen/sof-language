@@ -92,7 +92,8 @@ public abstract class Primitive implements Callable {
 		return this.createPrimitive(this.v());
 	}
 
-	public boolean equals(Object other) {
+	@Override
+	public boolean equals(Stackable other) {
 		return other instanceof Primitive ? ((Primitive) other).equals(this) : false;
 	}
 

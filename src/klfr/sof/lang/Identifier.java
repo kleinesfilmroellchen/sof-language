@@ -59,8 +59,8 @@ public class Identifier implements Callable {
 	}
 
 	@Override
-	public boolean equals(Object other) {
-		return Identifier.class.isAssignableFrom(other.getClass()) ? ((Identifier) other).value.equals(value) : false;
+	public boolean equals(Stackable other) {
+		return other instanceof Identifier ? ((Identifier) other).value.equals(value) : false;
 	}
 
 	@Override
@@ -85,8 +85,8 @@ public class Identifier implements Callable {
 			final var value = interpreter.internal.stack().lookup(this);
 			// if no mapping, throw error
 			if (value == null) {
-				throw CompilerException.fromCurrentPosition(interpreter.internal.tokenizer(), "Name", "Identifier " + this.print()
-						+ " is not defined.");
+				throw CompilerException.fromCurrentPosition(interpreter.internal.tokenizer(), "Name",
+						"Identifier " + this.print() + " is not defined.");
 			}
 			return value;
 		};
@@ -95,8 +95,9 @@ public class Identifier implements Callable {
 	@Override
 	public int compareTo(Stackable other) {
 		if (other instanceof Identifier)
-			return this.getValue().compareTo(((Identifier)other).getValue());
-		throw new ClassCastException("Cannot compare Identifier " + this.toString() + " to " + other.getClass().toString());
+			return this.getValue().compareTo(((Identifier) other).getValue());
+		throw new ClassCastException(
+				"Cannot compare Identifier " + this.toString() + " to " + other.getClass().toString());
 	}
 
 }

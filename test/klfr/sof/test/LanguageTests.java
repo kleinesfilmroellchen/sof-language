@@ -1,6 +1,6 @@
 package klfr.sof.test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.DynamicContainer.dynamicContainer;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
@@ -8,17 +8,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.ListIterator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
@@ -35,8 +30,7 @@ import org.opentest4j.TestAbortedException;
 import klfr.sof.CompilerException;
 import klfr.sof.IOInterface;
 import klfr.sof.Interpreter;
-import klfr.sof.TokenHandler;
-import klfr.sof.Interpreter.InterpreterAction;
+import klfr.sof.Preprocessor;
 import klfr.sof.lang.BoolPrimitive;
 
 /**
@@ -65,6 +59,8 @@ public class LanguageTests extends SofTestSuper {
 	 * A small interpreter extension that adds the "assert" primitive token.
 	 */
 	private static class AssertInterpreter extends Interpreter {
+		private static final long serialVersionUID = 1L;
+
 		public AssertInterpreter() {
 			super();
 			this.registerTokenHandler(token -> {
@@ -123,7 +119,7 @@ public class LanguageTests extends SofTestSuper {
 							final var codeStr = resLoader.getResourceAsStream(SOURCE_FOLDER + file);
 							final var out = new ByteArrayOutputStream(codeStr.available());
 							codeStr.transferTo(out);
-							final var code = new String(out.toByteArray(), TEST_SOURCE_CHARSET);
+							final var code = Preprocessor.preprocessCode(new String(out.toByteArray(), TEST_SOURCE_CHARSET));
 							return dynamicTest(String.format("Test source file: %s", file), () -> {
 								try {
 									log.info(String.format("Source test %s initializing...", file));

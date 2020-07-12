@@ -1,5 +1,7 @@
 package klfr.sof.lang;
 
+import java.util.logging.Logger;
+
 import klfr.sof.CompilerException;
 
 /**

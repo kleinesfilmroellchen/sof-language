@@ -17,8 +17,7 @@ class TokenizerTest extends SofTestSuper {
 	@Test
 	void testFromSourceCode() {
 		Tokenizer t = assertDoesNotThrow(() -> Tokenizer.fromSourceCode("hello code"));
-		assertEquals(String.format("hello code%n"), t.getCode());
-		assertThrows(CompilerException.class, () -> Tokenizer.fromSourceCode("\" unclosed string"), "illegal code");
+		assertEquals("hello code", t.getCode());
 	}
 
 	@Test
@@ -56,15 +55,15 @@ class TokenizerTest extends SofTestSuper {
 	void testWithCodeAppended() {
 		Tokenizer t = Tokenizer.fromSourceCode("hello code");
 		Tokenizer more = assertDoesNotThrow(() -> t.withCodeAppended("newline"));
-		assertEquals(String.format("hello code%nnewline%n"), more.getCode());
-		assertEquals(String.format("hello code%n"), t.getCode());
+		assertEquals(String.format("hello code%nnewline"), more.getCode());
+		assertEquals(String.format("hello code"), t.getCode());
 	}
 
 	@Test
 	void testAppendCode() {
 		Tokenizer t = Tokenizer.fromSourceCode("hello code");
 		t.appendCode("newline");
-		assertEquals(String.format("hello code%nnewline%n"), t.getCode());
+		assertEquals(String.format("hello code%nnewline"), t.getCode());
 	}
 
 	@Test
