@@ -1,14 +1,31 @@
 # SOF test file - number and arithmetic tests
 
-2 -1 1902903 0xff77 0o566 0b10011  # integer literals
+# literals
+0 2 -1 1902903 0xff77 0o566 0b10011  # integer literals
 2.5 -3.0478 4.81e+7  730.7781E-10  # float literals
 
+# division
 3 4 + 7 = assert # addition (int & int)
 6 19.4 + 25.4 = assert # addition (int & float)
 70.5 42.5 + 113.0 = assert # addition (float & float)
 
+# division
 200 81 - 119 = assert # subtraction (int & int)
 60 73 - -13 = assert # subtraction (negative result)
 70 42.5 - 27.5 = assert # subtraction (int & float)
 300.75 60.25 - 240.5 = assert # subtraction (float & float)
+
+# division
+30 68 * 2040 = assert # multiplication (int & int)
+60.5 7 * 423.5 = assert # multiplication (float & int)
+3.141 -8.2 * -25.7562 = assert # multiplication (float & float)
+
+# division
+100 5 / 20 = assert # divide (integer exact)
+-70 6 / -11 = assert # divide (integer with remainder)
+70.0 8 / 8.75 = assert # divide (float & int)
+80.6 5.2 / 15.5 = assert # divide (float & float)
+# try is not implemented
+# { 5 0 / false assert } { true assert } try # divide by zero fails
+
 

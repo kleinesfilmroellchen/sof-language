@@ -1,1 +1,32 @@
 # SOF test file - boolean literals and logic tests
+
+true True false False # literals
+
+# # basic assert & negation
+# true assert
+# false not assert
+# true not not assert
+
+# # or
+# true false or assert
+# false true or assert
+# true true or assert
+# false false or not assert
+
+# # and
+# true false and not assert
+# false true and not assert
+# true true and assert
+# false false and not assert
+
+# # xor
+# true false xor assert
+# false true xor assert
+# true true xor not assert
+# false false xor not assert
+
+# equality
+true true = assert
+false false = assert
+false true /= assert
+true false /= assert

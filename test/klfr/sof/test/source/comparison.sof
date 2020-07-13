@@ -1,2 +1,42 @@
 # SOF test file - comparison and equality tests
+# Boolean equality tests can be found in boolean.sof
 
+#### equality
+3 3 = assert # int
+4.0 4.0 = assert # float
+5.0 5 = assert # different number type, but same value
+5 5.0 = assert # associative
+"abc" "abc" = assert # string
+"2" 2 = assert # string & int
+2 "2" = assert # associative
+"6.71" 6.71 = assert # string & float
+
+#### inequality
+4 80 /= assert # same type int
+4.20 6.9 /= assert # same type float
+"abc" "def" /= assert # same type string
+{ blah } { blah } /= assert # code block
+
+4 "hello" /= assert # different type int & string
+4.5 "hello" /= assert # different type float & string
+{ blah } 280690 /= assert # different type code block & int
+{ blah } 4.20 /= assert # different type code block & float
+{ blah } "hey there" /= assert # different type code block & string
+
+#### comparison
+
+# int
+5 4 > assert # greater
+-30 20 < assert # smaller
+33 40 <= assert # *smaller equal
+33 33 <= assert # smaller *equal
+69 42 >= assert # *greater equal
+69 69 >= assert # greater *equal
+
+# float
+5.8 4.232365 > assert # greater
+-30.75 20.09 < assert # smaller
+33.01 40.7 <= assert # *smaller equal
+33.11 33.11 <= assert # smaller *equal
+69.420 42.3 >= assert # *greater equal
+69.420 69.420 >= assert # greater *equal

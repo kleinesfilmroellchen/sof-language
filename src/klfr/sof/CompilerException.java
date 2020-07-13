@@ -175,7 +175,7 @@ public class CompilerException extends RuntimeException {
 	 */
 	private static String formatMessage(String expression, int index, int line, String name, String reason) {
 		final var formatStr = "%s Error in line %d at index %d:%n %s%n %"
-				+ (significantAfterTrimmed(index, expression.length()) + 1) + "s%n    %s";
+				+ (significantAfterTrimmed(index, expression.length())) + "s%n    %s";
 		// log.fine(String.format("index %d, exprlen %d, fstring %s", index, expression.length(), formatStr));
 		return String.format(formatStr, name, line, index, trim(expression, index), "^", reason);
 	}

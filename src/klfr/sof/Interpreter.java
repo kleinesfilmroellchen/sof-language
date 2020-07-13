@@ -17,7 +17,6 @@ import java.util.regex.Pattern;
 import static klfr.Tuple.t;
 
 import klfr.Tuple;
-import klfr.sof.Interpreter.InterpreterAction;
 import klfr.sof.lang.*;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 
