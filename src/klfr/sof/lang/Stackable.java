@@ -1,6 +1,9 @@
 package klfr.sof.lang;
 
 import java.io.Serializable;
+import java.util.Formattable;
+import java.util.FormattableFlags;
+import java.util.Formatter;
 
 /**
  * Stackable is the name for all elements that can be put onto the SOF stack,
@@ -9,7 +12,7 @@ import java.io.Serializable;
  * hierarchy and therefore very general.
  */
 @StackableName("Value")
-public interface Stackable extends Serializable, Cloneable, Comparable<Stackable> {
+public interface Stackable extends Serializable, Cloneable, Comparable<Stackable>, Formattable {
 
 	/**
 	 * An enum which represents the different extensivenesses for debug strings of
@@ -95,6 +98,14 @@ public interface Stackable extends Serializable, Cloneable, Comparable<Stackable
 	 */
 	public default String print() {
 		return this.toDebugString(DebugStringExtensiveness.Full);
+	}
+
+	@Override
+	public default void formatTo(Formatter fmt, int f, int width, int precision) {
+		fmt.format(
+				"%" + ((f & FormattableFlags.LEFT_JUSTIFY) > 0 ? "-" : "") + (width > 0 ? width : "")
+						+ (precision > 0 ? "." + precision : "") + ((f & FormattableFlags.UPPERCASE) > 0 ? "S" : "s"),
+				(f & FormattableFlags.ALTERNATE) > 0 ? this.print() : this.toString());
 	}
 
 	/**

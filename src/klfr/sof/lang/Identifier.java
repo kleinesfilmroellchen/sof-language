@@ -36,7 +36,7 @@ public class Identifier implements Callable {
 	public Identifier(String value) throws CompilerException {
 		value = value.trim();
 		if (!isValidIdentifier(value))
-			throw CompilerException.makeIncomplete("Syntax", "\"" + value + "\" is not a valid identifier");
+			throw CompilerException.makeIncomplete("Syntax", String.format("`%s´ is not a valid identifier", value));
 		this.value = value;
 	}
 
@@ -86,7 +86,7 @@ public class Identifier implements Callable {
 			// if no mapping, throw error
 			if (value == null) {
 				throw CompilerException.fromCurrentPosition(interpreter.internal.tokenizer(), "Name",
-						"Identifier " + this.print() + " is not defined.");
+						String.format("Identifier `%#s´ is not defined.", this));
 			}
 			return value;
 		};

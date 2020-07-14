@@ -44,7 +44,7 @@ public class CodeBlock implements Callable {
 		return (interpreter) -> {
 			interpreter.internal.pushState();
 
-			interpreter.internal.setRegion(indexInFile, endIndex-2);
+			interpreter.internal.setRegion(indexInFile, endIndex - 2);
 			interpreter.internal.setExecutionPos(indexInFile);
 
 			while (interpreter.canExecute()) {
@@ -55,6 +55,11 @@ public class CodeBlock implements Callable {
 
 			return null;
 		};
+	}
+
+	@Override
+	public String print() {
+		return "{ " + this.getCode() + " }";
 	}
 
 }

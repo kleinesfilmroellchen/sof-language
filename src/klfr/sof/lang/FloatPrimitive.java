@@ -89,7 +89,7 @@ public class FloatPrimitive extends Primitive {
 			return new FloatPrimitive(sign * Math.pow(10, exponent) * (integerPart + decimalPart));
 		} else {
 			throw CompilerException.makeIncomplete("Syntax",
-					String.format("No float literal found in\"%s\".", doubleString));
+					String.format("No float literal found in `%s´.", doubleString));
 		}
 	}
 

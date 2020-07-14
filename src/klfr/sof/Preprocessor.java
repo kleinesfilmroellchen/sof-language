@@ -42,7 +42,7 @@ public class Preprocessor {
 		final var strm = Interpreter.stringPattern.matcher(sofString);
 		if (!strm.matches()) {
 			throw CompilerException.makeIncomplete("Syntax",
-					String.format("`%s´ is not a valid string literal.", sofString));
+					String.format("`%#s´ is not a valid string literal.", sofString));
 		}
 		final var str = strm.group(1);
 		return str.replace("\\\"", "\"").replace("\\n", System.lineSeparator());

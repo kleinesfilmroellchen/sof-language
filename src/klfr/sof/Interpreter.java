@@ -419,9 +419,8 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 					throw CompilerException.fromCurrentPosition(self.tokenizer, "Call",
 							"Cannot complete double-call operator \":\" : First call didn't return anything.");
 				else
-					throw CompilerException.fromCurrentPosition(self.tokenizer, "Call",
-							"Cannot complete double-call operator \":\" : First call returned non-Callable \"" + retval.print()
-									+ "\".");
+					throw CompilerException.fromCurrentPosition(self.tokenizer, "Call", String.format(
+							"Cannot complete double-call operator \":\" : First call returned non-Callable `%#s´.", retval));
 			}
 		});
 	}

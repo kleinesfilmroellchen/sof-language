@@ -87,7 +87,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 			return (T) val;
 		} else
 			throw CompilerException.makeIncomplete("Type",
-					String.format("\"%s\" is not a %s.", val.print(), t.getAnnotation(StackableName.class).value()));
+					String.format("`%#s´ is not a %s.", val, t.getAnnotation(StackableName.class).value()));
 	}
 
 	/**

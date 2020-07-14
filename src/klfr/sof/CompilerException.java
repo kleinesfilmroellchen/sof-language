@@ -16,6 +16,8 @@ public class CompilerException extends RuntimeException {
 	private static final long serialVersionUID = 1L;
 	private static final Logger log = Logger.getLogger(CompilerException.class.getCanonicalName());
 
+	public static final int EXPRESSION_OUTPUT_LEN = 30;
+
 	/**
 	 * Whether this element has information about execution location and mischievous
 	 * code available.
@@ -87,7 +89,8 @@ public class CompilerException extends RuntimeException {
 		final var codePosition = expressionInfo.getCurrentPosition();
 		var allCode = expressionInfo.getCode();
 		// line number-1 because is human-readable "one-based"
-		var expressionLine = Pattern.compile("$", Pattern.MULTILINE).split(allCode)[codePosition.getLeft()-1];
+		var expressionLine = Pattern.compile("\\R")
+				.matcher(Pattern.compile("$", Pattern.MULTILINE).split(allCode)[codePosition.getLeft() - 1]).replaceAll("");
 		return CompilerException.fromFormatMessage(expressionLine, codePosition.getRight(), codePosition.getLeft(),
 				name == null ? "Interpreter" : name, reason);
 	}
@@ -174,26 +177,34 @@ public class CompilerException extends RuntimeException {
 	 * @return nicely formatted multi-line string
 	 */
 	private static String formatMessage(String expression, int index, int line, String name, String reason) {
-		final var formatStr = "%s Error in line %d at index %d:%n %s%n %"
-				+ (significantAfterTrimmed(index, expression.length())) + "s%n    %s";
-		// log.fine(String.format("index %d, exprlen %d, fstring %s", index, expression.length(), formatStr));
-		return String.format(formatStr, name, line, index, trim(expression, index), "^", reason);
+		final var formatStr = "%s Error in line %d at index %d:%n %s%n %s%n    %s";
+		// log.fine(() -> String.format(
+		// "index %d, exprlen %d, significant %d, error line <%s>", index,
+		// expression.length(),
+		// significantAfterTrimmed(index, expression.length()),
+		// expression.replace("\n", "\\n").replace("\t", "\\t").replace("\r", "\\r")));
+		return String.format(formatStr, name, line, index, trim(expression, index),
+				" ".repeat(significantAfterTrimmed(index, expression.length())) + "^", reason);
 	}
 
-	/** trims string to exact length 20 while respecting the significant index */
+	/**
+	 * trims string to exact length EXPRESSION_OUTPUT_LEN while respecting the
+	 * significant index
+	 */
 	private static String trim(String original, int significantIndex) {
-		int min = significantIndex - 10, max = significantIndex + 10, length = original.length();
+		int min = significantIndex - (EXPRESSION_OUTPUT_LEN / 2),
+				max = significantIndex + (EXPRESSION_OUTPUT_LEN / 2) + 1, length = original.length();
 
 		if (min < 0) {
-			// case 1: from start on 20 characters
-			return String.format("%" + (length < 20 ? "-" : "") + "20s", original.substring(0, Math.min(20, length)));
-		} else if (max >= length) {
-			// case 2: from end on 20 characters (only happens if string itself is more than
-			// 20 chars)
-			return String.format("%20s", original.substring(Math.max(length - 20, 0), length));
+			// case 1: from start on EXPRESSION_OUTPUT_LEN characters
+			return padRight(original.substring(0, Math.min(EXPRESSION_OUTPUT_LEN, length)), EXPRESSION_OUTPUT_LEN);
+		} else if (max > length) {
+			// case 2: from end on EXPRESSION_OUTPUT_LEN characters (only happens if string
+			// itself is more than EXPRESSION_OUTPUT_LEN chars)
+			return original.substring(length - EXPRESSION_OUTPUT_LEN);
 		}
 		// case 3: in the middle of string means that there is trim on both sides
-		return String.format("%20s", original.substring(min, max));
+		return original.substring(min, max);
 	}
 
 	/**
@@ -206,15 +217,41 @@ public class CompilerException extends RuntimeException {
 	 *         trimmed string where the indexed character lies
 	 */
 	private static int significantAfterTrimmed(int significantIndex, int length) {
-		int min = significantIndex - 10, max = significantIndex + 10;
+		int min = significantIndex - (EXPRESSION_OUTPUT_LEN / 2),
+				max = significantIndex + (EXPRESSION_OUTPUT_LEN / 2) + 1;
 		if (min < 0)
 			// case 1: there is no trim from the start, index valid as-is
 			return significantIndex;
-		if (max >= length)
-			// case 2: no trim from the end: compute end offset and
-			return 20 - (length - significantIndex);
-		// trim from the start and end means that the char is always at index 10
-		return 10;
+		if (max > length)
+			// case 2: no trim from the end: compute end offset and subtract from the
+			// displayed string's length
+			return EXPRESSION_OUTPUT_LEN - (length - significantIndex);
+		// trim from the start and end means that the char is always at index
+		// (EXPRESSION_OUTPUT_LEN/2)
+		return (EXPRESSION_OUTPUT_LEN / 2);
+	}
+
+	private static String padLeft(final String s, final int len) {
+		final int charsToAdd = len - s.length();
+		if (charsToAdd <= 0)
+			return s;
+		return " ".repeat(charsToAdd) + s;
+	}
+
+	private static String padRight(final String s, final int len) {
+		final int charsToAdd = len - s.length();
+		if (charsToAdd <= 0)
+			return s;
+		return s + " ".repeat(charsToAdd);
+	}
+
+	private static String padCenter(final String s, final int len) {
+		final int charsToAdd = len - s.length();
+		if (charsToAdd <= 0)
+			return s;
+		// one additional char on the left side if number of padding chars is odd
+		final int oneMoreLeft = (charsToAdd % 2) == 0 ? 0 : 1;
+		return " ".repeat(charsToAdd / 2 + oneMoreLeft) + s + " ".repeat(charsToAdd / 2);
 	}
 
 }

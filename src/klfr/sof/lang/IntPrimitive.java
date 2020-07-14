@@ -86,7 +86,7 @@ public class IntPrimitive extends Primitive {
                break;
             default:
                throw CompilerException.makeIncomplete("Syntax",
-                     String.format("Invalid Integer literal \"%s\".", integerString));
+                     String.format("Invalid Integer literal `%s´.", integerString));
          }
          integerString = integerString.substring(2);
       }

@@ -30,7 +30,7 @@ public class BoolPrimitive extends Primitive {
       if (booleanString.toLowerCase().equals("false"))
          return new BoolPrimitive(false);
       throw CompilerException.makeIncomplete("Syntax",
-            String.format("No boolean literal found in \"%s\"", booleanString));
+            String.format("No boolean literal found in `%s´", booleanString));
    }
 
    public boolean equals(Stackable other) {
