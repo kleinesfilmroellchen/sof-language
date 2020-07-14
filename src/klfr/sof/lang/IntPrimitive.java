@@ -134,11 +134,8 @@ public class IntPrimitive extends Primitive {
    public boolean equals(Stackable other) {
       if (other instanceof IntPrimitive) {
          return ((IntPrimitive) other).value == this.value;
-      } else if (other instanceof FloatPrimitive || other instanceof BoolPrimitive
-            || other instanceof StringPrimitive) {
-         return other.equals(this);
       }
-      return false;
+      return super.equals(other);
    }
 
 }

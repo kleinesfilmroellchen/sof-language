@@ -108,12 +108,8 @@ public class FloatPrimitive extends Primitive {
 	public boolean equals(Stackable other) {
 		if (other instanceof FloatPrimitive) {
 			return round(((FloatPrimitive) other).v, EQUALITY_PRECISION) == round(this.v, EQUALITY_PRECISION);
-		} else if (other instanceof IntPrimitive) {
-			return ((IntPrimitive) other).value().doubleValue() == this.v;
-		} else if (other instanceof BoolPrimitive) {
-			return other.equals(this);
 		}
-		return false;
+		return super.equals(other);
 	}
 
 	@Override

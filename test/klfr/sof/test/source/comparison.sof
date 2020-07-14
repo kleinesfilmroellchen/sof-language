@@ -4,24 +4,13 @@
 #### equality
 3 3 = assert # int
 4.0 4.0 = assert # float
-5.0 5 = assert # different number type, but same value
-5 5.0 = assert # associative
 "abc" "abc" = assert # string
-"2" 2 = assert # string & int
-2 "2" = assert # associative
-"6.71" 6.71 = assert # string & float
 
 #### inequality
 4 80 /= assert # same type int
 4.20 6.9 /= assert # same type float
 "abc" "def" /= assert # same type string
 { blah } { blah } /= assert # code block
-
-4 "hello" /= assert # different type int & string
-4.5 "hello" /= assert # different type float & string
-{ blah } 280690 /= assert # different type code block & int
-{ blah } 4.20 /= assert # different type code block & float
-{ blah } "hey there" /= assert # different type code block & string
 
 #### comparison
 

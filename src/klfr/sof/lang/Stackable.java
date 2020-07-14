@@ -5,6 +5,8 @@ import java.util.Formattable;
 import java.util.FormattableFlags;
 import java.util.Formatter;
 
+import klfr.sof.CompilerException;
+
 /**
  * Stackable is the name for all elements that can be put onto the SOF stack,
  * meaning that every valid value in SOF is a Stackable. Stackables only have a
@@ -125,32 +127,56 @@ public interface Stackable extends Serializable, Cloneable, Comparable<Stackable
 	public default String typename() {
 		return this.getClass().getAnnotation(StackableName.class) != null
 				? this.getClass().getAnnotation(StackableName.class).value()
-				: "Stackable";
+				: "<Anonymous>";
 	}
 
 	/**
 	 * Checks the stackables for logical SOF-internal equality. This check should be
-	 * permissive, meaning that incompatible types return {@code false} rather than
-	 * failing. This is also the behavior of the default implementation.<br>
+	 * type-strict, meaning that incompatible types fail with a Type exception. This
+	 * is the behavior of the default fallback implementation.<br>
 	 * <br>
 	 * As for usual with equality, this check should be commutative, i.e.
 	 * {@code a.equals(b) == b.equals(a)}.
 	 * 
 	 * @param other Other stackable to check against
 	 * @return true if the Stackables are considered equal according to SOF logic,
-	 *         false if they aren't or the types are generally not comparable for
-	 *         equality.
+	 *         false if they aren't.
 	 */
 	public default boolean equals(Stackable other) {
-		return false;
+		throw CompilerException.makeIncomplete("Type",
+				String.format("Types %s and %s cannot be checked for equality.", this.typename(), other.typename()));
 	}
 
 	/**
 	 * Compares this stackable to another stackable, with the ususal Comparable
-	 * rules: greater than zero if self greater than other
+	 * rules: greater than zero if self greater than other.
 	 */
 	@Override
 	public default int compareTo(Stackable o) {
 		return this.hashCode() - o.hashCode();
 	}
+
+	/**
+	 * Returns whether this Stackable's data can be considered truthy. This is
+	 * commonly the case with most values except "falsy" exceptions. The default
+	 * implementation always returns true.
+	 * 
+	 * @return whether this Stackable's data can be considered truthy.
+	 */
+	public default boolean isTrue() {
+		return true;
+	}
+
+	/**
+	 * Returns whether this Stackable's data can be considered falsy. This is most
+	 * commonly the case with a few "falsy" exceptions, such as the number 0, the
+	 * empty string, the boolean false and any Nothing-like value. The default
+	 * implementation always returns false.
+	 * 
+	 * @return whether this Stackable's data can be considered falsy.
+	 */
+	public default boolean isFalse() {
+		return false;
+	}
+
 }

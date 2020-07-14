@@ -36,12 +36,8 @@ public class BoolPrimitive extends Primitive {
    public boolean equals(Stackable other) {
       if (other instanceof BoolPrimitive) {
          return ((BoolPrimitive) other).value == this.value;
-      } else if (other instanceof IntPrimitive) {
-         return this.value ? (((IntPrimitive) other).value() != 0) : (((IntPrimitive) other).value() == 0);
-      } else if (other instanceof FloatPrimitive) {
-         return this.value ? (((FloatPrimitive) other).value() != 0) : (((FloatPrimitive) other).value() == 0);
       }
-      return false;
+      return super.equals(other);
    }
 
    /**
@@ -49,6 +45,7 @@ public class BoolPrimitive extends Primitive {
     * 
     * @return whether the value represented by this boolean primitive is true.
     */
+   @Override
    public boolean isTrue() {
       return this.value;
    }
@@ -58,6 +55,7 @@ public class BoolPrimitive extends Primitive {
     * 
     * @return whether the value represented by this boolean primitive is false.
     */
+   @Override
    public boolean isFalse() {
       return !this.value;
    }

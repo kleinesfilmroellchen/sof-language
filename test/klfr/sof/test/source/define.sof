@@ -11,10 +11,10 @@ x . "hello" = assert
 x . "3" /= assert
 
 # bind other value
-42 blah def
+"a string" blah def
 # sanity-check
 blah . x . /= assert
-blah . 42 = assert
+blah . "a string" = assert
 
 {
 	# inside codeblocks, scope does not change

@@ -93,15 +93,6 @@ public abstract class Primitive implements Callable {
 	}
 
 	@Override
-	public boolean equals(Stackable other) {
-		return other instanceof Primitive ? ((Primitive) other).equals(this) : false;
-	}
-
-	public boolean equals(Primitive other) {
-		return other.v().equals(this.v());
-	}
-
-	@Override
 	public String print() {
 		return v().toString();
 	}

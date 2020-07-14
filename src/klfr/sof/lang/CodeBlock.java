@@ -62,4 +62,12 @@ public class CodeBlock implements Callable {
 		return "{ " + this.getCode() + " }";
 	}
 
+	@Override
+	public boolean equals(Stackable other) {
+		if (other instanceof CodeBlock)
+			// although code blocks are never equal, they may be compared
+			return false;
+		return Callable.super.equals(other);
+	}
+
 }
