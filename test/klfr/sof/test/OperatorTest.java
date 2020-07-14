@@ -46,6 +46,7 @@ class OperatorTest extends SofTestSuper {
 	@Test
 	void testBuiltinOperations() {
 		// TODO: test all builtin operations
+		fail("Not yet implemented");
 	}
 
 }
