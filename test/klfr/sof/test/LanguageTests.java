@@ -61,6 +61,7 @@ public class LanguageTests extends SofTestSuper {
 	private static class AssertInterpreter extends Interpreter {
 		private static final long serialVersionUID = 1L;
 
+		@SuppressWarnings("deprecation")
 		public AssertInterpreter() {
 			super();
 			this.registerTokenHandler(token -> {
@@ -69,8 +70,7 @@ public class LanguageTests extends SofTestSuper {
 						final var stack = intr.internal.stack();
 						BoolPrimitive condition = stack.popTyped(BoolPrimitive.class);
 						if (condition.isFalse()) {
-							throw new TestAssertException(CompilerException.fromCurrentPosition(intr.internal.tokenizer(),
-									"Assert", "Assertion check value was false, failing test."));
+							throw new TestAssertException(CompilerException.fromCurrentPosition(intr.internal.tokenizer(), "assert", null));
 						}
 					});
 				}
@@ -113,6 +113,7 @@ public class LanguageTests extends SofTestSuper {
 					}
 
 					@Override
+					@SuppressWarnings("deprecation")
 					public DynamicTest next() {
 						final var file = sofFileIterator.next();
 						try {

@@ -1,6 +1,9 @@
 package klfr.sof.test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.NoSuchElementException;
 import java.util.regex.Matcher;
@@ -8,7 +11,6 @@ import java.util.regex.Matcher;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 
-import klfr.sof.CompilerException;
 import klfr.sof.Tokenizer;
 import klfr.sof.Tokenizer.TokenizerState;
 

@@ -1,6 +1,13 @@
 package klfr.sof;
 
-import java.io.*;
+import static klfr.sof.Interpreter.R;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.Locale;
 import java.util.Scanner;
 
@@ -208,8 +215,9 @@ public class IOInterface {
 	 */
 	public void describeStack(Stack stack) {
 		if (debug) {
-			println("Stack: " + System.lineSeparator() + stack.toStringExtended());
-			println("Global Nametable: " + System.lineSeparator() + stack.globalNametable().toDebugString(DebugStringExtensiveness.Full));
+			println(R.getString("sof.debug.stack") + System.lineSeparator() + stack.toStringExtended());
+			println(R.getString("sof.debug.gnt") + System.lineSeparator()
+					+ stack.globalNametable().toDebugString(DebugStringExtensiveness.Full));
 		}
 	}
 

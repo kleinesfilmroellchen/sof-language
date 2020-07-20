@@ -19,6 +19,8 @@ import klfr.sof.IOInterface;
 import klfr.sof.Interpreter;
 import klfr.sof.Preprocessor;
 
+import static klfr.sof.Interpreter.R;
+
 @SuppressWarnings("deprecation")
 class Options implements Function<IOInterface, Optional<Throwable>> {
 
@@ -75,7 +77,7 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 						Reader strd = new FileReader(filename);
 						readers.add(strd);
 					} catch (FileNotFoundException e) {
-						io.printf("error: file %s not found, check access restrictions.%n", filename);
+						io.printf(R.getString("sof.cli.filenotfound"), filename);
 						CLI.exitUnnormal(2);
 					}
 				}
@@ -172,12 +174,11 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 			}
 			case VersionInfo: {
 				io.println(CLI.INFO_STRING);
-				io.printf(
-						"This program is licensed under GNU General Public License 3.0.%nSee the project LICENSE for details.%n");
+				io.printf(R.getString("sof.cli.license"));
 				break;
 			}
 			case HelpInfo: {
-				io.printf(CLI.HELP_STRING);
+				io.printf(R.getString("sof.cli.help"));
 				break;
 			}
 		}

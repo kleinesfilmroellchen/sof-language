@@ -26,10 +26,9 @@ public final class BuiltinPTs {
 			if (b instanceof FloatPrimitive && a instanceof IntPrimitive) {
 				return FloatPrimitive.createFloatPrimitive(((IntPrimitive) a).value() / ((FloatPrimitive) b).value());
 			}
-			throw CompilerException.makeIncomplete("Type",
-					String.format("Cannot divide types %s and %s.", a.typename(), b.typename()));
+			throw new CompilerException.Incomplete("type", "type.divide", a.typename(), b.typename());
 		} catch (ArithmeticException e) {
-			throw CompilerException.makeIncomplete("Arithmetic", "Divide by zero.");
+			throw new CompilerException.Incomplete("arithmetic", "div-by-zero");
 		}
 	});
 
@@ -46,8 +45,7 @@ public final class BuiltinPTs {
 		if (b instanceof FloatPrimitive && a instanceof IntPrimitive) {
 			return FloatPrimitive.createFloatPrimitive(((FloatPrimitive) b).value() + ((IntPrimitive) a).value());
 		}
-		throw CompilerException.makeIncomplete("Type",
-				String.format("Cannot add types %s and %s.", a.typename(), b.typename()));
+		throw new CompilerException.Incomplete("type", "type.add", a.typename(), b.typename());
 	});
 
 	public static final Callable multiply = Callable.fromFunction((a, b) -> {
@@ -63,8 +61,7 @@ public final class BuiltinPTs {
 		if (b instanceof FloatPrimitive && a instanceof IntPrimitive) {
 			return FloatPrimitive.createFloatPrimitive(((FloatPrimitive) b).value() * ((IntPrimitive) a).value());
 		}
-		throw CompilerException.makeIncomplete("Type",
-				String.format("Cannot multiply types %s and %s.", a.typename(), b.typename()));
+		throw new CompilerException.Incomplete("type", "type.multiply", a.typename(), b.typename());
 	});
 
 	public static final Callable subtract = Callable.fromFunction((a, b) -> {
@@ -80,8 +77,7 @@ public final class BuiltinPTs {
 		if (b instanceof FloatPrimitive && a instanceof IntPrimitive) {
 			return FloatPrimitive.createFloatPrimitive(((IntPrimitive) a).value() - ((FloatPrimitive) b).value());
 		}
-		throw CompilerException.makeIncomplete("Type",
-				String.format("Cannot subtract types %s and %s.", a.typename(), b.typename()));
+		throw new CompilerException.Incomplete("type", "type.subtract", a.typename(), b.typename());
 	});
 
 	public static final Callable lessThan = Callable

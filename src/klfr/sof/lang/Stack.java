@@ -1,6 +1,5 @@
 package klfr.sof.lang;
 
-import java.util.Deque;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -44,7 +43,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 			final Stackable elmt = super.getLast();
 			return elmt;
 		} catch (final NoSuchElementException e) {
-			throw CompilerException.makeIncomplete("Stack", "Stack is empty.");
+			throw new CompilerException.Incomplete("stack");
 		}
 	}
 
@@ -52,7 +51,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	public Stackable peek() throws CompilerException {
 		final Stackable elmt = super.peek();
 		if (elmt == null)
-			throw CompilerException.makeIncomplete("Stack", "Stack is empty.");
+			throw new CompilerException.Incomplete("stack");
 		return elmt;
 	}
 
@@ -62,12 +61,11 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 			final Stackable elmt = super.pop();
 			if (elmt instanceof Nametable) {
 				super.push(elmt);
-				throw CompilerException.makeIncomplete("StackAccess",
-						"Manipulation of Nametables and Stack delimiters on the stack is not allowed.");
+				throw new CompilerException.Incomplete("stackaccess");
 			}
 			return elmt;
 		} catch (final NoSuchElementException e) {
-			throw CompilerException.makeIncomplete("Stack", "Stack is empty.");
+			throw new CompilerException.Incomplete("stack");
 		}
 	}
 
@@ -86,8 +84,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 		if (t.isInstance(val)) {
 			return (T) val;
 		} else
-			throw CompilerException.makeIncomplete("Type",
-					String.format("`%#s´ is not a %s.", val, t.getAnnotation(StackableName.class).value()));
+			throw new CompilerException.Incomplete("type", "type.checkfail", val, t.getAnnotation(StackableName.class).value());
 	}
 
 	/**

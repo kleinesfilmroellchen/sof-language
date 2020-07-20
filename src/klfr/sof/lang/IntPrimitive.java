@@ -1,7 +1,5 @@
 package klfr.sof.lang;
 
-import java.util.logging.Logger;
-
 import klfr.sof.CompilerException;
 
 /**
@@ -85,8 +83,7 @@ public class IntPrimitive extends Primitive {
                radix = 16;
                break;
             default:
-               throw CompilerException.makeIncomplete("Syntax",
-                     String.format("Invalid Integer literal `%s´.", integerString));
+               throw new CompilerException.Incomplete("syntax", "syntax.integer", integerString);
          }
          integerString = integerString.substring(2);
       }
@@ -96,8 +93,7 @@ public class IntPrimitive extends Primitive {
       for (int place = 0; place < reverseInt.length(); ++place) {
          char magnitude = reverseInt.charAt(place);
          if (!numberChars.containsKey(magnitude) || numberChars.get(magnitude) >= radix) {
-            throw CompilerException.makeIncomplete("Syntax",
-                  String.format("Character \"%c\" not allowed in base %d integer literal.", magnitude, radix));
+            throw new CompilerException.Incomplete("syntax", "syntax.integer.base", magnitude, radix);
          }
          value += numberChars.get(magnitude) * (long) (Math.pow(radix, place));
       }
@@ -126,8 +122,7 @@ public class IntPrimitive extends Primitive {
          // invert the comparison result, therefore effectively switching sides
          return -((FloatPrimitive) o).compareTo(this);
       }
-      throw CompilerException.makeIncomplete("Type",
-            String.format("%s and %s cannot be compared.", this.typename(), o.typename()));
+      throw new CompilerException.Incomplete("type", "type.compare", this.typename(), o.typename());
    }
 
    @Override

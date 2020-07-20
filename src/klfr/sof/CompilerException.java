@@ -1,5 +1,7 @@
 package klfr.sof;
 
+import java.util.Formatter;
+import java.util.ResourceBundle;
 import java.util.Scanner;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -15,52 +17,61 @@ public class CompilerException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
 	private static final Logger log = Logger.getLogger(CompilerException.class.getCanonicalName());
+	private static final ResourceBundle R = ResourceBundle.getBundle(Interpreter.MESSAGE_RESOURCE);
+	private static final String EXCEPTION_FORMAT = "%s Error in line %d at index %d:%n %s%n %s%n    %s";
 
 	public static final int EXPRESSION_OUTPUT_LEN = 30;
 
 	/**
-	 * Whether this element has information about execution location and mischievous
-	 * code available.
+	 * A pseudo- compiler exception that does not have information about its
+	 * occurance in SOF source code, because it was thrown from some subclass
+	 * without interpreter access.
 	 */
-	private boolean infoPresent = false;
+	public static class Incomplete extends RuntimeException {
+		private static final long serialVersionUID = 1L;
+		/**
+		 * String that is used as a name for the 'sof.error.type.*' resource messages.
+		 * This allows for localized error names.
+		 */
+		public final String nameKey;
+		/**
+		 * String that is used as a name for the 'sof.error.message.*' resource
+		 * messages. This allows for localized error explanations.
+		 */
+		public final String explanationKey;
 
-	/**
-	 * @return Whether this element has information about execution location and
-	 *         mischievous code available.
-	 */
-	public boolean isInfoPresent() {
-		return infoPresent;
+		public final Object[] formatArguments;
+
+		/**
+		 * Constructs a compiler exception that does not have all information for nice
+		 * formatting.
+		 * 
+		 * @param nameKey         Name of the exception, as an accessor into the message
+		 *                        resources 'sof.error.type'
+		 * @param explanationKey  Why the exception occurred, as an accessor into the
+		 *                        message resources 'sof.error.message'
+		 * @param formatArguments Arguments for formatting the explanation message with.
+		 */
+		public Incomplete(String nameKey, String explanationKey, Object... formatArguments) {
+			// null checks on name and explanation resource identifier
+			nameKey = nameKey == null ? "generic" : nameKey;
+			explanationKey = explanationKey == null ? nameKey : explanationKey;
+			this.nameKey = nameKey;
+			this.explanationKey = explanationKey;
+			this.formatArguments = formatArguments;
+		}
+
+		public Incomplete(String string) {
+			this(string, null);
+		}
 	}
 
-	protected CompilerException(String arg0, boolean infoPresent) {
-		super(arg0);
-		this.infoPresent = infoPresent;
+	protected CompilerException(String message, Throwable cause) {
+		super(message, cause);
 	}
 
-	protected CompilerException(Throwable arg0, boolean infoPresent) {
-		super(arg0);
-		this.infoPresent = infoPresent;
-	}
-
-	protected CompilerException(String arg0, Throwable arg1) {
-		super(arg0, arg1);
-		infoPresent = false;
-	}
-
-	protected CompilerException(String arg0, Throwable arg1, boolean arg2, boolean arg3) {
-		super(arg0, arg1, arg2, arg3);
-		infoPresent = false;
-	}
-
-	/**
-	 * Makes a compiler exception that does not have all information for nice
-	 * formatting.
-	 * 
-	 * @param name   Name of exception
-	 * @param reason Why the exception occurred
-	 */
-	public static CompilerException makeIncomplete(String name, String reason) {
-		return new CompilerException(name + " " + reason, false);
+	private CompilerException(String message) {
+		super(message);
 	}
 
 	/**
@@ -71,56 +82,71 @@ public class CompilerException extends RuntimeException {
 	 */
 	public static CompilerException fromFormatMessage(String expression, int index, int linenum, String name,
 			String reason) {
-		return new CompilerException(formatMessage(expression, index, linenum, name, reason), true);
+		return new CompilerException(formatMessage(expression, index, linenum, name, reason));
 	}
 
 	/**
 	 * Makes a compiler exception that takes its positional information from a
-	 * tokenizer
+	 * tokenizer.
 	 * 
 	 * @param expressionInfo A tokenizer pointing to the position where the
 	 *                       exception occurred
-	 * @param name           Name of the exception
-	 * @param reason         Why the exception occurred
+	 * @param name           Name of the exception, as an accessor into the message
+	 *                       resources 'sof.error.type'
+	 * @param reason         Why the exception occurred, as an accessor into the
+	 *                       message resources 'sof.error.message'
 	 * @return nicely formatted multi-line string
 	 */
-	public static CompilerException fromCurrentPosition(Tokenizer expressionInfo, String name, String reason) {
+	public static CompilerException fromCurrentPosition(Tokenizer expressionInfo, String name, String reason,
+			final Object... formatArguments) {
+		// null checks on name and explanation resource identifier
+		name = name == null ? "generic" : name;
+		reason = reason == null ? name : reason;
+
 		// left = line, right = index in line
 		final var codePosition = expressionInfo.getCurrentPosition();
+
 		var allCode = expressionInfo.getCode();
 		// line number-1 because is human-readable "one-based"
 		var expressionLine = Pattern.compile("\\R")
 				.matcher(Pattern.compile("$", Pattern.MULTILINE).split(allCode)[codePosition.getLeft() - 1]).replaceAll("");
 		return CompilerException.fromFormatMessage(expressionLine, codePosition.getRight(), codePosition.getLeft(),
-				name == null ? "Interpreter" : name, reason);
+				R.getString("sof.error.type." + name), new Formatter(R.getLocale())
+						.format(R.getString("sof.error.message." + reason), formatArguments).toString());
 	}
 
 	/**
 	 * Makes a compiler exception that takes its positional information from a
-	 * tokenizer state
+	 * tokenizer state.
 	 * 
 	 * @param expressionInfo A tokenizer state pointing to the position where the
 	 *                       exception occurred
-	 * @param name           Name of the exception
-	 * @param reason         Why the exception occurred
+	 * @param name           Name of the exception, as an accessor into the message
+	 *                       resources 'sof.error.type'
+	 * @param reason         Why the exception occurred, as an accessor into the
+	 *                       message resources 'sof.error.message'
 	 * @return nicely formatted multi-line string
 	 */
-	public static CompilerException fromCurrentPosition(TokenizerState expressionInfo, String name, String reason) {
+	public static CompilerException fromCurrentPosition(TokenizerState expressionInfo, String name, String reason,
+			final Object... formatArguments) {
 		return fromCurrentPosition(Tokenizer.fromState(expressionInfo), name, reason);
 	}
 
 	/**
 	 * Makes a compiler exception that takes its positional information from
-	 * tokenizer-like data (all code, index inside code)
+	 * tokenizer-like data (all code, index inside code).
 	 * 
 	 * @param fullExpression All the code
 	 * @param index          Index inside fullExpression where the exception
 	 *                       occurred
-	 * @param name           Name of the exception
-	 * @param reason         Why the exception occurred
+	 * @param name           Name of the exception, as an accessor into the message
+	 *                       resources 'sof.error.type'
+	 * @param reason         Why the exception occurred, as an accessor into the
+	 *                       message resources 'sof.error.message'
 	 * @return nicely formatted multi-line string
 	 */
-	public static CompilerException fromCurrentPosition(String fullExpression, int index, String name, String reason) {
+	public static CompilerException fromCurrentPosition(String fullExpression, int index, String name, String reason,
+			final Object... formatArguments) {
 		var info = new TokenizerState(index, index + 1, 0, fullExpression.length(), fullExpression);
 		return fromCurrentPosition(info, name, reason);
 	}
@@ -130,38 +156,36 @@ public class CompilerException extends RuntimeException {
 	 * 
 	 * @param expression expression where error occurred
 	 * @param index      index in expression where error occurred
-	 * @param name       type of exception, e.g. Syntax, Value
-	 * @param reason     explanation why the exception occurred
+	 * @param name       Name of the exception, as an accessor into the message
+	 *                   resources 'sof.error.type'
+	 * @param reason     Why the exception occurred, as an accessor into the message
+	 *                   resources 'sof.error.message'
 	 * @return nicely formatted multi-line string
 	 */
 	public static CompilerException fromSingleLineExpression(String expression, int index, String name, String reason) {
-		var str = formatMessage(expression, index, 0, name, reason);
-		return new CompilerException(str, true);
+		// null checks on name and reason resource identifier
+		name = name == null ? "generic" : name;
+		reason = reason == null ? name : reason;
+
+		var str = formatMessage(expression, index, 0, R.getString("sof.error.type." + name),
+				R.getString("sof.error.message." + reason));
+		return new CompilerException(str);
 	}
 
 	/**
 	 * Constructs a compiler exception with the given base exception that points to
-	 * the current place in code the tokenizer is looking at. <br>
-	 * <br>
-	 * This method is intended to be used with exceptions thrown by other classes
-	 * unaware of the interpreter state. These classes can use the simple format "<
-	 * Name > < Description >" for their exception message to achieve suitable
-	 * formatting of the exception. As only one line of the exception message is
-	 * extracted, further lines can provide debug information to be used otherwise.
+	 * the current place in code the tokenizer is looking at. This method is used
+	 * with Incomplete compiler exceptions which were thrown by parts of the SOF
+	 * system unaware of code positions.
 	 * 
 	 * @param expressionInfo The tokenizer that points to the location where the
 	 *                       exception occured
-	 * @param cause          The cause of this exception. The first word of the
-	 *                       exception message is used as the name (such as
-	 *                       "Syntax") and the rest as the long reason.
-	 * @return The newly constructed compiler error.
+	 * @param cause          The cause of this exception, an instance of the stub
+	 *                       class {@link CompilerException.Incomplete}
+	 * @return The newly constructed compiler exception.
 	 */
-	public static CompilerException fromIncomplete(Tokenizer expressionInfo, CompilerException cause) {
-		Scanner helper = new Scanner(cause.getLocalizedMessage());
-		String name = helper.next();
-		String reason = helper.nextLine();
-		helper.close();
-		final var exc = fromCurrentPosition(expressionInfo, name, reason);
+	public static CompilerException fromIncomplete(Tokenizer expressionInfo, Incomplete cause) {
+		final var exc = fromCurrentPosition(expressionInfo, cause.nameKey, cause.explanationKey, cause.formatArguments);
 		exc.initCause(cause);
 		return exc;
 	}
@@ -177,13 +201,12 @@ public class CompilerException extends RuntimeException {
 	 * @return nicely formatted multi-line string
 	 */
 	private static String formatMessage(String expression, int index, int line, String name, String reason) {
-		final var formatStr = "%s Error in line %d at index %d:%n %s%n %s%n    %s";
 		// log.fine(() -> String.format(
 		// "index %d, exprlen %d, significant %d, error line <%s>", index,
 		// expression.length(),
 		// significantAfterTrimmed(index, expression.length()),
 		// expression.replace("\n", "\\n").replace("\t", "\\t").replace("\r", "\\r")));
-		return String.format(formatStr, name, line, index, trim(expression, index),
+		return String.format(EXCEPTION_FORMAT, name, line, index, trim(expression, index),
 				" ".repeat(significantAfterTrimmed(index, expression.length())) + "^", reason);
 	}
 

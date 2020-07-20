@@ -2,7 +2,6 @@ package klfr.sof.test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -59,9 +58,9 @@ public class StackTest extends SofTestSuper {
 		assertEquals(1, stack.size(), "Stack size");
 		stack.pop();
 
-		assertThrows(CompilerException.class, () -> stack.pop(), "Stack emptiness with Pop throws");
-		assertThrows(CompilerException.class, () -> stack.getLast(), "Stack emptiness with getLast throws");
-		assertThrows(CompilerException.class, () -> stack.peek(), "Stack emptiness with peek throws");
+		assertThrows(CompilerException.Incomplete.class, () -> stack.pop(), "Stack emptiness with Pop throws");
+		assertThrows(CompilerException.Incomplete.class, () -> stack.getLast(), "Stack emptiness with getLast throws");
+		assertThrows(CompilerException.Incomplete.class, () -> stack.peek(), "Stack emptiness with peek throws");
 	}
 
 	/**

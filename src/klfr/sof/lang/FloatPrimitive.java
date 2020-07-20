@@ -88,8 +88,7 @@ public class FloatPrimitive extends Primitive {
 			log.finest(String.format("%d * ( %d + %f ) * 10 ^ %d", sign, integerPart, decimalPart, exponent));
 			return new FloatPrimitive(sign * Math.pow(10, exponent) * (integerPart + decimalPart));
 		} else {
-			throw CompilerException.makeIncomplete("Syntax",
-					String.format("No float literal found in `%s´.", doubleString));
+			throw new CompilerException.Incomplete("syntax", "syntax.float", doubleString);
 		}
 	}
 
@@ -121,8 +120,7 @@ public class FloatPrimitive extends Primitive {
 			final var o = (IntPrimitive) x;
 			return (this.v - o.value() > 0 ? 1 : (this.v - o.value() < 0 ? -1 : 0));
 		}
-		throw CompilerException.makeIncomplete("Type",
-				String.format("%s and %s cannot be compared.", this.typename(), x.typename()));
+		throw new CompilerException.Incomplete("type", "type.compare", this.typename(), x.typename());
 	}
 
 	public String print() {

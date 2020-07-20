@@ -1,5 +1,7 @@
 package klfr.sof.cli;
 
+import static klfr.sof.Interpreter.R;
+
 // MOAR STANDARD LIBRARY
 import java.io.File;
 import java.io.IOException;
@@ -30,36 +32,7 @@ import klfr.sof.Preprocessor;
 
 public class CLI {
 
-	public static final String HELP_STRING = "" + "sof - Interpreter for Stack with Objects and       %n"
-			+ "      Functions (SOF) Programming Language.        %n"
-			+ "usage: sof [-hvdpP] [-c COMMAND]                   %n"
-			+ "           FILENAME [...FILENAMES]                 %n"
-			+ "                                                   %n"
-			+ "positional arguments:                              %n"
-			+ "   filename  Path to a file to be read and         %n"
-			+ "             executed. Can be a list of files that %n"
-			+ "             are executed in order.                %n"
-			+ "                                                   %n"
-			+ "options:                                           %n"
-			+ "   --help, -h                                      %n"
-			+ "             Display this help message and exit.   %n"
-			+ "   --version, -v                                   %n"
-			+ "             Display version information and exit. %n"
-			+ "   -d        Execute in debug mode. Read the manual%n"
-			+ "             for more information.                 %n"
-			+ "   -p        Run the preprocessor and exit.        %n"
-			+ "   -P        Do not run the preprocessor before    %n"
-			+ "             executing the input file(s).          %n"
-			+ "   --command, -c COMMAND                           %n"
-			+ "             Execute COMMAND and exit.             %n"
-			+ "                                                   %n"
-			+ "When used without execution-starting arguments (-c %n"
-			+ "or filename), sof is started in interactive mode.  %n"
-			+ "                                                   %n"
-			+ "Quit the program with ^C.                          %n"
-			+ "                                                   %n";
-
-	public static final String INFO_STRING = String.format("sof version %s (built %s)", Interpreter.VERSION,
+	public static final String INFO_STRING = String.format(R.getString("sof.cli.version"), Interpreter.VERSION,
 			// awww yesss, the Java Time API 😋
 			DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).format(buildTime().atZone(ZoneId.systemDefault())));
 
@@ -146,6 +119,7 @@ public class CLI {
 	 * @param doPreprocessing Whether to execute the preprocessor on the source code
 	 *                        before passing it into the interpreter.
 	 */
+	@SuppressWarnings("deprecation")
 	public static void doFullExecution(Reader codeStream, Interpreter interpreter, IOInterface io,
 			boolean doPreprocessing) throws Exception {
 		log.entering(CLI.class.getCanonicalName(), "doFullExecution");

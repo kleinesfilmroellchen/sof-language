@@ -83,6 +83,7 @@ public class Nametable implements Callable {
 	}
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public CallProvider getCallProvider() {
 		return interpreter -> {
 			final var stack = interpreter.internal.stack();

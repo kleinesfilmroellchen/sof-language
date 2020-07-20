@@ -14,7 +14,6 @@ import klfr.sof.lang.BoolPrimitive;
 import klfr.sof.lang.IntPrimitive;
 import klfr.sof.lang.Primitive;
 
-@SuppressWarnings("unchecked")
 class PrimitiveTest extends SofTestSuper {
 
 	static IntPrimitive i;
@@ -56,10 +55,10 @@ class PrimitiveTest extends SofTestSuper {
 		assertDoesNotThrow(() -> IntPrimitive.createIntegerFromString("-0b1010011  "));
 		assertDoesNotThrow(() -> IntPrimitive.createIntegerFromString(" +0o776352"));
 		assertDoesNotThrow(() -> IntPrimitive.createIntegerFromString("		-0d490"));
-		assertThrows(CompilerException.class, () -> IntPrimitive.createIntegerFromString("jksdf"));
-		assertThrows(CompilerException.class, () -> IntPrimitive.createIntegerFromString("	0xiwo3i"));
-		assertThrows(CompilerException.class, () -> IntPrimitive.createIntegerFromString("0b8373"));
-		assertThrows(CompilerException.class, () -> IntPrimitive.createIntegerFromString("0f879"));
+		assertThrows(CompilerException.Incomplete.class, () -> IntPrimitive.createIntegerFromString("jksdf"));
+		assertThrows(CompilerException.Incomplete.class, () -> IntPrimitive.createIntegerFromString("	0xiwo3i"));
+		assertThrows(CompilerException.Incomplete.class, () -> IntPrimitive.createIntegerFromString("0b8373"));
+		assertThrows(CompilerException.Incomplete.class, () -> IntPrimitive.createIntegerFromString("0f879"));
 	}
 
 	@Test
@@ -68,8 +67,8 @@ class PrimitiveTest extends SofTestSuper {
 		assertEquals(true, b.value());
 		assertDoesNotThrow(() -> BoolPrimitive.createBoolFromString("FALSE"));
 		assertDoesNotThrow(() -> BoolPrimitive.createBoolFromString("trUe"));
-		assertThrows(CompilerException.class, () -> BoolPrimitive.createBoolFromString("Trueblah"));
-		assertThrows(CompilerException.class, () -> BoolPrimitive.createBoolFromString("FALSEfalse"));
+		assertThrows(CompilerException.Incomplete.class, () -> BoolPrimitive.createBoolFromString("Trueblah"));
+		assertThrows(CompilerException.Incomplete.class, () -> BoolPrimitive.createBoolFromString("FALSEfalse"));
 	}
 
 }

@@ -49,8 +49,7 @@ public class StringPrimitive extends Primitive {
       if (o instanceof StringPrimitive) {
          return this.s.compareTo(((StringPrimitive) o).s);
       }
-      throw CompilerException.makeIncomplete("Type",
-            String.format("`%#s´ and `%#s´ cannot be compared.", this.typename(), o.typename()));
+      throw new CompilerException.Incomplete("type", "type.compare", this.typename(), o.typename());
    }
 
    @Override

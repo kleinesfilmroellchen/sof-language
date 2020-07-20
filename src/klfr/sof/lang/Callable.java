@@ -69,6 +69,7 @@ public interface Callable extends Stackable {
 		}
 
 		@Override
+		@SuppressWarnings("deprecation")
 		public CallProvider getCallProvider() {
 			return self -> {
 				final var stack = self.internal.stack();
@@ -110,6 +111,7 @@ public interface Callable extends Stackable {
 		}
 
 		@Override
+		@SuppressWarnings("deprecation")
 		public CallProvider getCallProvider() {
 			return self -> {
 				final var stack = self.internal.stack();
@@ -154,6 +156,7 @@ public interface Callable extends Stackable {
 		}
 
 		@Override
+		@SuppressWarnings("deprecation")
 		public CallProvider getCallProvider() {
 			return self -> {
 				final var stack = self.internal.stack();

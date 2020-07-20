@@ -36,7 +36,7 @@ public class Identifier implements Callable {
 	public Identifier(String value) throws CompilerException {
 		value = value.trim();
 		if (!isValidIdentifier(value))
-			throw CompilerException.makeIncomplete("Syntax", String.format("`%s´ is not a valid identifier", value));
+			throw new CompilerException.Incomplete("syntax", "syntax.identifier", value);
 		this.value = value;
 	}
 
@@ -79,14 +79,14 @@ public class Identifier implements Callable {
 	}
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public CallProvider getCallProvider() {
 		return interpreter -> {
 			// look up this identifier in the innermost nametable
 			final var value = interpreter.internal.stack().lookup(this);
 			// if no mapping, throw error
 			if (value == null) {
-				throw CompilerException.fromCurrentPosition(interpreter.internal.tokenizer(), "Name",
-						String.format("Identifier `%#s´ is not defined.", this));
+				throw CompilerException.fromCurrentPosition(interpreter.internal.tokenizer(), "name", null, this);
 			}
 			return value;
 		};

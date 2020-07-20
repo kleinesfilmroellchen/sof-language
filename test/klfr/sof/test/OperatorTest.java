@@ -37,7 +37,7 @@ class OperatorTest extends SofTestSuper {
 	// return FloatPrimitive.createFloatPrimitive(((FloatPrimitive) b).value() *
 	// ((IntPrimitive) a).value() * 2);
 	// }
-	// throw CompilerException.makeIncomplete("Type",
+	// throw CompilerException.incomplete("Type",
 	// String.format("Type error in test callable. Operand types %s and %s.",
 	// a.typename(), b.typename()));
 	// });

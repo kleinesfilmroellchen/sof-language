@@ -1,18 +1,10 @@
 package klfr.sof;
 
-import java.util.ArrayList;
 import java.util.Scanner;
-import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 /**
  * The SOF preprocessor is a collection of static methods that normalize and
@@ -41,8 +33,7 @@ public class Preprocessor {
 	public static String preprocessSofString(final String sofString) {
 		final var strm = Interpreter.stringPattern.matcher(sofString);
 		if (!strm.matches()) {
-			throw CompilerException.makeIncomplete("Syntax",
-					String.format("`%#s´ is not a valid string literal.", sofString));
+			throw new CompilerException.Incomplete("syntax", "syntax.string", sofString);
 		}
 		final var str = strm.group(1);
 		return str.replace("\\\"", "\"").replace("\\n", System.lineSeparator());

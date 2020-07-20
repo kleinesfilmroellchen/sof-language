@@ -1,24 +1,36 @@
 package klfr.sof;
 
+import static klfr.Tuple.t;
+
 // ALL THE STANDARD LIBRARY
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.ResourceBundle;
 import java.util.TreeMap;
-import java.util.function.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import static klfr.Tuple.t;
-
 import klfr.Tuple;
-import klfr.sof.lang.*;
+import klfr.sof.lang.BoolPrimitive;
+import klfr.sof.lang.BuiltinPTs;
+import klfr.sof.lang.Callable;
+import klfr.sof.lang.CodeBlock;
+import klfr.sof.lang.FloatPrimitive;
+import klfr.sof.lang.Identifier;
+import klfr.sof.lang.IntPrimitive;
+import klfr.sof.lang.Nametable;
+import klfr.sof.lang.Stack;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
+import klfr.sof.lang.StringPrimitive;
 
 /**
  * The most basic type of an SOF language interpreter without special
@@ -47,8 +59,23 @@ import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>, Serializable {
 	private static final long serialVersionUID = 1L;
 	protected static final Logger log = Logger.getLogger(Interpreter.class.getCanonicalName());
+	/** Major version of the interpreter. */
+	public static final int MAJOR_VERSION = 0;
+	/** Minor version of the interpreter. */
+	public static final int MINOR_VERSION = 1;
+	/** Bug & security fix version of the interpreter. */
+	public static final int BUG_VERSION = 0;
 	/** Version of the interpreter. */
-	public static final String VERSION = "0.1";
+	public static final String VERSION = MAJOR_VERSION + "." + MINOR_VERSION
+			+ (BUG_VERSION > 0 ? ("." + BUG_VERSION) : "");
+
+	/**
+	 * Resource bundle identifier for the main SOF message resource bundle. It
+	 * contains all messages that the command line interpreter produces, as well as
+	 * error messages and debug terms.
+	 */
+	public static final String MESSAGE_RESOURCE = "klfr.sof.SOFMessages";
+	public static final ResourceBundle R = ResourceBundle.getBundle(MESSAGE_RESOURCE, Locale.GERMAN);
 
 	// #region Nested classes
 
@@ -305,8 +332,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		ptActions.put("dup", self -> {
 			final var param = self.stack.peek();
 			if (param instanceof Nametable)
-				throw CompilerException.fromCurrentPosition(self.tokenizer, "StackAccess",
-						"A nametable cannot be duplicated.");
+				throw CompilerException.fromCurrentPosition(self.tokenizer, "stackaccess", "dupnametable");
 			// IMPORTANT: No copy() call is made here. The duplicate is the same reference!
 			self.stack.push(param);
 		});
@@ -416,11 +442,9 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 				self.doCall((Callable) retval);
 			} else {
 				if (retval == null)
-					throw CompilerException.fromCurrentPosition(self.tokenizer, "Call",
-							"Cannot complete double-call operator \":\" : First call didn't return anything.");
+					throw CompilerException.fromCurrentPosition(self.tokenizer, "call", "doublecall-firstnull");
 				else
-					throw CompilerException.fromCurrentPosition(self.tokenizer, "Call", String.format(
-							"Cannot complete double-call operator \":\" : First call returned non-Callable `%#s´.", retval));
+					throw CompilerException.fromCurrentPosition(self.tokenizer, "call", "doublecall-firstnoncallable");
 			}
 		});
 	}
@@ -449,25 +473,23 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	public static Optional<InterpreterAction> literalTokenHandler(String token) {
 		if (intPattern.matcher(token).matches()) {
 			return Optional.of(self -> {
-				log.finest(() -> f("LITERAL INT %30s @ %4d", token, self.tokenizer.getState().start));
+				log.finest(() -> f("LITERAL INTEGER %30s @ %4d", token, self.tokenizer.getState().start));
 				try {
 					final IntPrimitive literal = IntPrimitive.createIntegerFromString(token.toLowerCase());
 					self.stack.push(literal);
-				} catch (final CompilerException e) {
-					throw CompilerException.fromCurrentPosition(self.tokenizer, "Syntax",
-							f("No integer literal found in \"%s\".", token));
+				} catch (final CompilerException.Incomplete e) {
+					throw CompilerException.fromIncomplete(self.tokenizer, e);
 				}
 			});
 		}
 		if (doublePattern.matcher(token).matches()) {
 			return Optional.of(self -> {
-				log.finest(() -> f("LITERAL DOUBLE %30s @ %4d", token, self.tokenizer.getState().start));
+				log.finest(() -> f("LITERAL FLOAT %30s @ %4d", token, self.tokenizer.getState().start));
 				try {
 					final FloatPrimitive literal = FloatPrimitive.createFloatFromString(token);
 					self.stack.push(literal);
-				} catch (final NumberFormatException e) {
-					throw CompilerException.fromCurrentPosition(self.tokenizer, "Syntax",
-							f("No double literal found in \"%s\".", token));
+				} catch (final CompilerException.Incomplete e) {
+					throw CompilerException.fromIncomplete(self.tokenizer, e);
 				}
 			});
 		}
@@ -492,7 +514,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 			return Optional.of(self -> {
 				final var endPos = Preprocessor.indexOfMatching(self.tokenizer.getCode(), self.tokenizer.start(),
 						codeBlockStartPattern, codeBlockEndPattern) - 1;
-				self.check(endPos >= 0, () -> t("Syntax", "Unclosed code block"));
+				self.check(endPos >= 0, () -> t("syntax", "syntax.codeblock"));
 				final var cb = new CodeBlock(self.tokenizer.getState().end, endPos, self.tokenizer.getCode());
 				self.stack.push(cb);
 
@@ -618,15 +640,12 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 				applicableHandler.get().execute(this);
 			} else {
 				// oh no, you have input invalid characters!
-				throw CompilerException.fromCurrentPosition(this.tokenizer, "Syntax",
-						f("Unexpected characters \"%s\".", token));
+				throw CompilerException.fromCurrentPosition(this.tokenizer, "syntax", null);
 			}
 		} catch (final CompilerException e) {
-			if (e.isInfoPresent())
-				throw e;
-			else {
-				throw CompilerException.fromIncomplete(tokenizer, e);
-			}
+			throw e;
+		} catch (final CompilerException.Incomplete e) {
+			throw CompilerException.fromIncomplete(this.tokenizer, e);
 		}
 		log.exiting(this.getClass().getCanonicalName(), "executeOnce");
 		log.finest(() -> "S:\n" + stack.toStringExtended() + "\nNT:\n"
@@ -709,7 +728,7 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 		try {
 			return this.executeOnce();
 		} catch (final CompilerException e) {
-			throw new NoSuchElementException("Iteration failed because a compiler exception was encountered.");
+			throw new NoSuchElementException(R.getString("sof.misc.stopiteration"));
 		}
 	}
 

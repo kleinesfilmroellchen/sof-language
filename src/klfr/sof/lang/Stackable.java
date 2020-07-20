@@ -143,8 +143,7 @@ public interface Stackable extends Serializable, Cloneable, Comparable<Stackable
 	 *         false if they aren't.
 	 */
 	public default boolean equals(Stackable other) {
-		throw CompilerException.makeIncomplete("Type",
-				String.format("Types %s and %s cannot be checked for equality.", this.typename(), other.typename()));
+		throw new CompilerException.Incomplete("type", "type.equals-incompatible", this.typename(), other.typename());
 	}
 
 	/**
