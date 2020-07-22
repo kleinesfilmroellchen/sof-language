@@ -118,7 +118,7 @@ public class CLI {
 
 		IOInterface io = new IOInterface();
 		io.debug = (opt.flags & Options.DEBUG) > 0;
-		io.setStreams(System.in, System.out);
+		io.setInOut(System.in, System.out);
 
 		// decide over execution type depending on argument count
 		if (opt.executionType == Options.ExecutionType.Interactive)
