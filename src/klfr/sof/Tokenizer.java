@@ -198,8 +198,8 @@ public class Tokenizer implements Iterator<String> {
 	public Tokenizer appendCode(String code) {
 		TokenizerState state = this.currentState;
 		this.log.finer("State before appending: " + state);
-		var needsNewline = !this.currentState.code.isEmpty() && !this.currentState.code.endsWith(System.lineSeparator());
-		this.currentState.code += (needsNewline ? System.lineSeparator() : "") + code;
+		var needsNewline = !this.currentState.code.isEmpty() && !this.currentState.code.endsWith("\n");
+		this.currentState.code += (needsNewline ? "\n" : "") + code;
 		this.m = Interpreter.tokenPattern.matcher(this.currentState.code);
 		this.currentState.end = state.end;
 		this.currentState.regionStart = 0;

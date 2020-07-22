@@ -61,6 +61,16 @@ public class LanguageTests extends SofTestSuper {
 	private static class AssertInterpreter extends Interpreter {
 		private static final long serialVersionUID = 1L;
 
+		private int assertCount = 0;
+
+		/**
+		 * Returns the number of asserts that were successfully made with this interpreter.
+		 * @return the number of asserts that were successfully made with this interpreter.
+		 */
+		public int getAssertCount() {
+			return assertCount;
+		}
+
 		@SuppressWarnings("deprecation")
 		public AssertInterpreter() {
 			super();
@@ -70,13 +80,16 @@ public class LanguageTests extends SofTestSuper {
 						final var stack = intr.internal.stack();
 						BoolPrimitive condition = stack.popTyped(BoolPrimitive.class);
 						if (condition.isFalse()) {
-							throw new TestAssertException(CompilerException.fromCurrentPosition(intr.internal.tokenizer(), "assert", null));
+							throw new TestAssertException(
+									CompilerException.fromCurrentPosition(intr.internal.tokenizer(), "assert", null));
 						}
+						++assertCount;
 					});
 				}
 				return Optional.empty();
 			});
 		}
+
 	}
 
 	/**
@@ -120,18 +133,20 @@ public class LanguageTests extends SofTestSuper {
 							final var codeStr = resLoader.getResourceAsStream(SOURCE_FOLDER + file);
 							final var out = new ByteArrayOutputStream(codeStr.available());
 							codeStr.transferTo(out);
-							final var code = Preprocessor.preprocessCode(new String(out.toByteArray(), TEST_SOURCE_CHARSET));
+							final var code = Preprocessor
+									.preprocessCode(new String(out.toByteArray(), TEST_SOURCE_CHARSET));
 							return dynamicTest(String.format("Test source file: %s", file), () -> {
 								try {
 									log.info(String.format("Source test %s initializing...", file));
-									final Interpreter engine = new AssertInterpreter();
-									final IOInterface iface = new IOInterface(InputStream.nullInputStream(), System.out);
+									final var engine = new AssertInterpreter();
+									final IOInterface iface = new IOInterface(InputStream.nullInputStream(),
+											System.out);
 									engine.setCode(code);
 									engine.internal.setIO(iface);
 									final var time = Instant.now();
 									engine.executeForever();
-									log.info(String.format("Source test %s completed in %3.3fms", file,
-											Duration.between(time, Instant.now()).toNanosPart() / 1_000_000.0d));
+									log.info(String.format("Source test %-20s completed in %8.3fms, %3d asserts total", file,
+											Duration.between(time, Instant.now()).toNanosPart() / 1_000_000.0d, engine.getAssertCount()));
 								} catch (TestAssertException assertException) {
 									fail(assertException);
 								} catch (CompilerException e) {
@@ -140,7 +155,8 @@ public class LanguageTests extends SofTestSuper {
 							});
 						} catch (IOException e) {
 							log.log(Level.SEVERE, String.format("Cannot test source file %s", file), e);
-							return dynamicTest(String.format("Test source file: %s FAILING with external exception.", file),
+							return dynamicTest(
+									String.format("Test source file: %s FAILING with external exception.", file),
 									() -> {
 										throw new TestAbortedException("Cannot test source file.");
 									});

@@ -302,6 +302,8 @@ public class Interpreter implements Iterator<Interpreter>, Iterable<Interpreter>
 	 */
 	public static final Pattern nlPat = Pattern.compile("^", Pattern.MULTILINE);
 
+	public static final Pattern lineBreakPattern = Pattern.compile("\\R");
+
 	// #endregion Patterns
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

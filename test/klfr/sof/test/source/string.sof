@@ -1,0 +1,5 @@
+# SOF test file - string literals and functions tests
+"abc" "I am String." "äöüßß ¨†" " # no comment" # literals
+"lbah \" hehe" # quote escape
+"\n\t\f" # escapes
+"\u0020" " " = assert # unicode escapes

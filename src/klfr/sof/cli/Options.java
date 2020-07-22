@@ -149,7 +149,7 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 								// end on blank line
 								if (nl.isBlank())
 									break;
-								code += System.lineSeparator() + nl;
+								code += "\n" + nl;
 							}
 							interpreter.appendLine(Preprocessor.preprocessCode(code));
 						}

@@ -6,8 +6,8 @@ import java.util.Iterator;
 /**
  * Simple tuple type, nothing fancy.
  */
-public class Tuple<A extends Comparable<A>, B extends Comparable<B>>
-      implements Serializable, Comparable<Tuple<A, B>>, Iterable<Object>, Cloneable {
+public class Tuple<A, B>
+      implements Serializable, Iterable<Object>, Cloneable {
    private static final long serialVersionUID = 1L;
 
    private final A left;
@@ -22,15 +22,15 @@ public class Tuple<A extends Comparable<A>, B extends Comparable<B>>
       return new Tuple<C, D>(l, r);
    }
 
-   /**
-    * The Tuple comparison first compares the left two elements and only if they
-    * are equal, compares the right two elements.
-    */
-   @Override
-   public int compareTo(Tuple<A, B> other) throws ClassCastException {
-      var leftcomp = left.compareTo(other.left);
-      return leftcomp == 0 ? right.compareTo(other.right) : leftcomp;
-   }
+   // /**
+   //  * The Tuple comparison first compares the left two elements and only if they
+   //  * are equal, compares the right two elements.
+   //  */
+   // @Override
+   // public int compareTo(Tuple<A, B> other) throws ClassCastException {
+   //    var leftcomp = left.compareTo(other.left);
+   //    return leftcomp == 0 ? right.compareTo(other.right) : leftcomp;
+   // }
 
    /**
     * The Tuple iterator returns the left and the right value, in that order.

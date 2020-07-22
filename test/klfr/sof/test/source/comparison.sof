@@ -4,12 +4,12 @@
 #### equality
 3 3 = assert # int
 4.0 4.0 = assert # float
-"abc" "abc" = assert # string
+"abc" "abc" = assert "" "" = assert "\nza warudo" "\nza warudo" # string
 
 #### inequality
-4 80 /= assert # same type int
-4.20 6.9 /= assert # same type float
-"abc" "def" /= assert # same type string
+4 80 /= assert # int
+4.20 6.9 /= assert # float
+"abc" "de\tf" /= assert # string
 { blah } { blah } /= assert # code block
 
 #### comparison

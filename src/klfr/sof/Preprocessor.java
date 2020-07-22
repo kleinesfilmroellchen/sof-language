@@ -1,8 +1,6 @@
 package klfr.sof;
 
-import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.regex.MatchResult;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -14,10 +12,15 @@ import java.util.regex.Pattern;
  */
 public class Preprocessor {
 
-	private static String replaceBySpace(MatchResult comment) {
-		return comment.group().replaceAll("[^\n]", " ");
-		// return String.format("%" + comment.group().length() + "s", "");
+	private static enum PreprocessorState {
+		CODE, STRING, COMMENT_STARTED, MULTILINE_COMMENT, LINE_COMMENT, EXPECTING_MLCOMMENT_END;
 	}
+
+	private static final Logger log = Logger.getLogger(Preprocessor.class.getCanonicalName());
+
+	// private static String replaceBySpace(MatchResult comment) {
+	// 	return comment.group().replaceAll("[^\n]", " ");
+	// }
 
 	/**
 	 * Preprocesses an SOF literal string token that has already been processed by
@@ -36,184 +39,104 @@ public class Preprocessor {
 			throw new CompilerException.Incomplete("syntax", "syntax.string", sofString);
 		}
 		final var str = strm.group(1);
-		return str.replace("\\\"", "\"").replace("\\n", System.lineSeparator());
+		return Interpreter.escapeSequencePattern.matcher(str).replaceAll(escape -> {
+			if (escape.group(2) != null) {
+				// unicode escape sequence
+				final int codepoint = Integer.parseInt(escape.group(2), 16);
+				return String.valueOf(Character.toChars(codepoint));
+			}
+			switch (escape.group(1)) {
+				case "t":
+					return "\t";
+				case "f":
+					return "\f";
+				default:
+					return "\\" + escape.group(1);
+			}
+		}).replace("\\\"", "\"");
 	}
 
-	/**
-	 * Runs the preprocessing actions on the code. These are:
-	 * <ul>
-	 * <li>Removing any comments in the code while keeping all line numbers
-	 * correct.</li>
-	 * <li>Replacing the escape sequences in strings with their actual
-	 * characters.</li>
-	 * </ul>
-	 * The preprocessor, therefore, guarantees that
-	 * <ul>
-	 * <li>No comments of any kind exist in the returned code; all non-whitespace
-	 * characters are important;</li>
-	 * <li>No unclosed strings exist;</li>
-	 * <li>The only escape sequences remaining in strings are the quote escape
-	 * <code>\"</code> and the newline escape <code>\n</code>;</li>
-	 * <li>All line numbers match up with the line numbers in the original code;
-	 * however, the indices inside lines might <b>not</b> match up if comments were
-	 * removed on that particular line.</li>
-	 * <li>All code blocks match up, i.e. there are exactly as many <code>{</code>
-	 * as <code>}</code> tokens.
-	 * </ul>
-	 * 
-	 * @throws CompilerException if block comments, code blocks or string literals
-	 *                           are not closed properly.
-	 */
-	public static String preprocessCode(final String code) throws CompilerException {
-		// split the code into the raw strings and everything else
-		// non raw string parts have comments removed
-		final var nonStringParts = Interpreter.stringPattern.splitAsStream(code)
-				.map(dirtyS -> Interpreter.commentOneLinePattern
-						.matcher(Interpreter.commentMultilinePattern.matcher(dirtyS).replaceAll(Preprocessor::replaceBySpace))
-						.replaceAll(Preprocessor::replaceBySpace))
-				.iterator();
-		// raw strings have their escape sequences processed.
-		final var stringParts = Interpreter.stringPattern.matcher(code).results().map(mr -> mr.group())
-				.map(dirtyLiteralString -> Interpreter.stringPattern.matcher(dirtyLiteralString)
-						// 1. replace string escape sequences
-						.replaceAll(string -> Interpreter.escapeSequencePattern.matcher(string.group()).replaceAll(escape -> {
-							if (escape.group(2) != null) {
-								// unicode escape sequence
-								final int codepoint = Integer.parseInt(escape.group(2), 16);
-								return String.valueOf(Character.toChars(codepoint));
-							}
-							switch (escape.group(1)) {
-								case "t":
-									return "\t";
-								case "f":
-									return "\f";
-								default:
-									return "";
-							}
-						})))
-				.iterator();
-
-		final StringBuilder cleanCode = new StringBuilder(code.length());
-		while (nonStringParts.hasNext() || stringParts.hasNext()) {
-			if (nonStringParts.hasNext())
-				cleanCode.append(nonStringParts.next());
-			if (stringParts.hasNext())
-				cleanCode.append(stringParts.next());
-		}
-		return cleanCode.toString();
-		// return Interpreter.commentOneLinePattern
-		// .matcher(Interpreter.commentMultilinePattern.matcher(Interpreter.stringPattern.matcher(code)
-		// // 1. replace string escape sequences
-		// .replaceAll(string ->
-		// Interpreter.escapeSequencePattern.matcher(string.group()).replaceAll(escape
-		// -> {
-		// if (escape.group(2) != null) {
-		// // unicode escape sequence
-		// final int codepoint = Integer.parseInt(escape.group(2), 16);
-		// return String.valueOf(Character.toChars(codepoint));
-		// }
-		// switch (escape.group(1)) {
-		// case "t":
-		// return "\t";
-		// case "f":
-		// return "\f";
-		// default:
-		// return "";
-		// }
-		// })))
-		// // 2. replace multiline comments
-		// .replaceAll(Preprocessor::replaceBySpace))
-		// // 3. replace single line comments
-		// .replaceAll(Preprocessor::replaceBySpace);
-	}
-
-	@Deprecated
-	public static String legacyPreprocessCode(final String code) throws CompilerException {
-		final StringBuilder newCode = new StringBuilder();
-		@SuppressWarnings("resource")
-		final Scanner scanner = new Scanner(code);
-		String line = "";
-		boolean insideBlockComment = false;
-		int codeBlockDepth = 0;
-		int lineIdx = 0;
-		while (scanner.hasNextLine()) {
-			line = scanner.nextLine();
-			++lineIdx;
-			if (line.length() == 0)
+	public static String preprocessCode(String dirtyCode) {
+		var state = PreprocessorState.CODE;
+		boolean acceptNextChar = false;
+		StringBuilder clean = new StringBuilder(dirtyCode.length());
+		for (char c : dirtyCode.toCharArray()) {
+			// flag to auto-accept any character that occurs
+			if (acceptNextChar) {
+				clean.append(c);
+				acceptNextChar = false;
 				continue;
-			char c;
-			for (int i = 0; i < line.length(); ++i) {
-				c = line.charAt(i);
-
-				if (insideBlockComment) {
-					// if we have the ending character
-					if (c == '*' && i < line.length() - 1)
-						if (line.charAt(i + 1) == '#') {
-							++i;
-							insideBlockComment = false;
-						}
-				} // end of block comment check
-				else {
-					// BUG: detects all curly braces
-					if (c == '{')
-						++codeBlockDepth;
-					else if (c == '}')
-						--codeBlockDepth;
-					if (c == '"') {
-						// use string pattern to ensure valid string literal
-						final var toSearch = line.substring(i);
-						final var m = Interpreter.stringPattern.matcher(toSearch);
-						if (!m.find()) {
-							Interpreter.log.log(Level.INFO,
-									String.format("Invalid string literal in '%s' at %d line %d%n", line, i, lineIdx));
-							throw CompilerException.fromCurrentPosition(line, i, "Syntax",
-									"Invalid string literal, maybe a missing \" or wrong escapes?");
-						}
-						final var escapedString = Interpreter.escapeSequencePattern.matcher(m.group()).replaceAll(match -> {
-							if (match.group(2) != null) {
-								// unicode escape sequence
-								final int codepoint = Integer.parseInt(match.group(2), 16);
-								return String.valueOf(Character.toChars(codepoint));
-							}
-							switch (match.group(1)) {
-								case "t":
-									return "\t";
-								case "f":
-									return "\f";
-								default:
-									return "";
-							}
-						});
-						newCode.append(escapedString);
-						i = m.end() + i - 1;
-					} // end of string match
-					else if (c == '#') {
-						if (i < line.length() - 1)
-							if (line.charAt(i + 1) == '*') {
-								++i;
-								// we found a block comment
-								insideBlockComment = true;
-							} else {
-								// skip the single-line comment
-								i = line.length();
-							}
+			}
+			switch (state) {
+				// normal code, check for transition into comment or string
+				case CODE:
+					if (c == '#') {
+						state = PreprocessorState.COMMENT_STARTED;
+						clean.append(" ");
 					} else {
-						newCode.append(c);
+						if (c == '"')
+							state = PreprocessorState.STRING;
+						clean.append(c);
 					}
-				} // end of non-block comment
-			} // end of single line
-			newCode.append(System.lineSeparator());
-		} // end of scan
-
-		scanner.close();
-		if (codeBlockDepth > 0) {
-			throw CompilerException.fromCurrentPosition(newCode.toString(), newCode.lastIndexOf("{"), "Syntax",
-					"Unclosed code block");
-		} else if (codeBlockDepth < 0) {
-			throw CompilerException.fromCurrentPosition(newCode.toString(), newCode.lastIndexOf("}"), "Syntax",
-					"Too many closing '}'");
+					break;
+				// a # was found last time, either single line or multiline comment
+				case COMMENT_STARTED:
+					if (c == '*') {
+						state = PreprocessorState.MULTILINE_COMMENT;
+						clean.append(" ");
+					} else {
+						state = PreprocessorState.LINE_COMMENT;
+						clean.append(" ");
+					}
+					break;
+				// inside a line comment, append a space if no line break occurs
+				case LINE_COMMENT:
+					if (c == '\n') {
+						state = PreprocessorState.CODE;
+						clean.append(c);
+					} else
+						clean.append(" ");
+					break;
+				// inside a multiline comment, check if end of comment may occur
+				case MULTILINE_COMMENT:
+					if (c == '*')
+						state = PreprocessorState.EXPECTING_MLCOMMENT_END;
+					else if (c == '\n')
+						clean.append("\n");
+					else
+						clean.append(" ");
+					break;
+				// a * last time inside a multiline comment, expecting the mlcomment to end
+				case EXPECTING_MLCOMMENT_END:
+					if (c == '#') {
+						state = PreprocessorState.CODE;
+						// append two spaces b/c when finding the * nothing was appended
+						clean.append("  ");
+					} else {
+						state = PreprocessorState.MULTILINE_COMMENT;
+						// the mlcomment did not end, append the "ignored" *
+						clean.append('*').append(c);
+					}
+					break;
+				// inside a string
+				case STRING:
+					// ignore escaped chars, they are processed when the string is created
+					if (c == '\\') {
+						acceptNextChar = true;
+						clean.append(c);
+					} else // transition back to code
+					if (c == '"') {
+						state = PreprocessorState.CODE;
+						clean.append(c);
+					} else
+						clean.append(c);
+					break;
+			}
 		}
-		return newCode.toString();
+		// if (state == PreprocessorState.STRING)
+		// 	throw CompilerException.fromCurrentPosition(dirtyCode, dirtyCode.length() - 1, "syntax",
+		// 			"syntax.string.unclosed");
+		return clean.toString();
 	}
 
 	/**

@@ -1,0 +1,25 @@
+# SOF test file - Code block define, Code block direct call, named Code block double call tests
+# Depends on define.sof to succeed.
+
+#### define (edge cases)
+{ "token" even more 123 tokens true def }
+
+{
+    "newline start, newline end" # comments inside
+}
+
+{
+"newline" start }
+
+{ "newline" end # more comments inside
+}
+
+# lazy evaluation; syntactically incorrect code is not executed
+{ 8d8f8s9 '''''' }
+
+#### call
+false { true } . assert # call occurs, no stack separation
+5 { 16 } . pop   5 = assert # stack integrity
+true { false false false } pop assert # remove uncalled cb
+
+true false { pop } . assert # stack elements outside of call can be deleted
