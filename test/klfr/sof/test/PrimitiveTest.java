@@ -11,6 +11,7 @@ import klfr.sof.lang.Callable.CallProvider;
 import klfr.sof.CompilationError;
 import klfr.sof.lang.Primitive;
 
+@SuppressWarnings("unchecked")
 class PrimitiveTest {
 
 	static Primitive<Long> i;
@@ -55,7 +56,7 @@ class PrimitiveTest {
 		assertThrows(CompilationError.class, () -> Primitive.createInteger("jksdf"));
 		assertThrows(CompilationError.class, () -> Primitive.createInteger("	0xiwo3i"));
 		assertThrows(CompilationError.class, () -> Primitive.createInteger("0b8373"));
-		assertThrows(CompilationError.class, () -> Primitive.createInteger("0o879"));
+		assertThrows(CompilationError.class, () -> Primitive.createInteger("0f879"));
 	}
 
 	@Test
