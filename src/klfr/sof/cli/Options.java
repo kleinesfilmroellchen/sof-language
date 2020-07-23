@@ -16,10 +16,10 @@ import java.util.logging.Logger;
 
 import klfr.sof.CompilerException;
 import klfr.sof.IOInterface;
-import klfr.sof.Interpreter;
+import klfr.sof.NaiveInterpreter;
 import klfr.sof.Preprocessor;
 
-import static klfr.sof.Interpreter.R;
+import static klfr.sof.NaiveInterpreter.R;
 
 @SuppressWarnings("deprecation")
 class Options implements Function<IOInterface, Optional<Throwable>> {
@@ -82,7 +82,7 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 					}
 				}
 				// TODO use other interpreters in certain cases
-				Interpreter interpreterPrototype = new Interpreter();
+				NaiveInterpreter interpreterPrototype = new NaiveInterpreter();
 				// This is what I envision 'typa' to look like, minus the try-catch. Exceptions
 				// as subclass of Nothing, as an instance of the Maybe Monad
 				// Note that the map has side-effects and this is the most unpure stream
@@ -115,7 +115,7 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 			}
 			case Literal: {
 				//// Single literal to be executed
-				Interpreter interpreter = new Interpreter();
+				NaiveInterpreter interpreter = new NaiveInterpreter();
 				try {
 					CLI.doFullExecution(new StringReader(this.executionStrings.get(0)), interpreter, io, (flags & NO_PREPROCESSOR) == 0);
 				} catch (Throwable t) {
@@ -126,7 +126,7 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 			case Interactive: {
 				//// Interactive interpretation
 				io.println(CLI.INFO_STRING);
-				Interpreter interpreter = new Interpreter().reset();
+				NaiveInterpreter interpreter = new NaiveInterpreter().reset();
 				interpreter.internal.setIO(io);
 
 				Scanner scanner = io.newInputScanner();

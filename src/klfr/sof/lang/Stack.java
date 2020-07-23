@@ -4,8 +4,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
-import klfr.sof.CompilerException;
-import klfr.sof.Interpreter;
+import klfr.sof.*;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 
 /**

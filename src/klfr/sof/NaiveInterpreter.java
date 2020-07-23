@@ -1,0 +1,642 @@
+package klfr.sof;
+
+import static klfr.Tuple.t;
+import static klfr.sof.Interpreter.*;
+
+// ALL THE STANDARD LIBRARY
+import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+import java.util.function.*;
+
+import klfr.Tuple;
+import klfr.sof.lang.*;
+import klfr.sof.lang.Stack;
+import klfr.sof.lang.Stackable.DebugStringExtensiveness;
+
+/**
+ * The most basic type of an SOF language interpreter without special
+ * functionality.<br>
+ * Is the central point of the SOF RE because it handles all code execution.<br>
+ * <br>
+ * The main method of this class is {@code executeOnce()}, which processes one
+ * token from the input code and therefore does the smallest step in execution
+ * possible.<br>
+ * <br>
+ * This interpreter does only access I/O on its own given input and output
+ * streams, therefore, one can redirect this interpreter's I/O to other sources
+ * and destinations easily.<br>
+ * <br>
+ * This class is special in that it always needs special setup after
+ * construction; before that, it is an unusable dummy object. This is necessary
+ * because one can more easily pass different interpreters around with the help
+ * of unused, freshly instantiated interpreters (and respective subclasses). The
+ * constructor therefore does neither recieve code nor throw any exceptions, as
+ * the method that recieves the interpreter's code needs to preprocess it, which
+ * can cause some types of user-side compilation errors.
+ * 
+ * @author klfr
+ * @version 0.1
+ * @deprecated This class represents the old interpreter system which was
+ *             inefficient and error-prone. Do not use this.
+ */
+@Deprecated
+public class NaiveInterpreter implements Iterator<NaiveInterpreter>, Iterable<NaiveInterpreter> {
+
+	// #region Nested classes
+
+	/**
+	 * Access Interpreter internals through this pseudo-class.
+	 * 
+	 * @deprecated This pseudo-class accesses the Interpreter internals. Its usage
+	 *             may break the currently running SOF interpretation system.
+	 */
+	@Deprecated()
+	public Internal internal = new Internal();
+
+	/**
+	 * Access Interpreter internals through this pseudo-class.
+	 * 
+	 * @deprecated This pseudo-class accesses the Interpreter internals. Its usage
+	 *             may break the currently running SOF interpretation system.
+	 */
+	@Deprecated
+	public class Internal {
+		@Deprecated
+		public Stack stack() {
+			return stack;
+		}
+
+		/**
+		 * Access the Interpreter's tokenizer.
+		 * 
+		 * @deprecated This method accesses the Interpreter internals. Its usage may
+		 *             break the currently running SOF interpretation system.
+		 */
+		@Deprecated
+		public Tokenizer tokenizer() {
+			return tokenizer;
+		}
+
+		/**
+		 * Access the Interpreter's Input-output system.
+		 * 
+		 * @deprecated This method accesses the Interpreter internals. Its usage may
+		 *             break the currently running SOF interpretation system.
+		 */
+		@Deprecated
+		public IOInterface io() {
+			return io;
+		}
+
+		/**
+		 * Push the current tokenizer state onto the tokenizer stack.
+		 * 
+		 * @deprecated This method accesses the Interpreter internals. Its usage may
+		 *             break the currently running SOF interpretation system.
+		 */
+		@Deprecated
+		public void pushState() {
+			tokenizer.pushState();
+		}
+
+		/**
+		 * Pop the current tokenizer state from the tokenizer stack and activate it on
+		 * the tokenizer.
+		 * 
+		 * @deprecated This method accesses the Interpreter internals. Its usage may
+		 *             break the currently running SOF interpretation system.
+		 */
+		@Deprecated
+		public void popState() {
+			tokenizer.popState();
+		}
+
+		/**
+		 * Sets the execution region for the interpreter; it is recommended to push the
+		 * interpreter state beforehand and popping it back afterwards.
+		 * 
+		 * @param start start of the region, inclusive.
+		 * @param end   end of the region, exclusive.
+		 * @deprecated This method accesses the Interpreter internals. Its usage may
+		 *             break the currently running SOF interpretation system.
+		 */
+		@Deprecated
+		public void setRegion(final int start, final int end) {
+			final var state = tokenizer.getState();
+			state.regionStart = start;
+			state.regionEnd = end;
+			tokenizer.setState(state);
+		}
+
+		@Deprecated
+		public void setIO(final IOInterface newio) {
+			io = newio;
+		}
+
+		/**
+		 * Sets the execution position to the specified index in the code.
+		 */
+		@Deprecated
+		public void setExecutionPos(final int index) {
+			final var state = tokenizer.getState();
+			state.end = state.start = index;
+			tokenizer.setState(state);
+		}
+	}
+
+	/**
+	 * Simple functional interface for an action with side-effects that operates on
+	 * an interpreter.
+	 */
+	@FunctionalInterface
+	public static interface InterpreterAction {
+		/**
+		 * Execute this PTAction.
+		 * 
+		 * @param self The interpreter that asked for the action.
+		 */
+		public void execute(NaiveInterpreter self) throws CompilerException;
+	}
+
+	// #endregion
+
+	/**
+	 * Defines a mapping from primitive tokens (PTs) to actions that correspond with
+	 * them.
+	 */
+	private static Map<String, InterpreterAction> ptActions = new TreeMap<>();
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// #region PRIMITIVE TOKEN ACTIONS
+	static {
+		/// OPERATIONS
+		ptActions.put("+", self -> self.doCall(BuiltinPTs.add));
+		ptActions.put("-", self -> self.doCall(BuiltinPTs.subtract));
+		ptActions.put("*", self -> self.doCall(BuiltinPTs.multiply));
+		ptActions.put("/", self -> self.doCall(BuiltinPTs.divide));
+		ptActions.put(">", self -> self.doCall(BuiltinPTs.greaterThan));
+		ptActions.put("<", self -> self.doCall(BuiltinPTs.lessThan));
+		ptActions.put(">=", self -> self.doCall(BuiltinPTs.greaterEqualThan));
+		ptActions.put("<=", self -> self.doCall(BuiltinPTs.lessEqualThan));
+		ptActions.put("=", self -> self.doCall(BuiltinPTs.equals));
+		ptActions.put("/=", self -> self.doCall(BuiltinPTs.notEquals));
+		// pop and discard
+		ptActions.put("pop", self -> self.stack.pop());
+		// peek and push, thereby duplicate
+		ptActions.put("dup", self -> {
+			final var param = self.stack.peek();
+			if (param instanceof Nametable)
+				throw CompilerException.fromCurrentPosition(self.tokenizer, "stackaccess", "dupnametable");
+			// IMPORTANT: No copy() call is made here. The duplicate is the same reference!
+			self.stack.push(param);
+		});
+		ptActions.put("swap", self -> {
+			var eltop = self.stack.pop();
+			var elbot = self.stack.pop();
+			self.stack.push(eltop);
+			self.stack.push(elbot);
+		});
+		// debug commands that are effectively no-ops in terms of data and code
+		ptActions.put("describes", self -> self.io.describeStack(self.stack));
+		ptActions.put("describe", self -> self.io.debug(self.stack.peek().toDebugString(DebugStringExtensiveness.Full)));
+		// i/o
+		ptActions.put("write", self -> self.io.print(self.stack.pop().print()));
+		ptActions.put("writeln", self -> self.io.println(self.stack.pop().print()));
+		// define
+		final Function<Function<NaiveInterpreter, Nametable>, InterpreterAction> definer = scope -> self -> {
+			// The scope lookup is only performed in this moment. The scope retrieval
+			// function should leave the identifier, whether actually provided by the user
+			// or not, as the topmost element of the stack and the value directly below.
+			final var targetScope = scope.apply(self);
+			// pop value, define
+			final var id = self.stack.popTyped(Identifier.class);
+			final var valS = self.stack.pop();
+			targetScope.put(id, valS);
+		};
+		ptActions.put("def", definer.apply(self -> {
+			final var idS = self.stack.popTyped(Identifier.class);
+			self.stack.push(idS);
+			if (self.stack.namingScope().hasMapping(idS))
+				return self.stack.namingScope();
+			return self.stack.localScope();
+		}));
+		ptActions.put("globaldef", definer.apply(self -> self.stack.namingScope()));
+
+		ptActions.put("if", self -> {
+			final var cond = self.stack.popTyped(BoolPrimitive.class);
+			final var callable = self.stack.popTyped(Callable.class);
+			if (cond.value()) {
+				self.doCall(callable);
+			}
+		});
+
+		ptActions.put("ifelse", self -> {
+			final var elseCallable = self.stack.popTyped(Callable.class);
+			final var cond = self.stack.popTyped(BoolPrimitive.class);
+			final var callable = self.stack.popTyped(Callable.class);
+			self.doCall(cond.value() ? callable : elseCallable);
+		});
+
+		ptActions.put("switch", self -> {
+			// first argument is the default action callable
+			final var defaultCallable = self.stack.popTyped(Callable.class);
+			// loop to throw or switch end marker
+			while (true) {
+				// get case and corresponding body
+				Callable _case = self.stack.popTyped(Callable.class), body = self.stack.popTyped(Callable.class);
+				// execute case
+				self.doCall(_case);
+				final var result = self.stack.popTyped(BoolPrimitive.class);
+				// ... and check if successful; if so, exit
+				if (result.value()) {
+					self.doCall(body);
+					// remove elements until identifier "switch"
+					var elt = self.stack.pop();
+					while (!(elt instanceof Identifier && ((Identifier) elt).getValue().equals("switch::")))
+						elt = self.stack.pop();
+					break;
+				} else {
+					final var elt = self.stack.pop();
+					if (elt instanceof Identifier && ((Identifier) elt).getValue().equals("switch::")) {
+						// switch end was reached without executing any case: execute default callable
+						self.doCall(defaultCallable);
+						break;
+					} else {
+						// just another pair of case and body; do that in the next loop
+						self.stack.push(elt);
+					}
+				}
+			}
+		});
+		ptActions.put("while", self -> {
+			final var condCallable = self.stack.popTyped(Callable.class);
+			final var bodyCallable = self.stack.popTyped(Callable.class);
+			while (true) {
+				self.doCall(condCallable);
+				var preContinue = self.stack.popTyped(BoolPrimitive.class);
+				if (preContinue.value())
+					self.doCall(bodyCallable);
+			}
+		});
+
+		///// CALL OPERATOR /////
+		ptActions.put(".", self -> {
+			final var param = self.stack.popTyped(Callable.class);
+			log.finer(f("@ CALL: %s", param));
+			self.doCall(param);
+		});
+
+		// double call operator; convenience for function and method invocations
+		ptActions.put(":", self -> {
+			final var param = self.stack.popTyped(Callable.class);
+			log.finer(f("@ DOUBLE CALL: %s", param));
+			final var retval = param.getCallProvider().call(self);
+			// try to call again
+			if (retval instanceof Callable) {
+				self.doCall((Callable) retval);
+			} else {
+				if (retval == null)
+					throw CompilerException.fromCurrentPosition(self.tokenizer, "call", "doublecall-firstnull");
+				else
+					throw CompilerException.fromCurrentPosition(self.tokenizer, "call", "doublecall-firstnoncallable");
+			}
+		});
+	}
+	// #endregion PT actions
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	// #region TOKEN HANDLERS
+
+	/**
+	 * Token handler for all primitive, i.e. immediate-action tokens.
+	 */
+	public static Optional<InterpreterAction> primitiveTokenHandler(String token) {
+		if (ptActions.containsKey(token)) {
+			return Optional.of(self -> {
+				final var toExec = ptActions.get(token);
+				log.finest(() -> f("PT-EXEC %30s :: %10s @ %4d", token, toExec, self.tokenizer.getState().start));
+				toExec.execute(self);
+			});
+		}
+		return Optional.empty();
+	}
+
+	/**
+	 * Token handler for all kinds of literals.
+	 */
+	public static Optional<InterpreterAction> literalTokenHandler(String token) {
+		if (Patterns.intPattern.matcher(token).matches()) {
+			return Optional.of(self -> {
+				log.finest(() -> f("LITERAL INTEGER %30s @ %4d", token, self.tokenizer.getState().start));
+				try {
+					final IntPrimitive literal = IntPrimitive.createIntegerFromString(token.toLowerCase());
+					self.stack.push(literal);
+				} catch (final CompilerException.Incomplete e) {
+					throw CompilerException.fromIncomplete(self.tokenizer, e);
+				}
+			});
+		}
+		if (Patterns.doublePattern.matcher(token).matches()) {
+			return Optional.of(self -> {
+				log.finest(() -> f("LITERAL FLOAT %30s @ %4d", token, self.tokenizer.getState().start));
+				try {
+					final FloatPrimitive literal = FloatPrimitive.createFloatFromString(token);
+					self.stack.push(literal);
+				} catch (final CompilerException.Incomplete e) {
+					throw CompilerException.fromIncomplete(self.tokenizer, e);
+				}
+			});
+		}
+		if (Patterns.boolPattern.matcher(token).matches()) {
+			return Optional.of(self -> {
+				log.finest(() -> f("LITERAL BOOL %30s @ %4d", token, self.tokenizer.getState().start));
+				final BoolPrimitive literal = BoolPrimitive.createBoolFromString(token);
+				self.stack.push(literal);
+			});
+		}
+		if (Patterns.stringPattern.matcher(token).matches()) {
+			return Optional.of(self -> {
+				log.finest(() -> f("LITERAL STRING %30s @ %4d", token, self.tokenizer.getState().start));
+				self.stack.push(StringPrimitive.createStringPrimitive(Preprocessor.preprocessSofString(token)));
+			});
+		}
+		return Optional.empty();
+	}
+
+	public static Optional<InterpreterAction> codeBlockTokenHandler(String token) {
+		if (Patterns.codeBlockStartPattern.matcher(token).matches()) {
+			return Optional.of(self -> {
+				final var endPos = Preprocessor.indexOfMatching(self.tokenizer.getCode(), self.tokenizer.start(),
+						Patterns.codeBlockStartPattern, Patterns.codeBlockEndPattern) - 1;
+				self.check(endPos >= 0, () -> t("syntax", "syntax.codeblock"));
+				final var cb = new CodeBlock(self.tokenizer.getState().end, endPos, self.tokenizer.getCode());
+				self.stack.push(cb);
+
+				log.finest(() -> f("CODE BLOCK %30s @ %4d", cb.toDebugString(DebugStringExtensiveness.Full),
+						self.tokenizer.getState().start));
+
+				// setup the tokenizer just before the curly brace...
+				self.internal.setExecutionPos(endPos);
+				// ...and skip it
+				self.tokenizer.next();
+			});
+		}
+		return Optional.empty();
+	}
+
+	public static Optional<InterpreterAction> identifierTokenHandler(String token) {
+		if (Patterns.identifierPattern.matcher(token).matches()) {
+			return Optional.of(self -> {
+				log.finest(() -> f("IDENTIFIER %30s @ %4d", token, self.tokenizer.getState().start));
+				self.stack.push(new Identifier(token));
+			});
+		}
+		return Optional.empty();
+	}
+
+	// #endregion TOKEN HANDLERS
+
+	/**
+	 * Constructs an uninitialized reset interpreter. Use methods such as
+	 * {@link NaiveInterpreter#setCode(String)},
+	 * {@link NaiveInterpreter#appendLine(String)} to initialize the interpreter to
+	 * your desired state.
+	 */
+	public NaiveInterpreter() {
+		this.reset();
+		// the last handler is the first to be invoked.
+		tokenHandlers.add(NaiveInterpreter::primitiveTokenHandler);
+		tokenHandlers.add(NaiveInterpreter::literalTokenHandler);
+		tokenHandlers.add(NaiveInterpreter::codeBlockTokenHandler);
+		tokenHandlers.add(NaiveInterpreter::identifierTokenHandler);
+	}
+
+	/**
+	 * Responsible for tokenizing the code and moving around when code blocks and
+	 * functions affect control flow.
+	 */
+	protected Tokenizer tokenizer = Tokenizer.fromSourceCode("");
+
+	// I/O
+	protected IOInterface io;
+
+	// all da memory
+	protected Stack stack;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// #region EXECUTION
+
+	/**
+	 * The list of token handlers that the interpreter uses to resolve a given token
+	 * to an action. This is at the core of the Interpreter extension mechanism and
+	 * facilitates easy future modifications. The most important handlers present in
+	 * this list by default is the primitive token handler, the handlers for each
+	 * literal token type, and the code block handler. Token handlers are always
+	 * considered in the inverse order that they appear in the list. Adding a token
+	 * with the {@link NaiveInterpreter#registerTokenHandler(TokenHandler)}
+	 * interface will append it to the end of the list, therefore making it the
+	 * first invoked handler.
+	 */
+	private List<TokenHandler> tokenHandlers = new ArrayList<>(20);
+
+	/**
+	 * Register a new token handler that will be used by this interpreter to handle
+	 * tokens it recieves from the SOF source code. Token handlers added through
+	 * this method are placed at the top of the handler hierarchy, meaning that they
+	 * are the first handler to be recieving the token. This means that generic
+	 * (possibly regex-based) handlers should be added first, followed by more and
+	 * more specific handlers that will trigger on less and less tokens. For
+	 * example, in the default token handler hierarchy, the primitive token
+	 * handlers, which only match one exact token each, are at the very top of the
+	 * hierarchy, i.e. added last; while the identifier token handler, which matches
+	 * a lot of tokens including some literals and primitive tokens, is at the very
+	 * bottom of the hierarchy, making it the last handler to ever be invoked.
+	 * 
+	 * @param newHandler A new token handler to be registered in this interpreter.
+	 *                   It is possible to add one handler multiple times, which
+	 *                   will have no effect other than effectively increasing the
+	 *                   importance of the token handler in the hierarchy.
+	 * @return self
+	 */
+	public NaiveInterpreter registerTokenHandler(TokenHandler newHandler) {
+		log.config(() -> f("New token handler registered: %s", newHandler));
+		this.tokenHandlers.add(0, newHandler);
+		return this;
+	}
+
+	/**
+	 * Does one execution step. Will do nothing if the end of the source code is
+	 * reached.
+	 * 
+	 * @throws CompilerException If something goes wrong at runtime.
+	 * @return self
+	 */
+	public NaiveInterpreter executeOnce() throws CompilerException {
+		log.entering(this.getClass().getCanonicalName(), "executeOnce");
+		final String token = tokenizer.next();
+		if (token.length() == 0)
+			return this;
+
+		try {
+			// Use stream processing to find the first token handler that can handle the
+			// current token. This is not inefficient, as the terminal operation 'findFirst'
+			// only executes the intermediate maps and filters when required. As soon as the
+			// first applicable token handler is found, all others are discarded.
+			final var applicableHandler = this.tokenHandlers.stream()
+					// handle the token
+					.map(th -> th.handle(token))
+					// filter out all handlers that couldn't handle the token
+					.filter(op -> op.isPresent())
+					// map to remove the optional from the handle operation (checked above)
+					.map(op -> op.get())
+					// find the first token handler, only processes as many handlers as needed
+					.findFirst();
+			if (applicableHandler.isPresent()) {
+				applicableHandler.get().execute(this);
+			} else {
+				// oh no, you have input invalid characters!
+				throw CompilerException.fromCurrentPosition(this.tokenizer, "syntax", null);
+			}
+		} catch (final CompilerException e) {
+			throw e;
+		} catch (final CompilerException.Incomplete e) {
+			throw CompilerException.fromIncomplete(this.tokenizer, e);
+		}
+		log.exiting(this.getClass().getCanonicalName(), "executeOnce");
+		log.finest(() -> "S:\n" + stack.toStringExtended() + "\nNT:\n"
+				+ stack.globalNametable().toDebugString(DebugStringExtensiveness.Full));
+		return this;
+	}
+
+	// ITERATION AND EXECUTION METHODS
+
+	/**
+	 * Returns whether the interpreter can execute further instructions.
+	 * 
+	 * @return whether the interpreter can execute further instructions.
+	 */
+	public boolean canExecute() {
+		return tokenizer.hasNext();
+	}
+
+	/**
+	 * Executes this interpreter until it either encounters an exception or the
+	 * tokenizer reaches the end of its searching range.<br>
+	 * <br>
+	 * Note that this method might not return.<br>
+	 * Subclasses may override this method to provide optimized continuous
+	 * execution.
+	 * 
+	 * @return this Interpreter
+	 * @throws CompilerException
+	 */
+	public NaiveInterpreter executeForever() throws CompilerException {
+		while (this.canExecute()) {
+			this.executeOnce();
+		}
+		return this;
+	}
+
+	/**
+	 * Checks whether the given condition holds true; if <b>not</b>, throws a
+	 * CompilerException with the given name and description at the current location
+	 * 
+	 * @param b            Check to validate.
+	 * @param errorCreator Function that creates a tuple with (name, description)
+	 *                     format.
+	 * @throws CompilerException If the check fails.
+	 */
+	private void check(final boolean b, final Supplier<Tuple<String, String>> errorCreator) throws CompilerException {
+		if (!b) {
+			final var errortuple = errorCreator.get();
+			throw CompilerException.fromCurrentPosition(this.tokenizer, errortuple.getLeft(), errortuple.getRight());
+		}
+	}
+
+	/**
+	 * Helper function to execute call and push return value of callable to stack if
+	 * possible.
+	 */
+	private void doCall(final Callable reference) {
+		final var retval = reference.getCallProvider().call(this);
+		if (retval != null)
+			this.stack.push(retval);
+	}
+
+	// #endregion Execution
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	// #region Iterable and utility methods
+
+	@Override
+	public Iterator<NaiveInterpreter> iterator() {
+		return this;
+	}
+
+	@Override
+	public boolean hasNext() {
+		return this.canExecute();
+	}
+
+	@Override
+	public NaiveInterpreter next() {
+		try {
+			return this.executeOnce();
+		} catch (final CompilerException e) {
+			throw new NoSuchElementException(R.getString("sof.misc.stopiteration"));
+		}
+	}
+
+	/**
+	 * Creates a new instance of this interpreter. Especially useful for the
+	 * specialized interpreter subclasses.
+	 */
+	public NaiveInterpreter instantiateSelf() {
+		try {
+			return this.getClass().getConstructor().newInstance();
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException
+				| SecurityException | InvocationTargetException e) {
+			// this should not happen
+			throw new RuntimeException("VERY DANGEROUS EXCEPTION", e);
+		}
+	}
+
+	// #endregion
+
+	// #region API and state modification
+
+	/** Resets this interpreter by deleting and reinitializing all state. */
+	public NaiveInterpreter reset() {
+		// make the stack
+		stack = new Stack();
+		// make the global nametable
+		final Nametable globalNametable = new Nametable();
+		stack.push(globalNametable);
+		return this;
+	}
+
+	/**
+	 * Sets the code of this interpreter.
+	 * 
+	 * @param code The SOF code to be used by this interpreter.
+	 */
+	public NaiveInterpreter setCode(final String code) {
+		this.tokenizer = Tokenizer.fromSourceCode(code);
+		return this;
+	}
+
+	/**
+	 * Appends a line of code to the interpreter's current code. Useful for
+	 * line-by-line source code scanning and interactive sessions.
+	 * 
+	 * @param string The line of code to be appended
+	 * @return this interpreter
+	 */
+	public NaiveInterpreter appendLine(final String string) {
+		this.tokenizer.appendCode(string);
+		return this;
+	}
+
+	// #endregion
+
+}

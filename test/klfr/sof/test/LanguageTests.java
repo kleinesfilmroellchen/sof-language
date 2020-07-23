@@ -29,7 +29,7 @@ import org.opentest4j.TestAbortedException;
 
 import klfr.sof.CompilerException;
 import klfr.sof.IOInterface;
-import klfr.sof.Interpreter;
+import klfr.sof.NaiveInterpreter;
 import klfr.sof.Preprocessor;
 import klfr.sof.lang.BoolPrimitive;
 
@@ -58,7 +58,7 @@ public class LanguageTests extends SofTestSuper {
 	/**
 	 * A small interpreter extension that adds the "assert" primitive token.
 	 */
-	private static class AssertInterpreter extends Interpreter {
+	private static class AssertInterpreter extends NaiveInterpreter {
 		private static final long serialVersionUID = 1L;
 
 		private int assertCount = 0;

@@ -26,7 +26,7 @@ public class Preprocessor {
 	 * Preprocesses an SOF literal string token that has already been processed by
 	 * {@link Preprocessor#preprocessCode(String)}. The given token must still
 	 * contain the leading and trailing double quote, and the
-	 * {@link klfr.sof.Interpreter#stringPattern} is used to match the string
+	 * {@link klfr.sof.Patterns#stringPattern} is used to match the string
 	 * contents and replace the escape sequences.
 	 * 
 	 * @param sofString The SOF literal string token to be processed.
@@ -34,12 +34,12 @@ public class Preprocessor {
 	 *         {@link klfr.sof.lang.StringPrimitive}.
 	 */
 	public static String preprocessSofString(final String sofString) {
-		final var strm = Interpreter.stringPattern.matcher(sofString);
+		final var strm = Patterns.stringPattern.matcher(sofString);
 		if (!strm.matches()) {
 			throw new CompilerException.Incomplete("syntax", "syntax.string", sofString);
 		}
 		final var str = strm.group(1);
-		return Interpreter.escapeSequencePattern.matcher(str).replaceAll(escape -> {
+		return Patterns.escapeSequencePattern.matcher(str).replaceAll(escape -> {
 			if (escape.group(2) != null) {
 				// unicode escape sequence
 				final int codepoint = Integer.parseInt(escape.group(2), 16);

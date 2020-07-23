@@ -3,7 +3,7 @@ package klfr.sof.lang;
 import java.util.logging.Logger;
 
 import klfr.sof.CompilerException;
-import klfr.sof.Interpreter;
+import klfr.sof.Patterns;
 
 /**
  * floating point decimal primitive type
@@ -67,7 +67,7 @@ public class FloatPrimitive extends Primitive {
 	}
 
 	public static FloatPrimitive createFloatFromString(String doubleString) throws CompilerException {
-		final var m = Interpreter.doublePattern.matcher(doubleString);
+		final var m = Patterns.doublePattern.matcher(doubleString);
 		if (m.matches()) {
 			log.finest(() -> String.format("%s %s %s %s", m.group(1), m.group(2), m.group(3), m.group(4)));
 			// split the parts of the double up

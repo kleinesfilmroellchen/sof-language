@@ -1,6 +1,6 @@
 package klfr.sof.cli;
 
-import static klfr.sof.Interpreter.R;
+import static klfr.sof.NaiveInterpreter.R;
 
 // MOAR STANDARD LIBRARY
 import java.io.File;
@@ -27,12 +27,14 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
 import klfr.sof.IOInterface;
-import klfr.sof.Interpreter;
+import klfr.sof.NaiveInterpreter;
+import klfr.sof.Parser;
 import klfr.sof.Preprocessor;
+import klfr.sof.ast.Node;
 
 public class CLI {
 
-	public static final String INFO_STRING = String.format(R.getString("sof.cli.version"), Interpreter.VERSION,
+	public static final String INFO_STRING = String.format(R.getString("sof.cli.version"), NaiveInterpreter.VERSION,
 			// awww yesss, the Java Time API 😋
 			DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).format(buildTime().atZone(ZoneId.systemDefault())));
 
@@ -120,7 +122,7 @@ public class CLI {
 	 *                        before passing it into the interpreter.
 	 */
 	@SuppressWarnings("deprecation")
-	public static void doFullExecution(Reader codeStream, Interpreter interpreter, IOInterface io,
+	public static void doFullExecution(Reader codeStream, NaiveInterpreter interpreter, IOInterface io,
 			boolean doPreprocessing) throws Exception {
 		log.entering(CLI.class.getCanonicalName(), "doFullExecution");
 		String code = "";
@@ -134,6 +136,9 @@ public class CLI {
 
 		if (doPreprocessing)
 			code = Preprocessor.preprocessCode(code);
+
+		Node ast = Parser.parse(code);
+		io.println(ast);
 
 		interpreter.reset() // reset interpreter
 				.setCode(code) // set the code to execute

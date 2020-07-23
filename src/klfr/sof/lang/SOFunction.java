@@ -1,6 +1,6 @@
 package klfr.sof.lang;
 
-import java.util.LinkedList;
+import klfr.sof.ast.TokenListNode;
 
 /**
  * Function type, one of the most important callable types. Functions are the
@@ -13,80 +13,43 @@ public class SOFunction extends CodeBlock {
     protected final int arguments;
 
     /**
-     * Create a function with start and end indices referring to the code, with
-     * given numbers of arguments
+     * Create a function with this code, with given numbers of arguments.
      * 
-     * @param startIndex index in the code where the function starts
-     * @param endIndex   index in the code where the function ends (exclusive)
-     * @param code       code of the entire file containing the function
-     * @param arguments  number of arguments the function recieves
+     * @param code      code of the function
+     * @param arguments number of arguments the function recieves
      */
-    public SOFunction(int startIndex, int endIndex, String code, int arguments) {
-        super(startIndex, endIndex, code);
+    public SOFunction(TokenListNode code, int arguments) {
+        super(code);
         this.arguments = arguments;
     }
 
     @Override
-    @SuppressWarnings("deprecation")
-    public CallProvider getCallProvider() {
-        return interpreter -> {
-            interpreter.internal.pushState();
-
-            interpreter.internal.setRegion(indexInFile, endIndex - 1);
-            interpreter.internal.setExecutionPos(indexInFile);
-
-            var stack = interpreter.internal.stack();
-
-            // pop arguments and store temporarily
-            var args = new LinkedList<Stackable>();
-            for (var i = 0; i < arguments; ++i) {
-                args.add(stack.pop());
-            }
-
-            // create the FNT
-            var fnt = new FunctionDelimiter();
-            // place it followed by the arguments on the stack
-            stack.push(fnt);
-            var it = args.descendingIterator();
-            while (it.hasNext())
-                stack.push(it.next());
-
-            // execute
-            while (interpreter.canExecute()) {
-                interpreter.executeOnce();
-            }
-
-            // clean up: remove all elements above the fnt
-            Stackable current = null;
-            while (current != fnt)
-                current = stack.forcePop();
-
-            interpreter.internal.popState();
-
-            // is set by the return PT
-            return fnt.returnValue;
-
-        };
-    }
-
-    @Override
     public String toDebugString(DebugStringExtensiveness e) {
-        // TODO: comebak
-        return String.format("Function/%d{", this.arguments) + this.getCode() + "}";
+        switch (e) {
+            case Compact:
+                return String.format("[Function/%d %dn ]", this.arguments, this.code.count());
+            case Full:
+                return String.format("[Function/%d { %s } %h]", this.arguments, this.code, this.hashCode());
+            case Type:
+                return "Function";
+            default:
+                return Stackable.toDebugString(this, e);
+        }
+
     }
 
     @Override
-    public String toString() {
-        return "[Function " + this.hashCode() + "]";
+    public String print() {
+        return String.format("{ %d argument Function }", this.arguments);
     }
 
     @Override
     public Stackable clone() {
-        return new SOFunction(this.indexInFile, this.endIndex, this.code, this.arguments);
+        return new SOFunction(this.code, this.arguments);
     }
 
     public static SOFunction fromCodeBlock(CodeBlock origin, int arguments) {
-        return new SOFunction(origin.indexInFile, origin.endIndex, origin.code, arguments);
+        return new SOFunction(origin.code, arguments);
     }
 
 }
