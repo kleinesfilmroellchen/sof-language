@@ -1,6 +1,6 @@
 package klfr.sof;
 
-import static klfr.sof.Interpreter.R;
+import static klfr.sof.NaiveInterpreter.R;
 
 import java.io.IOException;
 import java.io.InputStream;

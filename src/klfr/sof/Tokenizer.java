@@ -112,7 +112,7 @@ public class Tokenizer implements Iterator<String> {
 	 * cleaned beforehand
 	 */
 	private Tokenizer(String code) {
-		this.m = Interpreter.tokenPattern.matcher(code);
+		this.m = Patterns.tokenPattern.matcher(code);
 		this.stateStack = new LinkedBlockingDeque<>();
 		this.currentState = new TokenizerState(0, 0, 0, code.length(), code);
 	}
@@ -168,7 +168,7 @@ public class Tokenizer implements Iterator<String> {
 	@Deprecated
 	public void setState(TokenizerState state) {
 		this.currentState = state;
-		this.m = Interpreter.tokenPattern.matcher(this.currentState.code);
+		this.m = Patterns.tokenPattern.matcher(this.currentState.code);
 		this.m.region(state.regionStart, state.regionEnd);
 	}
 
@@ -200,7 +200,7 @@ public class Tokenizer implements Iterator<String> {
 		this.log.finer("State before appending: " + state);
 		var needsNewline = !this.currentState.code.isEmpty() && !this.currentState.code.endsWith("\n");
 		this.currentState.code += (needsNewline ? "\n" : "") + code;
-		this.m = Interpreter.tokenPattern.matcher(this.currentState.code);
+		this.m = Patterns.tokenPattern.matcher(this.currentState.code);
 		this.currentState.end = state.end;
 		this.currentState.regionStart = 0;
 		this.currentState.regionEnd = this.currentState.code.length();
@@ -259,7 +259,7 @@ public class Tokenizer implements Iterator<String> {
 	 *         inside the line; see above notes.
 	 */
 	public Tuple<Integer, Integer> getCurrentPosition() {
-		Matcher linefinder = Interpreter.nlPat.matcher(getCode());
+		Matcher linefinder = Patterns.nlPat.matcher(getCode());
 		int realIndex = this.start(), linenum = 0, lineStart = 0;
 		// increment line number while the text index is still after the searched line
 		// beginning
@@ -299,28 +299,46 @@ public class Tokenizer implements Iterator<String> {
 	 * @return whether the tokenizer can provide more tokens.
 	 */
 	public boolean hasNext() {
-		return !this.regionExceeded() && this.m.find(this.currentState.end);
+		return findNextToken(false);
 	}
 
 	/**
 	 * Performs region- and state-safe find on the matcher from the given index.
+	 * 
+	 * @param advance Whether to actually store the new findings. hasNext(), for
+	 *                example, will set this to false to not change the state on
+	 *                repeated invocations.
 	 */
-	private boolean findNextToken() {
+	private boolean findNextToken(boolean advance) {
 		if (this.regionExceeded())
 			return false;
 		// whether there are more tokens to be found: perform one additional match
 		var hasMore = this.m.find(this.currentState.end);
+		final int prevEnd = this.currentState.end, prevStart = this.currentState.start;
 		if (hasMore) {
 			// in this case, use the matcher's finding bounds
 			this.currentState.end = this.m.end();
 			this.currentState.start = this.m.start();
+			// check if any of the new finds are outside of the region
+			if (this.regionExceeded()) {
+				if (!advance) {
+					this.currentState.end = prevEnd;
+					this.currentState.start = prevStart;
+				}
+				return false;
+			}
 			// store the matched token for the other methods to use
-			this.lastMatchedToken = this.m.group();
+			if (advance)
+				this.lastMatchedToken = this.m.group();
 		}
 		// otherwise, we hit the end, position the last match at the end of the code
 		else
 			this.currentState.end = this.currentState.code.length();
 
+		if (!advance) {
+			this.currentState.end = prevEnd;
+			this.currentState.start = prevStart;
+		}
 		return hasMore;
 	}
 
@@ -332,10 +350,8 @@ public class Tokenizer implements Iterator<String> {
 	 */
 	@Override
 	public String next() {
-		// we were at the end the previous time, return nothing
-		if (!hasNext())
-			return "";
-		this.findNextToken();
+		if (!this.findNextToken(true))
+			throw new NoSuchElementException("No more tokens");
 		return this.lastMatchedToken;
 	}
 

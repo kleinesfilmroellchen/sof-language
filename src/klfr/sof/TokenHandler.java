@@ -1,12 +1,12 @@
 package klfr.sof;
 
-import static klfr.sof.Interpreter.InterpreterAction;
+import static klfr.sof.NaiveInterpreter.InterpreterAction;
 
 import java.util.Optional;
 
 /**
  * This functional interface defines handlers for SOF tokens. It is used in
- * conjunction with the {@link Interpreter#registerTokenHandler(TokenHandler)}
+ * conjunction with the {@link NaiveInterpreter#registerTokenHandler(TokenHandler)}
  * interface method to define token handlers that are used by the Interpreter.
  * <br>
  * <br>
@@ -33,7 +33,7 @@ public interface TokenHandler {
 	 *         token in the context of the same Interpreter state, and in the second
 	 *         case, no other TokenHandler recieves the token in the context of the
 	 *         same Interpreter state.
-	 * @see Interpreter.InterpreterAction
+	 * @see NaiveInterpreter.InterpreterAction
 	 */
 	public Optional<InterpreterAction> handle(final String token);
 }

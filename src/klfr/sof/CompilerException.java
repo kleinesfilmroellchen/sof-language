@@ -17,7 +17,7 @@ public class CompilerException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
 	private static final Logger log = Logger.getLogger(CompilerException.class.getCanonicalName());
-	private static final ResourceBundle R = ResourceBundle.getBundle(Interpreter.MESSAGE_RESOURCE);
+	private static final ResourceBundle R = ResourceBundle.getBundle(NaiveInterpreter.MESSAGE_RESOURCE);
 	private static final String EXCEPTION_FORMAT = "%s Error in line %d at index %d:%n %s%n %s%n    %s";
 
 	public static final int EXPRESSION_OUTPUT_LEN = 30;

@@ -2,7 +2,8 @@ package klfr.sof.lang;
 
 import java.util.*;
 import java.util.stream.Stream;
-import klfr.sof.Interpreter;
+
+import klfr.sof.*;
 
 /**
  * A nametable is the second basic structure in SOF and contains values
@@ -10,7 +11,7 @@ import klfr.sof.Interpreter;
  * 
  * @author klfr
  */
-public class Nametable implements Callable {
+public class Nametable implements Stackable {
 	private static final long serialVersionUID = 1L;
 
 	/**
@@ -80,15 +81,5 @@ public class Nametable implements Callable {
 		return mappingStream().map(x -> Map.entry(x.getKey().copy(), x.getValue().copy())).collect(() -> new Nametable(),
 				(nt, entry) -> nt.put((Identifier) entry.getKey(), entry.getValue()),
 				(nt1, nt2) -> nt1.mappingStream().forEach(x -> nt2.put(x.getKey(), x.getValue())));
-	}
-
-	@Override
-	@SuppressWarnings("deprecation")
-	public CallProvider getCallProvider() {
-		return interpreter -> {
-			final var stack = interpreter.internal.stack();
-			final var id = stack.popTyped(Identifier.class);
-			return this.get(id);
-		};
 	}
 }

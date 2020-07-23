@@ -14,9 +14,6 @@
 { "newline" end # more comments inside
 }
 
-# lazy evaluation; syntactically incorrect code is not executed
-{ 8d8f8s9 '''''' }
-
 #### call
 false { true } . assert # call occurs, no stack separation
 5 { 16 } . pop   5 = assert # stack integrity

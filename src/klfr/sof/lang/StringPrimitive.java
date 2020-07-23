@@ -31,7 +31,7 @@ public class StringPrimitive extends Primitive {
    public String toDebugString(DebugStringExtensiveness e) {
       switch (e) {
          case Full:
-            return String.format("s\"%s\"(%2d)", this.s, this.length);
+            return String.format("s\"%s\"(%2d)", this.s.replace("\n", "\\n").replace("\t", "\\t").replace("\f", "\\f").replace("\r", "\\r"), this.length);
          case Compact:
             return '"' + s + '"';
          default:

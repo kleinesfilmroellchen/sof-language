@@ -1,65 +1,38 @@
 package klfr.sof.lang;
 
-@StackableName("Code block")
-public class CodeBlock implements Callable {
+import klfr.sof.ast.TokenListNode;
 
+@StackableName("Codeblock")
+public class CodeBlock implements Stackable {
 	private static final long serialVersionUID = 1L;
 
-	protected int indexInFile;
-	protected int endIndex;
+	protected final TokenListNode code;
 
-	protected String code;
-
-	public CodeBlock(int indexInFile, int endIndex, String code) {
-		this.indexInFile = indexInFile;
-		this.endIndex = endIndex;
+	public CodeBlock(TokenListNode code) {
 		this.code = code;
 	}
 
 	@Override
 	public String toDebugString(DebugStringExtensiveness e) {
+		String code = this.code.toString();
 		switch (e) {
 			case Full:
-				return String.format("[CodeBlock { %s } %h]", getCode(), hashCode());
+				return String.format("[CodeBlock { %s } %h]", code, hashCode());
 			case Compact:
-				return "[CodeBlk { " + (code.length() > 16 ? (code.substring(0, 12) + " ...") : code) + " } ]";
+				return "[CodeBlk " + this.code.count() + "n ]";
 			default:
 				return Stackable.toDebugString(this, e);
 		}
 	}
 
-	/** Returns the actual code that the code block refers to. */
-	public String getCode() {
-		return code.substring(indexInFile, endIndex);
-	}
-
 	@Override
-	public Stackable clone() {
-		return new CodeBlock(this.indexInFile, this.endIndex, this.code);
-	}
-
-	@Override
-	@SuppressWarnings("deprecation")
-	public CallProvider getCallProvider() {
-		return (interpreter) -> {
-			interpreter.internal.pushState();
-
-			interpreter.internal.setRegion(indexInFile, endIndex - 2);
-			interpreter.internal.setExecutionPos(indexInFile);
-
-			while (interpreter.canExecute()) {
-				interpreter.executeOnce();
-			}
-
-			interpreter.internal.popState();
-
-			return null;
-		};
+	public Stackable copy() {
+		return new CodeBlock(this.code);
 	}
 
 	@Override
 	public String print() {
-		return "{ " + this.getCode() + " }";
+		return "{ Codeblock }";
 	}
 
 	@Override
@@ -67,7 +40,7 @@ public class CodeBlock implements Callable {
 		if (other instanceof CodeBlock)
 			// although code blocks are never equal, they may be compared
 			return false;
-		return Callable.super.equals(other);
+		return super.equals(other);
 	}
 
 }

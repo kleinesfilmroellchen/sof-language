@@ -15,7 +15,7 @@ import java.util.logging.Logger;
  * 
  * @author klfr
  */
-public abstract class Primitive implements Callable {
+public abstract class Primitive implements Stackable {
 	private static final long serialVersionUID = 1L;
 	private static final Logger log = Logger.getLogger(Primitive.class.getCanonicalName());
 
@@ -79,12 +79,6 @@ public abstract class Primitive implements Callable {
 			default:
 				return Stackable.toDebugString(this, e);
 		}
-	}
-
-	@Override
-	public CallProvider getCallProvider() {
-		final Primitive self = this;
-		return (interpreter) -> self.copy();
 	}
 
 	@Override

@@ -1,7 +1,7 @@
 package klfr.sof.lang;
 
 import klfr.sof.CompilerException;
-import klfr.sof.Interpreter;
+import klfr.sof.*;
 
 /**
  * Identifiers are a type of stackable (i.e. basic SOF value) that are used to
@@ -12,7 +12,7 @@ import klfr.sof.Interpreter;
  * @author klfr
  */
 @StackableName("Identifier")
-public class Identifier implements Callable {
+public class Identifier implements Stackable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -75,21 +75,7 @@ public class Identifier implements Callable {
 	}
 
 	public static boolean isValidIdentifier(String id) {
-		return Interpreter.identifierPattern.matcher(id).matches();
-	}
-
-	@Override
-	@SuppressWarnings("deprecation")
-	public CallProvider getCallProvider() {
-		return interpreter -> {
-			// look up this identifier in the innermost nametable
-			final var value = interpreter.internal.stack().lookup(this);
-			// if no mapping, throw error
-			if (value == null) {
-				throw CompilerException.fromCurrentPosition(interpreter.internal.tokenizer(), "name", null, this);
-			}
-			return value;
-		};
+		return Patterns.identifierPattern.matcher(id).matches();
 	}
 
 	@Override

@@ -91,7 +91,6 @@ class TokenizerTest extends SofTestSuper {
 		assertEquals(6, t.getState().regionEnd);
 		int currentStart = t.getState().start, currentEnd = t.getState().end;
 		t.pushState();
-		t.next();
 		t.popState();
 		assertEquals(currentStart, t.getState().start);
 		assertEquals(currentEnd, t.getState().end);
