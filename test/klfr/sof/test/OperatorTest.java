@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import klfr.sof.lang.Callable;
 import klfr.sof.lang.FloatPrimitive;
 import klfr.sof.lang.IntPrimitive;
 import klfr.sof.CompilerException;

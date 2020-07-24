@@ -16,10 +16,10 @@ import java.util.logging.Logger;
 
 import klfr.sof.CompilerException;
 import klfr.sof.IOInterface;
-import klfr.sof.NaiveInterpreter;
+import klfr.sof.Interpreter;
 import klfr.sof.Preprocessor;
 
-import static klfr.sof.NaiveInterpreter.R;
+import static klfr.sof.Interpreter.R;
 
 @SuppressWarnings("deprecation")
 class Options implements Function<IOInterface, Optional<Throwable>> {
@@ -69,7 +69,7 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 		log.config(() -> String.format("FLAG :: DEBUG %5s", io.debug ? "on" : "off"));
 		switch (executionType) {
 			case File: {
-				//// File interpretation
+				//// File execution
 				log.log(Level.FINE, () -> this.executionStrings.toString());
 				List<Reader> readers = new ArrayList<>(this.executionStrings.size());
 				for (String filename : this.executionStrings) {
@@ -81,8 +81,6 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 						CLI.exitUnnormal(2);
 					}
 				}
-				// TODO use other interpreters in certain cases
-				NaiveInterpreter interpreterPrototype = new NaiveInterpreter();
 				// This is what I envision 'typa' to look like, minus the try-catch. Exceptions
 				// as subclass of Nothing, as an instance of the Maybe Monad
 				// Note that the map has side-effects and this is the most unpure stream
@@ -94,7 +92,7 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 							CLI.runPreprocessor(reader, io);
 							io.println("^D");
 						} else
-							CLI.doFullExecution(reader, interpreterPrototype.instantiateSelf(), io, (flags & NO_PREPROCESSOR) == 0);
+							CLI.doFullExecution(reader, new Interpreter(io), io, (flags & NO_PREPROCESSOR) == 0);
 						return null;
 					} catch (Throwable t) {
 						io.println(t.getMessage());
@@ -115,9 +113,8 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 			}
 			case Literal: {
 				//// Single literal to be executed
-				NaiveInterpreter interpreter = new NaiveInterpreter();
 				try {
-					CLI.doFullExecution(new StringReader(this.executionStrings.get(0)), interpreter, io, (flags & NO_PREPROCESSOR) == 0);
+					CLI.doFullExecution(new StringReader(this.executionStrings.get(0)), new Interpreter(io), io, (flags & NO_PREPROCESSOR) == 0);
 				} catch (Throwable t) {
 					return Optional.of(t);
 				}
@@ -126,50 +123,50 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 			case Interactive: {
 				//// Interactive interpretation
 				io.println(CLI.INFO_STRING);
-				NaiveInterpreter interpreter = new NaiveInterpreter().reset();
-				interpreter.internal.setIO(io);
+				// NaiveInterpreter interpreter = new NaiveInterpreter().reset();
+				// interpreter.internal.setIO(io);
 
-				Scanner scanner = io.newInputScanner();
-				// scanner.useDelimiter("[[^\n]\\s+]");
-				io.print(">>> ");
-				while (scanner.hasNextLine()) {
-					String code = scanner.nextLine();
-					var curEnd = interpreter.internal.tokenizer().getState().code.length();
-					// catches all unwanted compilation errors
-					try {
-						// catches "unclosed"-compilation errors which might be resolved by adding more
-						// content on another line
-						try {
-							interpreter.appendLine(Preprocessor.preprocessCode(code));
-						} catch (CompilerException e) {
-							// one invalid line: let user input as many continuation lines as they want
-							while (true) {
-								io.print("... ");
-								var nl = scanner.nextLine();
-								// end on blank line
-								if (nl.isBlank())
-									break;
-								code += "\n" + nl;
-							}
-							interpreter.appendLine(Preprocessor.preprocessCode(code));
-						}
-						var state = interpreter.internal.tokenizer().getState();
-						state.end = curEnd;
-						interpreter.internal.tokenizer().setState(state);
-						while (interpreter.canExecute()) {
-							interpreter.executeOnce();
-						}
-					} catch (CompilerException e) {
-						io.println("!!! " + e.getLocalizedMessage());
-						log.log(Level.SEVERE,
-								("Compiler Exception occurred.\nUser-friendly message: " + e.getLocalizedMessage()
-										+ "\nStack trace:\n" + Arrays.stream(e.getStackTrace()).map(ste -> ste.toString())
-												.reduce("", (a, b) -> (a + "\n  " + b).strip())
-										+ "\n").indent(2));
-					}
-					io.print(">>> ");
-				}
-				scanner.close();
+				// Scanner scanner = io.newInputScanner();
+				// // scanner.useDelimiter("[[^\n]\\s+]");
+				// io.print(">>> ");
+				// while (scanner.hasNextLine()) {
+				// 	String code = scanner.nextLine();
+				// 	var curEnd = interpreter.internal.tokenizer().getState().code.length();
+				// 	// catches all unwanted compilation errors
+				// 	try {
+				// 		// catches "unclosed"-compilation errors which might be resolved by adding more
+				// 		// content on another line
+				// 		try {
+				// 			interpreter.appendLine(Preprocessor.preprocessCode(code));
+				// 		} catch (CompilerException e) {
+				// 			// one invalid line: let user input as many continuation lines as they want
+				// 			while (true) {
+				// 				io.print("... ");
+				// 				var nl = scanner.nextLine();
+				// 				// end on blank line
+				// 				if (nl.isBlank())
+				// 					break;
+				// 				code += "\n" + nl;
+				// 			}
+				// 			interpreter.appendLine(Preprocessor.preprocessCode(code));
+				// 		}
+				// 		var state = interpreter.internal.tokenizer().getState();
+				// 		state.end = curEnd;
+				// 		interpreter.internal.tokenizer().setState(state);
+				// 		while (interpreter.canExecute()) {
+				// 			interpreter.executeOnce();
+				// 		}
+				// 	} catch (CompilerException e) {
+				// 		io.println("!!! " + e.getLocalizedMessage());
+				// 		log.log(Level.SEVERE,
+				// 				("Compiler Exception occurred.\nUser-friendly message: " + e.getLocalizedMessage()
+				// 						+ "\nStack trace:\n" + Arrays.stream(e.getStackTrace()).map(ste -> ste.toString())
+				// 								.reduce("", (a, b) -> (a + "\n  " + b).strip())
+				// 						+ "\n").indent(2));
+				// 	}
+				// 	io.print(">>> ");
+				// }
+				// scanner.close();
 				break;
 			}
 			case VersionInfo: {

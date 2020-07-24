@@ -13,18 +13,25 @@ public class LiteralNode implements Node {
 	private static final long serialVersionUID = 1L;
 
 	private final Stackable value;
+	private final int codeIndex;
+	
+	@Override
+	public int getCodeIndex() {
+		return codeIndex;
+	}
 
 	public Stackable getValue() {
 		return value;
 	}
 
-	public LiteralNode(final Stackable data) {
+	public LiteralNode(final Stackable data, final int codeIndex) {
 		this.value = data;
+		this.codeIndex = codeIndex;
 	}
 
 	@Override
 	public Object cloneNode() {
-		return new LiteralNode(value);
+		return new LiteralNode(value, codeIndex);
 	}
 
 	@Override
@@ -39,7 +46,7 @@ public class LiteralNode implements Node {
 
 	@Override
 	public String toString() {
-		return "Literal: " + value.toDebugString(DebugStringExtensiveness.Type) + " [ " + value.toDebugString(DebugStringExtensiveness.Full) + " ]";
+		return "Literal: " + value.toDebugString(DebugStringExtensiveness.Type) + " [ " + value.toDebugString(DebugStringExtensiveness.Full) + " ] @ " + this.codeIndex;
 	}
 
 	@Override

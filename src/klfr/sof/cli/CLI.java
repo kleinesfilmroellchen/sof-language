@@ -1,6 +1,6 @@
 package klfr.sof.cli;
 
-import static klfr.sof.NaiveInterpreter.R;
+import static klfr.sof.Interpreter.R;
 
 // MOAR STANDARD LIBRARY
 import java.io.File;
@@ -11,6 +11,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -26,15 +27,12 @@ import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
-import klfr.sof.IOInterface;
-import klfr.sof.NaiveInterpreter;
-import klfr.sof.Parser;
-import klfr.sof.Preprocessor;
+import klfr.sof.*;
 import klfr.sof.ast.Node;
 
 public class CLI {
 
-	public static final String INFO_STRING = String.format(R.getString("sof.cli.version"), NaiveInterpreter.VERSION,
+	public static final String INFO_STRING = String.format(R.getString("sof.cli.version"), Interpreter.VERSION,
 			// awww yesss, the Java Time API 😋
 			DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).format(buildTime().atZone(ZoneId.systemDefault())));
 
@@ -114,15 +112,14 @@ public class CLI {
 	 * Does full execution on SOF source code given the environment.
 	 * 
 	 * @param codeStream      A reader that reads source code.
-	 * @param interpreter     The interpreter to use for the execution. It is reset
-	 *                        and its source code replaced.
+	 * @param interpreter     The interpreter to use for the execution.
 	 * @param io              The Input-Output interface that the full execution
 	 *                        should use.
 	 * @param doPreprocessing Whether to execute the preprocessor on the source code
 	 *                        before passing it into the interpreter.
 	 */
 	@SuppressWarnings("deprecation")
-	public static void doFullExecution(Reader codeStream, NaiveInterpreter interpreter, IOInterface io,
+	public static void doFullExecution(Reader codeStream, Interpreter interpreter, IOInterface io,
 			boolean doPreprocessing) throws Exception {
 		log.entering(CLI.class.getCanonicalName(), "doFullExecution");
 		String code = "";
@@ -140,12 +137,21 @@ public class CLI {
 		Node ast = Parser.parse(code);
 		io.println(ast);
 
-		interpreter.reset() // reset interpreter
-				.setCode(code) // set the code to execute
-						.internal.setIO(io); // set the I/O system to use
-		while (interpreter.canExecute())
-			interpreter.executeOnce();
+		// count nodes
+		var nodeCount = 0;
+		if (io.debug) {
+			for (Node n : ast)
+				++nodeCount;
+		}
 
+		final Instant startTime = Instant.now();
+		interpreter.run(ast, code);
+		final Instant finishTime = Instant.now();
+		final Duration execTime = Duration.between(startTime, finishTime);
+
+		log.info(String.format("Ran %d asserts.", interpreter.getAssertCount()));
+		log.info(String.format("PERFORMANCE: Ran %9.3f ms (%4d nodes in %12.3f µs, avg %7.2f µs/node)",
+				execTime.toNanos() / 1_000_000d, nodeCount, execTime.toNanos()/1_000d, (execTime.toNanos()/1000d)/nodeCount));
 		log.exiting(CLI.class.getCanonicalName(), "doFullExecution");
 	}
 

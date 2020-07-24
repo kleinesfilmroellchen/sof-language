@@ -1,6 +1,6 @@
 package klfr.sof;
 
-import static klfr.sof.NaiveInterpreter.R;
+import static klfr.sof.Interpreter.R;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,10 +24,12 @@ public class IOInterface {
 	/**
 	 * Number of milliseconds to wait between short prints until flushing anyways.
 	 */
-	public static final long FLUSH_MILLIS = 500;
+	public static final long FLUSH_MILLIS = 100;
 
 	public Readable input;
 	private Writer output;
+
+	private Scanner scan;
 
 	public boolean debug;
 
@@ -116,8 +118,10 @@ public class IOInterface {
 	}
 
 	public void setIn(Readable in) {
-		if (in != null)
+		if (in != null) {
 			this.input = in;
+			this.scan = new Scanner(in);
+		}
 	}
 
 	public void setIn(InputStream in) {
@@ -155,7 +159,23 @@ public class IOInterface {
 	 * Creates and returns a new scanner over the basic InputStream.
 	 */
 	public Scanner newInputScanner() {
-		return new Scanner(input);
+		scan = new Scanner(input);
+		return scan;
+	}
+
+	/**
+	 * Returns the next input sequence, as defined by the input sequence terminology
+	 * of SOF's input builtin. An input sequence is any sequence of non-whitespace
+	 * characters.
+	 * 
+	 * @return
+	 */
+	public String nextInputSequence() {
+		return scan.next();
+	}
+
+	public String nextInputLine() {
+		return scan.nextLine();
 	}
 
 	public void println(String x) {

@@ -17,7 +17,7 @@ public class CompilerException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
 	private static final Logger log = Logger.getLogger(CompilerException.class.getCanonicalName());
-	private static final ResourceBundle R = ResourceBundle.getBundle(NaiveInterpreter.MESSAGE_RESOURCE);
+	private static final ResourceBundle R = ResourceBundle.getBundle(Interpreter.MESSAGE_RESOURCE);
 	private static final String EXCEPTION_FORMAT = "%s Error in line %d at index %d:%n %s%n %s%n    %s";
 
 	public static final int EXPRESSION_OUTPUT_LEN = 30;
@@ -186,6 +186,22 @@ public class CompilerException extends RuntimeException {
 	 */
 	public static CompilerException fromIncomplete(Tokenizer expressionInfo, Incomplete cause) {
 		final var exc = fromCurrentPosition(expressionInfo, cause.nameKey, cause.explanationKey, cause.formatArguments);
+		exc.initCause(cause);
+		return exc;
+	}
+
+	/**
+	 * Constructs a compiler exception with the given base exception that points to
+	 * the current place in code specified with index. This method is used
+	 * with Incomplete compiler exceptions which were thrown by parts of the SOF
+	 * system unaware of code positions.
+	 * 
+	 * @param cause          The cause of this exception, an instance of the stub
+	 *                       class {@link CompilerException.Incomplete}
+	 * @return The newly constructed compiler exception.
+	 */
+	public static CompilerException fromIncomplete(String code, int index, Incomplete cause) {
+		final var exc = fromCurrentPosition(code, index, cause.nameKey, cause.explanationKey, cause.formatArguments);
 		exc.initCause(cause);
 		return exc;
 	}

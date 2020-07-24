@@ -14,6 +14,12 @@ public interface Node extends Serializable, Cloneable, Iterable<Node> {
 	static final Logger log = Logger.getLogger(Node.class.getCanonicalName());
 
 	/**
+	 * Returns the index inside the source code where this node was located.
+	 * @return the index inside the source code where this node was located.
+	 */
+	public int getCodeIndex();
+
+	/**
 	 * The primary method of the node. Traverses the node and all of its children in
 	 * proper order and hands them off to the action for processing.
 	 */

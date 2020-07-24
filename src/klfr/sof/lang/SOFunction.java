@@ -10,7 +10,7 @@ public class SOFunction extends CodeBlock {
 
     private static final long serialVersionUID = 1L;
 
-    protected final int arguments;
+    public final int arguments;
 
     /**
      * Create a function with this code, with given numbers of arguments.

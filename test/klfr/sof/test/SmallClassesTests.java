@@ -38,15 +38,4 @@ class SmallClassesTests extends SofTestSuper {
 		assertTrue(nt.hasMapping(id));
 		assertFalse(nt.hasMapping(new Identifier("zzz")));
 	}
-
-	@Test
-	void testCodeBlock() {
-		var cb = assertDoesNotThrow(() -> new CodeBlock(0, 12, "abc def ghi j k"));
-		assertDoesNotThrow(() -> cb.toDebugString(DebugStringExtensiveness.Full));
-		assertDoesNotThrow(() -> cb.print());
-		// TODO insert equals test
-		var clone = assertDoesNotThrow(() -> cb.clone());
-		// TODO test call provider somewhere else
-	}
-
 }

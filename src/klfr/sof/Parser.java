@@ -1,8 +1,7 @@
 package klfr.sof;
 
-import static klfr.sof.NaiveInterpreter.*;
-
 import java.util.*;
+import java.util.logging.*;
 
 import klfr.sof.Tokenizer.TokenizerState;
 import klfr.sof.ast.*;
@@ -12,6 +11,7 @@ import klfr.sof.lang.*;
  * Parses preprocessed SOF code into an AST.
  */
 public class Parser {
+	private static final Logger log = Logger.getLogger(Parser.class.getCanonicalName());
 
 	public static Node parse(String code) throws CompilerException {
 		return parse(code, 0, code.length());
@@ -32,7 +32,7 @@ public class Parser {
 			String token = tokenizer.next();
 			try {
 				// primitive token
-				final var pt = PrimitiveTokenNode.make(token);
+				final var pt = PrimitiveTokenNode.make(token, tokenizer.start());
 				if (pt.isPresent())
 					tokens.add(pt.get());
 				else
@@ -54,31 +54,31 @@ public class Parser {
 				if (Patterns.intPattern.matcher(token).matches()) {
 					log.finest(() -> String.format("Literal integer token %30s @ %4d", token, tokenizer.start()));
 					final IntPrimitive literal = IntPrimitive.createIntegerFromString(token.toLowerCase());
-					tokens.add(new LiteralNode(literal));
+					tokens.add(new LiteralNode(literal, tokenizer.start()));
 				} else
 				// float literal
 				if (Patterns.doublePattern.matcher(token).matches()) {
 					log.finest(() -> String.format("Literal float token %30s @ %4d", token, tokenizer.start()));
 					final FloatPrimitive literal = FloatPrimitive.createFloatFromString(token);
-					tokens.add(new LiteralNode(literal));
+					tokens.add(new LiteralNode(literal, tokenizer.start()));
 				} else
 				// boolean literal
 				if (Patterns.boolPattern.matcher(token).matches()) {
 					log.finest(() -> String.format("Literal boolean token %30s @ %4d", token, tokenizer.start()));
 					final BoolPrimitive literal = BoolPrimitive.createBoolFromString(token);
-					tokens.add(new LiteralNode(literal));
+					tokens.add(new LiteralNode(literal, tokenizer.start()));
 				} else
 				// string literal
 				if (Patterns.stringPattern.matcher(token).matches()) {
 					log.finest(() -> String.format("Literal string token %30s @ %4d", token, tokenizer.start()));
 					final StringPrimitive literal = StringPrimitive
 							.createStringPrimitive(Preprocessor.preprocessSofString(token));
-					tokens.add(new LiteralNode(literal));
+					tokens.add(new LiteralNode(literal, tokenizer.start()));
 				} else
 				// identifier
 				if (Patterns.identifierPattern.matcher(token).matches()) {
 					log.finest(() -> String.format("Identifier token %30s @ %4d", token, tokenizer.start()));
-					tokens.add(new LiteralNode(new Identifier(token)));
+					tokens.add(new LiteralNode(new Identifier(token), tokenizer.start()));
 				} else
 					throw CompilerException.fromCurrentPosition(tokenizer, "syntax", null);
 
@@ -87,6 +87,6 @@ public class Parser {
 			}
 		}
 
-		return new TokenListNode(new ArrayList<>(tokens));
+		return new TokenListNode(new ArrayList<>(tokens), start);
 	}
 }

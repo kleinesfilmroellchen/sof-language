@@ -6,7 +6,7 @@ import klfr.sof.ast.TokenListNode;
 public class CodeBlock implements Stackable {
 	private static final long serialVersionUID = 1L;
 
-	protected final TokenListNode code;
+	public final TokenListNode code;
 
 	public CodeBlock(TokenListNode code) {
 		this.code = code;

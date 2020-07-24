@@ -1,7 +1,6 @@
 package klfr.sof.lang;
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 import klfr.sof.*;
@@ -69,6 +68,25 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	}
 
 	/**
+	 * Pop count elements from the stack and return them in the
+	 * <strong>inverse</strong> order that they were popped.
+	 * 
+	 * @param count how many elements to pop.
+	 * @return a list containing the elements popped, with the last popped element
+	 *         first.
+	 * @throws CompilerException
+	 */
+	public List<Stackable> pop(int count) throws CompilerException {
+		// array for efficiency; it can be pre-allocated to specific size and then
+		// inserted into at any location
+		final var elts = new Stackable[count];
+		for (int i = count; --i >= 0;) {
+			elts[i] = this.pop();
+		}
+		return Arrays.asList(elts);
+	}
+
+	/**
 	 * Pops a value with given type from the stack, or fails if the type does not
 	 * match.
 	 * 
@@ -82,13 +100,16 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 		final Stackable val = pop();
 		if (t.isInstance(val)) {
 			return (T) val;
-		} else
-			throw new CompilerException.Incomplete("type", "type.checkfail", val, t.getAnnotation(StackableName.class).value());
+		}
+		super.push(val);
+		throw new CompilerException.Incomplete("type", "type.checkfail", val,
+				t.getAnnotation(StackableName.class).value());
 	}
 
 	/**
 	 * Forces the stack to pop its topmost element, regardless of stack access
-	 * restrictions. Users should use this function with great caution.
+	 * restrictions. <strong>Users should use this function with great
+	 * caution.</strong>
 	 * 
 	 * @return the popped value
 	 */
@@ -200,16 +221,42 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	}
 
 	/**
-	 * toString method that creates a visual multiline representation of the stack and its contents.
+	 * Traverses the stack and returns the first nametable that is found on it. All
+	 * elements above and including the nametable are discarded. This method is
+	 * intended to be used for destroying local scopes when exiting them. This
+	 * method will not remove the global nametable and return Optional.empty()
+	 * instead. It will, however, still remove all elements above it. Therefore,
+	 * callers of this method should cautiously push nametables to the stack which
+	 * are then to be found by this method.
+	 * 
+	 * @return The highest nametable that was found, or none if none was found.
+	 */
+	public Optional<Nametable> popFirstNametable() {
+		try {
+			var nt = this.forcePop();
+			while (!(nt instanceof Nametable))
+				nt = this.forcePop();
+			// popped the gnt
+			if (this.isEmpty()) {
+				this.push(nt);
+				return Optional.empty();
+			}
+			return Optional.of((Nametable) nt);
+		} catch (NoSuchElementException e) {
+			throw new CompilerException.Incomplete("stackaccess");
+		}
+	}
+
+	/**
+	 * toString method that creates a visual multiline representation of the stack
+	 * and its contents.
 	 */
 	public String toStringExtended() {
 		return "┌─" + Interpreter.line66.substring(0, 37) + "─┐" + System.lineSeparator()
-				+ this.stream()
-						.collect(() -> new StringBuilder(),
-								(str, elmt) -> str.append(String.format("│%38s │%n├─" + Interpreter.line66.substring(0, 37) + "─┤%n",
-										elmt.toDebugString(DebugStringExtensiveness.Compact), " ")),
-								(e1, e2) -> e1.append(e2))
-						.toString();
+				+ this.stream().collect(() -> new StringBuilder(),
+						(str, elmt) -> str.append(String.format("│%38s │%n├─" + Interpreter.line66.substring(0, 37) + "─┤%n",
+								elmt.toDebugString(DebugStringExtensiveness.Compact), " ")),
+						(e1, e2) -> e1.append(e2)).toString();
 	}
 
 }

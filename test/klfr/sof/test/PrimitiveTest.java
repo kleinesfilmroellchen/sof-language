@@ -4,15 +4,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Map;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
-import klfr.sof.lang.Callable.CallProvider;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
-import klfr.sof.CompilerException;
-import klfr.sof.lang.BoolPrimitive;
-import klfr.sof.lang.IntPrimitive;
-import klfr.sof.lang.Primitive;
+import klfr.sof.*;
+import klfr.sof.lang.*;
 
 class PrimitiveTest extends SofTestSuper {
 
@@ -38,13 +34,6 @@ class PrimitiveTest extends SofTestSuper {
 		IntPrimitive clone = (IntPrimitive) assertDoesNotThrow(() -> i.copy());
 		assertTrue(i.equals(clone));
 		assertFalse(i.equals(IntPrimitive.createIntPrimitive(30l)));
-	}
-
-	@Test
-	void testGetCallProvider() {
-		CallProvider lambda = assertDoesNotThrow(() -> i.getCallProvider());
-		IntPrimitive result = (IntPrimitive) assertDoesNotThrow(() -> lambda.call(null));
-		assertTrue(i.equals(result), "Primitive calling should return the primitive itself copied");
 	}
 
 	@Test

@@ -29,7 +29,8 @@ import org.opentest4j.TestAbortedException;
 
 import klfr.sof.CompilerException;
 import klfr.sof.IOInterface;
-import klfr.sof.NaiveInterpreter;
+import klfr.sof.Interpreter;
+import klfr.sof.Parser;
 import klfr.sof.Preprocessor;
 import klfr.sof.lang.BoolPrimitive;
 
@@ -55,56 +56,6 @@ public class LanguageTests extends SofTestSuper {
 
 	public static final Logger log = Logger.getLogger(LanguageTests.class.getCanonicalName());
 
-	/**
-	 * A small interpreter extension that adds the "assert" primitive token.
-	 */
-	private static class AssertInterpreter extends NaiveInterpreter {
-		private static final long serialVersionUID = 1L;
-
-		private int assertCount = 0;
-
-		/**
-		 * Returns the number of asserts that were successfully made with this interpreter.
-		 * @return the number of asserts that were successfully made with this interpreter.
-		 */
-		public int getAssertCount() {
-			return assertCount;
-		}
-
-		@SuppressWarnings("deprecation")
-		public AssertInterpreter() {
-			super();
-			this.registerTokenHandler(token -> {
-				if (token.equals(ASSERT_PT)) {
-					return Optional.of(intr -> {
-						final var stack = intr.internal.stack();
-						BoolPrimitive condition = stack.popTyped(BoolPrimitive.class);
-						if (condition.isFalse()) {
-							throw new TestAssertException(
-									CompilerException.fromCurrentPosition(intr.internal.tokenizer(), "assert", null));
-						}
-						++assertCount;
-					});
-				}
-				return Optional.empty();
-			});
-		}
-
-	}
-
-	/**
-	 * Primitive compiler exception subclass that doesn't add any functionality. It
-	 * simply serves to distinguish assertion failures from normal compiler
-	 * exceptions.
-	 */
-	private static class TestAssertException extends CompilerException {
-		private static final long serialVersionUID = 1L;
-
-		protected TestAssertException(Throwable arg1) {
-			super(arg1.getMessage(), arg1);
-		}
-	}
-
 	@DisplayName("SOF language tests from test files")
 	@TestFactory
 	DynamicNode generateLanguageTests() {
@@ -126,7 +77,6 @@ public class LanguageTests extends SofTestSuper {
 					}
 
 					@Override
-					@SuppressWarnings("deprecation")
 					public DynamicTest next() {
 						final var file = sofFileIterator.next();
 						try {
@@ -138,19 +88,16 @@ public class LanguageTests extends SofTestSuper {
 							return dynamicTest(String.format("Test source file: %s", file), () -> {
 								try {
 									log.info(String.format("Source test %s initializing...", file));
-									final var engine = new AssertInterpreter();
 									final IOInterface iface = new IOInterface(InputStream.nullInputStream(),
-											System.out);
-									engine.setCode(code);
-									engine.internal.setIO(iface);
+									System.out);
+									final var engine = new Interpreter(iface);
+									final var ast = Parser.parse(code);
 									final var time = Instant.now();
-									engine.executeForever();
-									log.info(String.format("Source test %-20s completed in %8.3fms, %3d asserts total", file,
-											Duration.between(time, Instant.now()).toNanosPart() / 1_000_000.0d, engine.getAssertCount()));
-								} catch (TestAssertException assertException) {
-									fail(assertException);
+									engine.run(ast, code);
+									log.info(String.format("Source test %-20s completed in %12.3f µs, %3d asserts total", file,
+											Duration.between(time, Instant.now()).toNanos() / 1_000d, engine.getAssertCount()));
 								} catch (CompilerException e) {
-									fail("Unexpected compiler exception.", e);
+									fail("Compiler exception while running language test '" + file + "'.", e);
 								}
 							});
 						} catch (IOException e) {

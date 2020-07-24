@@ -83,30 +83,24 @@ public final class BuiltinPTs {
 	public static final Stackable logicalAnd(Stackable a, Stackable b) {
 		// make 'and' more efficient by only checking type of first operand, and
 		// returning second operand if it is true
-		if (a instanceof BoolPrimitive && ((BoolPrimitive) a).isTrue()) {
-			return b;
-		}
-		throw new CompilerException.Incomplete("type", "type.and", a.typename(), b.typename());
+		if (a.isTrue() && b.isTrue())
+			return a;
+		return BoolPrimitive.createBoolPrimitive(false);
 	}
 
 	public static final Stackable logicalOr(Stackable a, Stackable b) {
-		// make 'or' more efficient by only checking a if possible, and also return the
-		// value that was considered true
-		if (a instanceof BoolPrimitive && ((BoolPrimitive) a).isTrue()) {
+		// doesn't care about types, this one time run-time binding/virtual methods come
+		// into play thanks java
+		if (a.isTrue())
 			return a;
-		} else if (b instanceof BoolPrimitive && ((BoolPrimitive) b).isTrue()) {
+		else if (b.isTrue())
 			return b;
-		}
-		throw new CompilerException.Incomplete("type", "type.or", a.typename(), b.typename());
+		return BoolPrimitive.createBoolPrimitive(false);
 	}
 
 	public static final Stackable logicalXor(Stackable a, Stackable b) {
-		// two typechecks necessary, use the convenient property of (a xor b) == true
-		// only if they are different
-		if (a instanceof BoolPrimitive && b instanceof BoolPrimitive) {
-			return BoolPrimitive.createBoolPrimitive(((BoolPrimitive) b).value() != ((BoolPrimitive) a).value());
-		}
-		throw new CompilerException.Incomplete("type", "type.xor", a.typename(), b.typename());
+		// use the convenient property of (a xor b) == true only if they are different
+		return BoolPrimitive.createBoolPrimitive(b.isTrue() != a.isTrue());
 	}
 
 	public static final Stackable lessThan(Stackable a, Stackable b) {
