@@ -6,11 +6,11 @@ An experimental programming language concieved and implemented by kleinesfilmrö
 
 This document will not explain the concept of a stack, please consult The Internet for information on stacks in computer science.
 
-**This is a Work In Progress (WIP). The program is extremely buggy and should not be used for anything serious.** If you cause a nuclear war and the inevitable destruction of mankind by using this software, I am not to blame.
+**This is a Work In Progress (WIP) experimental programming language.** If you cause a nuclear war and the inevitable destruction of mankind by using this software, I am not to blame.
 
 ### Installation and CLI usage
 
-This is an Eclipse project, so I recommend cloning it with git and importing it into your workspace (again, there are great explanations for both of these). After building normally into the `/bin` folder, you should be able to execute the main CLI class with a normal launch configuration. Alternatively, use the command line
+This is an Eclipse project, so I recommend cloning it with git and importing it into your workspace (again, there are great explanations for both of these). After building normally, you should be able to execute the main CLI class with a normal launch configuration. Alternatively, use the command line
 
 ```
 java -p bin -m sof/klfr.sof.cli.CLI [arguments]
