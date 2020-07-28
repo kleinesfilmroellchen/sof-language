@@ -3,38 +3,23 @@ package klfr.sof.cli;
 import static klfr.sof.Interpreter.R;
 
 // MOAR STANDARD LIBRARY
-import java.io.File;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
-import java.util.Arrays;
-import java.util.MissingResourceException;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.FileHandler;
-import java.util.logging.Formatter;
-import java.util.logging.Level;
-import java.util.logging.LogManager;
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
+import java.net.*;
+import java.time.*;
+import java.time.format.*;
+import java.util.*;
+import java.util.logging.*;
 
 import klfr.sof.*;
-import klfr.sof.ast.Node;
+import klfr.sof.ast.*;
 
 public class CLI {
 
 	public static final String INFO_STRING = String.format(R.getString("sof.cli.version"), Interpreter.VERSION,
 			// awww yesss, the Java Time API 😋
-			DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).format(buildTime().atZone(ZoneId.systemDefault())));
+			DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT)
+					.format(buildTime().atZone(ZoneId.systemDefault())));
 
 	private static final Logger log = Logger.getLogger(CLI.class.getCanonicalName());
 
@@ -62,7 +47,7 @@ public class CLI {
 				ch = new ConsoleHandler();
 				ch.setLevel(Level.FINE);
 
-				ch.setFormatter(new Formatter() {
+				ch.setFormatter(new java.util.logging.Formatter() {
 					@Override
 					public String format(LogRecord record) {
 						final var msg = record.getMessage();
@@ -77,13 +62,15 @@ public class CLI {
 								Math.min(record.getLevel().getLocalizedName().length(), 6));
 						final var logName = record.getLoggerName().replace("klfr.sof", "~");
 
-						return String.format("[%s %-20s |%6s] %s%n", time, logName, level, msg) + (record.getThrown() == null
-								? ""
-								: String.format("EXCEPTION: %s | Stack trace:%n%s", record.getThrown().toString(),
-										Arrays.asList(record.getThrown().getStackTrace()).stream().map(x -> x.toString()).collect(
-												() -> new StringBuilder(),
-												(builder, str) -> builder.append("in ").append(str).append(System.lineSeparator()),
-												(b1, b2) -> b1.append(b2))));
+						return String.format("[%s %-20s |%6s] %s%n", time, logName, level, msg)
+								+ (record.getThrown() == null ? ""
+										: String.format("EXCEPTION: %s | Stack trace:%n%s",
+												record.getThrown().toString(),
+												Arrays.asList(record.getThrown().getStackTrace()).stream()
+														.map(x -> x.toString()).collect(() -> new StringBuilder(),
+																(builder, str) -> builder.append("in ").append(str)
+																		.append(System.lineSeparator()),
+																(b1, b2) -> b1.append(b2))));
 					}
 				});
 				rootLog.addHandler(ch);
@@ -118,7 +105,6 @@ public class CLI {
 	 * @param doPreprocessing Whether to execute the preprocessor on the source code
 	 *                        before passing it into the interpreter.
 	 */
-	@SuppressWarnings("deprecation")
 	public static void doFullExecution(Reader codeStream, Interpreter interpreter, IOInterface io,
 			boolean doPreprocessing) throws Exception {
 		log.entering(CLI.class.getCanonicalName(), "doFullExecution");
@@ -140,18 +126,19 @@ public class CLI {
 		// count nodes
 		var nodeCount = 0;
 		if (io.debug) {
-			for (Node n : ast)
+			for (@SuppressWarnings("unused")
+			Node n : ast)
 				++nodeCount;
 		}
 
-		final Instant startTime = Instant.now();
+		final var startTime = System.nanoTime();
 		interpreter.run(ast, code);
-		final Instant finishTime = Instant.now();
-		final Duration execTime = Duration.between(startTime, finishTime);
+		final var finishTime = System.nanoTime();
+		final var execTimeµs = (finishTime - startTime) / 1_000d;
 
 		log.info(String.format("Ran %d asserts.", interpreter.getAssertCount()));
 		log.info(String.format("PERFORMANCE: Ran %9.3f ms (%4d nodes in %12.3f µs, avg %7.2f µs/node)",
-				execTime.toNanos() / 1_000_000d, nodeCount, execTime.toNanos()/1_000d, (execTime.toNanos()/1000d)/nodeCount));
+				execTimeµs / 1_000d, nodeCount, execTimeµs, execTimeµs / nodeCount));
 		log.exiting(CLI.class.getCanonicalName(), "doFullExecution");
 	}
 

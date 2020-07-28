@@ -92,10 +92,11 @@ public class LanguageTests extends SofTestSuper {
 									System.out);
 									final var engine = new Interpreter(iface);
 									final var ast = Parser.parse(code);
-									final var time = Instant.now();
+									final var time = System.nanoTime();
 									engine.run(ast, code);
+									final var finish = System.nanoTime();
 									log.info(String.format("Source test %-20s completed in %12.3f µs, %3d asserts total", file,
-											Duration.between(time, Instant.now()).toNanos() / 1_000d, engine.getAssertCount()));
+											(finish -  time) / 1_000d, engine.getAssertCount()));
 								} catch (CompilerException e) {
 									fail("Compiler exception while running language test '" + file + "'.", e);
 								}
