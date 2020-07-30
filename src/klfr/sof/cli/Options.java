@@ -49,6 +49,8 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 	public static final int ONLY_PREPROCESSOR = 0b10;
 	/** No preprocessor flag constant. */
 	public static final int NO_PREPROCESSOR = 0b100;
+	/** Print performance info flag constant. */
+	public static final int PERFORMANCE = 0b1000;
 	public Options.ExecutionType executionType;
 	public List<String> executionStrings;
 	/**
@@ -92,7 +94,7 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 							CLI.runPreprocessor(reader, io);
 							io.println("^D");
 						} else
-							CLI.doFullExecution(reader, new Interpreter(io), io, (flags & NO_PREPROCESSOR) == 0);
+							CLI.doFullExecution(reader, new Interpreter(io), io, flags);
 						return null;
 					} catch (Throwable t) {
 						io.println(t.getMessage());
@@ -114,7 +116,7 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 			case Literal: {
 				//// Single literal to be executed
 				try {
-					CLI.doFullExecution(new StringReader(this.executionStrings.get(0)), new Interpreter(io), io, (flags & NO_PREPROCESSOR) == 0);
+					CLI.doFullExecution(new StringReader(this.executionStrings.get(0)), new Interpreter(io), io, flags);
 				} catch (Throwable t) {
 					return Optional.of(t);
 				}
@@ -228,6 +230,9 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 					break;
 				case "-P":
 					opt.flags |= Options.NO_PREPROCESSOR;
+					break;
+				case "--performance":
+					opt.flags |= Options.PERFORMANCE;
 					break;
 				default:
 					// extract combined option flags into separate options

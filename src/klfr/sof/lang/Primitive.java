@@ -72,6 +72,7 @@ public abstract class Primitive implements Stackable {
 	@Override
 	public String toDebugString(DebugStringExtensiveness e) {
 		switch (e) {
+			case Full:
 			case Compact:
 				if (v() instanceof String)
 					return this.typename() + ":\"" + v().toString() + '"';

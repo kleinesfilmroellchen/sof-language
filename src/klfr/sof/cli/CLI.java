@@ -9,6 +9,7 @@ import java.net.*;
 import java.time.*;
 import java.time.format.*;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.logging.*;
 
 import klfr.sof.*;
@@ -18,8 +19,7 @@ public class CLI {
 
 	public static final String INFO_STRING = String.format(R.getString("sof.cli.version"), Interpreter.VERSION,
 			// awww yesss, the Java Time API 😋
-			DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT)
-					.format(buildTime().atZone(ZoneId.systemDefault())));
+			DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).format(buildTime().atZone(ZoneId.systemDefault())));
 
 	private static final Logger log = Logger.getLogger(CLI.class.getCanonicalName());
 
@@ -62,15 +62,13 @@ public class CLI {
 								Math.min(record.getLevel().getLocalizedName().length(), 6));
 						final var logName = record.getLoggerName().replace("klfr.sof", "~");
 
-						return String.format("[%s %-20s |%6s] %s%n", time, logName, level, msg)
-								+ (record.getThrown() == null ? ""
-										: String.format("EXCEPTION: %s | Stack trace:%n%s",
-												record.getThrown().toString(),
-												Arrays.asList(record.getThrown().getStackTrace()).stream()
-														.map(x -> x.toString()).collect(() -> new StringBuilder(),
-																(builder, str) -> builder.append("in ").append(str)
-																		.append(System.lineSeparator()),
-																(b1, b2) -> b1.append(b2))));
+						return String.format("[%s %-20s |%6s] %s%n", time, logName, level, msg) + (record.getThrown() == null
+								? ""
+								: String.format("EXCEPTION: %s | Stack trace:%n%s", record.getThrown().toString(),
+										Arrays.asList(record.getThrown().getStackTrace()).stream().map(x -> x.toString()).collect(
+												() -> new StringBuilder(),
+												(builder, str) -> builder.append("in ").append(str).append(System.lineSeparator()),
+												(b1, b2) -> b1.append(b2))));
 					}
 				});
 				rootLog.addHandler(ch);
@@ -98,15 +96,14 @@ public class CLI {
 	/**
 	 * Does full execution on SOF source code given the environment.
 	 * 
-	 * @param codeStream      A reader that reads source code.
-	 * @param interpreter     The interpreter to use for the execution.
-	 * @param io              The Input-Output interface that the full execution
-	 *                        should use.
-	 * @param doPreprocessing Whether to execute the preprocessor on the source code
-	 *                        before passing it into the interpreter.
+	 * @param codeStream  A reader that reads source code.
+	 * @param interpreter The interpreter to use for the execution.
+	 * @param io          The Input-Output interface that the full execution should
+	 *                    use.
+	 * @param flags       The flags passed to the program on the command line.
 	 */
-	public static void doFullExecution(Reader codeStream, Interpreter interpreter, IOInterface io,
-			boolean doPreprocessing) throws Exception {
+	public static void doFullExecution(Reader codeStream, Interpreter interpreter, IOInterface io, int flags)
+			throws Exception {
 		log.entering(CLI.class.getCanonicalName(), "doFullExecution");
 		String code = "";
 		try {
@@ -117,19 +114,21 @@ public class CLI {
 			throw new Exception("Unknown exception occurred during input reading.", e);
 		}
 
-		if (doPreprocessing)
+		// if no preprocessing flag NOT set
+		if ((flags & Options.NO_PREPROCESSOR) == 0)
 			code = Preprocessor.preprocessCode(code);
 
 		Node ast = Parser.parse(code);
 		io.println(ast);
 
 		// count nodes
-		var nodeCount = 0;
-		if (io.debug) {
+		var nc = 0;
+		if (io.debug || (flags & Options.PERFORMANCE) > 0) {
 			for (@SuppressWarnings("unused")
 			Node n : ast)
-				++nodeCount;
+				++nc;
 		}
+		final var nodeCount = nc;
 
 		final var startTime = System.nanoTime();
 		interpreter.run(ast, code);
@@ -137,8 +136,12 @@ public class CLI {
 		final var execTimeµs = (finishTime - startTime) / 1_000d;
 
 		log.info(String.format("Ran %d asserts.", interpreter.getAssertCount()));
-		log.info(String.format("PERFORMANCE: Ran %9.3f ms (%4d nodes in %12.3f µs, avg %7.2f µs/node)",
-				execTimeµs / 1_000d, nodeCount, execTimeµs, execTimeµs / nodeCount));
+		final Supplier<String> perfInfo = () -> String.format(
+				"PERFORMANCE: Ran %9.3f ms (%4d nodes in %12.3f µs, avg %7.2f µs/node)", execTimeµs / 1_000d, nodeCount,
+				execTimeµs, execTimeµs / nodeCount);
+		log.info(perfInfo);
+		if ((flags & Options.PERFORMANCE) > 0)
+			io.println(perfInfo.get());
 		log.exiting(CLI.class.getCanonicalName(), "doFullExecution");
 	}
 

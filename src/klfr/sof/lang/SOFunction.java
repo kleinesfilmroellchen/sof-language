@@ -10,7 +10,7 @@ public class SOFunction extends CodeBlock {
 
     private static final long serialVersionUID = 1L;
 
-    public final int arguments;
+    public final long arguments;
 
     /**
      * Create a function with this code, with given numbers of arguments.
@@ -18,7 +18,7 @@ public class SOFunction extends CodeBlock {
      * @param code      code of the function
      * @param arguments number of arguments the function recieves
      */
-    public SOFunction(TokenListNode code, int arguments) {
+    public SOFunction(TokenListNode code, long arguments) {
         super(code);
         this.arguments = arguments;
     }

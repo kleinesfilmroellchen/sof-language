@@ -53,6 +53,19 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 		return elmt;
 	}
 
+	/**
+	 * Pushes all values in the given collection to the stack, in the order that the
+	 * iterator returns them.
+	 * 
+	 * @param args
+	 */
+	public Stack pushAll(Collection<Stackable> args) {
+		for (var arg : args) {
+			this.push(arg);
+		}
+		return this;
+	}
+
 	@Override
 	public Stackable pop() throws CompilerException {
 		try {

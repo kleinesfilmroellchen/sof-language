@@ -3,6 +3,7 @@ package klfr.sof;
 import java.util.logging.*;
 import java.io.Serializable;
 import java.util.*;
+import java.util.function.*;
 
 import klfr.sof.ast.*;
 import klfr.sof.lang.*;
@@ -106,6 +107,7 @@ public class Interpreter implements Serializable {
 	/**
 	 * Run a parsed SOF program without resetting state. This method is thread-safe
 	 * and will only allow one execution on this interpreter at the same time.
+	 * Therefore, it cannot be called recursively.
 	 * 
 	 * @return this interpreter.
 	 */
@@ -113,7 +115,7 @@ public class Interpreter implements Serializable {
 		synchronized (this) {
 			log.entering(Interpreter.class.getCanonicalName(), "run # synchronized");
 			this.currentCode = currentCode;
-			program.forEach(this::handle);
+			program.forEach((Function<Node, Boolean>) this::handle);
 			this.currentCode = "";
 		}
 		log.exiting(Interpreter.class.getCanonicalName(), "run");
@@ -123,15 +125,15 @@ public class Interpreter implements Serializable {
 	/**
 	 * Callback for handling a node.
 	 */
-	private void handle(Node n) throws CompilerException {
+	private boolean handle(Node n) throws CompilerException {
 		try {
 			// manual dynamic dispatch -- there isn't a better reflection-free way
 			if (n instanceof TokenListNode)
-				handle((TokenListNode) n);
+				return handle((TokenListNode) n);
 			else if (n instanceof LiteralNode)
-				handle((LiteralNode) n);
+				return handle((LiteralNode) n);
 			else if (n instanceof PrimitiveTokenNode)
-				handle((PrimitiveTokenNode) n);
+				return handle((PrimitiveTokenNode) n);
 			else
 				throw new RuntimeException("Unknown node type.");
 		} catch (CompilerException.Incomplete incomplete) {
@@ -139,12 +141,14 @@ public class Interpreter implements Serializable {
 		}
 	}
 
-	private void handle(TokenListNode codeblock) throws CompilerException {
+	private boolean handle(TokenListNode codeblock) throws CompilerException {
 		this.stack.push(new CodeBlock(codeblock));
+		return true;
 	}
 
-	private void handle(LiteralNode literal) throws CompilerException {
+	private boolean handle(LiteralNode literal) throws CompilerException {
 		this.stack.push(literal.getValue());
+		return true;
 	}
 
 	/**
@@ -152,7 +156,7 @@ public class Interpreter implements Serializable {
 	 * 
 	 * @param pt The primitive token to execute.
 	 */
-	private void handle(PrimitiveTokenNode pt) throws CompilerException {
+	private boolean handle(PrimitiveTokenNode pt) throws CompilerException {
 		// BEHOLD THE SWITCH CASE OF DOOM
 		// if the switch case is optimized to jump table lookups, this may be the
 		// fastest way of handling all of the primitive tokens selectively
@@ -339,6 +343,18 @@ public class Interpreter implements Serializable {
 				gnt.put(id, value);
 				break;
 			}
+			// functions
+			case Function: {
+				final var argcount = this.stack.popTyped(IntPrimitive.class);
+				final var code = this.stack.popTyped(CodeBlock.class).code;
+				this.stack.push(new SOFunction(code, argcount.value()));
+				break;
+			}
+			case Return: {
+				final var retval = this.stack.pop();
+				this.stack.localScope().setReturn(retval);
+				return false;
+			}
 			// i/o
 			case Input: {
 				final String input = this.io.nextInputSequence();
@@ -376,6 +392,7 @@ public class Interpreter implements Serializable {
 			default:
 				throw new RuntimeException("Unhandled primitive token.");
 		}
+		return true;
 	}
 
 	/**
@@ -397,26 +414,27 @@ public class Interpreter implements Serializable {
 			final var subProgram = function.code;
 
 			// setup stack
-			final var args = this.stack.pop(function.arguments);
+			// causes overflow issues with extremely large (> 2.5 million) argcounts, which
+			// shouldn't happen.
+			final var args = this.stack.pop((int) function.arguments);
 			this.stack.push(new FunctionDelimiter());
-			this.stack.addAll(args);
+			this.stack.pushAll(args);
 
 			// run
-			subProgram.forEach(this::handle);
+			subProgram.forEach((Function<Node, Boolean>) this::handle);
 
 			// get return value through nametable
 			final var table = this.stack.popFirstNametable()
 					.orElseThrow(() -> new RuntimeException("Local nametable was removed unexpectedly."));
 			if (!(table instanceof FunctionDelimiter))
 				throw new RuntimeException("Unexpected nametable type " + table.getClass().toString());
-			// push return value
 			((FunctionDelimiter) table).pushReturnValue(this.stack);
 		} else if (toCall instanceof CodeBlock) {
 			final var subProgram = ((CodeBlock) toCall).code;
 			// just run, no return value, no stack protect
-			subProgram.forEach(this::handle);
+			subProgram.forEach((Function<Node, Boolean>) this::handle);
 		} else
-		throw new CompilerException.Incomplete("call",  "type.call", toCall.typename());
+			throw new CompilerException.Incomplete("call", "type.call", toCall.typename());
 	}
 
 	// #endregion Execution

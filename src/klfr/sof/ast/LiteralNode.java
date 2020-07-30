@@ -50,11 +50,6 @@ public class LiteralNode implements Node {
 	}
 
 	@Override
-	public void forEach(Consumer<? super Node> action) {
-		action.accept(this);
-	}
-
-	@Override
 	public Iterator<Node> iterator() {
 		return List.<Node>of(this).iterator();
 	}

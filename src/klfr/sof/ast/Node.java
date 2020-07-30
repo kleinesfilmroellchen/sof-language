@@ -15,6 +15,7 @@ public interface Node extends Serializable, Cloneable, Iterable<Node> {
 
 	/**
 	 * Returns the index inside the source code where this node was located.
+	 * 
 	 * @return the index inside the source code where this node was located.
 	 */
 	public int getCodeIndex();
@@ -25,11 +26,26 @@ public interface Node extends Serializable, Cloneable, Iterable<Node> {
 	 */
 	@Override
 	default void forEach(Consumer<? super Node> action) {
-		action.accept(this);
+		this.forEach(n -> {
+			action.accept(n);
+			return true;
+		});
 	}
 
 	/**
-	 * Returns an iterator over this node's children, or an iterator with only this node if this node has no children.
+	 * The primary method of the node. Traverses the node and all of its children in
+	 * proper order and hands them off to the action for processing. If the action
+	 * ever returns false, any iterative application should stop.<br><br>
+	 * The default method applies the function to this node directly, which is
+	 * useful for most "primitive" nodes.
+	 */
+	default void forEach(Function<? super Node, Boolean> action) {
+		action.apply(this);
+	}
+
+	/**
+	 * Returns an iterator over this node's children, or an iterator with only this
+	 * node if this node has no children.
 	 */
 	@Override
 	default Iterator<Node> iterator() {

@@ -13,6 +13,12 @@ public class FunctionDelimiter extends Nametable {
 	private static final long serialVersionUID = 1L;
 	public Optional<Stackable> returnValue = Optional.empty();
 
+	@Override
+	public Nametable setReturn(Stackable value) {
+		this.returnValue = Optional.of(value);
+		return this;
+	}
+
 	/**
 	 * Pushes the return value of this function delimiter to the given stack. If
 	 * this function delimiter never recieved a return value, don't push anything.

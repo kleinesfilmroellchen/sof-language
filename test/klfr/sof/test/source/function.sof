@@ -1,0 +1,27 @@
+# SOF test file - function tests
+
+# define and run a function without arguments
+{ 33 } 0 function test globaldef
+test :
+
+# define and run a function without arguments, check return value
+{ 42 return } 0 function test globaldef
+test : 42 = assert
+
+# define and run a function with one argument, check return value
+{ return } 1 function test globaldef
+"return value" test : "return value" = assert
+
+# define 2 arg function, check argument order is preserved and stack deleted
+8888
+   { return } 2 function test globaldef
+   20 8 test : 8 = assert
+8888 = assert
+
+# first return encountered stops execution
+{ true return false return } 0 function test globaldef
+test : assert
+
+# although not done in the above tests, a function can be called directly
+"string" { true return } 0 function . assert
+"string" = assert

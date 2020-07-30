@@ -48,6 +48,18 @@ public class Nametable implements Stackable {
 	}
 
 	/**
+	 * Sets the return value for the nametable. The default implementation does
+	 * nothing and it is to be overridden by subclasses who specify the behavior of
+	 * the {@code return} PT.
+	 * 
+	 * @param returnValue The value to return in SOF.
+	 * @return This nametable.
+	 */
+	public Nametable setReturn(Stackable returnValue) {
+		return this;
+	}
+
+	/**
 	 * Returns all identifiers present in the nametable.
 	 */
 	public Set<Identifier> identifiers() {

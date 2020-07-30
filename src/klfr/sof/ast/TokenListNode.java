@@ -1,7 +1,7 @@
 package klfr.sof.ast;
 
 import java.util.*;
-import java.util.function.Consumer;
+import java.util.function.*;
 
 /**
  * A list of nodes that are to be executed in order. This may be the main
@@ -46,9 +46,16 @@ public class TokenListNode implements Node {
 				+ System.lineSeparator() + "} @ " + this.getCodeIndex();
 	}
 
+	/**
+	 * Run the specified action on every subnode.
+	 */
 	@Override
-	public void forEach(Consumer<? super Node> action) {
-		subNodes.forEach(action);
+	public void forEach(Function<? super Node, Boolean> action) {
+		for (Node subnode : subNodes) {
+			// run the action, if false was returned, return as well
+			if (!action.apply(subnode))
+				return;
+		}
 	}
 
 	@Override
