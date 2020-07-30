@@ -218,7 +218,7 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 					if (idx - 1 >= args.length - 1) {
 						throw new IllegalArgumentException("No parameter specified for option -c. See -h for help.");
 					}
-					opt.executionStrings.add(0, args[idx++]);
+					opt.executionStrings.add(0, cmdLineArguments.get(idx++));
 					break;
 				case "-d":
 					opt.flags |= Options.DEBUG;
@@ -236,14 +236,14 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 						throw new IllegalArgumentException(String.format("Unknown option \"%s\". Try -h for help.", s));
 					}
 					for (char c : s.substring(1).toCharArray()) {
-						cmdLineArguments.add("-" + c);
+						cmdLineArguments.add(idx, "-" + c);
 					}
 					log.log(Level.FINE, () -> cmdLineArguments.toString());
 			}
 		}
 		// decide over execution type depending on argument count
 		if (opt.executionType == Options.ExecutionType.Interactive)
-			opt.executionType = idx < args.length ? Options.ExecutionType.File : Options.ExecutionType.Interactive;
+			opt.executionType = idx < cmdLineArguments.size() ? Options.ExecutionType.File : Options.ExecutionType.Interactive;
 		if (opt.executionType == Options.ExecutionType.File)
 			while (idx < cmdLineArguments.size()) {
 				opt.executionStrings.add(cmdLineArguments.get(idx++));
