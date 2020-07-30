@@ -329,11 +329,7 @@ public class Interpreter implements Serializable {
 			case Define: {
 				final var id = this.stack.popTyped(Identifier.class);
 				final var value = this.stack.pop();
-				final var gnt = this.stack.globalNametable();
-				if (gnt.hasMapping(id))
-					gnt.put(id, value);
-				else
-					this.stack.localScope().put(id, value);
+				this.stack.localScope().put(id, value);
 				break;
 			}
 			case GlobalDefine: {
@@ -418,7 +414,8 @@ public class Interpreter implements Serializable {
 			// shouldn't happen.
 			final var args = this.stack.pop((int) function.arguments);
 			this.stack.push(new FunctionDelimiter());
-			this.stack.pushAll(args);
+			if (function.arguments > 0)
+				this.stack.pushAll(args);
 
 			// run
 			subProgram.forEach((Function<Node, Boolean>) this::handle);

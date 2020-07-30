@@ -66,8 +66,8 @@ public class PrimitiveTokenNode implements Node {
 		Call("."),
 		/** The <code>:</code> primitive token. */
 		DoubleCall(":"),
-		/** The <code>nativecall</code> primitive token. */
-		// NativeCall("nativecall"),
+		/** The <code>nativefunction</code> primitive token. */
+		// NativeFunction("nativefunction"),
 
 		/** The <code>function</code> primitive token. */
 		Function("function"),

@@ -20,3 +20,16 @@ blah . "a string" = assert
 	# inside codeblocks, scope does not change
 	x . "hello" = assert
 } .
+
+{
+	# inside functions, scope changes
+	"another" x def
+	x . "another" = assert
+} 0 function .
+x . "hello" = assert
+
+# globaldef
+{
+	"global" x globaldef
+} 0 function .
+x . "global" = assert
