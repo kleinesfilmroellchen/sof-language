@@ -289,7 +289,7 @@ public class Tokenizer implements Iterator<String> {
 	 * @return whether the tokenizer has exceeded its searching region.
 	 */
 	public boolean regionExceeded() {
-		return this.currentState.regionEnd <= Math.max(this.currentState.start, this.currentState.end)
+		return this.currentState.regionEnd < Math.max(this.currentState.start, this.currentState.end)
 				|| this.currentState.regionStart > Math.min(this.currentState.start, this.currentState.end);
 	}
 
