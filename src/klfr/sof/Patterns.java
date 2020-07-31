@@ -2,16 +2,14 @@ package klfr.sof;
 
 import java.util.regex.Pattern;
 
+/**
+ * Storage class for all the regular expressions that assist in finding tokens
+ * and processing them.
+ */
 public final class Patterns {
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// #region PATTERNS
-	/**
-	 * Pattern for integer number literals. Group 1 matches the entire number if not
-	 * the simple '0' literal, group 2 matches the sign, if present. Group 3 matches
-	 * the base prefix, if present.
-	 */
-	public static final Pattern intPattern = Pattern.compile("((\\+|\\-)?(0[bhxod])?[0-9a-fA-F]+)|0");
+	/** Pattern for integer number literals. */
+	public static final Pattern intPattern = Pattern.compile("(\\+|\\-)?(?:((?:0d)?[0-9]+)|(0[xh][0-9a-fA-F]+)|(0o[0-7]+)|(0b[01]+)|0)");
 	/**
 	 * Pattern for floating point number literals (represented with 64-bit "double"
 	 * values internally). Group 1 matches the sign, if present, group 2 matches the
@@ -81,5 +79,5 @@ public final class Patterns {
 	 */
 	public static final Pattern nlPat = Pattern.compile("^", Pattern.MULTILINE);
 	public static final Pattern lineBreakPattern = Pattern.compile("\\R");
-   
+
 }
