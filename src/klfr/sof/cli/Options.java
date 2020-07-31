@@ -217,7 +217,7 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 				case "-c":
 				case "--command":
 					opt.executionType = Options.ExecutionType.Literal;
-					if (idx - 1 >= args.length - 1) {
+					if (idx - 1 >= cmdLineArguments.size() - 1) {
 						throw new IllegalArgumentException("No parameter specified for option -c. See -h for help.");
 					}
 					opt.executionStrings.add(0, cmdLineArguments.get(idx++));
