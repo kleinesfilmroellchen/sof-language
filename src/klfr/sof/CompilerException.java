@@ -240,7 +240,7 @@ public class CompilerException extends RuntimeException {
 		} else if (max > length) {
 			// case 2: from end on EXPRESSION_OUTPUT_LEN characters (only happens if string
 			// itself is more than EXPRESSION_OUTPUT_LEN chars)
-			return original.substring(length - EXPRESSION_OUTPUT_LEN);
+			return padLeft(original.substring(Math.max(length - EXPRESSION_OUTPUT_LEN, 0)), EXPRESSION_OUTPUT_LEN);
 		}
 		// case 3: in the middle of string means that there is trim on both sides
 		return original.substring(min, max);
@@ -263,7 +263,7 @@ public class CompilerException extends RuntimeException {
 			return significantIndex;
 		if (max > length)
 			// case 2: no trim from the end: compute end offset and subtract from the
-			// displayed string's length
+			// displayed expression output string's length, but never go past the actual string length
 			return EXPRESSION_OUTPUT_LEN - (length - significantIndex);
 		// trim from the start and end means that the char is always at index
 		// (EXPRESSION_OUTPUT_LEN/2)
