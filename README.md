@@ -1,10 +1,8 @@
 # SOF - Stack with Objects and Functions
 
-An experimental programming language concieved and implemented by kleinesfilmröllchen.
+An experimental fully stack-based reverse-polish-notation functional and object-oriented programming language concieved and implemented by kleinesfilmröllchen.
 
 ###### SOF is to be pronounced 'ess-oh-eff' in English or `/əs.ʊu.ˈəf/` in IPA. If you want to make me angry, you can also pronounce it 'sohf'.
-
-This document will not explain the concept of a stack, please consult The Internet for information on stacks in computer science.
 
 **This is a Work In Progress (WIP) experimental programming language.** If you cause a nuclear war and the inevitable destruction of mankind by using this software, I am not to blame.
 
@@ -61,9 +59,9 @@ SOF, the (ugly but useful & pronouncible) acronym for **S**tack with **O**bjects
 
 This means that SOF has the following main features:
 
-- The fundamental element of a program is the stack: All data is contained in the stack and the stack combined with the current execution location in the source code gives full information about the state of the program and how to continue its execution.
-- All code is sequential and every token you write out operates on the stack in some way, be it a literal, an arithmetic operation, a function call, a block of code or otherwise. In essence, the entire programming language can be broken down into its tokens and other units and a description of what each of them does with the stack.
-- Creating blocks of SOF source code is the basic mechanism that enables loops, conditions, objects, functions and possibly meta-programming. These code blocks live on the stack together with any other data, which conveniently makes functions first-class objects.
+- The fundamental element of a program is the stack: All data is contained in the stack and the interpreter needs little to (if implemented a certain way) no hidden data in order to execute successfully.
+- All code is sequential and every token you write out operates on the stack in some way, be it a literal, an arithmetic operation, a function call, a block of code or otherwise. This leads to SOF exclusively using reverse-polish notation, or postfix notation, where operations come after the operands. In essence, the entire programming language can be broken down into its few types of tokens and a description of what each of them does with the stack.
+- SOF does not distinguish between data and code; code is first-class by design. Code can be grouped into manipulatable data with the code block construct `{ }` (cmp. PostScript). This is the only nesting/recursive token of the entire language, which powers turing-completeness (branching & conditional execution) as well as FP and OOP.
 
 ## 2. Some sample programs
 
@@ -85,7 +83,7 @@ To get a taste of SOF, here are several sample programs written in SOF. Note tha
 	} { i . n . < } while
 } 1 function fib def
 
-"enter a number: " write input convert:int . fib .
+"enter a number: " write input convert:int : fib :
 
 # alternative function definition: heavier stack use, runs faster
 
@@ -106,10 +104,10 @@ To get a taste of SOF, here are several sample programs written in SOF. Note tha
 {
 	dup dup # arg*3
 	{ 1 return } 2 < if # arg*2
-	1 - fact . * return
+	1 - fact : * return
 } 1 function fact def
 
-"enter a number: " write input convert:int . fact .
+"enter a number: " write input convert:int : fact :
 ```
 
 ```sof
@@ -117,7 +115,7 @@ To get a taste of SOF, here are several sample programs written in SOF. Note tha
 15 number def
 0 guess def
 {
-	input convert:int . guess def
+	input convert:int : guess def
 	switch:: {
 		"You are correct!" writeln
 	} { number . guess . = }
@@ -150,7 +148,7 @@ To get a taste of SOF, here are several sample programs written in SOF. Note tha
 	n . n . 1 + * 2 / return
 } 1 function sum def
 
-"The result is: " 1 sum . cat writeln 
+"The result is: " 1 sum : cat writeln 
 ```
 
 ## 3. Basic principles of SOF
@@ -159,17 +157,17 @@ An SOF program consist of a list of "tokens", input elements that can be one of 
 
 1. Basic token: Tokens that don't contain spaces.
 2. String literal token: Tokens that represent string literals; these start with a double quote " and end with another one.
-3. Code block token: Tokens that represent executable blocks of code and contain other tokens; these start with a open curly bracket { and end with a close curly bracket } .
+3. Code block token: Tokens that represent executable blocks of code and contain other tokens; these start with a open curly bracket `{` and end with a close curly bracket `}`.
 
-Tokens are separated by at least one arbitrary whitespace character, e.g. space, newline, tab. This means that SOF is extremely tolerant in terms of formatting, as every token is self-contained.
+Tokens are separated by at least one arbitrary whitespace character, e.g. space, newline, tab. This means that SOF is extremely tolerant in terms of formatting, but even non-word tokens like arithmetic operators have to be separated visually.
 
 Every token can be seen as an action that operates on the stack. Some basic tokens include:
 
 - Literal token: This is a string (see above), an integer, a floating-point decimal number or a boolean. They place their own value onto the stack.
-- Operator token: The basic arithmetic operations add (+), subtract (-), multiply (*) and divide (/) (as well as some others), which will pop two values off the stack, compute a result and push that back onto the stack. It should be noted right now that all operators and functions consider the lower elements on the stack further to the left, as this is the most natural for programming. For example, the SOF code `3 4 /` is equivalent to the mathematical operation `3 / 4`, as the operator '/' treats the lower value (`3` in this case) as the left operand of the division, the dividend.
-- Special primitive token: These tokens take on special roles in the language and enable more advanced features. You can think of them as keywords (because they would be identifiers if they weren't treated specially). The most basic ones are `dup`, which duplicates the topmost value on the stack, `pop`, which discards one value of the stack, `def`, which defines a variable and `write` and `writeln`, which output text. The most basic flow-controlling special tokens are the well-known `if`, `while`, `elseif` etc.
-- Call operator: The special token `.` calls functions and code blocks, retrieves variable values and creates objects. Quite special, that little guy! As it turns out, the working principle of this operator is somewhat complicated, but at the same time can handle several apparently distinct language features. Therefore, an entire sub-section is devoted to it.
-- Identifier token: An identifier that will later be used to access some named code (a function), some named value (a variable) or some named constructor function (an object). Identifiers are normal data as they simply place themselves onto the stack like literals.
+- Operator token: The basic arithmetic operations add (`+`), subtract (`-`), multiply (`\*`) and divide (`/`) (as well as some others), which will pop two values off the stack, compute a result and push that back onto the stack. It should be noted right now that all operators and functions consider the lower elements on the stack further to the left, as this is the most natural for programming. For example, the SOF code `3 4 /` is equivalent to the mathematical operation `3 / 4`, as the operator `/` treats the lower value (`3` in this case) as the left operand of the division, the dividend.
+- Special primitive token (PT): These tokens take on special roles in the language and enable more advanced features. You can think of them as keywords (because they would be identifiers if they weren't treated specially). The most basic ones are `dup`, which duplicates the topmost value on the stack, `pop`, which discards one value of the stack, `def`, which defines a variable and `write` and `writeln`, which output text. The most basic flow-controlling special tokens are the well-known `if`, `while`, `elseif` etc.
+- Call operator: The special token `.` calls functions and code blocks, retrieves variable values and creates objects. Quite special, that little guy! As it turns out, this operator is fairly simple in behavior, but at the same time can handle several apparently distinct language features. The Double Call operator `:` is just an abbreviation for two calls head-to-head, useful for invoking named functions.
+- Identifier token: An identifier that will later be used to access some named code (a function), some named value (a variable) or some named constructor function (a class). Identifiers are normal data as they simply place themselves onto the stack like literals.
 
 ### For more information, [visit the wiki](https://github.com/kleinesfilmroellchen/sof-language/wiki).
 
@@ -181,31 +179,33 @@ SOF is a simple language. By simple, I do not mean easy to learn or understand, 
 - SOF syntax is extremely basic (see 5. EBNF Syntax definition) and therefore easy to interpret and compile by many primitive tools.
 - SOF is so basic in its I/O and internal operations that one can translate any SOF program into any bytecode utilizing nothing more than one temporary register containing a number and a pure stack of numbers. Although I have not yet written such a compiler for an elemental ultra-pure-stack-based language (like the pure lambda calculus in functional programming), a skilled reader should have no trouble of writing down the translation instructions and/or a program to do that for you.
 
-SOF is a tool for understanding programming languages. It is very usable, the learning curve is not very steep regardless of whether you have programming experience or not, and it is turing-complete and universal. At the same time, it is so simple that I can write its interpreter or even a compiler without knowing how 'real' compilers work or how to write a 'real' compiler. Heck, I can even write a bytecompiler for an intermediate language!
+SOF is a tool for understanding programming languages. It is very usable, the learning curve is not very steep regardless of whether you have programming experience or not, and it is turing-complete and universal. At the same time, it is so simple that I can write its interpreter or even a compiler without knowing how 'real' compilers work or how to write a 'real' compiler. Even very primitive environments should be able to parse and run SOF.
 
-By creating a programming language which takes one concept to the extreme and sticks with it by any means, even when introducing new concepts, I want to explore programming in such a 'focused' language, which is so different from the mainstream of OOP and even from the other outliers such as FP and logical programming.
+Just to be pretentious; Antoine de Saint-Exupéry is famously quoted on
 
-I was surprised at how easy it was to create an immensly powerful programming language by just introducing some general features. For example, the code block construct powers all of OOP, FP, enables turing-completeness, makes SOF higher-order and makes not only functions, but code in general first-class objects.
+> Perfection is achieved, not when there is nothing more to add, but when there is nothing left to take away.
+
+I think that SOF is an excellent example of this. I cannot currently think of anything that you can take away from SOF without making it inferior in capability (or, at least, severely less usable, like removing the function PT would do, for example). It is very surprising indeed that such a simple thing as a reverse-polish notation language with three token types and literally less than 30 lines of syntax definition could be as feature-rich and capable as any other modern programming language, even if with odd syntax and inferior speed. (The latter is down to me being simply not capable of writing an efficient interpreter or any sort of compiler. PostScript and Forth prove that postfix languages can be extremely performant.)
 
 ## 5. EBNF Syntax definition
 
-This formal syntax definition utilizes standard Extended Backus-Naur Form formal language grammar notation. An entire SOF program needs to conform to the syntax of `SofProgram`.
+This formal syntax definition utilizes standard Extended Backus-Naur Form formal language grammar notation. An entire SOF program needs to conform to the syntax of `SofProgram`. Note that this syntax may be incorrect and will be rechecked with the language in the future.
+
+Identifiers are quite restricted in the characters they can contain. The characters `'`, `:` and `_` are to be used for word separation or language conventions that denote return type, argument count etc. [see here](https://github.com/kleinesfilmroellchen/sof-language/wiki/Programming-conventions). However, all normal Unicode alphabetical characters are allowed, i.e. every character that is used in some language's normal text. SOF is therefore suited for international use by design. In contrast to identifiers, primitive tokens may contain any characters but are most often valid identifiers, as well.
 
 ```ebnf
-
 SofProgram = { Token } ;
-Token = "def" | "dup" | "write" | "writeln" | "pop"
-      | "if" | "else" | "elseif" | "while" | "for"
-      | "+" | "-" | "*" | "/" | "%" | "."
-      | "<" | "<=" | ">" | ">=" | "="
+Token = "def" | "dup" | "pop" | "swap" | "write" | "writeln" | "input" | "inputln"
+      | "if" | "else" | "elseif" | "while" | "switch"
+      | "+" | "-" | "*" | "/" | "%" | "and" | "or" | "xor" | "not" | "." | ":"
+      | "<" | "<=" | ">" | ">=" | "=" | "/="
       | "[" | "]"
       | Number | String | Boolean
       | Identifier | CodeBlock ;
-Identifier = ? any Unicode character with class "Alphabetical" ? { ? Unicode Alphabetical ? | DecimalDigits | "_" } ;
+Identifier = ? Unicode "Alphabetical" ? { ? Unicode "Alphabetical" ? | DecimalDigits | "_" | "'" | ":" } ;
 CodeBlock = "{" { Token } "}" ;
-
 (* Literals *)
-String = '"' { ? any character, including the terminal sequence '\"' ? } '"' ;
+String = '"' { ? any character ? '\"' } '"' ;
 Boolean = "true" | "false" | "True" | "False" ;
 Number = [ "+" | "-" ] ( Integer | Decimal ) ;
 Integer = "0" ( "h" | "x" ) HexDigits { HexDigits }
@@ -213,13 +213,11 @@ Integer = "0" ( "h" | "x" ) HexDigits { HexDigits }
 	| "0o" OctalDigits { DecimalDigits }
 	| "0b" BinaryDigits { BinaryDigits } ;
 Decimal = DecimalDigits { DecimalDigits } "." DecimalDigits { DecimalDigits }
-          [ ("e" | "E") [ "+" | "-" ] DecimalDigits { DecimalDigits } ] ;
-
+          [ ("e" | "E") ( "+" | "-" ) DecimalDigits { DecimalDigits } ] ;
 BinaryDigits = "0" | "1" ;
 OctalDigits = BinaryDigits | "2" | "3" | "4" | "5" | "6" | "7" ;
 DecimalDigits = OctalDigits | "8" | "9" ;
 HexDigits = DecimalDigits | "a" | "b" | "c" | "d" | "e" | "f" | "A" | "B" | "C" | "D" | "E" | "F" ;
-
 ```
 
 ## The SOF interpreter
