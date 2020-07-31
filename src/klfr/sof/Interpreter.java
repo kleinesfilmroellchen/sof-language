@@ -107,7 +107,9 @@ public class Interpreter implements Serializable {
 	/**
 	 * Run a parsed SOF program without resetting state. This method is thread-safe
 	 * and will only allow one execution on this interpreter at the same time.
-	 * Therefore, it cannot be called recursively.
+	 * Therefore, it cannot be called recursively. This method does not reset the
+	 * interpreter and is therefore suitable for interactive execution or any other
+	 * kind of execution that is done in steps.
 	 * 
 	 * @return this interpreter.
 	 */
@@ -321,8 +323,7 @@ public class Interpreter implements Serializable {
 				break;
 			}
 			case DoubleCall: {
-				final Stackable toCall = this.stack.pop();
-				this.doCall(toCall);
+				this.doCall(this.stack.pop());
 				this.doCall(this.stack.pop());
 				break;
 			}
@@ -395,7 +396,7 @@ public class Interpreter implements Serializable {
 	 * Helper function to execute the call operation on the stackable, depending on
 	 * the type. This function may modify the current interpreter state.
 	 */
-	private void doCall(final Stackable toCall) throws CompilerException, CompilerException.Incomplete {
+	private void doCall(final Stackable toCall) throws CompilerException.Incomplete {
 		if (toCall instanceof Identifier) {
 			final var id = (Identifier) toCall;
 			final var val = this.stack.lookup(id);

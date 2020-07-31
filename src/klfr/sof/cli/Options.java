@@ -17,7 +17,9 @@ import java.util.logging.Logger;
 import klfr.sof.CompilerException;
 import klfr.sof.IOInterface;
 import klfr.sof.Interpreter;
+import klfr.sof.Parser;
 import klfr.sof.Preprocessor;
+import klfr.sof.ast.Node;
 
 import static klfr.sof.Interpreter.R;
 
@@ -125,50 +127,49 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 			case Interactive: {
 				//// Interactive interpretation
 				io.println(CLI.INFO_STRING);
-				// NaiveInterpreter interpreter = new NaiveInterpreter().reset();
-				// interpreter.internal.setIO(io);
-
-				// Scanner scanner = io.newInputScanner();
-				// // scanner.useDelimiter("[[^\n]\\s+]");
-				// io.print(">>> ");
-				// while (scanner.hasNextLine()) {
-				// 	String code = scanner.nextLine();
-				// 	var curEnd = interpreter.internal.tokenizer().getState().code.length();
-				// 	// catches all unwanted compilation errors
-				// 	try {
-				// 		// catches "unclosed"-compilation errors which might be resolved by adding more
-				// 		// content on another line
-				// 		try {
-				// 			interpreter.appendLine(Preprocessor.preprocessCode(code));
-				// 		} catch (CompilerException e) {
-				// 			// one invalid line: let user input as many continuation lines as they want
-				// 			while (true) {
-				// 				io.print("... ");
-				// 				var nl = scanner.nextLine();
-				// 				// end on blank line
-				// 				if (nl.isBlank())
-				// 					break;
-				// 				code += "\n" + nl;
-				// 			}
-				// 			interpreter.appendLine(Preprocessor.preprocessCode(code));
-				// 		}
-				// 		var state = interpreter.internal.tokenizer().getState();
-				// 		state.end = curEnd;
-				// 		interpreter.internal.tokenizer().setState(state);
-				// 		while (interpreter.canExecute()) {
-				// 			interpreter.executeOnce();
-				// 		}
-				// 	} catch (CompilerException e) {
-				// 		io.println("!!! " + e.getLocalizedMessage());
-				// 		log.log(Level.SEVERE,
-				// 				("Compiler Exception occurred.\nUser-friendly message: " + e.getLocalizedMessage()
-				// 						+ "\nStack trace:\n" + Arrays.stream(e.getStackTrace()).map(ste -> ste.toString())
-				// 								.reduce("", (a, b) -> (a + "\n  " + b).strip())
-				// 						+ "\n").indent(2));
-				// 	}
-				// 	io.print(">>> ");
-				// }
-				// scanner.close();
+				Interpreter engine = new Interpreter(io);
+				Scanner scanner = io.newInputScanner();
+				// scanner.useDelimiter("[[^\n]\\s+]");
+				io.print(">>> ");
+				while (scanner.hasNextLine()) {
+					String code = scanner.nextLine();
+					// catches all unwanted compilation errors
+					try {
+						Node ast = null;
+						try {
+							// may throw
+							ast = Parser.parse(Preprocessor.preprocessCode(code));
+						} catch (CompilerException e) {
+							// give the user more lines to possibly fix the syntax error
+							while (true) {
+								io.print("... ");
+								final var nl = scanner.nextLine();
+								// end on blank line
+								if (nl.isBlank())
+									break;
+								// update unclean code
+								code += "\n" + nl;
+							}
+							// may throw again, in this case even with additional lines the code is bad
+							ast = Parser.parse(Preprocessor.preprocessCode(code));
+						}
+						// in any case, execute
+						if (ast != null) {
+							log.fine(ast.toString());
+							engine.run(ast, code);
+						}
+					} catch (CompilerException e) {
+						// outer catch catches all runtime errors e.g. type and stack errors
+						io.println("!!! " + e.getLocalizedMessage());
+						log.log(Level.SEVERE,
+								("Compiler Exception occurred.\nUser-friendly message: " + e.getLocalizedMessage()
+										+ "\nStack trace:\n" + Arrays.stream(e.getStackTrace()).map(ste -> ste.toString())
+												.reduce("", (a, b) -> (a + "\n  " + b).strip())
+										+ "\n").indent(2));
+					}
+					io.print(">>> ");
+				}
+				scanner.close();
 				break;
 			}
 			case VersionInfo: {
@@ -248,7 +249,8 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 		}
 		// decide over execution type depending on argument count
 		if (opt.executionType == Options.ExecutionType.Interactive)
-			opt.executionType = idx < cmdLineArguments.size() ? Options.ExecutionType.File : Options.ExecutionType.Interactive;
+			opt.executionType = idx < cmdLineArguments.size() ? Options.ExecutionType.File
+					: Options.ExecutionType.Interactive;
 		if (opt.executionType == Options.ExecutionType.File)
 			while (idx < cmdLineArguments.size()) {
 				opt.executionStrings.add(cmdLineArguments.get(idx++));
