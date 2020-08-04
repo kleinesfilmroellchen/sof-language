@@ -47,6 +47,8 @@ or filename), sof is started in interactive mode.
 Quit the program with ^C.
 ```
 
+A basic Visual Studio language support extension has been written, which can be found [on the marketplace](https://marketplace.visualstudio.com/items?itemName=kleinesfilmroellchen.sof-language-support) and [here on github](https://github.com/kleinesfilmroellchen/sof-syntaxhighlight).
+
 ## 1. What is SOF?
 
 ```sof
