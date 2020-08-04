@@ -1,6 +1,16 @@
 # Standard library preamble. This file is subject to the SOF language project copyright.
 
+{ "klfr.sof.lib.Builtins#convertInt(StringPrimitive)" nativecall } 1 function convert:int globaldef
 
+{ "klfr.sof.lib.Builtins#convertFloat(StringPrimitive)" nativecall } 1 function convert:float globaldef
+
+{ "klfr.sof.lib.Builtins#convertCallable(StringPrimitive)" nativecall } 1 function convert:callable globaldef
+
+{ "klfr.sof.lib.Builtins#random01()" nativecall } 0 function random:01 globaldef
+
+{ "klfr.sof.lib.Builtins#random(IntPrimitive,IntPrimitive)" nativecall } 2 function random:int globaldef
+
+{ "klfr.sof.lib.Builtins#random(FloatPrimitive,FloatPrimitive)" nativecall } 2 function random:float globaldef
 
 
 # The SOF programming language interpreter.
