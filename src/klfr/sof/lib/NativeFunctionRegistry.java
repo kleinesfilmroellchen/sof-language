@@ -2,8 +2,7 @@ package klfr.sof.lib;
 
 import java.lang.reflect.*;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.stream.*;
 
 import klfr.sof.lang.*;
 import klfr.Tuple;
