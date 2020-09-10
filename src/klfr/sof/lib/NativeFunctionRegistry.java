@@ -2,6 +2,7 @@ package klfr.sof.lib;
 
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.*;
 
 import klfr.sof.lang.*;
@@ -13,6 +14,7 @@ import klfr.sof.*;
  * function implementor uses this class to register native functions.
  */
 public final class NativeFunctionRegistry {
+	private static final Logger log = Logger.getLogger(NativeFunctionRegistry.class.getCanonicalName());
 
 	/** The maximum number of parameters the native function system supports. */
 	public static int MAX_PARAMETER_COUNT = 3;
@@ -76,15 +78,15 @@ public final class NativeFunctionRegistry {
 	 */
 	public static void registerNativeFunctions(Class<?> clazz) {
 		// FP for da win
-		Arrays.stream(clazz.getMethods())
+		Arrays.stream(clazz.getDeclaredMethods())
 				// only public static methods, only methods without too many parameters
 				.filter(m -> Modifier.isStatic(m.getModifiers()) && Modifier.isPublic(m.getModifiers())
 						&& m.getParameterCount() <= MAX_PARAMETER_COUNT)
 				// only methods with only Stackable or Stackable subtype parameters
 				.filter(
 						m -> Arrays.stream(m.getParameterTypes()).allMatch(ptype -> Stackable.class.isAssignableFrom(ptype)))
-				// only methods with Stackable return type
-				.filter(m -> Stackable.class.isAssignableFrom(m.getReturnType()))
+				// only methods with Stackable return type (or no return value)
+				.filter(m -> Stackable.class.isAssignableFrom(m.getReturnType()) || (m.getReturnType() == void.class))
 				// group by parameter count
 				.collect(Collectors.groupingByConcurrent(Method::getParameterCount))
 				// map the methods to one of the mcallN a proxies and flatten streams
@@ -103,8 +105,8 @@ public final class NativeFunctionRegistry {
 	 *         does nothing and returns null if the specified native function was
 	 *         not found.
 	 */
-	public static NativeNArgFunction getNativeFunction(String fidentifier) {
-		return nativeFunctions.getOrDefault(fidentifier, NativeNArgFunction.dummy);
+	public static Optional<NativeNArgFunction> getNativeFunction(String fidentifier) {
+		return Optional.ofNullable(nativeFunctions.getOrDefault(fidentifier, null));
 	}
 
 	/**
@@ -138,7 +140,9 @@ public final class NativeFunctionRegistry {
 				return (Stackable) function.invoke(null);
 			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
 					| ExceptionInInitializerError e) {
-				throw new CompilerException.Incomplete(null, "native");
+				final var ce = new CompilerException.Incomplete("native");
+				ce.initCause(e);
+				throw ce;
 			}
 		};
 	}
@@ -153,7 +157,9 @@ public final class NativeFunctionRegistry {
 				return (Stackable) function.invoke(null, a);
 			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
 					| ExceptionInInitializerError e) {
-				throw new CompilerException.Incomplete(null, "native");
+				final var ce = new CompilerException.Incomplete("native");
+				ce.initCause(e);
+				throw ce;
 			}
 		};
 	}
@@ -168,7 +174,9 @@ public final class NativeFunctionRegistry {
 				return (Stackable) function.invoke(null, a, b);
 			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
 					| ExceptionInInitializerError e) {
-				throw new CompilerException.Incomplete(null, "native");
+				final var ce = new CompilerException.Incomplete("native");
+				ce.initCause(e);
+				throw ce;
 			}
 		};
 	}
@@ -183,7 +191,9 @@ public final class NativeFunctionRegistry {
 				return (Stackable) function.invoke(null, a, b, c);
 			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
 					| ExceptionInInitializerError e) {
-				throw new CompilerException.Incomplete(null, "native");
+				final var ce = new CompilerException.Incomplete("native");
+				ce.initCause(e);
+				throw ce;
 			}
 		};
 	}
@@ -201,10 +211,27 @@ public final class NativeFunctionRegistry {
 	public static String generateDescriptor(Method function) {
 		final String className = function.getDeclaringClass().getSimpleName(), methodName = function.getName(),
 				packageName = function.getDeclaringClass().getPackageName();
-		final var arguments = String.join(",",
-				(String[]) Arrays.stream(function.getParameterTypes()).map(pt -> pt.getSimpleName()).toArray());
+		final var arguments = Arrays.stream(function.getParameterTypes()).map(pt -> pt.getSimpleName()).collect(Collectors.joining(","));
 		return new StringBuilder(packageName).append(".").append(className).append("#").append(methodName).append("(")
 				.append(arguments).append(")").toString();
 	}
 
 }
+
+/*
+The SOF programming language interpreter. Copyright (C) 2019-2020
+kleinesfilmröllchen
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+details.
+
+You should have received a copy of the GNU General Public License along with
+this program. If not, see <https://www.gnu.org/licenses/>.
+*/

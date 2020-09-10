@@ -3,13 +3,10 @@ package klfr.sof.test;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.*;
 
-import klfr.Tuple;
-import klfr.sof.CompilerException;
 import klfr.sof.lang.*;
 import klfr.sof.lib.*;
 

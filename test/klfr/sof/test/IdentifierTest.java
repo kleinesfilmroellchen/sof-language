@@ -1,6 +1,8 @@
 package klfr.sof.test;
 
 import static org.junit.jupiter.api.Assertions.*;
+
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import klfr.sof.CompilerException;
@@ -9,6 +11,7 @@ import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 
 class IdentifierTest extends SofTestSuper {
 
+	@DisplayName("Test Identifier.getValue() and Identifier::new")
 	@Test
 	void testGetValue() {
 		Identifier i = assertDoesNotThrow(() -> new Identifier("test'"));
@@ -21,12 +24,14 @@ class IdentifierTest extends SofTestSuper {
 		assertEquals("はるこ_κοπαΞΕΚ", i.getValue(), "identifier getvalue test with japanese and greek");
 	}
 
+	@DisplayName("Test Identifier.print()")
 	@Test
 	void testGetDebugDisplay() {
 		Identifier i = assertDoesNotThrow(() -> new Identifier("test'"));
 		assertEquals("test'", i.print(), "Basic identifier print test");
 	}
 
+	@DisplayName("Test Identifier validity check")
 	@Test
 	void testIsValidIdentifier() {
 		assertThrows(CompilerException.Incomplete.class, () -> new Identifier("-abc-def"), "Invalid Identifier test");
@@ -41,6 +46,7 @@ class IdentifierTest extends SofTestSuper {
 	/**
 	 * Tests other methods such as equals(), clone() etc.
 	 */
+	@DisplayName("Test Identifier minor methods")
 	@Test
 	void testOther() {
 		Identifier i = new Identifier("abc");
