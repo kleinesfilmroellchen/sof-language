@@ -135,7 +135,7 @@ public class CompilerException extends RuntimeException {
 	 */
 	public static CompilerException fromCurrentPosition(TokenizerState expressionInfo, String name, String reason,
 			final Object... formatArguments) {
-		return fromCurrentPosition(Tokenizer.fromState(expressionInfo), name, reason);
+		return fromCurrentPosition(Tokenizer.fromState(expressionInfo), name, reason, formatArguments);
 	}
 
 	/**
@@ -154,7 +154,7 @@ public class CompilerException extends RuntimeException {
 	public static CompilerException fromCurrentPosition(String fullExpression, int index, String name, String reason,
 			final Object... formatArguments) {
 		var info = new TokenizerState(index, index + 1, 0, fullExpression.length(), fullExpression);
-		return fromCurrentPosition(info, name, reason);
+		return fromCurrentPosition(info, name, reason, formatArguments);
 	}
 
 	/**
