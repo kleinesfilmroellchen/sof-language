@@ -61,6 +61,13 @@ public class CompilerException extends RuntimeException {
 			this.formatArguments = formatArguments;
 		}
 
+		/**
+		 * Constructs a compiler exception that does not have all information for nice
+		 * formatting.
+		 * 
+		 * @param nameKey         Name and explanation of the exception, as an accessor
+		 *                        into the message resources 'sof.error.type'
+		 */
 		public Incomplete(String string) {
 			this(string, null);
 		}

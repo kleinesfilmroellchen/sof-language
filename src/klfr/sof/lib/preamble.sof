@@ -1,0 +1,32 @@
+# Standard library preamble. This file is subject to the SOF language project copyright.
+
+{ "klfr.sof.lib.Builtins#convertInt(Stackable)" nativecall } 1 function convert:int globaldef
+
+{ "klfr.sof.lib.Builtins#convertFloat(Stackable)" nativecall } 1 function convert:float globaldef
+
+{ "klfr.sof.lib.Builtins#convertCallable(Stackable)" nativecall } 1 function convert:callable globaldef
+
+{ "klfr.sof.lib.Builtins#convertString(Stackable)" nativecall } 1 function convert:string globaldef
+
+{ "klfr.sof.lib.Builtins#random01()" nativecall } 0 function random:01 globaldef
+
+{ "klfr.sof.lib.Builtins#random(IntPrimitive,IntPrimitive)" nativecall } 2 function random:int globaldef
+
+{ "klfr.sof.lib.Builtins#random(FloatPrimitive,FloatPrimitive)" nativecall } 2 function random:float globaldef
+
+
+# The SOF programming language interpreter.
+# Copyright (C) 2019-2020  kleinesfilmröllchen
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
