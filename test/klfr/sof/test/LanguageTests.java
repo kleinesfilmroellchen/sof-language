@@ -29,6 +29,7 @@ import klfr.sof.IOInterface;
 import klfr.sof.Interpreter;
 import klfr.sof.Parser;
 import klfr.sof.Preprocessor;
+import klfr.sof.cli.CLI;
 
 /**
  * The language test class is responsible for running the tests on the SOF
@@ -87,6 +88,7 @@ public class LanguageTests extends SofTestSuper {
 									final var engine = new Interpreter(iface);
 									final var ast = Parser.parse(code);
 									final var time = System.nanoTime();
+									CLI.runPreamble(engine);
 									engine.run(ast, code);
 									final var finish = System.nanoTime();
 									log.info(String.format("Source test %-20s completed in %12.3f µs, %3d asserts total", file,

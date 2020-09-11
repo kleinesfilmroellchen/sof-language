@@ -2,7 +2,6 @@ package klfr.sof;
 
 import java.util.Formatter;
 import java.util.ResourceBundle;
-import java.util.Scanner;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 

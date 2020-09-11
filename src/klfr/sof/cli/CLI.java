@@ -6,6 +6,7 @@ import static klfr.sof.Interpreter.R;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.net.*;
+import java.nio.charset.Charset;
 import java.time.*;
 import java.time.format.*;
 import java.util.*;
@@ -23,16 +24,26 @@ public class CLI {
 
 	private static final Logger log = Logger.getLogger(CLI.class.getCanonicalName());
 
+	/**
+	 * Parsed Code for the SOF preamble, which is responsible for the builtin
+	 * function setup.
+	 */
+	private static Node preambleCode;
+	private static String preambleCodeStr;
+
 	public static void main(String[] args) throws InvocationTargetException, UnsupportedEncodingException, IOException {
 		// setup console info logging
 		LogManager.getLogManager().reset();
-		Logger.getLogger("").setLevel(Level.FINEST);
+		final var bl = Logger.getLogger("");
+		bl.setLevel(Level.FINEST);
 		var ch = new ConsoleHandler();
 		ch.setLevel(Level.OFF);
-		Logger.getLogger("").addHandler(ch);
+		bl.addHandler(ch);
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-			Logger.getLogger("").info("SOF exiting.");
+			bl.info("SOF exiting.");
 		}));
+		//System.out.println(ResourceBundle.getBundle(Interpreter.MESSAGE_RESOURCE).getBaseBundleName());
+		//bl.setResourceBundle(R);
 
 		var opt = Options.parseOptions(args);
 
@@ -118,8 +129,10 @@ public class CLI {
 		if ((flags & Options.NO_PREPROCESSOR) == 0)
 			code = Preprocessor.preprocessCode(code);
 
+		// parse
 		Node ast = Parser.parse(code);
-		io.println(ast);
+		if (io.debug)
+			io.println(ast);
 
 		// count nodes
 		var nc = 0;
@@ -130,19 +143,52 @@ public class CLI {
 		}
 		final var nodeCount = nc;
 
+		// run preamble
+		runPreamble(interpreter);
+
+		// run code
 		final var startTime = System.nanoTime();
 		interpreter.run(ast, code);
 		final var finishTime = System.nanoTime();
 		final var execTimeµs = (finishTime - startTime) / 1_000d;
 
+		// logging, performance
 		log.info(String.format("Ran %d asserts.", interpreter.getAssertCount()));
 		final Supplier<String> perfInfo = () -> String.format(
 				"PERFORMANCE: Ran %9.3f ms (%4d nodes in %12.3f µs, avg %7.2f µs/node)", execTimeµs / 1_000d, nodeCount,
 				execTimeµs, execTimeµs / nodeCount);
-		log.info(perfInfo);
 		if ((flags & Options.PERFORMANCE) > 0)
 			io.println(perfInfo.get());
 		log.exiting(CLI.class.getCanonicalName(), "doFullExecution");
+	}
+
+	/**
+	 * Helper function that runs the preamble code on the interpreter, and may parse
+	 * the preamble code if necessary.
+	 * 
+	 * @param interpreter The interpreter on which the preamble should be run.
+	 */
+	public static void runPreamble(Interpreter interpreter) {
+		// parse preamble if not yet done
+		if (preambleCode == null) {
+			try {
+				// get code
+				final var pStream = CLI.class.getModule().getClassLoader().getResource("klfr/sof/lib/preamble.sof").openStream();
+				final var pReader = new InputStreamReader(pStream, Charset.forName("utf-8"));
+				final var pWriter = new StringWriter();
+				pReader.transferTo(pWriter);
+				preambleCodeStr = pWriter.toString();
+				pWriter.close(); pStream.close();
+
+				// parse code
+				preambleCodeStr = Preprocessor.preprocessCode(preambleCodeStr);
+				preambleCode = Parser.parse(preambleCodeStr);
+			} catch (IOException | NullPointerException e) {
+				interpreter.getIO().println(R.getString("sof.cli.nopreamble"));
+				throw new RuntimeException(e);
+			}
+		}
+		interpreter.run(preambleCode, preambleCodeStr);
 	}
 
 	/**

@@ -34,7 +34,7 @@ public class Interpreter implements Serializable {
 	 * error messages and debug terms.
 	 */
 	public static final String MESSAGE_RESOURCE = "klfr.sof.SOFMessages";
-	public static final ResourceBundle R = ResourceBundle.getBundle(MESSAGE_RESOURCE, Locale.GERMAN);
+	public static final ResourceBundle R = ResourceBundle.getBundle(MESSAGE_RESOURCE);
 
 	// #endregion
 

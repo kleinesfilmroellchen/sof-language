@@ -128,6 +128,7 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 				//// Interactive interpretation
 				io.println(CLI.INFO_STRING);
 				Interpreter engine = new Interpreter(io);
+				CLI.runPreamble(engine);
 				Scanner scanner = io.newInputScanner();
 				// scanner.useDelimiter("[[^\n]\\s+]");
 				io.print(">>> ");

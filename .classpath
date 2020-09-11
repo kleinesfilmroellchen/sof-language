@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry including="**/*.java|**/*.properties" kind="src" path="src"/>
+	<classpathentry including="**/*.java|**/*.properties|**/*.sof" kind="src" path="src"/>
 	<classpathentry kind="src" output="testbins" path="test">
 		<attributes>
 			<attribute name="test" value="true"/>
