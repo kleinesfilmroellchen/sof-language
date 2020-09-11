@@ -224,10 +224,16 @@ HexDigits = DecimalDigits | "a" | "b" | "c" | "d" | "e" | "f" | "A" | "B" | "C" 
 
 ## The SOF interpreter
 
-The main project at the current date is to complete the SOF interpreter, the program that executes SOF source code. At the current state it is a very bare-bones non-optimized command line program written in Java 10. The interpreter is extremely simple in that it does not do any optimization and never compiles code to any intermediate level before it is run.
+The main project at the current date is to complete the SOF interpreter, the program that executes SOF source code. At the current state it is a very bare-bones non-optimized command line program written in Java 12. The interpreter is extremely simple in that it does not do any optimization and just uses an AST as intermediate representation.
 
 While in development, the special primitive tokens `describe` and `describes` can be used when starting the interpreter with the debug flag '-d' to describe the topmost stack element and the entire stack and global nametable, respectively.
 
-Currently there is only basic output, arithmetic, literals, variable definition and calling in the local scope implemented. However, I will continue to extend the interpreter's capabilities until it reaches the prospected language definition. This means that many times I will talk about and document the language's vision instead of its current state, so don't be confused.
+Currently many fundamental features, including base features (variables, arithmetic, branching), functions and codeblocks, native calls implemented. However, I will continue to extend the interpreter's capabilities until it reaches the prospected language definition. This means that many times I will talk about and document the language's vision instead of its current state, so don't be confused.
 
-The project is coming up on 50% code coverage through JUnit5 tests, and the long-term goal is as close to 100% as possible. As many of the main files, like the `Interpreter` and `CLI` classes, are hard to test, this will probably never be achieved but anywhere near that goal is good enough. I am very welcome to any test contributions!
+The project is coming up on 70% code coverage through JUnit5 tests, and the long-term goal is as close to 100% as possible. As many of the main files, like the `Interpreter` and `CLI` classes, are hard to test, this will probably never be achieved but anywhere near that goal is good enough. I am very welcome to any test contributions!
+
+Tests can be run with:
+
+```
+java -jar C:\Users\malub\Documents\java-libs\junit-platform-console-standalone-1.7.0-M1.jar --cp bin:testbins -o sof -p klfr.sof.test
+```
