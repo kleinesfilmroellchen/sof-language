@@ -153,13 +153,7 @@ public class CLI {
 			io.println(ast);
 
 		// count nodes
-		var nc = 0;
-		if (io.debug || (flags & Options.PERFORMANCE) > 0) {
-			for (@SuppressWarnings("unused")
-			Node n : ast)
-				++nc;
-		}
-		final var nodeCount = nc;
+		final var nodeCount = (io.debug || (flags & Options.PERFORMANCE) > 0) ? ast.nodeCount() : 0;
 
 		// run preamble
 		runPreamble(interpreter);

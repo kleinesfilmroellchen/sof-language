@@ -68,6 +68,9 @@ public interface Node extends Serializable, Cloneable, Iterable<Node> {
 	@Override
 	String toString();
 
+	/** Count the subnodes of this node, including this node itself. The default returns 1. */
+	public default int nodeCount() { return 1; }
+
 }
 
 /*  

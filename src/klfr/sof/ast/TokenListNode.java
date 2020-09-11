@@ -73,6 +73,11 @@ public class TokenListNode implements Node {
 		return subNodes.size();
 	}
 
+	@Override
+	public int nodeCount() {
+		return subNodes.parallelStream().mapToInt(n -> n.nodeCount()).sum();
+	}
+
 }
 
 /*  
