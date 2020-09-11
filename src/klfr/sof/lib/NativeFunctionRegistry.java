@@ -138,8 +138,15 @@ public final class NativeFunctionRegistry {
 		return () -> {
 			try {
 				return (Stackable) function.invoke(null);
-			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
+			} catch (IllegalAccessException | IllegalArgumentException
 					| ExceptionInInitializerError e) {
+				final var ce = new CompilerException.Incomplete("native");
+				ce.initCause(e);
+				throw ce;
+			} catch (InvocationTargetException e) {
+				final var cause = e.getCause();
+				if (cause instanceof CompilerException.Incomplete)
+					throw (CompilerException.Incomplete)cause;
 				final var ce = new CompilerException.Incomplete("native");
 				ce.initCause(e);
 				throw ce;
@@ -155,8 +162,15 @@ public final class NativeFunctionRegistry {
 		return (a) -> {
 			try {
 				return (Stackable) function.invoke(null, a);
-			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
+			} catch (IllegalAccessException | IllegalArgumentException
 					| ExceptionInInitializerError e) {
+				final var ce = new CompilerException.Incomplete("native");
+				ce.initCause(e);
+				throw ce;
+			} catch (InvocationTargetException e) {
+				final var cause = e.getCause();
+				if (cause instanceof CompilerException.Incomplete)
+					throw (CompilerException.Incomplete)cause;
 				final var ce = new CompilerException.Incomplete("native");
 				ce.initCause(e);
 				throw ce;
@@ -172,8 +186,15 @@ public final class NativeFunctionRegistry {
 		return (a, b) -> {
 			try {
 				return (Stackable) function.invoke(null, a, b);
-			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
+			} catch (IllegalAccessException | IllegalArgumentException
 					| ExceptionInInitializerError e) {
+				final var ce = new CompilerException.Incomplete("native");
+				ce.initCause(e);
+				throw ce;
+			} catch (InvocationTargetException e) {
+				final var cause = e.getCause();
+				if (cause instanceof CompilerException.Incomplete)
+					throw (CompilerException.Incomplete)cause;
 				final var ce = new CompilerException.Incomplete("native");
 				ce.initCause(e);
 				throw ce;
@@ -189,8 +210,15 @@ public final class NativeFunctionRegistry {
 		return (a, b, c) -> {
 			try {
 				return (Stackable) function.invoke(null, a, b, c);
-			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
+			} catch (IllegalAccessException | IllegalArgumentException
 					| ExceptionInInitializerError e) {
+				final var ce = new CompilerException.Incomplete("native");
+				ce.initCause(e);
+				throw ce;
+			} catch (InvocationTargetException e) {
+				final var cause = e.getCause();
+				if (cause instanceof CompilerException.Incomplete)
+					throw (CompilerException.Incomplete)cause;
 				final var ce = new CompilerException.Incomplete("native");
 				ce.initCause(e);
 				throw ce;

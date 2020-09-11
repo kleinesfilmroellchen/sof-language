@@ -9,6 +9,8 @@ import klfr.sof.ast.*;
 import klfr.sof.lang.*;
 import klfr.sof.lang.Stack;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
+import klfr.sof.lib.*;
+import klfr.sof.lib.NativeFunctionRegistry.*;
 
 /**
  * 
@@ -72,9 +74,6 @@ public class Interpreter implements Serializable {
 
 	protected int assertCount;
 
-	/** Stores the current code while the interpreter is running a program. */
-	private transient String currentCode = "";
-
 	/**
 	 * Returns the number of asserts that were successfully performed by this
 	 * interpreter.
@@ -116,9 +115,7 @@ public class Interpreter implements Serializable {
 	public Interpreter run(Node program, String currentCode) throws CompilerException {
 		synchronized (this) {
 			log.entering(Interpreter.class.getCanonicalName(), "run # synchronized");
-			this.currentCode = currentCode;
 			program.forEach((Function<Node, Boolean>) this::handle);
-			this.currentCode = "";
 		}
 		log.exiting(Interpreter.class.getCanonicalName(), "run");
 		return this;
@@ -139,7 +136,7 @@ public class Interpreter implements Serializable {
 			else
 				throw new RuntimeException("Unknown node type.");
 		} catch (CompilerException.Incomplete incomplete) {
-			throw CompilerException.fromIncomplete(this.currentCode, n.getCodeIndex(), incomplete);
+			throw CompilerException.fromIncomplete(n.getCode(), n.getCodeIndex(), incomplete);
 		}
 	}
 
@@ -327,6 +324,10 @@ public class Interpreter implements Serializable {
 				this.doCall(this.stack.pop());
 				break;
 			}
+			case NativeCall: {
+				this.doNativeCall(this.stack.pop());
+				break;
+			}
 			case Define: {
 				final var id = this.stack.popTyped(Identifier.class);
 				final var value = this.stack.pop();
@@ -382,7 +383,7 @@ public class Interpreter implements Serializable {
 			}
 			case Assert: {
 				if (this.stack.pop().isFalse())
-					throw CompilerException.fromCurrentPosition(this.currentCode, pt.getCodeIndex(), "assert", null);
+					throw CompilerException.fromCurrentPosition(pt.getCode(), pt.getCodeIndex(), "assert", null);
 				++this.assertCount;
 				break;
 			}
@@ -390,6 +391,52 @@ public class Interpreter implements Serializable {
 				throw new RuntimeException("Unhandled primitive token.");
 		}
 		return true;
+	}
+
+	/**
+	 * Executes a native call on this interpreter, using the given native function
+	 * name as an SOF string. This may modify the stack.
+	 * @param _fname The native function name, as an SOF string.
+	 */
+	private void doNativeCall(Stackable _fname) {
+		// typecheck and retrieve function
+		if (!(_fname instanceof StringPrimitive))
+			throw new CompilerException.Incomplete("type");
+		final var fname = ((StringPrimitive) _fname).value();
+		log.fine(() -> String.format("Native call function '%s'", fname));
+		final var nativeFunc_ = NativeFunctionRegistry.getNativeFunction(fname);
+		if (nativeFunc_.isEmpty())
+			throw new CompilerException.Incomplete("native", "native.unknown", fname);
+		final var nativeFunc = nativeFunc_.get();
+		
+		// switch over type
+		if (nativeFunc instanceof Native0ArgFunction) {
+			final var func = (Native0ArgFunction) nativeFunc;
+			final var res = func.call();
+			log.finer(() -> String.format("Native call 0 arg function returned %s", res.toDebugString(DebugStringExtensiveness.Compact)));
+			if (res != null) this.stack.push(res);
+		} else if (nativeFunc instanceof Native1ArgFunction) {
+			final var func = (Native1ArgFunction) nativeFunc;
+			final var arg0 = this.stack.pop();
+			final var res = func.call(arg0);
+			log.finer(() -> String.format("Native call 1 arg function returned %s", res.toDebugString(DebugStringExtensiveness.Compact)));
+			if (res != null) this.stack.push(res);
+		} else if (nativeFunc instanceof Native2ArgFunction) {
+			final var func = (Native2ArgFunction) nativeFunc;
+			final var arg1 = this.stack.pop();
+			final var arg0 = this.stack.pop();
+			final var res = func.call(arg0, arg1);
+			log.finer(() -> String.format("Native call 2 arg function returned %s", res.toDebugString(DebugStringExtensiveness.Compact)));
+			if (res != null) this.stack.push(res);
+		} else if (nativeFunc instanceof Native3ArgFunction) {
+			final var func = (Native3ArgFunction) nativeFunc;
+			final var arg2 = this.stack.pop();
+			final var arg1 = this.stack.pop();
+			final var arg0 = this.stack.pop();
+			final var res = func.call(arg0, arg1, arg2);
+			log.finer(() -> String.format("Native call 3 arg function returned %s", res.toDebugString(DebugStringExtensiveness.Compact)));
+			if (res != null) this.stack.push(res);
+		}
 	}
 
 	/**

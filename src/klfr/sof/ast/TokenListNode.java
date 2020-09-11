@@ -12,20 +12,26 @@ public class TokenListNode implements Node {
 
 	private final List<Node> subNodes;
 	private final int index;
+	private final String code;
 
 	@Override
 	public int getCodeIndex() {
 		return index;
 	}
+	@Override
+	public String getCode() {
+		return code;
+	}
 
-	public TokenListNode(List<Node> subNodes, int index) {
+	public TokenListNode(List<Node> subNodes, int index, String code) {
 		this.subNodes = subNodes;
 		this.index = index;
+		this.code = code;
 	}
 
 	@Override
 	public Object cloneNode() throws CloneNotSupportedException {
-		return new TokenListNode(subNodes, index);
+		return new TokenListNode(subNodes, index, code);
 	}
 
 	@Override

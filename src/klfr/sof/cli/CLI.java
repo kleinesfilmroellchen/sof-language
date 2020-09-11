@@ -15,6 +15,7 @@ import java.util.logging.*;
 
 import klfr.sof.*;
 import klfr.sof.ast.*;
+import klfr.sof.lib.*;
 
 public class CLI {
 
@@ -45,6 +46,9 @@ public class CLI {
 		//System.out.println(ResourceBundle.getBundle(Interpreter.MESSAGE_RESOURCE).getBaseBundleName());
 		//bl.setResourceBundle(R);
 
+		//TODO: move this into some centralized system
+		NativeFunctionRegistry.registerNativeFunctions(Builtins.class);
+
 		var opt = Options.parseOptions(args);
 
 		IOInterface io = new IOInterface();
@@ -73,13 +77,27 @@ public class CLI {
 								Math.min(record.getLevel().getLocalizedName().length(), 6));
 						final var logName = record.getLoggerName().replace("klfr.sof", "~");
 
-						return String.format("[%s %-20s |%6s] %s%n", time, logName, level, msg) + (record.getThrown() == null
-								? ""
-								: String.format("EXCEPTION: %s | Stack trace:%n%s", record.getThrown().toString(),
-										Arrays.asList(record.getThrown().getStackTrace()).stream().map(x -> x.toString()).collect(
-												() -> new StringBuilder(),
-												(builder, str) -> builder.append("in ").append(str).append(System.lineSeparator()),
-												(b1, b2) -> b1.append(b2))));
+						return String.format("[%s %-20s |%6s] %s%n", time, logName, level, msg) + (record.getThrown() == null ? ""
+									: formatException(record.getThrown()));
+					}
+					/** Helper to format an exception and its causality chain. */
+					private String formatException(final Throwable exc) {
+						final var sb = new StringBuilder(512);
+						sb.append(String.format("EXCEPTION: %s | Stack trace:%n", exc.toString()));
+
+						var currentExc = exc;
+						int level = 0;
+						while (currentExc != null) {
+							sb.append(Arrays.asList(currentExc.getStackTrace()).stream().map(x -> x.toString()).collect(
+									() -> new StringBuilder(),
+									(builder, str) -> builder.append(" in ").append(str).append(System.lineSeparator()),
+									(b1, b2) -> b1.append(b2))
+								.toString().indent(level*2));
+							
+							currentExc = currentExc.getCause(); ++level;
+							if (currentExc != null) sb.append("Caused by: ").append(currentExc.toString()).append("\n");
+						}
+						return sb.toString();
 					}
 				});
 				rootLog.addHandler(ch);

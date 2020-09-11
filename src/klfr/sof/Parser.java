@@ -32,7 +32,7 @@ public class Parser {
 			String token = tokenizer.next();
 			try {
 				// primitive token
-				final var pt = PrimitiveTokenNode.make(token, tokenizer.start());
+				final var pt = PrimitiveTokenNode.make(token, tokenizer.start(), code);
 				if (pt.isPresent())
 					tokens.add(pt.get());
 				else
@@ -54,31 +54,30 @@ public class Parser {
 				if (Patterns.intPattern.matcher(token).matches()) {
 					log.finest(() -> String.format("Literal integer token %30s @ %4d", token, tokenizer.start()));
 					final IntPrimitive literal = IntPrimitive.createIntegerFromString(token.toLowerCase());
-					tokens.add(new LiteralNode(literal, tokenizer.start()));
+					tokens.add(new LiteralNode(literal, tokenizer.start(), code));
 				} else
 				// float literal
 				if (Patterns.doublePattern.matcher(token).matches()) {
 					log.finest(() -> String.format("Literal float token %30s @ %4d", token, tokenizer.start()));
 					final FloatPrimitive literal = FloatPrimitive.createFloatFromString(token);
-					tokens.add(new LiteralNode(literal, tokenizer.start()));
+					tokens.add(new LiteralNode(literal, tokenizer.start(), code));
 				} else
 				// boolean literal
 				if (Patterns.boolPattern.matcher(token).matches()) {
 					log.finest(() -> String.format("Literal boolean token %30s @ %4d", token, tokenizer.start()));
 					final BoolPrimitive literal = BoolPrimitive.createBoolFromString(token);
-					tokens.add(new LiteralNode(literal, tokenizer.start()));
+					tokens.add(new LiteralNode(literal, tokenizer.start(), code));
 				} else
 				// string literal
 				if (Patterns.stringPattern.matcher(token).matches()) {
 					log.finest(() -> String.format("Literal string token %30s @ %4d", token, tokenizer.start()));
-					final StringPrimitive literal = StringPrimitive
-							.createStringPrimitive(Preprocessor.preprocessSofString(token));
-					tokens.add(new LiteralNode(literal, tokenizer.start()));
+					final StringPrimitive literal = StringPrimitive.createStringPrimitive(Preprocessor.preprocessSofString(token));
+					tokens.add(new LiteralNode(literal, tokenizer.start(), code));
 				} else
 				// identifier
 				if (Patterns.identifierPattern.matcher(token).matches()) {
 					log.finest(() -> String.format("Identifier token %30s @ %4d", token, tokenizer.start()));
-					tokens.add(new LiteralNode(new Identifier(token), tokenizer.start()));
+					tokens.add(new LiteralNode(new Identifier(token), tokenizer.start(), code));
 				} else
 					throw CompilerException.fromCurrentPosition(tokenizer, "syntax", null);
 
@@ -87,7 +86,7 @@ public class Parser {
 			}
 		}
 
-		return new TokenListNode(new ArrayList<>(tokens), start);
+		return new TokenListNode(new ArrayList<>(tokens), start, code);
 	}
 }
 

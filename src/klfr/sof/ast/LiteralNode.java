@@ -13,24 +13,30 @@ public class LiteralNode implements Node {
 
 	private final Stackable value;
 	private final int codeIndex;
+	private final String code;
 	
 	@Override
 	public int getCodeIndex() {
 		return codeIndex;
+	}
+	@Override
+	public String getCode() {
+		return code;
 	}
 
 	public Stackable getValue() {
 		return value;
 	}
 
-	public LiteralNode(final Stackable data, final int codeIndex) {
+	public LiteralNode(final Stackable data, final int codeIndex, final String code) {
 		this.value = data;
 		this.codeIndex = codeIndex;
+		this.code = code;
 	}
 
 	@Override
 	public Object cloneNode() {
-		return new LiteralNode(value, codeIndex);
+		return new LiteralNode(value, codeIndex, code);
 	}
 
 	@Override

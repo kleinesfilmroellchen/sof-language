@@ -12,10 +12,10 @@ import klfr.sof.lang.*;
  */
 public final class Builtins {
 
-	static {
-		System.out.println("Registering builtins...");
-		NativeFunctionRegistry.registerNativeFunctions(Builtins.class);
-	}
+	// static {
+	// 	System.out.println("Registering builtins...");
+	// 	NativeFunctionRegistry.registerNativeFunctions(Builtins.class);
+	// }
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	//#region Randomness

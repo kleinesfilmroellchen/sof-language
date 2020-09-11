@@ -162,11 +162,7 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 					} catch (CompilerException e) {
 						// outer catch catches all runtime errors e.g. type and stack errors
 						io.println("!!! " + e.getLocalizedMessage());
-						log.log(Level.SEVERE,
-								("Compiler Exception occurred.\nUser-friendly message: " + e.getLocalizedMessage()
-										+ "\nStack trace:\n" + Arrays.stream(e.getStackTrace()).map(ste -> ste.toString())
-												.reduce("", (a, b) -> (a + "\n  " + b).strip())
-										+ "\n").indent(2));
+						log.log(Level.SEVERE, "Compiler Exception occurred.", e);
 					}
 					io.print(">>> ");
 				}

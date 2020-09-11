@@ -66,8 +66,8 @@ public class PrimitiveTokenNode implements Node {
 		Call("."),
 		/** The <code>:</code> primitive token. */
 		DoubleCall(":"),
-		/** The <code>nativefunction</code> primitive token. */
-		// NativeFunction("nativefunction"),
+		/** The <code>nativecall</code> primitive token. */
+		NativeCall("nativecall"),
 
 		/** The <code>function</code> primitive token. */
 		Function("function"),
@@ -108,28 +108,34 @@ public class PrimitiveTokenNode implements Node {
 
 	private final PrimitiveToken symbol;
 	private final int index;
+	private final String code;
 	
 	@Override
 	public int getCodeIndex() {
 		return index;
+	}
+	@Override
+	public String getCode() {
+		return code;
 	}
 
 	public PrimitiveToken symbol() {
 		return symbol;
 	}
 
-	public PrimitiveTokenNode(PrimitiveToken symbol, int index) {
+	public PrimitiveTokenNode(PrimitiveToken symbol, int index, String code) {
 		this.symbol = symbol;
 		this.index = index;
+		this.code = code;
 	}
 
 	/**
 	 * Returns the primitive token associated with the symbol, if it exists.
 	 */
-	public static Optional<PrimitiveTokenNode> make(final String symbol, final int index) {
+	public static Optional<PrimitiveTokenNode> make(final String symbol, final int index, final String code) {
 		for (PrimitiveToken pt : PrimitiveToken.values()) {
 			if (pt.symbol.equals(symbol))
-				return Optional.of(new PrimitiveTokenNode(pt, index));
+				return Optional.of(new PrimitiveTokenNode(pt, index, code));
 		}
 		return Optional.empty();
 	}
@@ -141,7 +147,7 @@ public class PrimitiveTokenNode implements Node {
 
 	@Override
 	public Object cloneNode() throws CloneNotSupportedException {
-		return new PrimitiveTokenNode(this.symbol, this.index);
+		return new PrimitiveTokenNode(this.symbol, this.index, code);
 	}
 }
 

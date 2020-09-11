@@ -15,10 +15,15 @@ public interface Node extends Serializable, Cloneable, Iterable<Node> {
 
 	/**
 	 * Returns the index inside the source code where this node was located.
-	 * 
 	 * @return the index inside the source code where this node was located.
 	 */
 	public int getCodeIndex();
+
+	/**
+	 * Returns the actual source code in which this node is located.
+	 * @return the actual source code in which this node is located.
+	 */
+	public String getCode();
 
 	/**
 	 * The primary method of the node. Traverses the node and all of its children in
