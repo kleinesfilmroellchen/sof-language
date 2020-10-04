@@ -448,7 +448,7 @@ public class Interpreter implements Serializable {
 			final var id = (Identifier) toCall;
 			final var val = this.stack.lookup(id);
 			if (val == null)
-				throw new CompilerException.Incomplete("name");
+				throw new CompilerException.Incomplete("name", id);
 			this.stack.push(val);
 		} else if (toCall instanceof Primitive) {
 			this.stack.push(toCall);
