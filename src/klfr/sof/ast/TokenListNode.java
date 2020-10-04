@@ -3,35 +3,25 @@ package klfr.sof.ast;
 import java.util.*;
 import java.util.function.*;
 
+import klfr.sof.SOFFile;
+
 /**
  * A list of nodes that are to be executed in order. This may be the main
  * program itself, or a code block literal.
  */
-public class TokenListNode implements Node {
+public class TokenListNode extends Node {
 	private static final long serialVersionUID = 1L;
 
 	private final List<Node> subNodes;
-	private final int index;
-	private final String code;
 
-	@Override
-	public int getCodeIndex() {
-		return index;
-	}
-	@Override
-	public String getCode() {
-		return code;
-	}
-
-	public TokenListNode(List<Node> subNodes, int index, String code) {
+	public TokenListNode(List<Node> subNodes, int index, SOFFile source) {
+		super(index, source);
 		this.subNodes = subNodes;
-		this.index = index;
-		this.code = code;
 	}
 
 	@Override
 	public Object cloneNode() throws CloneNotSupportedException {
-		return new TokenListNode(subNodes, index, code);
+		return new TokenListNode(subNodes, getCodeIndex(), getSource());
 	}
 
 	@Override

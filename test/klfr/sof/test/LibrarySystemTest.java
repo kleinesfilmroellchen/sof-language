@@ -53,7 +53,7 @@ public class LibrarySystemTest extends SofTestSuper {
 		try {
 			final var m1func = (Native0ArgFunction) m1funcN;
 			final var m2func = (Native1ArgFunction) m2funcN;
-			final var m3func = (Native2ArgFunction) m3funcN;
+			//final var m3func = (Native2ArgFunction) m3funcN;
 
 			final var res1 = assertDoesNotThrow(() -> m1func.call(), "Function 1 call does not throw");
 			assertTrue(IntPrimitive.createIntPrimitive(42l).equals(res1), "Function 1 call returns 42");

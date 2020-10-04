@@ -1,25 +1,13 @@
 package klfr.sof.cli;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.Reader;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Scanner;
+import java.io.*;
+import java.nio.charset.Charset;
+import java.util.*;
 import java.util.function.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.logging.*;
 
-import klfr.sof.CompilerException;
-import klfr.sof.IOInterface;
-import klfr.sof.Interpreter;
-import klfr.sof.Parser;
-import klfr.sof.Preprocessor;
-import klfr.sof.ast.Node;
+import klfr.sof.*;
+import klfr.sof.ast.*;
 
 import static klfr.sof.Interpreter.R;
 
@@ -75,28 +63,19 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 			case File: {
 				//// File execution
 				log.log(Level.FINE, () -> this.executionStrings.toString());
-				List<Reader> readers = new ArrayList<>(this.executionStrings.size());
+				List<File> files = new ArrayList<>(this.executionStrings.size());
 				for (String filename : this.executionStrings) {
-					try {
-						Reader strd = new FileReader(filename);
-						readers.add(strd);
-					} catch (FileNotFoundException e) {
-						io.printf(R.getString("sof.cli.filenotfound"), filename);
-						CLI.exitUnnormal(2);
-					}
+					File f = new File(filename);
+					files.add(f);
 				}
-				// This is what I envision 'typa' to look like, minus the try-catch. Exceptions
-				// as subclass of Nothing, as an instance of the Maybe Monad
-				// Note that the map has side-effects and this is the most unpure stream
-				// pipeline ever written *haskell cringing in the corner*
-				return readers.stream().map(reader -> {
+				return files.stream().map(file -> {
 					try {
-						log.log(Level.INFO, () -> String.format("EXECUTE :: %30s", reader));
+						log.log(Level.INFO, () -> String.format("EXECUTE :: %30s", file));
 						if ((flags & ONLY_PREPROCESSOR) > 0) {
-							CLI.runPreprocessor(reader, io);
+							CLI.runPreprocessor(new FileReader(file, Charset.forName("utf-8")), io);
 							io.println("^D");
 						} else
-							CLI.doFullExecution(reader, new Interpreter(io), io, flags);
+							CLI.doFullExecution(file, new Interpreter(io), io, flags);
 						return null;
 					} catch (Throwable t) {
 						io.println(t.getMessage());
@@ -136,10 +115,10 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 					String code = scanner.nextLine();
 					// catches all unwanted compilation errors
 					try {
-						Node ast = null;
+						SOFFile codeUnit = null;
 						try {
 							// may throw
-							ast = Parser.parse(Preprocessor.preprocessCode(code));
+							codeUnit = Parser.parse(new File("<stdin>"), Preprocessor.preprocessCode(code));
 						} catch (CompilerException e) {
 							// give the user more lines to possibly fix the syntax error
 							while (true) {
@@ -152,12 +131,12 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 								code += "\n" + nl;
 							}
 							// may throw again, in this case even with additional lines the code is bad
-							ast = Parser.parse(Preprocessor.preprocessCode(code));
+							codeUnit = Parser.parse(new File("<stdin>"), Preprocessor.preprocessCode(code));
 						}
 						// in any case, execute
-						if (ast != null) {
-							log.fine(ast.toString());
-							engine.run(ast, code);
+						if (codeUnit != null) {
+							log.fine(codeUnit.toString());
+							engine.run(codeUnit);
 						}
 					} catch (CompilerException e) {
 						// outer catch catches all runtime errors e.g. type and stack errors

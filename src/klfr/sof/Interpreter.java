@@ -11,6 +11,7 @@ import klfr.sof.lang.Stack;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 import klfr.sof.lib.*;
 import klfr.sof.lib.NativeFunctionRegistry.*;
+import klfr.sof.module.*;
 
 /**
  * 
@@ -74,6 +75,8 @@ public class Interpreter implements Serializable {
 
 	protected int assertCount;
 
+	protected ModuleDiscoverer moduleDiscoverer;
+
 	/**
 	 * Returns the number of asserts that were successfully performed by this
 	 * interpreter.
@@ -112,10 +115,10 @@ public class Interpreter implements Serializable {
 	 * 
 	 * @return this interpreter.
 	 */
-	public Interpreter run(Node program, String currentCode) throws CompilerException {
+	public Interpreter run(SOFFile sofProgram) throws CompilerException {
 		synchronized (this) {
 			log.entering(Interpreter.class.getCanonicalName(), "run # synchronized");
-			program.forEach((Function<Node, Boolean>) this::handle);
+			sofProgram.ast().forEach((Function<Node, Boolean>) this::handle);
 		}
 		log.exiting(Interpreter.class.getCanonicalName(), "run");
 		return this;
@@ -136,7 +139,7 @@ public class Interpreter implements Serializable {
 			else
 				throw new RuntimeException("Unknown node type.");
 		} catch (CompilerException.Incomplete incomplete) {
-			throw CompilerException.fromIncomplete(n.getCode(), n.getCodeIndex(), incomplete);
+			throw CompilerException.fromIncomplete(n.getSource(), n.getCodeIndex(), incomplete);
 		}
 	}
 
@@ -353,6 +356,12 @@ public class Interpreter implements Serializable {
 				this.stack.localScope().setReturn(retval);
 				return false;
 			}
+			// module system
+			case Use: {
+				final var moduleSpecifier = this.stack.popTyped(StringPrimitive.class).value();
+				moduleDiscoverer.getModule(pt.getSource().sourceFile(), moduleSpecifier);
+				break;
+			}
 			// i/o
 			case Input: {
 				final String input = this.io.nextInputSequence();
@@ -383,7 +392,7 @@ public class Interpreter implements Serializable {
 			}
 			case Assert: {
 				if (this.stack.pop().isFalse())
-					throw CompilerException.fromCurrentPosition(pt.getCode(), pt.getCodeIndex(), "assert", null);
+					throw CompilerException.fromCurrentPosition(pt.getSource(), pt.getCodeIndex(), "assert", null);
 				++this.assertCount;
 				break;
 			}

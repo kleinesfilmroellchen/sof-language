@@ -2,11 +2,13 @@ package klfr.sof.ast;
 
 import java.util.*;
 
+import klfr.sof.SOFFile;
+
 /**
  * A node representing primitive tokens. It uses the inner enum type
  * {@link PrimitiveToken} to represent all possible primitive tokens.
  */
-public class PrimitiveTokenNode implements Node {
+public class PrimitiveTokenNode extends Node {
 	private static final long serialVersionUID = 1L;
 
 	public enum PrimitiveToken {
@@ -77,7 +79,7 @@ public class PrimitiveTokenNode implements Node {
 		// Constructor("constructor"),
 
 		/** The <code>use</code> primitive token. */
-		// Use("use"),
+		Use("use"),
 		/** The <code>export</code> primitive token. */
 		// Export("export"),
 
@@ -107,47 +109,45 @@ public class PrimitiveTokenNode implements Node {
 	}
 
 	private final PrimitiveToken symbol;
-	private final int index;
-	private final String code;
-	
-	@Override
-	public int getCodeIndex() {
-		return index;
-	}
-	@Override
-	public String getCode() {
-		return code;
-	}
 
 	public PrimitiveToken symbol() {
 		return symbol;
 	}
 
-	public PrimitiveTokenNode(PrimitiveToken symbol, int index, String code) {
+	public PrimitiveTokenNode(PrimitiveToken symbol, int index, SOFFile source) {
+		super(index, source);
 		this.symbol = symbol;
-		this.index = index;
-		this.code = code;
 	}
 
 	/**
 	 * Returns the primitive token associated with the symbol, if it exists.
 	 */
-	public static Optional<PrimitiveTokenNode> make(final String symbol, final int index, final String code) {
+	public static Optional<PrimitiveTokenNode> make(final String symbol, final int index, SOFFile source) {
 		for (PrimitiveToken pt : PrimitiveToken.values()) {
 			if (pt.symbol.equals(symbol))
-				return Optional.of(new PrimitiveTokenNode(pt, index, code));
+				return Optional.of(new PrimitiveTokenNode(pt, index, source));
 		}
 		return Optional.empty();
 	}
 
 	@Override
 	public String toString() {
-		return "PT: " + this.symbol.name() + " [ " + this.symbol.symbol + " ] @ " + index;
+		return "PT: " + this.symbol.name() + " [ " + this.symbol.symbol + " ] @ " + this.getCodeIndex();
 	}
 
 	@Override
 	public Object cloneNode() throws CloneNotSupportedException {
-		return new PrimitiveTokenNode(this.symbol, this.index, code);
+		return new PrimitiveTokenNode(this.symbol, this.getCodeIndex(), getSource());
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return obj instanceof PrimitiveTokenNode ? ((PrimitiveTokenNode)obj).symbol.equals(this.symbol) : false;
+	}
+
+	@Override
+	public int hashCode() {
+		return symbol.hashCode();
 	}
 }
 

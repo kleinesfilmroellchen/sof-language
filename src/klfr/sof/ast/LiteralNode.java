@@ -2,41 +2,30 @@ package klfr.sof.ast;
 
 import java.util.*;
 
+import klfr.sof.SOFFile;
 import klfr.sof.lang.Stackable;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 
 /**
  * A node that holds a simple Stackable to be placed on the stack.
  */
-public class LiteralNode implements Node {
+public class LiteralNode extends Node {
 	private static final long serialVersionUID = 1L;
 
 	private final Stackable value;
-	private final int codeIndex;
-	private final String code;
-	
-	@Override
-	public int getCodeIndex() {
-		return codeIndex;
-	}
-	@Override
-	public String getCode() {
-		return code;
-	}
 
 	public Stackable getValue() {
 		return value;
 	}
 
-	public LiteralNode(final Stackable data, final int codeIndex, final String code) {
+	public LiteralNode(final Stackable data, final int codeIndex, final SOFFile source) {
+		super(codeIndex, source);
 		this.value = data;
-		this.codeIndex = codeIndex;
-		this.code = code;
 	}
 
 	@Override
 	public Object cloneNode() {
-		return new LiteralNode(value, codeIndex, code);
+		return new LiteralNode(value, getCodeIndex(), getSource());
 	}
 
 	@Override
@@ -51,7 +40,7 @@ public class LiteralNode implements Node {
 
 	@Override
 	public String toString() {
-		return "Literal: " + value.toDebugString(DebugStringExtensiveness.Type) + " [ " + value.toDebugString(DebugStringExtensiveness.Full) + " ] @ " + this.codeIndex;
+		return "Literal: " + value.toDebugString(DebugStringExtensiveness.Type) + " [ " + value.toDebugString(DebugStringExtensiveness.Full) + " ] @ " + this.getCodeIndex();
 	}
 
 	@Override

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.DynamicContainer.dynamicContainer;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -29,6 +30,7 @@ import klfr.sof.IOInterface;
 import klfr.sof.Interpreter;
 import klfr.sof.Parser;
 import klfr.sof.Preprocessor;
+import klfr.sof.SOFFile;
 import klfr.sof.cli.CLI;
 
 /**
@@ -86,10 +88,10 @@ public class LanguageTests extends SofTestSuper {
 									log.info(String.format("Source test %s initializing...", file));
 									final IOInterface iface = new IOInterface(InputStream.nullInputStream(), System.out);
 									final var engine = new Interpreter(iface);
-									final var ast = Parser.parse(code);
+									final var codeUnit = Parser.parse(new File(file), code);
 									final var time = System.nanoTime();
 									CLI.runPreamble(engine);
-									engine.run(ast, code);
+									engine.run(codeUnit);
 									final var finish = System.nanoTime();
 									log.info(String.format("Source test %-20s completed in %12.3f µs, %3d asserts total", file,
 											(finish - time) / 1_000d, engine.getAssertCount()));

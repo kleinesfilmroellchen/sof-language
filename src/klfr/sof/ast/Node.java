@@ -5,32 +5,48 @@ import java.util.*;
 import java.util.function.*;
 import java.util.logging.Logger;
 
+import klfr.sof.SOFFile;
+
 /**
  * A node is an element in the abstract syntax tree (AST) that may contain other
  * nodes. The implementations are responsible for properly traversing their
  * subnodes as well as providing relevant data to the actions.
  */
-public interface Node extends Serializable, Cloneable, Iterable<Node> {
+public abstract class Node implements Serializable, Cloneable, Iterable<Node> {
+	private static final long serialVersionUID = 1L;
+
 	static final Logger log = Logger.getLogger(Node.class.getCanonicalName());
+
+	private final int index;
+	private final SOFFile source;
+
+	protected Node(int index, SOFFile source) {
+		this.index = index;
+		this.source = source;
+	}
 
 	/**
 	 * Returns the index inside the source code where this node was located.
 	 * @return the index inside the source code where this node was located.
 	 */
-	public int getCodeIndex();
+	public int getCodeIndex() {
+		return index;
+	}
 
 	/**
-	 * Returns the actual source code in which this node is located.
-	 * @return the actual source code in which this node is located.
+	 * Returns the source file that this node is contained in.
+	 * @return the source file that this node is contained in.
 	 */
-	public String getCode();
+	public SOFFile getSource() {
+		return source;
+	}
 
 	/**
 	 * The primary method of the node. Traverses the node and all of its children in
 	 * proper order and hands them off to the action for processing.
 	 */
 	@Override
-	default void forEach(Consumer<? super Node> action) {
+	public void forEach(Consumer<? super Node> action) {
 		this.forEach(n -> {
 			action.accept(n);
 			return true;
@@ -44,7 +60,7 @@ public interface Node extends Serializable, Cloneable, Iterable<Node> {
 	 * The default method applies the function to this node directly, which is
 	 * useful for most "primitive" nodes.
 	 */
-	default void forEach(Function<? super Node, Boolean> action) {
+	public void forEach(Function<? super Node, Boolean> action) {
 		action.apply(this);
 	}
 
@@ -53,23 +69,23 @@ public interface Node extends Serializable, Cloneable, Iterable<Node> {
 	 * node if this node has no children.
 	 */
 	@Override
-	default Iterator<Node> iterator() {
+	public Iterator<Node> iterator() {
 		return List.of(this).iterator();
 	}
 
-	public Object cloneNode() throws CloneNotSupportedException;
+	public abstract Object cloneNode() throws CloneNotSupportedException;
 
 	@Override
-	boolean equals(Object obj);
+	public abstract boolean equals(Object obj);
 
 	@Override
-	int hashCode();
+	public abstract int hashCode();
 
 	@Override
-	String toString();
+	public abstract String toString();
 
 	/** Count the subnodes of this node, including this node itself. The default returns 1. */
-	public default int nodeCount() { return 1; }
+	public int nodeCount() { return 1; }
 
 }
 

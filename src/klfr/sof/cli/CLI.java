@@ -29,8 +29,7 @@ public class CLI {
 	 * Parsed Code for the SOF preamble, which is responsible for the builtin
 	 * function setup.
 	 */
-	private static Node preambleCode;
-	private static String preambleCodeStr;
+	private static SOFFile preambleCode;
 
 	public static void main(String[] args) throws InvocationTargetException, UnsupportedEncodingException, IOException {
 		// setup console info logging
@@ -125,42 +124,65 @@ public class CLI {
 	/**
 	 * Does full execution on SOF source code given the environment.
 	 * 
-	 * @param codeStream  A reader that reads source code.
+	 * @param codeSource  A file that points to SOF source code.
 	 * @param interpreter The interpreter to use for the execution.
 	 * @param io          The Input-Output interface that the full execution should
 	 *                    use.
 	 * @param flags       The flags passed to the program on the command line.
 	 */
-	public static void doFullExecution(Reader codeStream, Interpreter interpreter, IOInterface io, int flags)
+	public static void doFullExecution(File codeSource, Interpreter interpreter, IOInterface io, int flags)
 			throws Exception {
 		log.entering(CLI.class.getCanonicalName(), "doFullExecution");
 		String code = "";
 		try {
-			StringWriter writer = new StringWriter();
+			final var codeStream = new FileReader(codeSource, Charset.forName("utf-8"));
+			final StringWriter writer = new StringWriter();
+			codeStream.transferTo(writer);
+			codeStream.close();
+			code = writer.getBuffer().toString();
+		} catch (IOException e) {
+			throw new Exception("Unknown exception occurred during input reading.", e);
+		}
+		doFullExecution(codeSource, code, interpreter, io, flags);
+	}
+
+	public static void doFullExecution(Reader codeStream, Interpreter interpreter, IOInterface io, int flags) throws Exception {
+		log.entering(CLI.class.getCanonicalName(), "doFullExecution");
+		// Because this file is never read, it is safe to create it with a placeholder name that indicates a literal string from a reader.
+		final var dummyFile = new File("<literal>");
+		String code = "";
+		try {
+			final StringWriter writer = new StringWriter();
 			codeStream.transferTo(writer);
 			code = writer.getBuffer().toString();
 		} catch (IOException e) {
 			throw new Exception("Unknown exception occurred during input reading.", e);
 		}
+		doFullExecution(dummyFile, code, interpreter, io, flags);
+	}
 
+	/**
+	 * Handler for the common part of all full execution routines; retrieves finished SOF source code and a "dummy" file that is never read.
+	 */
+	private static void doFullExecution(File fdummy, String code, Interpreter interpreter, IOInterface io, int flags) throws Exception {
 		// if no preprocessing flag NOT set
 		if ((flags & Options.NO_PREPROCESSOR) == 0)
 			code = Preprocessor.preprocessCode(code);
 
 		// parse
-		Node ast = Parser.parse(code);
+		final var codeUnit = Parser.parse(fdummy, code);
 		if (io.debug)
-			io.println(ast);
+			io.println(codeUnit.ast());
 
 		// count nodes
-		final var nodeCount = (io.debug || (flags & Options.PERFORMANCE) > 0) ? ast.nodeCount() : 0;
+		final var nodeCount = (io.debug || (flags & Options.PERFORMANCE) > 0) ? codeUnit.ast().nodeCount() : 0;
 
 		// run preamble
 		runPreamble(interpreter);
 
 		// run code
 		final var startTime = System.nanoTime();
-		interpreter.run(ast, code);
+		interpreter.run(codeUnit);
 		final var finishTime = System.nanoTime();
 		final var execTimeµs = (finishTime - startTime) / 1_000d;
 
@@ -189,18 +211,18 @@ public class CLI {
 				final var pReader = new InputStreamReader(pStream, Charset.forName("utf-8"));
 				final var pWriter = new StringWriter();
 				pReader.transferTo(pWriter);
-				preambleCodeStr = pWriter.toString();
+				var preambleCodeStr = pWriter.toString();
 				pWriter.close(); pStream.close();
 
 				// parse code
 				preambleCodeStr = Preprocessor.preprocessCode(preambleCodeStr);
-				preambleCode = Parser.parse(preambleCodeStr);
+				preambleCode = Parser.parse(new File("<preamble>"), preambleCodeStr);
 			} catch (IOException | NullPointerException e) {
 				interpreter.getIO().println(R.getString("sof.cli.nopreamble"));
 				throw new RuntimeException(e);
 			}
 		}
-		interpreter.run(preambleCode, preambleCodeStr);
+		interpreter.run(preambleCode);
 	}
 
 	/**
