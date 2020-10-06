@@ -59,6 +59,11 @@ public class Identifier implements Stackable {
 	}
 
 	@Override
+	public boolean equals(Object other) {
+		return other instanceof Identifier ? ((Identifier) other).value.equals(value) : false;
+	}
+
+	@Override
 	public boolean equals(Stackable other) {
 		return other instanceof Identifier ? ((Identifier) other).value.equals(value) : false;
 	}
