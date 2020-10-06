@@ -31,3 +31,4 @@ vm/
 bin*/*.launch
 .vscode
 /testbins/
+sof dev files/

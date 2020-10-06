@@ -13,11 +13,9 @@ import klfr.sof.lang.Stackable.DebugStringExtensiveness;
  * 
  * <pre>
  *   |-------------------|
- *   | (other elements)  |
+ *   |  other elements   |
  *   |-------------------|
  *   |       ...         |
- * ( |-------------------| )
- * ( | File namespace NT | )
  *   |-------------------|
  *   | Global Nametable  |
  *   |                   |
@@ -32,6 +30,9 @@ import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * The stack starts out empty. The user of the stack is responsible for adding the global nametable.
+	 */
 	public Stack() {
 	}
 
@@ -147,45 +148,17 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	}
 
 	/**
-	 * Returns the current top-most scope which is the destination for names that
-	 * are defined in the file-global scope. This is the global nametable (as
-	 * returned by {@code globalNametable()}) if there is no namespace introduced,
-	 * or the namespace defined by the 'namespace' command (which resides on the
-	 * stack just above the global nametable).<br>
-	 * <br>
-	 * {@code globaldef} always uses this as do {@code def}'s outside of functions.
-	 * 
-	 * @throws RuntimeException
-	 */
-	public Nametable namingScope() throws RuntimeException {
-		final Iterator<Stackable> helperIt = this.descendingIterator();
-		// skip global nametable
-		helperIt.next();
-		if (helperIt.hasNext()) {
-			final Stackable maybeNamespace = helperIt.next();
-			// if it is a nametable but no local scope delimiter
-			if (maybeNamespace instanceof Nametable && !(maybeNamespace instanceof FunctionDelimiter)) {
-				// we found a namespace
-				return (Nametable) maybeNamespace;
-			}
-		}
-		// only end up here if no element above global nametable or no namespace above
-		// global nametable
-		return globalNametable();
-	}
-
-	/**
 	 * Returns the current local scope, i.e. the topmost nametable that is on the
 	 * stack.
 	 */
 	public Nametable localScope() throws RuntimeException {
-		for (final var elmt : this) {
+		for (var elmt : this) {
 			if (elmt instanceof Nametable)
 				return (Nametable) elmt;
 		}
 		// fallback (should not happen, as the last iteration of the loop should find
 		// the global NT)
-		return namingScope();
+		return globalNametable();
 	}
 
 	/**
@@ -197,7 +170,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 * @return the most local value that is associated with the identifier
 	 */
 	public Stackable lookup(final Identifier id) {
-		for (final var elmt : this) {
+		for (var elmt : this) {
 			if (elmt instanceof Nametable) {
 				final var nt = (Nametable) elmt;
 				if (nt.hasMapping(id))

@@ -81,7 +81,7 @@ public class PrimitiveTokenNode extends Node {
 		/** The <code>use</code> primitive token. */
 		Use("use"),
 		/** The <code>export</code> primitive token. */
-		// Export("export"),
+		Export("export"),
 
 		/** The <code>write</code> primitive token. */
 		Write("write"),

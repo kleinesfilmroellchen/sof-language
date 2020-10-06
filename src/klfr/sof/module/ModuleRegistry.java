@@ -1,10 +1,10 @@
 package klfr.sof.module;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.*;
 
 import klfr.sof.SOFFile;
-import klfr.sof.ast.*;
 
 /**
  * The module registry stores all discovered modules and their AST.
@@ -13,7 +13,7 @@ import klfr.sof.ast.*;
 public class ModuleRegistry implements Serializable {
 	private static final long serialVersionUID = 1L;
 
-	private final Map<String, SOFFile> modules = new TreeMap<>();
+	private final Map<File, SOFFile> modules = new TreeMap<>();
 
 	public ModuleRegistry() {}
 
@@ -26,7 +26,7 @@ public class ModuleRegistry implements Serializable {
 	 *         another module with the same identifier was already registered
 	 *         and replaced by this module.
 	 */
-	public boolean storeModule(String moduleName, SOFFile module) {
+	public boolean storeModule(File moduleName, SOFFile module) {
 		final var prev = this.modules.put(moduleName, module);
 		return prev != null;
 	}
@@ -36,7 +36,7 @@ public class ModuleRegistry implements Serializable {
 	 * @param moduleName The module identifier to be checked.
 	 * @return whether this module registry has the specified module identifier registered.
 	 */
-	public boolean hasModule(String moduleName) {
+	public boolean hasModule(File moduleName) {
 		return this.modules.containsKey(moduleName);
 	}
 
@@ -45,7 +45,7 @@ public class ModuleRegistry implements Serializable {
 	 * @param moduleName The identifier of the module to be retrieved.
 	 * @return the module associated with the specified module identifier.
 	 */
-	public SOFFile getModule(String moduleName) {
+	public SOFFile getModule(File moduleName) {
 		return this.modules.get(moduleName);
 	}
 	

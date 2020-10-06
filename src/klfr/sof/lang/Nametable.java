@@ -48,6 +48,15 @@ public class Nametable implements Stackable {
 	}
 
 	/**
+	 * Applies all of the mappings that the given map uses to this nametable.
+	 * Existing identifier's bindings in this nametable are overwritten.
+	 * @param m The map whose mappings are to be copied.
+	 */
+	public void putAll(Map<? extends Identifier, ? extends Stackable> m) {
+		entries.putAll(m);
+	}
+	
+	/**
 	 * Sets the return value for the nametable. The default implementation does
 	 * nothing and it is to be overridden by subclasses who specify the behavior of
 	 * the {@code return} PT.

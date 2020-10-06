@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.function.*;
 
 import klfr.sof.ast.*;
+import klfr.sof.cli.CLI;
 import klfr.sof.lang.*;
 import klfr.sof.lang.Stack;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
@@ -88,8 +89,14 @@ public class Interpreter implements Serializable {
 	// #endregion
 
 	public Interpreter(IOInterface io) {
+		this(io, new ModuleDiscoverer());
+	}
+
+	// for subclasses
+	protected Interpreter(IOInterface io, ModuleDiscoverer md) {
 		this.io = io;
 		this.stack = new Stack();
+		this.moduleDiscoverer = md;
 		this.reset();
 	}
 
@@ -127,7 +134,7 @@ public class Interpreter implements Serializable {
 	/**
 	 * Callback for handling a node.
 	 */
-	private boolean handle(Node n) throws CompilerException {
+	protected boolean handle(Node n) throws CompilerException {
 		try {
 			// manual dynamic dispatch -- there isn't a better reflection-free way
 			if (n instanceof TokenListNode)
@@ -143,12 +150,12 @@ public class Interpreter implements Serializable {
 		}
 	}
 
-	private boolean handle(TokenListNode codeblock) throws CompilerException {
+	protected boolean handle(TokenListNode codeblock) throws CompilerException {
 		this.stack.push(new CodeBlock(codeblock));
 		return true;
 	}
 
-	private boolean handle(LiteralNode literal) throws CompilerException {
+	protected boolean handle(LiteralNode literal) throws CompilerException {
 		this.stack.push(literal.getValue());
 		return true;
 	}
@@ -158,7 +165,7 @@ public class Interpreter implements Serializable {
 	 * 
 	 * @param pt The primitive token to execute.
 	 */
-	private boolean handle(PrimitiveTokenNode pt) throws CompilerException {
+	protected boolean handle(PrimitiveTokenNode pt) throws CompilerException {
 		// BEHOLD THE SWITCH CASE OF DOOM
 		// if the switch case is optimized to jump table lookups, this may be the
 		// fastest way of handling all of the primitive tokens selectively
@@ -359,8 +366,27 @@ public class Interpreter implements Serializable {
 			// module system
 			case Use: {
 				final var moduleSpecifier = this.stack.popTyped(StringPrimitive.class).value();
-				moduleDiscoverer.getModule(pt.getSource().sourceFile(), moduleSpecifier);
+				final var maybeModule = moduleDiscoverer.getModule(pt.getSource().sourceFile(), moduleSpecifier);
+				if (maybeModule.isEmpty())
+					throw CompilerException.fromCurrentPosition(pt.getSource(), pt.getCodeIndex(), "module", null, moduleSpecifier);
+				final var module = maybeModule.get();
+				
+				// dispatch module to a new interpreter that can handle `export` keywords
+				final var moduleRunner = new ModuleInterpreter(this.io, this.moduleDiscoverer);
+				CLI.runPreamble(moduleRunner);
+				moduleRunner.run(module);
+
+				// retrieve module exports and add them to this global nametable
+				final var exports = moduleRunner.getExports();
+				final var gnt = this.stack.globalNametable();
+				gnt.putAll(exports);
+
 				break;
+			}
+			case Export: {
+				// the default interpreter noops the export keyword so that module-like files can still be run normally
+				// pop the identifier that is also used by proper `export`
+				this.stack.pop();
 			}
 			// i/o
 			case Input: {
@@ -407,7 +433,7 @@ public class Interpreter implements Serializable {
 	 * name as an SOF string. This may modify the stack.
 	 * @param _fname The native function name, as an SOF string.
 	 */
-	private void doNativeCall(Stackable _fname) {
+	protected void doNativeCall(Stackable _fname) {
 		// typecheck and retrieve function
 		if (!(_fname instanceof StringPrimitive))
 			throw new CompilerException.Incomplete("type");
@@ -452,7 +478,7 @@ public class Interpreter implements Serializable {
 	 * Helper function to execute the call operation on the stackable, depending on
 	 * the type. This function may modify the current interpreter state.
 	 */
-	private void doCall(final Stackable toCall) throws CompilerException.Incomplete {
+	protected void doCall(final Stackable toCall) throws CompilerException.Incomplete {
 		if (toCall instanceof Identifier) {
 			final var id = (Identifier) toCall;
 			final var val = this.stack.lookup(id);

@@ -42,5 +42,9 @@ public class SOFFile implements Serializable {
 		if (this.ast == null)
 			this.ast = ast;
 	}
+
+	public String toString() {
+		return "SOFFile(" + sourceFile.toString() + ", '" + code.substring(0, Math.min(code.length(), 15)) + "', " + ast + ")";
+	}
 	
 }
