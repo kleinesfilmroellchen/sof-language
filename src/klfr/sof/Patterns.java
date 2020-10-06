@@ -34,7 +34,7 @@ public final class Patterns {
 	 * escapes as group 2. Does not match the escaped quote, which is not treated by
 	 * the "preprocessor".
 	 */
-	public static final Pattern escapeSequencePattern = Pattern.compile("\\\\(f|t|(?:u([0-9a-fA-F]{4})))");
+	public static final Pattern escapeSequencePattern = Pattern.compile("\\\\(f|t|n|(?:u([0-9a-fA-F]{4})))");
 	/**
 	 * Boolean literal pattern. Matches "true" and "false", capitalized as well.
 	 */

@@ -46,6 +46,8 @@ public class Preprocessor {
 				return String.valueOf(Character.toChars(codepoint));
 			}
 			switch (escape.group(1)) {
+				case "n":
+					return "\n";
 				case "t":
 					return "\t";
 				case "f":
