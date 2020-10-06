@@ -56,7 +56,7 @@ public class StringPrimitive extends Primitive {
    public boolean equals(Stackable other) {
       if (other instanceof StringPrimitive)
          return this.s.equals(((StringPrimitive) other).s);
-      return super.equals(other);
+      return false;
    }
 
 }

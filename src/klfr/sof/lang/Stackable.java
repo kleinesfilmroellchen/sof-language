@@ -132,7 +132,7 @@ public interface Stackable extends Serializable, Cloneable, Comparable<Stackable
 
 	/**
 	 * Checks the stackables for logical SOF-internal equality. This check should be
-	 * type-strict, meaning that incompatible types fail with a Type exception. This
+	 * type-agnostic, meaning that incompatible types are always considered unequal. This
 	 * is the behavior of the default fallback implementation.<br>
 	 * <br>
 	 * As for usual with equality, this check should be commutative, i.e.
@@ -143,7 +143,7 @@ public interface Stackable extends Serializable, Cloneable, Comparable<Stackable
 	 *         false if they aren't.
 	 */
 	public default boolean equals(Stackable other) {
-		throw new CompilerException.Incomplete("type", "type.equals-incompatible", this.typename(), other.typename());
+		return false;
 	}
 
 	/**

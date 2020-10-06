@@ -130,7 +130,7 @@ public class IntPrimitive extends Primitive {
       if (other instanceof IntPrimitive) {
          return ((IntPrimitive) other).value == this.value;
       }
-      return super.equals(other);
+      return false;
    }
 
 }

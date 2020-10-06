@@ -35,14 +35,6 @@ public class CodeBlock implements Stackable {
 		return "{ Codeblock }";
 	}
 
-	@Override
-	public boolean equals(Stackable other) {
-		if (other instanceof CodeBlock)
-			// although code blocks are never equal, they may be compared
-			return false;
-		return super.equals(other);
-	}
-
 }
 
 /*  
