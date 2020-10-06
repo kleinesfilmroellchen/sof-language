@@ -195,7 +195,7 @@ public class IOInterface {
 
 	public void print(String s) {
 		try {
-			output.write(s);
+			output.write(s != null ? s : "null");
 		} catch (IOException e) {
 			// TODO handle this differently?
 			e.printStackTrace();
