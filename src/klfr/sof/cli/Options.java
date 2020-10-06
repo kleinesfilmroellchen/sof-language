@@ -7,13 +7,13 @@ import java.util.function.*;
 import java.util.logging.*;
 
 import klfr.sof.*;
-import klfr.sof.ast.*;
-
 import static klfr.sof.Interpreter.R;
 
-@SuppressWarnings("deprecation")
-class Options implements Function<IOInterface, Optional<Throwable>> {
-
+/**
+ * Command-line options storage and parsing.
+ */
+class Options implements Serializable {
+	private static final long serialVersionUID = 1L;
 	private static Logger log = Logger.getLogger(Options.class.getCanonicalName());
 
 	/**
@@ -50,115 +50,6 @@ class Options implements Function<IOInterface, Optional<Throwable>> {
 
 	public String toString() {
 		return "Options:" + executionType + executionStrings.toString() + "f:" + Integer.toBinaryString(flags);
-	}
-
-	/**
-	 * Run the interpreter with the given Options
-	 */
-	@Override
-	public Optional<Throwable> apply(IOInterface io) {
-		io.debug = (this.flags & DEBUG) > 0;
-		log.config(() -> String.format("FLAG :: DEBUG %5s", io.debug ? "on" : "off"));
-		switch (executionType) {
-			case File: {
-				//// File execution
-				log.log(Level.FINE, () -> this.executionStrings.toString());
-				List<File> files = new ArrayList<>(this.executionStrings.size());
-				for (String filename : this.executionStrings) {
-					File f = new File(filename);
-					files.add(f);
-				}
-				return files.stream().map(file -> {
-					try {
-						log.log(Level.INFO, () -> String.format("EXECUTE :: %30s", file));
-						if ((flags & ONLY_PREPROCESSOR) > 0) {
-							CLI.runPreprocessor(new FileReader(file, Charset.forName("utf-8")), io);
-							io.println("^D");
-						} else
-							CLI.doFullExecution(file, new Interpreter(io), io, flags);
-						return null;
-					} catch (Throwable t) {
-						io.println(t.getMessage());
-						return t;
-					}
-				})
-						// The above map will execute on all readers and then return null, if the
-						// execution method just exited normally. If, however, some exception was
-						// raised, whether controlled (CompilerException, IllegalArgumentException etc.)
-						// or not (ArrayIndexOutOfBoundsException, RuntimeException), the Throwable is
-						// returned. Thus, in the first step, we "map" all readers to a possibly null
-						// Throwable. The filter then removes all nulls with the instanceof check. We
-						// now of course have a situation where, if all files executed successfully, the
-						// stream can be empty. The "findFirst" will exactly exhibit the behavior we
-						// need: return an Optional<Throwable> if any error occurred, or an empty
-						// Optional otherwise. I call all of this "Java do notation". Praise Haskell!
-						.filter(val -> val instanceof Throwable).findFirst();
-			}
-			case Literal: {
-				//// Single literal to be executed
-				try {
-					CLI.doFullExecution(new StringReader(this.executionStrings.get(0)), new Interpreter(io), io, flags);
-				} catch (Throwable t) {
-					return Optional.of(t);
-				}
-				break;
-			}
-			case Interactive: {
-				//// Interactive interpretation
-				io.println(CLI.INFO_STRING);
-				Interpreter engine = new Interpreter(io);
-				CLI.runPreamble(engine);
-				Scanner scanner = io.newInputScanner();
-				// scanner.useDelimiter("[[^\n]\\s+]");
-				io.print(">>> ");
-				while (scanner.hasNextLine()) {
-					String code = scanner.nextLine();
-					// catches all unwanted compilation errors
-					try {
-						SOFFile codeUnit = null;
-						try {
-							// may throw
-							codeUnit = Parser.parse(new File("<stdin>"), Preprocessor.preprocessCode(code));
-						} catch (CompilerException e) {
-							// give the user more lines to possibly fix the syntax error
-							while (true) {
-								io.print("... ");
-								final var nl = scanner.nextLine();
-								// end on blank line
-								if (nl.isBlank())
-									break;
-								// update unclean code
-								code += "\n" + nl;
-							}
-							// may throw again, in this case even with additional lines the code is bad
-							codeUnit = Parser.parse(new File("<stdin>"), Preprocessor.preprocessCode(code));
-						}
-						// in any case, execute
-						if (codeUnit != null) {
-							log.fine(codeUnit.toString());
-							engine.run(codeUnit);
-						}
-					} catch (CompilerException e) {
-						// outer catch catches all runtime errors e.g. type and stack errors
-						io.println("!!! " + e.getLocalizedMessage());
-						log.log(Level.SEVERE, "Compiler Exception occurred.", e);
-					}
-					io.print(">>> ");
-				}
-				scanner.close();
-				break;
-			}
-			case VersionInfo: {
-				io.println(CLI.INFO_STRING);
-				io.printf(R.getString("sof.cli.license"));
-				break;
-			}
-			case HelpInfo: {
-				io.printf(R.getString("sof.cli.help"));
-				break;
-			}
-		}
-		return Optional.empty();
 	}
 
 	/**

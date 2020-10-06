@@ -31,6 +31,15 @@ public class CLI {
 	 */
 	private static SOFFile preambleCode;
 
+	/**
+	 * Main entry point of the SOF interpreter system. This method handles command-line arguments
+	 * as described in the documentation and then runs the SOF interpreter system.
+	 * 
+	 * @param args Command-line arguments
+	 * @throws InvocationTargetException Should not be thrown: If reflectively invoked methods fail.
+	 * @throws UnsupportedEncodingException Should not be thrown: If the UTF-8 encoding is not supported.
+	 * @throws IOException If any I/O operation fails unrecoverable.
+	 */
 	public static void main(String[] args) throws InvocationTargetException, UnsupportedEncodingException, IOException {
 		// setup console info logging
 		LogManager.getLogManager().reset();
@@ -48,7 +57,13 @@ public class CLI {
 		//TODO: move this into some centralized system
 		NativeFunctionRegistry.registerNativeFunctions(Builtins.class);
 
-		var opt = Options.parseOptions(args);
+		Options opt = null;
+		try {
+			opt = Options.parseOptions(args);
+		} catch (IllegalArgumentException e) {
+			System.out.println(e.getLocalizedMessage());
+			System.exit(3);
+		}
 
 		IOInterface io = new IOInterface();
 		io.setInOut(System.in, System.out);
@@ -56,7 +71,7 @@ public class CLI {
 		if ((opt.flags & Options.DEBUG) > 0) {
 			try {
 				LogManager.getLogManager().reset();
-				var rootLog = Logger.getLogger("");
+				final var rootLog = Logger.getLogger("");
 				rootLog.setLevel(Level.ALL);
 				ch = new ConsoleHandler();
 				ch.setLevel(Level.FINE);
@@ -100,7 +115,7 @@ public class CLI {
 					}
 				});
 				rootLog.addHandler(ch);
-				var handler = new FileHandler("sof-log.log");
+				final var handler = new FileHandler("sof-log.log");
 				handler.setFormatter(new SimpleFormatter());
 				handler.setEncoding("utf-8");
 				handler.setLevel(Level.FINEST);
@@ -111,14 +126,130 @@ public class CLI {
 		}
 
 		// execute
-		var error = opt.apply(io);
+		final var error = runSOF(opt, io);
+
 		if (error.isPresent()) {
-			var t = error.get();
+			final var t = error.get();
 			log.log(Level.SEVERE,
 					String.format("Uncaught Interpreter exception: %s%nStack trace:%n%s", t.getLocalizedMessage(),
 							Arrays.asList(t.getStackTrace()).stream().map(ste -> ste.toString())
 									.reduce((a, b) -> a + System.lineSeparator() + b).orElse("")));
 		}
+	}
+
+	/**
+	 * Run a standard SOF system with the given options and IO interface.
+	 * 
+	 * @param clo The options that determine what sort of execution should be done and what other
+	 *            parameters apply to the execution.
+	 * @param io  The I/O interface. Will be passed to any interpreters and is also used internally
+	 *            by this method.
+	 * @return An exception, if something went wrong, or nothing, if everything went fine.
+	 */
+	public static Optional<Throwable> runSOF(Options clo, IOInterface io) {
+		io.debug = (clo.flags & Options.DEBUG) > 0;
+		log.config(() -> String.format("FLAG :: DEBUG %5s", io.debug ? "on" : "off"));
+		switch (clo.executionType) {
+			case File: {
+				//// File execution
+				log.log(Level.FINE, () -> clo.executionStrings.toString());
+				List<File> files = new ArrayList<>(clo.executionStrings.size());
+				for (String filename : clo.executionStrings) {
+					File f = new File(filename);
+					files.add(f);
+				}
+				return files.stream().map(file -> {
+					try {
+						log.log(Level.INFO, () -> String.format("EXECUTE :: %30s", file));
+						if ((clo.flags & Options.ONLY_PREPROCESSOR) > 0) {
+							CLI.runPreprocessor(new FileReader(file, Charset.forName("utf-8")), io);
+							io.println("^D");
+						} else
+							CLI.doFullExecution(file, new Interpreter(io), io, clo.flags);
+						return null;
+					} catch (Throwable t) {
+						io.println(t.getMessage());
+						return t;
+					}
+				})
+						// The above map will execute on all readers and then return null, if the
+						// execution method just exited normally. If, however, some exception was
+						// raised, whether controlled (CompilerException, IllegalArgumentException etc.)
+						// or not (ArrayIndexOutOfBoundsException, RuntimeException), the Throwable is
+						// returned. Thus, in the first step, we "map" all readers to a possibly null
+						// Throwable. The filter then removes all nulls with the instanceof check. We
+						// now of course have a situation where, if all files executed successfully, the
+						// stream can be empty. The "findFirst" will exactly exhibit the behavior we
+						// need: return an Optional<Throwable> if any error occurred, or an empty
+						// Optional otherwise. I call all of this "Java do notation". Praise Haskell!
+						.filter(val -> val instanceof Throwable).findFirst();
+			}
+			case Literal: {
+				//// Single literal to be executed
+				try {
+					CLI.doFullExecution(new StringReader(clo.executionStrings.get(0)), new Interpreter(io), io, clo.flags);
+				} catch (Throwable t) {
+					io.println(t.getLocalizedMessage());
+					return Optional.of(t);
+				}
+				break;
+			}
+			case Interactive: {
+				//// Interactive interpretation
+				io.println(CLI.INFO_STRING);
+				Interpreter engine = new Interpreter(io);
+				CLI.runPreamble(engine);
+				Scanner scanner = io.newInputScanner();
+				// scanner.useDelimiter("[[^\n]\\s+]");
+				io.print(">>> ");
+				while (scanner.hasNextLine()) {
+					String code = scanner.nextLine();
+					// catches all unwanted compilation errors
+					try {
+						SOFFile codeUnit = null;
+						try {
+							// may throw
+							codeUnit = Parser.parse(new File("<stdin>"), Preprocessor.preprocessCode(code));
+						} catch (CompilerException e) {
+							// give the user more lines to possibly fix the syntax error
+							while (true) {
+								io.print("... ");
+								final var nl = scanner.nextLine();
+								// end on blank line
+								if (nl.isBlank())
+									break;
+								// update unclean code
+								code += "\n" + nl;
+							}
+							// may throw again, in this case even with additional lines the code is bad
+							codeUnit = Parser.parse(new File("<stdin>"), Preprocessor.preprocessCode(code));
+						}
+						// in any case, execute
+						if (codeUnit != null) {
+							log.fine(codeUnit.toString());
+							engine.run(codeUnit);
+						}
+					} catch (CompilerException e) {
+						// outer catch catches all runtime errors e.g. type and stack errors
+						io.println("!!! " + e.getLocalizedMessage());
+						log.log(Level.SEVERE, "Compiler Exception occurred.", e);
+					}
+					io.print(">>> ");
+				}
+				scanner.close();
+				break;
+			}
+			case VersionInfo: {
+				io.println(CLI.INFO_STRING);
+				io.printf(R.getString("sof.cli.license"));
+				break;
+			}
+			case HelpInfo: {
+				io.printf(R.getString("sof.cli.help"));
+				break;
+			}
+		}
+		return Optional.empty();
 	}
 
 	/**
