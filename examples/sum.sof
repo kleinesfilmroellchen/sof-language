@@ -1,0 +1,24 @@
+# Sum computation sample program.
+# Compute the sum of the first one hundred natural numbers, using a loop and a function.
+
+"Enter n: " write input convert:int : N def
+
+# loop
+1 i def
+0 result def
+{
+	result . i . + result def
+	i . 1 + i def
+} { i . N . <= } while
+
+"The result (loop) is: " result . cat writeln
+
+# function
+{
+	n def # arg1
+	# gauss formula
+	n . n . 1 + * 2 / return
+} 1 function sum def
+
+N . sum :
+"The result (function) is: " swap cat writeln 

@@ -46,12 +46,13 @@ public class TokenListNode extends Node {
 	 * Run the specified action on every subnode.
 	 */
 	@Override
-	public void forEach(Function<? super Node, Boolean> action) {
+	public boolean forEach(Function<? super Node, Boolean> action) {
 		for (Node subnode : subNodes) {
 			// run the action, if false was returned, return as well
 			if (!action.apply(subnode))
-				return;
+				return false;
 		}
+		return true;
 	}
 
 	@Override

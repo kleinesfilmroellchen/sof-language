@@ -176,106 +176,110 @@ public class Interpreter implements Serializable {
 				// type-checking inside builtin, same story below
 				final Stackable rhs = this.stack.pop(), lhs = this.stack.pop();
 				this.stack.push(BuiltinPTs.add(lhs, rhs));
-				break;
+				return true;
 			}
 			case Subtract: {
 				final Stackable rhs = this.stack.pop(), lhs = this.stack.pop();
 				this.stack.push(BuiltinPTs.subtract(lhs, rhs));
-				break;
+				return true;
 			}
 			case Multiply: {
 				final Stackable rhs = this.stack.pop(), lhs = this.stack.pop();
 				this.stack.push(BuiltinPTs.multiply(lhs, rhs));
-				break;
+				return true;
 			}
 			case Divide: {
 				final Stackable rhs = this.stack.pop(), lhs = this.stack.pop();
 				this.stack.push(BuiltinPTs.divide(lhs, rhs));
-				break;
+				return true;
+			}
+			case Concatenate: {
+				final Stackable rhs = this.stack.pop(), lhs = this.stack.pop();
+				this.stack.push(StringPrimitive.createStringPrimitive(lhs.print() + rhs.print()));
+				return true;
 			}
 			case And: {
 				final Stackable rhs = this.stack.pop(), lhs = this.stack.pop();
 				this.stack.push(BuiltinPTs.logicalAnd(lhs, rhs));
-				break;
+				return true;
 			}
 			case Or: {
 				final Stackable rhs = this.stack.pop(), lhs = this.stack.pop();
 				this.stack.push(BuiltinPTs.logicalOr(lhs, rhs));
-				break;
+				return true;
 			}
 			case ExclusiveOr: {
 				final Stackable rhs = this.stack.pop(), lhs = this.stack.pop();
 				this.stack.push(BuiltinPTs.logicalXor(lhs, rhs));
-				break;
+				return true;
 			}
 			case Not: {
 				final var val = this.stack.pop();
 				this.stack.push(BoolPrimitive.createBoolPrimitive(val.isFalse()));
-				break;
+				return true;
 			}
 			// comparison and equality
 			case Equals: {
 				final Stackable rhs = this.stack.pop(), lhs = this.stack.pop();
 				this.stack.push(BuiltinPTs.equals(lhs, rhs));
-				break;
+				return true;
 			}
 			case NotEquals: {
 				final Stackable rhs = this.stack.pop(), lhs = this.stack.pop();
 				this.stack.push(BuiltinPTs.notEquals(lhs, rhs));
-				break;
+				return true;
 			}
 			case GreaterThan: {
 				final Stackable rhs = this.stack.pop(), lhs = this.stack.pop();
 				this.stack.push(BuiltinPTs.greaterThan(lhs, rhs));
-				break;
+				return true;
 			}
 			case GreaterThanEquals: {
 				final Stackable rhs = this.stack.pop(), lhs = this.stack.pop();
 				this.stack.push(BuiltinPTs.greaterEqualThan(lhs, rhs));
-				break;
+				return true;
 			}
 			case LessThan: {
 				final Stackable rhs = this.stack.pop(), lhs = this.stack.pop();
 				this.stack.push(BuiltinPTs.lessThan(lhs, rhs));
-				break;
+				return true;
 			}
 			case LessThanEquals: {
 				final Stackable rhs = this.stack.pop(), lhs = this.stack.pop();
 				this.stack.push(BuiltinPTs.lessEqualThan(lhs, rhs));
-				break;
+				return true;
 			}
 			// stack operations
 			case Discard: {
 				this.stack.pop();
-				break;
+				return true;
 			}
 			case Duplicate: {
 				final var a = this.stack.pop();
 				this.stack.push(a);
 				this.stack.push(a);
-				break;
+				return true;
 			}
 			case Swap: {
 				final var eltop = this.stack.pop();
 				final var elbot = this.stack.pop();
 				this.stack.push(eltop);
 				this.stack.push(elbot);
-				break;
+				return true;
 			}
 			// conditionals and loops
 			case If: {
 				final var cond = this.stack.pop();
 				final var callable = this.stack.pop();
 				if (cond.isTrue())
-					this.doCall(callable);
-				break;
+					return this.doCall(callable);
+				return true;
 			}
 			case IfElse: {
 				final var elseCallable = this.stack.pop();
 				final var cond = this.stack.pop();
 				final var callable = this.stack.pop();
-				this.doCall(cond.isTrue() ? callable : elseCallable);
-				break;
+				return this.doCall(cond.isTrue() ? callable : elseCallable);
 			}
 			case Switch: {
 				// first argument is the default action callable
@@ -289,25 +293,24 @@ public class Interpreter implements Serializable {
 					final var result = this.stack.pop();
 					// ... and check if successful; if so, run body and exit
 					if (result.isTrue()) {
-						this.doCall(body);
+						// properly propagate the return flag
+						final var retflag = this.doCall(body);
 						// remove elements until identifier "switch"
 						var elt = this.stack.pop();
 						while (!(elt instanceof Identifier && ((Identifier) elt).getValue().equals("switch::")))
 							elt = this.stack.pop();
-						break;
+						return retflag;
 					} else {
 						final var elt = this.stack.pop();
 						if (elt instanceof Identifier && ((Identifier) elt).getValue().equals("switch::")) {
 							// switch end was reached without executing any case: execute default callable
-							this.doCall(defaultCallable);
-							break;
+							return this.doCall(defaultCallable);
 						} else {
 							// just another pair of case and body; do that in the next loop
 							this.stack.push(elt);
 						}
 					}
 				}
-				break;
 			}
 			case While: {
 				final var condCallable = this.stack.pop();
@@ -316,51 +319,56 @@ public class Interpreter implements Serializable {
 					// execute the condition
 					this.doCall(condCallable);
 					var preContinue = this.stack.pop();
-					if (preContinue.isTrue())
-						this.doCall(bodyCallable);
+					if (preContinue.isTrue()) {
+						// abort if the return flag was set (false)
+						var retflag = this.doCall(bodyCallable);
+						if (!retflag) return retflag;
+					}
 					else
-						break;
+						// end normally when condition doesn't hold anymore
+						return true;
 				}
-				break;
 			}
 			// naming and calling
 			case Call: {
 				final Stackable toCall = this.stack.pop();
-				this.doCall(toCall);
-				break;
+				return this.doCall(toCall);
 			}
 			case DoubleCall: {
 				this.doCall(this.stack.pop());
-				this.doCall(this.stack.pop());
-				break;
+				return this.doCall(this.stack.pop());
 			}
 			case NativeCall: {
 				this.doNativeCall(this.stack.pop());
-				break;
+				return true;
 			}
 			case Define: {
 				final var id = this.stack.popTyped(Identifier.class);
 				final var value = this.stack.pop();
 				this.stack.localScope().put(id, value);
-				break;
+				return true;
 			}
 			case GlobalDefine: {
 				final var id = this.stack.popTyped(Identifier.class);
 				final var value = this.stack.pop();
 				final var gnt = this.stack.globalNametable();
 				gnt.put(id, value);
-				break;
+				return true;
 			}
 			// functions
 			case Function: {
 				final var argcount = this.stack.popTyped(IntPrimitive.class);
 				final var code = this.stack.popTyped(CodeBlock.class).code;
 				this.stack.push(new SOFunction(code, argcount.value()));
-				break;
+				return true;
 			}
 			case Return: {
 				final var retval = this.stack.pop();
 				this.stack.localScope().setReturn(retval);
+				return false;
+			}
+			case ReturnNothing: {
+				// no return value assignment
 				return false;
 			}
 			// module system
@@ -381,7 +389,7 @@ public class Interpreter implements Serializable {
 				final var gnt = this.stack.globalNametable();
 				gnt.putAll(exports);
 
-				break;
+				return true;
 			}
 			case Export: {
 				// the default interpreter noops the export keyword so that module-like files can still be run normally
@@ -392,40 +400,39 @@ public class Interpreter implements Serializable {
 			case Input: {
 				final String input = this.io.nextInputSequence();
 				this.stack.push(StringPrimitive.createStringPrimitive(input));
-				break;
+				return true;
 			}
 			case InputLine: {
 				final String input = this.io.nextInputLine();
 				this.stack.push(StringPrimitive.createStringPrimitive(input));
-				break;
+				return true;
 			}
 			case Write: {
 				this.io.print(this.stack.pop().print());
-				break;
+				return true;
 			}
 			case WriteLine: {
 				this.io.println(this.stack.pop().print());
-				break;
+				return true;
 			}
 			// debug
 			case DescribeElement: {
 				this.io.debug(this.stack.peek().toDebugString(DebugStringExtensiveness.Full));
-				break;
+				return true;
 			}
 			case DescribeStack: {
 				this.io.describeStack(this.stack);
-				break;
+				return true;
 			}
 			case Assert: {
 				if (this.stack.pop().isFalse())
 					throw CompilerException.fromCurrentPosition(pt.getSource(), pt.getCodeIndex(), "assert", null);
 				++this.assertCount;
-				break;
+				return true;
 			}
 			default:
 				throw new RuntimeException("Unhandled primitive token.");
 		}
-		return true;
 	}
 
 	/**
@@ -477,16 +484,20 @@ public class Interpreter implements Serializable {
 	/**
 	 * Helper function to execute the call operation on the stackable, depending on
 	 * the type. This function may modify the current interpreter state.
+	 * @return Whether any of the subcalls encountered a return statement.
+	 * This is necessary so that return statements propagate through CodeBlocks and are only caught by Functions.
 	 */
-	protected void doCall(final Stackable toCall) throws CompilerException.Incomplete {
+	protected boolean doCall(final Stackable toCall) throws CompilerException.Incomplete {
 		if (toCall instanceof Identifier) {
 			final var id = (Identifier) toCall;
 			final var val = this.stack.lookup(id);
 			if (val == null)
 				throw new CompilerException.Incomplete("name", id);
 			this.stack.push(val);
+			return true;
 		} else if (toCall instanceof Primitive) {
 			this.stack.push(toCall);
+			return true;
 		} else if (toCall instanceof SOFunction) {
 			// HINT: handle the function before the codeblock because it inherits from it
 			final var function = (SOFunction) toCall;
@@ -500,7 +511,7 @@ public class Interpreter implements Serializable {
 			if (function.arguments > 0)
 				this.stack.pushAll(args);
 
-			// run
+			// run and ignore return state
 			subProgram.forEach((Function<Node, Boolean>) this::handle);
 
 			// get return value through nametable
@@ -509,10 +520,11 @@ public class Interpreter implements Serializable {
 			if (!(table instanceof FunctionDelimiter))
 				throw new RuntimeException("Unexpected nametable type " + table.getClass().toString());
 			((FunctionDelimiter) table).pushReturnValue(this.stack);
+			return true;
 		} else if (toCall instanceof CodeBlock) {
 			final var subProgram = ((CodeBlock) toCall).code;
 			// just run, no return value, no stack protect
-			subProgram.forEach((Function<Node, Boolean>) this::handle);
+			return subProgram.forEach((Function<Node, Boolean>) this::handle);
 		} else
 			throw new CompilerException.Incomplete("call", "type.call", toCall.typename());
 	}

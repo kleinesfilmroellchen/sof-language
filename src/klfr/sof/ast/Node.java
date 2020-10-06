@@ -60,8 +60,8 @@ public abstract class Node implements Serializable, Cloneable, Iterable<Node> {
 	 * The default method applies the function to this node directly, which is
 	 * useful for most "primitive" nodes.
 	 */
-	public void forEach(Function<? super Node, Boolean> action) {
-		action.apply(this);
+	public boolean forEach(Function<? super Node, Boolean> action) {
+		return action.apply(this);
 	}
 
 	/**

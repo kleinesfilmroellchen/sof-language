@@ -20,6 +20,11 @@ public class PrimitiveTokenNode extends Node {
 		Multiply("*"),
 		/** The <code>/</code> primitive token. */
 		Divide("/"),
+		/** The <code>%</code> primitive token. */
+		// Modulus("%"),
+
+		/** The <code>cat</code> primitive token. */
+		Concatenate("cat"),
 
 		/** The <code>and</code> primitive token. */
 		And("and"),
@@ -75,6 +80,8 @@ public class PrimitiveTokenNode extends Node {
 		Function("function"),
 		/** The <code>return</code> primitive token. */
 		Return("return"),
+		/** The <code>return:0</code> primitive token. */
+		ReturnNothing("return:0"),
 		/** The <code>constructor</code> primitive token. */
 		// Constructor("constructor"),
 

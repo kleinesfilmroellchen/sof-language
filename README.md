@@ -71,16 +71,17 @@ To get a taste of SOF, here are several sample programs written in SOF. Note tha
 
 ```sof
 # fibbonachi
+
 {
 	n def
 	0 i def
 	1 x def 1 y def 1 z def
 	{
 		z .
-		x . y . + z def
-		y . x def
-		z . y def
-		writeln
+		x . y . + z def # z := x + y
+		y . x def # x := y
+		z . y def # y := z
+		writeln # z old
 		i . 1 + i def
 	} { i . n . < } while
 } 1 function fib def
@@ -90,12 +91,12 @@ To get a taste of SOF, here are several sample programs written in SOF. Note tha
 # alternative function definition: heavier stack use, runs faster
 
 {
-	1 x def 1 y def 1 z def # counter
+	1 x def 0 y def # counters, z is only defined later
 	{
-		y . dup x . + z def # yold
-		z . y def x def
-		dup writeln # counter
-	} { 1 - 0 > } while
+		y . dup x . + z def # z = y + x,  y (old) on the stack
+		z . y def x def # y = z, x = y (old)
+		z . writeln # write z, counter on the stack
+	} { 1 - dup 0 > } while # while counter > 0
 } 1 function fib def
 
 ```
@@ -104,17 +105,17 @@ To get a taste of SOF, here are several sample programs written in SOF. Note tha
 # factorial
 
 {
-	dup dup # arg*3
-	{ 1 return } 2 < if # arg*2
-	1 - fact : * return
+	dup dup # n*3 on the stack
+	{ 1 return } swap 2 < if # return 1 if n < 2, n*2 on the stack
+	1 - fact : * return # return factorial of n-1 times n
 } 1 function fact def
 
-"enter a number: " write input convert:int : fact :
+"enter a number: " write input convert:int : fact : writeln
 ```
 
 ```sof
 # play a guessing game
-15 number def
+random:int number def
 0 guess def
 {
 	input convert:int : guess def
@@ -133,15 +134,17 @@ To get a taste of SOF, here are several sample programs written in SOF. Note tha
 ```sof
 # compute the sum of the first one hundred natural numbers, using a loop and a function
 
+100 N def
+
 # loop
 1 i def
 0 result def
 {
-	result . i . + result def # this syntax might change
+	result . i . + result def
 	i . 1 + i def
-} { i . 100 <= } while
+} { i . N . <= } while
 
-"The result is: " result . cat writeln
+"The result (loop) is: " result . cat writeln
 
 # function
 {
@@ -150,7 +153,8 @@ To get a taste of SOF, here are several sample programs written in SOF. Note tha
 	n . n . 1 + * 2 / return
 } 1 function sum def
 
-"The result is: " 1 sum : cat writeln 
+N . sum :
+"The result (function) is: " swap cat writeln 
 ```
 
 ## 3. Basic principles of SOF

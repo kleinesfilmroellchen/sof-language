@@ -1,0 +1,12 @@
+# Fibbonachi sample program.
+{
+	1 x def 0 y def # counters, z is only defined later
+	{
+		y . dup x . + z def # z = y + x,  y (old) on the stack
+		z . y def x def # y = z, x = y (old)
+		z . writeln # write z, counter on the stack
+	} { 1 - dup 0 > } while # while counter > 0
+} 1 function fib def
+
+# request input, convert, run function
+"enter a number: " write input convert:int : fib :
