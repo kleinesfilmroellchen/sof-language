@@ -66,7 +66,18 @@ public class Nametable implements Stackable {
 		return entries.keySet();
 	}
 
-	private final Map<Identifier, Stackable> entries = new TreeMap<>();
+	/**
+	 * Map backing this nametable.<br><br>
+	 * 
+	 * For the main nametables, a hash-based map is chosen.
+	 * The main tables are frequently accessed and modified, therefore, the constant lookup
+	 * and store times are very beneficial.
+	 * It is therefore also fine to take some size penalty compared to e.g. TreeMaps.
+	 * Neither load factor nor initial capacity are chosen with much consideration.
+	 * The load factor is slightly lower to prevent frequent resizing as well as collisions.
+	 * The initial capacity is a reasonable size and a power of two with possible benefits.
+	 */
+	private final Map<Identifier, Stackable> entries = new HashMap<>(32, 0.6f);
 
 	@Override
 	public String toDebugString(DebugStringExtensiveness e) {
