@@ -4,9 +4,7 @@ import klfr.sof.CompilerException;
 
 /**
  * Built-in Primitive Tokens is a collection for most PTs, like arithmetic
- * operations, comparisons, stack operations. This collection makes heavy use of
- * the {@link Callable#fromFunction(Function)} methods to define callables
- * directly from lambda functions.
+ * operations, comparisons, stack operations.
  * 
  * @author klfr
  */

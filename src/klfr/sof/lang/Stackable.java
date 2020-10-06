@@ -152,7 +152,7 @@ public interface Stackable extends Serializable, Cloneable, Comparable<Stackable
 	 */
 	@Override
 	public default int compareTo(Stackable o) {
-		return this.hashCode() - o.hashCode();
+		throw new CompilerException.Incomplete("type", "type.compare", this.typename(), o.typename());
 	}
 
 	/**
