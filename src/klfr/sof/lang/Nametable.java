@@ -90,11 +90,9 @@ public class Nametable implements Stackable {
 
 	@Override
 	public String toDebugString(DebugStringExtensiveness e) {
-		switch (e) {
-			case Compact:
-				return "NT[" + entries.size() + "]";
-			case Full:
-				return "┌" + Interpreter.line66.substring(2) + "┐" + System.lineSeparator() + // top of the table
+		return switch (e) {
+			case Compact -> "NT[" + entries.size() + "]";
+			case Full -> "┌" + Interpreter.line66.substring(2) + "┐" + System.lineSeparator() + // top of the table
 						mappingStream().collect( // the stream is parallel b/c order does not exist
 								() -> new StringBuilder(66), // create a new string builder as the starting point
 								(strb, entry) -> // for each new entry, append its formatted string to the string builder
@@ -103,9 +101,8 @@ public class Nametable implements Stackable {
 												.ensureLength(entry.getValue().toDebugString(DebugStringExtensiveness.Compact)))),
 								(strb1, strb2) -> strb1.append(strb2)) // combine stringbuilders with a newline
 						+ "└" + Interpreter.line66.substring(2) + "┘"; // bottom of the table
-			default:
-				return Stackable.toDebugString(this, e);
-		}
+			default -> Stackable.toDebugString(this, e);
+		};
 	}
 
 	public Stackable copy() {

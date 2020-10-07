@@ -14,6 +14,15 @@
 
 { "klfr.sof.lib.Builtins#random(FloatPrimitive,FloatPrimitive)" nativecall return } 2 function random:float globaldef
 
+{ "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable)" nativecall return } 2 function fmt'1 globaldef
+{ "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable)" nativecall return } 3 function fmt'2 globaldef
+{ "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable,Stackable)" nativecall return } 4 function fmt'3 globaldef
+{ "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable,Stackable,Stackable)" nativecall return } 5 function fmt'4 globaldef
+{ "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable,Stackable,Stackable,Stackable)" nativecall return } 6 function fmt'5 globaldef
+{ "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable,Stackable,Stackable,Stackable,Stackable)" nativecall return } 7 function fmt'6 globaldef
+{ "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable,Stackable,Stackable,Stackable,Stackable,Stackable)" nativecall return } 8 function fmt'7 globaldef
+{ "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable,Stackable,Stackable,Stackable,Stackable,Stackable,Stackable)" nativecall return } 9 function fmt'8 globaldef
+
 
 # The SOF programming language interpreter.
 # Copyright (C) 2019-2020  kleinesfilmröllchen

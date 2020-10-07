@@ -25,17 +25,12 @@ public class SOFunction extends CodeBlock {
 
     @Override
     public String toDebugString(DebugStringExtensiveness e) {
-        switch (e) {
-            case Compact:
-                return String.format("[Function/%d %dn ]", this.arguments, this.code.count());
-            case Full:
-                return String.format("[Function/%d { %s } %h]", this.arguments, this.code, this.hashCode());
-            case Type:
-                return "Function";
-            default:
-                return Stackable.toDebugString(this, e);
-        }
-
+        return switch (e) {
+            case Compact -> String.format("[Function/%d %dn ]", this.arguments, this.code.count());
+            case Full -> String.format("[Function/%d { %s } %h]", this.arguments, this.code, this.hashCode());
+            case Type -> "Function";
+            default -> Stackable.toDebugString(this, e);
+        };
     }
 
     @Override

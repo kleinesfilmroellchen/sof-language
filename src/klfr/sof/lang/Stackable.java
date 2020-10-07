@@ -79,16 +79,11 @@ public interface Stackable extends Serializable, Cloneable, Comparable<Stackable
 	 *         as in logger output, describe(s) PT calls etc.
 	 */
 	public static String toDebugString(Stackable s, DebugStringExtensiveness e) {
-		// TODO: use Java 14 and expression switches
-		switch (e) {
-			case Type:
-				return e.ensureLength(s.typename());
-			case Compact:
-			case Full:
-				return e.ensureLength(String.format("[%s %h]", s.getClass().getSimpleName(), s.hashCode()));
-		}
-		// never hit, otherwise the switch won't compile
-		return "";
+		// THE SWITCH EXPRESSIONS ARE HERE AND I LOVE THEM
+		return switch (e) {
+			case Type -> e.ensureLength(s.typename());
+			case Compact, Full -> e.ensureLength(String.format("[%s %h]", s.getClass().getSimpleName(), s.hashCode()));
+		};
 	}
 
 	/**

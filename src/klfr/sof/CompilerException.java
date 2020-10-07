@@ -6,6 +6,7 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 import klfr.sof.Tokenizer.TokenizerState;
+import static klfr.Utility.*;
 
 /**
  * Compiler/interpreter exception class with fancy formatting.
@@ -262,29 +263,6 @@ public class CompilerException extends RuntimeException {
 		// trim from the start and end means that the char is always at index
 		// (EXPRESSION_OUTPUT_LEN/2)
 		return (EXPRESSION_OUTPUT_LEN / 2);
-	}
-
-	private static String padLeft(final String s, final int len) {
-		final int charsToAdd = len - s.length();
-		if (charsToAdd <= 0)
-			return s;
-		return " ".repeat(charsToAdd) + s;
-	}
-
-	private static String padRight(final String s, final int len) {
-		final int charsToAdd = len - s.length();
-		if (charsToAdd <= 0)
-			return s;
-		return s + " ".repeat(charsToAdd);
-	}
-
-	private static String padCenter(final String s, final int len) {
-		final int charsToAdd = len - s.length();
-		if (charsToAdd <= 0)
-			return s;
-		// one additional char on the left side if number of padding chars is odd
-		final int oneMoreLeft = (charsToAdd % 2) == 0 ? 0 : 1;
-		return " ".repeat(charsToAdd / 2 + oneMoreLeft) + s + " ".repeat(charsToAdd / 2);
 	}
 
 }

@@ -42,15 +42,11 @@ public class Identifier implements Stackable {
 
 	@Override
 	public String toDebugString(DebugStringExtensiveness e) {
-		switch (e) {
-			case Full:
-				return "Identifier(" + value + ")";
-			case Compact:
-				return value;
-			case Type:
-			default:
-				return Stackable.toDebugString(this, e);
-		}
+		return switch (e) {
+			case Full -> "Identifier(" + value + ")";
+			case Compact -> value;
+			case Type -> Stackable.toDebugString(this, e);
+		};
 	}
 
 	@Override

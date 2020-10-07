@@ -29,14 +29,11 @@ public class StringPrimitive extends Primitive {
 
    @Override
    public String toDebugString(DebugStringExtensiveness e) {
-      switch (e) {
-         case Full:
-            return String.format("s\"%s\"(%2d)", this.s.replace("\n", "\\n").replace("\t", "\\t").replace("\f", "\\f").replace("\r", "\\r"), this.length);
-         case Compact:
-            return '"' + s + '"';
-         default:
-            return super.toDebugString(e);
-      }
+      return switch (e) {
+         case Full -> String.format("s\"%s\"(%2d)", this.s.replace("\n", "\\n").replace("\t", "\\t").replace("\f", "\\f").replace("\r", "\\r"), this.length);
+         case Compact -> '"' + s + '"';
+         default -> super.toDebugString(e);
+      };
    }
 
    @Override

@@ -117,17 +117,15 @@ public final class NativeFunctionRegistry {
 			final Map.Entry<Integer, List<Method>> entry) {
 		final var argcount = entry.getKey();
 		final var functions = entry.getValue().stream();
-		switch (argcount) {
-			case 0:
-				return functions.map(m -> new Tuple<>(mcall0(m), m));
-			case 1:
-				return functions.map(m -> new Tuple<>(mcall1(m), m));
-			case 2:
-				return functions.map(m -> new Tuple<>(mcall2(m), m));
-			case 3:
-				return functions.map(m -> new Tuple<>(mcall3(m), m));
-		}
-		return Stream.<Tuple<NativeNArgFunction, Method>>empty();
+		// Yes.
+		return switch (argcount) {
+			case 0 -> functions.map(m -> new Tuple<>(mcall0(m), m));
+			case 1 -> functions.map(m -> new Tuple<>(mcall1(m), m));
+			case 2 -> functions.map(m -> new Tuple<>(mcall2(m), m));
+			case 3 -> functions.map(m -> new Tuple<>(mcall3(m), m));
+			default -> Stream.<Tuple<NativeNArgFunction, Method>>empty();
+		};
+		
 	}
 
 	/**

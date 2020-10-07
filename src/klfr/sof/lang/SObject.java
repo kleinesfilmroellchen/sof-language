@@ -15,14 +15,11 @@ public class SObject extends Nametable {
 
 	@Override
 	public String toDebugString(DebugStringExtensiveness e) {
-		switch (e) {
-			case Full:
-				return "Object " + getName() + ":" + System.lineSeparator() + super.toDebugString(e);
-			case Compact:
-				return "Obj(" + super.toDebugString(e) + ")";
-			default:
-				return super.toDebugString(e);
-		}
+		return switch (e) {
+			case Full -> "Object " + getName() + ":" + System.lineSeparator() + super.toDebugString(e);
+			case Compact -> "Obj(" + super.toDebugString(e) + ")";
+			default -> super.toDebugString(e);
+		};
 	}
 
 }

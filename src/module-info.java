@@ -3,8 +3,8 @@ module sof {
 	requires java.logging;
 	opens klfr.sof.test.source;
 	opens klfr.sof.lib;
+	exports klfr.sof;
 }
-// exports klfr.sof;
 
 /*  
 The SOF programming language interpreter.

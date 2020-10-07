@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.*;
 
+import static klfr.Utility.*;
 import klfr.sof.lang.*;
 import klfr.sof.lib.*;
 
@@ -46,6 +47,17 @@ class BuiltinFunctionsTest extends SofTestSuper {
 						.parallelStream().map(entry -> entry.getValue().size())
 						.allMatch(count -> count > avgCountPerNum * 0.8d && count <= avgCountPerNum * 1.2d),
 				"All values are no more than 20% from the expected mean");
+	}
+
+	@Test
+	@DisplayName("Test formatting helper function fullDoubleToString()")
+	void testDoubleToString() {
+		assertEquals("0.000000000000", fullDoubleToString(0d), "Zero tostring");
+		assertEquals("1.000000000000", fullDoubleToString(1d), "One tostring");
+		assertEquals("3020190293.000000000000", fullDoubleToString(3020190293d), "Large number tostring (accounting for float inacuraccy)");
+		assertEquals("3020190293.184730052947", fullDoubleToString(3020190293.18473d), "Large number with decimals tostring");
+		assertEquals("3.141592653588", fullDoubleToString(3.141592653589d), "Small number with decimals tostring");
+		assertEquals("-197.335000000000", fullDoubleToString(-197.335d), "Negative number tostring");
 	}
 
 }

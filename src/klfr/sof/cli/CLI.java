@@ -51,11 +51,13 @@ public class CLI {
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 			bl.info("SOF exiting.");
 		}));
-		//System.out.println(ResourceBundle.getBundle(Interpreter.MESSAGE_RESOURCE).getBaseBundleName());
+		// System.out.println(R.getBaseBundleName());
+		// System.out.println(ResourceBundle.getBundle(Interpreter.MESSAGE_RESOURCE).getBaseBundleName());
 		//bl.setResourceBundle(R);
 
 		//TODO: move this into some centralized system
 		NativeFunctionRegistry.registerNativeFunctions(Builtins.class);
+		NativeFunctionRegistry.registerNativeFunctions(Formatting.class);
 
 		Options opt = null;
 		try {

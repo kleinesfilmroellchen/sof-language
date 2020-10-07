@@ -15,14 +15,12 @@ public class CodeBlock implements Stackable {
 	@Override
 	public String toDebugString(DebugStringExtensiveness e) {
 		String code = this.code.toString();
-		switch (e) {
-			case Full:
-				return String.format("[CodeBlock { %s } %h]", code, hashCode());
-			case Compact:
-				return "[CodeBlk " + this.code.count() + "n ]";
-			default:
-				return Stackable.toDebugString(this, e);
-		}
+		// Java Switch Expression FTW!
+		return switch (e) {
+			case Full -> String.format("[CodeBlock { %s } %h]", code, hashCode());
+			case Compact -> "[CodeBlk " + this.code.count() + "n ]";
+			default -> Stackable.toDebugString(this, e);
+		};
 	}
 
 	@Override

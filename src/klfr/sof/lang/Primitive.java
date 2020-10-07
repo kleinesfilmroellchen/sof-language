@@ -71,15 +71,15 @@ public abstract class Primitive implements Stackable {
 
 	@Override
 	public String toDebugString(DebugStringExtensiveness e) {
-		switch (e) {
-			case Full:
-			case Compact:
+		// Yes, Java. You can do it.
+		return switch (e) {
+			case Full, Compact -> {
 				if (v() instanceof String)
-					return this.typename() + ":\"" + v().toString() + '"';
-				return this.typename() + ':' + v().toString();
-			default:
-				return Stackable.toDebugString(this, e);
-		}
+					yield this.typename() + ":\"" + v().toString() + '"';
+				yield this.typename() + ':' + v().toString();
+			}
+			default -> Stackable.toDebugString(this, e);
+		};
 	}
 
 	@Override

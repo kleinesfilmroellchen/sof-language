@@ -52,8 +52,8 @@ public class IntPrimitive extends Primitive {
     */
    public static IntPrimitive createIntegerFromString(String integerString) throws CompilerException {
       integerString = integerString.strip();
-      int radix = 10;
       long sign = 1;
+      int radix = 10;
       // check zero
       if (integerString.matches("[\\+\\-]?0+")) {
          return new IntPrimitive(0l);
@@ -68,23 +68,13 @@ public class IntPrimitive extends Primitive {
       // check radix
       if (integerString.charAt(0) == '0') {
          char base = integerString.charAt(1);
-         switch (base) {
-            case 'b':
-               radix = 2;
-               break;
-            case 'o':
-               radix = 8;
-               break;
-            case 'd':
-               radix = 10;
-               break;
-            case 'h':
-            case 'x':
-               radix = 16;
-               break;
-            default:
-               throw new CompilerException.Incomplete("syntax", "syntax.integer", integerString);
-         }
+         radix = switch (base) {
+            case 'b' ->       2;
+            case 'o' ->       8;
+            case 'd' ->      10;
+            case 'h', 'x' -> 16;
+            default -> throw new CompilerException.Incomplete("syntax", "syntax.integer", integerString);
+         };
          integerString = integerString.substring(2);
       }
 
