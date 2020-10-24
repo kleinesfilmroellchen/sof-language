@@ -32,3 +32,4 @@ bin*/*.launch
 .vscode
 /testbins/
 sof dev files/
+testncoverage.ps1
