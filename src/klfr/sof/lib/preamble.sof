@@ -14,6 +14,7 @@
 
 { "klfr.sof.lib.Builtins#random(FloatPrimitive,FloatPrimitive)" nativecall return } 2 function random:float globaldef
 
+{ "klfr.sof.lib.Formatting#fmt(StringPrimitive)" nativecall return } 1 function fmt'0 globaldef
 { "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable)" nativecall return } 2 function fmt'1 globaldef
 { "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable)" nativecall return } 3 function fmt'2 globaldef
 { "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable,Stackable)" nativecall return } 4 function fmt'3 globaldef

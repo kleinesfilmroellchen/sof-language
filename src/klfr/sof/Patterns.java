@@ -80,7 +80,7 @@ public final class Patterns {
 	public static final Pattern nlPat = Pattern.compile("^", Pattern.MULTILINE);
 	public static final Pattern lineBreakPattern = Pattern.compile("\\R");
 
-	public static final Pattern formatSpecifierPattern = Pattern.compile("(\\%n)|\\%([\\<\\^\\+ \\#0]+)?([1-9][0-9]*)?(?:\\.([1-9][0-9]*))?([dioxXefgs])");
+	public static final Pattern formatSpecifierPattern = Pattern.compile("(\\%n)|\\%([\\<\\^\\+ \\#0]+)?([1-9][0-9]*)?(?:\\.([1-9][0-9]*))?([diboxXefgs])");
 
 }
 

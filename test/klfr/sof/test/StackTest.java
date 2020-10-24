@@ -96,14 +96,6 @@ public class StackTest extends SofTestSuper {
 		assertDoesNotThrow(() -> nt.toDebugString(DebugStringExtensiveness.Type), "Debug string (Type)");
 		assertDoesNotThrow(() -> nt.toDebugString(DebugStringExtensiveness.Full), "Debug string (Full)");
 	}
-
-	/**
-	 * Test the scoping functionality that concerns both Stack and Nametable.
-	 */
-	@Test
-	void testScoping() {
-		fail("Not yet implemented");
-	}
 }
 
 /*  

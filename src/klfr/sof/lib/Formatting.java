@@ -3,6 +3,7 @@ package klfr.sof.lib;
 import klfr.sof.Patterns;
 import klfr.sof.lang.*;
 
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
 import klfr.Tuple;
@@ -12,13 +13,14 @@ import static klfr.Utility.*;
 
 /** Library class that handles SOF's string formatting. */
 public final class Formatting {
+	private static final Logger log = Logger.getLogger(Formatting.class.getCanonicalName());
 
 	/**
 	 * General version of the fmt functions that implements all the actual formatting.
 	 * @param fstring The format string.
 	 * @param fparams The format parameters.
 	 */
-	private static String internalFormat(String fstring, Stackable... fparams) {
+	public static String internalFormat(String fstring, Stackable... fparams) {
 		final var matcher = Patterns.formatSpecifierPattern.matcher(fstring);
 		int currentIdx = 0;
 		int lastMatchEnd = 0;
@@ -37,12 +39,14 @@ public final class Formatting {
 			// set the new last match endpoint to the current match's end
 			lastMatchEnd = matcher.end();
 		}
+		// append the section of the string after the last format specifier
+		finalString.append(fstring.substring(lastMatchEnd));
 		return finalString.toString();
 	}
 
 	private static class FormatSpecification {
 		private static enum Justify { Left, Right, Center }
-		private static enum FormatSpec { Decimal('d'), Octal('o'), Hex('x'), HexUpper('X'), Float('f'), Scientific('e'), ShortestFloat('g'), String('s'), Newline('n');
+		private static enum FormatSpec { Decimal('d'), Binary('b'), Octal('o'), Hex('x'), HexUpper('X'), Float('f'), Scientific('e'), ShortestFloat('g'), String('s'), Newline('n');
 			private FormatSpec(char fc) { this.fc = fc; }
 			public final char fc;
 			public static FormatSpec make(final char fc) {
@@ -59,7 +63,7 @@ public final class Formatting {
 		public int width = 0;
 		public int flags = 0;
 		public char getPadChar() {
-			return (flags & PAD_ZERO) > 0 ? '0' : ' ';
+			return ((flags & PAD_ZERO) > 0) ? '0' : ' ';
 		}
 		/** + */
 		public static final int SIGN = 0b1;
@@ -80,7 +84,7 @@ public final class Formatting {
 	 * <pre>
 	 * %[flags][width][.precision]specifier
 	 * </pre>
-	 * The leading % is not passed to this method.
+	 * The leading % IS passed to this method.
 	 * 
 	 * <ul>
 	 * <li><strong>Specifier</strong> specifies the actual data type that is to be formatted.
@@ -89,7 +93,8 @@ public final class Formatting {
 	 * s (string), n (system newline, this is different from C's n format specifier).</li>
 	 * <li><strong>Flags</strong> specify various formatting flags. SOF supports < (left-justify), ^ (center-justify),
 	 * + (force numbers to print sign), (space) (force blank space in sign location for positive numbers),
-	 * # (force hex to print 0x / 0X, force decimal numbers to print decimal point), 0 (pad with zeroes instead of spaces).</li>
+	 * # (force hex to print 0x / 0X, force octal to print leading 0, force decimal numbers to print decimal point),
+	 * 0 (pad with zeroes instead of spaces).</li>
 	 * <li><strong>Width</strong> is the minimum width of the formatted text.
 	 * If the text is shorter, it is right-justified padded with spaces. Alignment and padding type is controlled by flags.</li>
 	 * <li><strong>Precision</strong> depends on the format specifier. For integers, it is the minimum number of digits.
@@ -112,38 +117,107 @@ public final class Formatting {
 	 * @throws IndexOutOfBoundsException If the current index or an additional argument index is out of bounds.
 	 *                                   This is auto-thrown by the array indexing.
 	 */
-	private static Tuple<Integer, String> handleFormatter(String fspecifier, int currentIdx, Stackable[] fparams) throws IllegalArgumentException, ClassCastException, IndexOutOfBoundsException, NumberFormatException {
+	public static Tuple<Integer, String> handleFormatter(String fspecifier, int currentIdx, Stackable[] fparams) throws IllegalArgumentException, ClassCastException, IndexOutOfBoundsException, NumberFormatException {
 		// percent escape
-		if (fspecifier.equals("%")) return Tuple.t(currentIdx, "%");
+		if (fspecifier.equals("%%")) return Tuple.t(currentIdx, "%");
 
 		final var fspec = parseFormatSpecifier(fspecifier);
+		
+		// treat newline first because it may even be used if there are no formatting parameters at all
+		if (fspec.fspec == FormatSpecification.FormatSpec.Newline)
+			return Tuple.t(currentIdx, System.lineSeparator());
+		
 		final var fparam = fparams[currentIdx];
 
 		StringBuilder formatted = new StringBuilder();
 		switch (fspec.fspec) {
-			case Newline:
-				return Tuple.t(currentIdx, System.lineSeparator());
+			// share code between all integer radices
 			case Decimal:
+			case Hex:
+			case HexUpper:
+			case Octal:
+			case Binary:
+				// determine radix for toString()
+				final int radix = (fspec.fspec == FormatSpecification.FormatSpec.Hex || fspec.fspec == FormatSpecification.FormatSpec.HexUpper) ? 16 : (fspec.fspec == FormatSpecification.FormatSpec.Octal) ? 8 : (fspec.fspec == FormatSpecification.FormatSpec.Binary) ? 2 : 10;
 				final long i = ((IntPrimitive)fparam).value();
-				String fullInt = Long.toString(i, 10);
-				if (fullInt.length() < fspec.precision) {
+				
+				String fullInt = Long.toString(i, radix);
+				if (fullInt.length() < fspec.precision)
 					fullInt = padLeft(fullInt, fspec.precision, '0');
-				}
+				if (fspec.fspec == FormatSpecification.FormatSpec.HexUpper)
+					fullInt = fullInt.toUpperCase();
+				
 				formatted.append(fullInt);
+				if ((fspec.flags & FormatSpecification.FULLFORM) > 0) {
+					// handle the two/three types of full form
+					if (fspec.fspec == FormatSpecification.FormatSpec.Octal)
+						formatted.insert(0, '0');
+					else if (fspec.fspec == FormatSpecification.FormatSpec.Hex)
+						formatted.insert(0, "0x");
+					else if (fspec.fspec == FormatSpecification.FormatSpec.HexUpper)
+						formatted.insert(0, "0X");
+				}
 				if (i >= 0) {
-					if ((fspec.flags | FormatSpecification.SIGN) > 0)
+					if ((fspec.flags & FormatSpecification.SIGN) > 0)
 						formatted.insert(0, '+');
-					else if ((fspec.flags | FormatSpecification.ALIGN_SIGN) > 0)
+					else if ((fspec.flags & FormatSpecification.ALIGN_SIGN) > 0)
 						formatted.insert(0, ' ');
+				} else {
+					// delete any negative signs and add one to the front
+					formatted.deleteCharAt(formatted.indexOf("-"));
+					formatted.insert(0, '-');
 				}
 				break;
 			case Float:
-				final double d = ((FloatPrimitive)fparam).value();
-				String fullDouble = Utility.fullDoubleToString(d);
-				// if there are at least two zeroes towards the end of the decimal line
-				if (fullDouble.lastIndexOf("00") > fullDouble.length()-5) {
-					fullDouble = fullDouble.substring(0, fullDouble.lastIndexOf("00"));
+				// Using the rounding trick here already to make the limited decimal representation rounding-accurate
+				final double d = fspec.precision <= 0 ? ((FloatPrimitive)fparam).value() : Math.round(((FloatPrimitive)fparam).value() * Math.pow(10, fspec.precision)) / Math.pow(10, fspec.precision);
+				StringBuilder fullDouble = new StringBuilder(Utility.fullDoubleToString(d));
+				log.fine(fullDouble.toString());
+				// Maximum precision is demanded, pad the number out with zeroes for precision over 12
+				if (fspec.precision >= 12) {
+					fullDouble = new StringBuilder(Utility.padRight(fullDouble.toString(), fspec.precision, '0'));
+				} else if (fspec.precision <= 0) {
+					// If precision is zero (or less, shouldn't happen), use the optimal digit length
+					int idx = fullDouble.length();
+					// advance to the last zero-containing digit
+					while ((--idx) > fullDouble.lastIndexOf(".") && (fullDouble.charAt(idx) == '0' || fullDouble.charAt(idx) == '9')) {
+
+					}
+					// more rectification for long "99999" chains
+					if (fullDouble.charAt(idx+1) == '9') fullDouble.insert(idx, String.valueOf((char)(fullDouble.charAt(idx)+1)));
+					// special case for integers that have all zeroes behind the decimal point
+					if (idx == fullDouble.lastIndexOf(".")) {
+						// full form flag specifies that even for the integers, a decimal point and a 0 needs to be printed.
+						if ((fspec.flags & FormatSpecification.FULLFORM) > 0) ++idx;
+						// otherwise remove it
+						else --idx;
+					}
+
+					fullDouble.setLength(idx+1);
+				} else {
+					// one character BEHIND the actual last character to be printed, see setLength below
+					var lastRelevantChar = fullDouble.length() - (12 - fspec.precision);
+					// HACK: Floating-point imprecisions are revealed by the super-accurate toString converter.
+					// To prevent 999999... chains (or similar) messing up converted rounded numbers, increment the last printed digit
+					// if another digit after it is greater or equal to 5. (Char comparison works because the ASCII is nicely in order)
+					if (lastRelevantChar < fullDouble.length() && fullDouble.charAt(lastRelevantChar) >= '5') {
+						// insertion is fine because the later sections will be thrown away anyways
+						fullDouble.insert(lastRelevantChar-1, String.valueOf((char)(fullDouble.charAt(lastRelevantChar-1)+1)));
+					}
+					// Remove however many digits necessary from the end
+					fullDouble.setLength(lastRelevantChar);
 				}
+				formatted.append(fullDouble);
+				if (d >= 0) {
+					if ((fspec.flags & FormatSpecification.SIGN) > 0)
+						formatted.insert(0, '+');
+					else if ((fspec.flags & FormatSpecification.ALIGN_SIGN) > 0)
+						formatted.insert(0, ' ');
+				}
+				break;
+			case String:
+				formatted.append(fparam.print());
+				break;
 			default:
 				throw new RuntimeException("Unhandled format specifier");
 		}
@@ -152,8 +226,8 @@ public final class Formatting {
 			// Java Switch Expressions FTW
 			formatted = switch(fspec.justify) {
 				case Center -> new StringBuilder(padCenter(formatted.toString(), fspec.width, fspec.getPadChar()));
-				case Left -> new StringBuilder(padLeft(formatted.toString(), fspec.width, fspec.getPadChar()));
-				case Right -> new StringBuilder(padRight(formatted.toString(), fspec.width, fspec.getPadChar()));
+				case Left -> new StringBuilder(padRight(formatted.toString(), fspec.width, fspec.getPadChar()));
+				case Right -> new StringBuilder(padLeft(formatted.toString(), fspec.width, fspec.getPadChar()));
 			};
 		}
 		return Tuple.t(currentIdx+1, formatted.toString());
@@ -166,16 +240,16 @@ public final class Formatting {
 
 		String newline = fmatcher.group(1), flags = fmatcher.group(2), width = fmatcher.group(3),
 				 precision = fmatcher.group(4);
-		char specifier = fmatcher.group(5).charAt(0);
 		if (newline != null) {
 			fspec.fspec = FormatSpecification.FormatSpec.Newline;
 			return fspec;
 		}
+		char specifier = fmatcher.group(5).charAt(0);
 
 		// parse format specifier
+		fspec.fspec = FormatSpecification.FormatSpec.make(specifier);
 		// decimal has two specifiers, handle 'i' specially
 		if (specifier == 'i') fspec.fspec = FormatSpecification.FormatSpec.Decimal;
-		fspec.fspec = FormatSpecification.FormatSpec.make(specifier);
 		if (fspec.fspec == null) throw new IllegalArgumentException("Format specifier " + specifier + " unknown");
 
 		// parse width and precision
@@ -240,6 +314,9 @@ public final class Formatting {
 		// return fspec;
 	}
 
+	public static StringPrimitive fmt(StringPrimitive fstring) {
+		return StringPrimitive.createStringPrimitive(internalFormat(fstring.value()));
+	}
 	public static StringPrimitive fmt(StringPrimitive fstring, Stackable farg0) {
 		return StringPrimitive.createStringPrimitive(internalFormat(fstring.value(), farg0));
 	}

@@ -20,7 +20,7 @@ public class CompilerException extends RuntimeException {
 	private static final ResourceBundle R = ResourceBundle.getBundle(Interpreter.MESSAGE_RESOURCE);
 	private static final String EXCEPTION_FORMAT = "%s Error in file %s line %d at index %d:%n %s%n %s%n    %s";
 
-	public static final int EXPRESSION_OUTPUT_LEN = 30;
+	public static final int EXPRESSION_OUTPUT_LEN = 70;
 
 	/**
 	 * A pseudo- compiler exception that does not have information about its
