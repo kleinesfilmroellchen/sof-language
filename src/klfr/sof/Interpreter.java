@@ -395,6 +395,7 @@ public class Interpreter implements Serializable {
 				// the default interpreter noops the export keyword so that module-like files can still be run normally
 				// pop the identifier that is also used by proper `export`
 				this.stack.pop();
+				return true;
 			}
 			// i/o
 			case Input: {

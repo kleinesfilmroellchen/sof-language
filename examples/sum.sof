@@ -21,4 +21,4 @@
 } 1 function sum def
 
 N . sum :
-"The result (function) is: " swap cat writeln 
+"The result (function) is: " swap cat writeln

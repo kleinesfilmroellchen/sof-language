@@ -6,8 +6,10 @@ import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collections;
@@ -50,7 +52,7 @@ public class LanguageTests extends SofTestSuper {
 	 * Directory or package where the SOF source files for the language tests
 	 * reside.
 	 */
-	public static final String SOURCE_FOLDER = "klfr/sof/test/source/";
+	public static final String SOURCE_FOLDER = "testbins/klfr/sof/test/source/";
 	public static final Charset TEST_SOURCE_CHARSET = Charset.forName("utf-8");
 
 	public static final Logger log = Logger.getLogger(LanguageTests.class.getCanonicalName());
@@ -58,9 +60,7 @@ public class LanguageTests extends SofTestSuper {
 	@DisplayName("SOF language tests from test files")
 	@TestFactory
 	DynamicNode generateLanguageTests() {
-		final var resLoader = LanguageTests.class.getModule().getClassLoader();
-
-		final var files = listDirectory(SOURCE_FOLDER);
+		final var files = Arrays.asList(new File(SOURCE_FOLDER).listFiles());
 		log.log(Level.INFO, () -> String.format("Test source directory contents: %s", files));
 		final var sofFiles = files.stream().map(cs -> cs.toString()).filter(f -> f.toString().endsWith(".sof"))
 				.collect(Collectors.toSet());
@@ -79,10 +79,12 @@ public class LanguageTests extends SofTestSuper {
 					public DynamicTest next() {
 						final var file = sofFileIterator.next();
 						try {
-							final var codeStr = resLoader.getResourceAsStream(SOURCE_FOLDER + file);
-							final var out = new ByteArrayOutputStream(codeStr.available());
-							codeStr.transferTo(out);
-							final var code = Preprocessor.preprocessCode(new String(out.toByteArray(), TEST_SOURCE_CHARSET));
+							final var codeReader = new FileReader(new File(file), TEST_SOURCE_CHARSET);
+							// TODO: magic number 1KiB?
+							final var out = new StringWriter(1024);
+							codeReader.transferTo(out);
+							final var code = Preprocessor.preprocessCode(out.toString());
+							out.close(); codeReader.close();
 							return dynamicTest(String.format("Test source file: %s", file), () -> {
 								try {
 									log.info(String.format("Source test %s initializing...", file));
@@ -119,9 +121,13 @@ public class LanguageTests extends SofTestSuper {
 	 * directory separated by a newline.
 	 * 
 	 * @param directoryName The directory to be read
+	 * @deprecated This method was previously used for listing directories with any URI.
+	 *              It is now obsolete because all test files are expected to be in a
+	 *              file system directory directly accessible.
 	 * @return A collection of file name strings that represent the files found in
 	 *         the directory
 	 */
+	@Deprecated
 	private static Set<CharSequence> listDirectory(String directoryName) {
 		try {
 			final var resLoader = LanguageTests.class.getModule().getClassLoader();

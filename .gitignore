@@ -32,4 +32,8 @@ bin*/*.launch
 .vscode
 /testbins/
 sof dev files/
+
+# test and coverage
 testncoverage.ps1
+jcc-report.report
+jcc-report/

@@ -2,6 +2,7 @@ package klfr.sof.module;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -17,7 +18,10 @@ import klfr.sof.*;
  * {@link klfr.sof.Parser} system for parsing modules.
  */
 public class ModuleDiscoverer {
+	/** The default directory of the standard library. This value facilitates development. */
 	public static final String DEFAULT_STDLIB_DIRECTORY = "./bin/klfr/sof/lib";
+	/** Allowed file extensions, tried in the given order. */
+	public static final List<String> EXTENSIONS = List.of("sof", "stackof");
 	public static final Logger log = Logger.getLogger(ModuleDiscoverer.class.getCanonicalName());
 
 	private final ModuleRegistry registry;
@@ -101,23 +105,30 @@ public class ModuleDiscoverer {
 		try {
 			// Check whether the module is absolute or relative
 			final var isRelative = moduleSpecifier.startsWith(".");
-			// Create full file path
-			File fullFile = null;
+			// the parent directory depends on that
+			File parentDirectory = null;
 			if (isRelative) {
-				// parent file is the containing source directory, which is the level in which
-				// the module
-				fullFile = new File(
-						requestingSourceFile.getParentFile() == null ? new File(".") : requestingSourceFile.getParentFile(),
-						moduleSpecifier.replace(".", File.separator) + ".sof");
-				final var _fullFile = fullFile.getAbsolutePath();
-				log.info(() -> String.format("Requesting relative module '%s' from source file '%s' : '%s'", moduleSpecifier,
-						requestingSourceFile.getAbsolutePath(), _fullFile));
+				// parent file is the containing source directory, which is the level in which the module is contained
+				parentDirectory = requestingSourceFile.getParentFile() == null ? new File(".") : requestingSourceFile.getParentFile();
+				final var _pd = parentDirectory;
+				log.info(() -> String.format("Requesting relative module '%s' from source file '%s' parent dir '%s'", moduleSpecifier,
+					requestingSourceFile.getAbsolutePath(), _pd.getAbsolutePath()));
 			} else {
-				fullFile = new File(stdlibBaseDirectory, moduleSpecifier.replace(".", File.separator) + ".sof");
-				final var _fullFile = fullFile.getAbsolutePath();
-				log.info(() -> String.format("Requesting absolute system module '%s' : '%s'", moduleSpecifier, _fullFile));
+				parentDirectory = stdlibBaseDirectory;
+				log.info(() -> String.format("Requesting absolute system module '%s'", moduleSpecifier));
 			}
-			var fullPath = fullFile.getCanonicalFile(); fullPath_ = fullPath;
+			File fullFile = null;
+			var filename = moduleSpecifier.replace(".", File.separator);
+			// check all file extensions, even the empty one
+			for (var extension : EXTENSIONS) {
+				var sourceFile = new File(parentDirectory, filename + (!extension.isEmpty() ? ("." + extension) : ""));
+				if (sourceFile.exists()) fullFile = sourceFile;
+			}
+			if (fullFile == null) {
+				throw new CompilerException.Incomplete("module", "module", moduleSpecifier);
+			}
+
+			var fullPath = fullFile.getCanonicalFile(); /*needed for error handling*/ fullPath_ = fullPath;
 
 			// retrieve or compile module
 			if (registry.hasModule(fullPath)) {
