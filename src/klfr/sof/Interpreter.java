@@ -348,6 +348,8 @@ public class Interpreter implements Serializable {
 				this.stack.localScope().put(id, value);
 				return true;
 			}
+			// the default interpreter rerouts this to globaldefine behavior, because export is noop
+			case DefineExport_Sugar:
 			case GlobalDefine: {
 				final var id = this.stack.popTyped(Identifier.class);
 				final var value = this.stack.pop();

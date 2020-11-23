@@ -1,18 +1,27 @@
 # Library math.sof. This file is subject to the SOF language project copyright.
 
-{ "klfr.sof.lib.Builtins#abs(Stackable)" nativecall } 1 function abs globaldef
+{ "klfr.sof.lib.Builtins#abs(Stackable)" nativecall return } 1 function abs dexport
 
-{ "klfr.sof.lib.Builtins#sin(FloatPrimitive)" nativecall } 1 function sin globaldef
+{ "klfr.sof.lib.Builtins#sin(Stackable)" nativecall return } 1 function sin dexport
 
-{ "klfr.sof.lib.Builtins#cos(FloatPrimitive)" nativecall } 1 function cos globaldef
+{ "klfr.sof.lib.Builtins#cos(Stackable)" nativecall return } 1 function cos dexport
 
-{ "klfr.sof.lib.Builtins#tan(FloatPrimitive)" nativecall } 1 function tan globaldef
+{ "klfr.sof.lib.Builtins#tan(Stackable)" nativecall return } 1 function tan dexport
 
-{ "klfr.sof.lib.Builtins#exp(FloatPrimitive)" nativecall } 1 function exp globaldef
+{ "klfr.sof.lib.Builtins#exp(Stackable)" nativecall return } 1 function exp dexport
 
-{ "klfr.sof.lib.Builtins#ln(FloatPrimitive)" nativecall } 1 function ln globaldef
+{ "klfr.sof.lib.Builtins#ln(Stackable)" nativecall return } 1 function ln dexport
 
-{ "klfr.sof.lib.Builtins#log(FloatPrimitive,FloatPrimitive)" nativecall } 2 function log globaldef
+{ "klfr.sof.lib.Builtins#log(Stackable,Stackable)" nativecall return } 2 function log dexport
+
+3.1415926535897932384626433832795 dup
+PI dexport π dexport
+
+PI . 2 *
+TAU dexport
+
+2.7182818284590452353602874713527
+E dexport
 
 
 # The SOF programming language interpreter.

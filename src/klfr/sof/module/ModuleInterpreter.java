@@ -39,6 +39,13 @@ public class ModuleInterpreter extends Interpreter {
 			final var exportBinding = this.stack.pop();
 			this.exports.put(exportId, exportBinding);
 			return true;
+		} else if (pt.symbol() == PrimitiveToken.DefineExport_Sugar) {
+			// does both globaldef and export
+			final var id = this.stack.popTyped(Identifier.class);
+			final var toBeDefined = this.stack.pop();
+			this.stack.globalNametable().put(id, toBeDefined);
+			this.exports.put(id, toBeDefined);
+			return true;
 		} else
 			return super.handle(pt);
 	}

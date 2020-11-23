@@ -69,6 +69,8 @@ public class PrimitiveTokenNode extends Node {
 		Define("def"),
 		/** The <code>globaldef</code> primitive token. */
 		GlobalDefine("globaldef"),
+		/** The <code>dexport</code> primitive token, syntax sugar for <code>IDENTIFIER globaldef IDENTIFIER export</code>. */
+		DefineExport_Sugar("dexport"),
 		/** The <code>.</code> primitive token. */
 		Call("."),
 		/** The <code>:</code> primitive token. */

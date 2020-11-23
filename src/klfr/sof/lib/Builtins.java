@@ -159,6 +159,79 @@ public final class Builtins {
 		throw new CompilerException.Incomplete("type");
 	}
 
+	/**
+	 * Implements SOF's sin function of the sof.math module.
+	 */
+	public static FloatPrimitive sin(Stackable a) {
+		if (a instanceof FloatPrimitive)
+			return FloatPrimitive.createFloatPrimitive(Math.sin(((FloatPrimitive)a).value()));
+		if (a instanceof IntPrimitive)
+			return FloatPrimitive.createFloatPrimitive(Math.sin(((IntPrimitive)a).value()));
+		throw new CompilerException.Incomplete("type");
+	}
+
+	/**
+	 * Implements SOF's cos function of the sof.math module.
+	 */
+	public static FloatPrimitive cos(Stackable a) {
+		if (a instanceof FloatPrimitive)
+			return FloatPrimitive.createFloatPrimitive(Math.cos(((FloatPrimitive)a).value()));
+		if (a instanceof IntPrimitive)
+			return FloatPrimitive.createFloatPrimitive(Math.cos(((IntPrimitive)a).value()));
+		throw new CompilerException.Incomplete("type");
+	}
+
+	/**
+	 * Implements SOF's tan function of the sof.math module.
+	 */
+	public static FloatPrimitive tan(Stackable a) {
+		if (a instanceof FloatPrimitive)
+			return FloatPrimitive.createFloatPrimitive(Math.tan(((FloatPrimitive)a).value()));
+		if (a instanceof IntPrimitive)
+			return FloatPrimitive.createFloatPrimitive(Math.tan(((IntPrimitive)a).value()));
+		throw new CompilerException.Incomplete("type");
+	}
+
+	/**
+	 * Implements SOF's exp (e^x) function of the sof.math module.
+	 */
+	public static FloatPrimitive exp(Stackable a) {
+		if (a instanceof FloatPrimitive)
+			return FloatPrimitive.createFloatPrimitive(Math.exp(((FloatPrimitive)a).value()));
+		if (a instanceof IntPrimitive)
+			return FloatPrimitive.createFloatPrimitive(Math.exp(((IntPrimitive)a).value()));
+		throw new CompilerException.Incomplete("type");
+	}
+
+	/**
+	 * Implements SOF's ln (natural logarithm) function of the sof.math module.
+	 */
+	public static FloatPrimitive ln(Stackable a) {
+		if (a instanceof FloatPrimitive)
+			return FloatPrimitive.createFloatPrimitive(Math.log(((FloatPrimitive)a).value()));
+		if (a instanceof IntPrimitive)
+			return FloatPrimitive.createFloatPrimitive(Math.log(((IntPrimitive)a).value()));
+		throw new CompilerException.Incomplete("type");
+	}
+
+	/**
+	 * Implements SOF's log function of the sof.math module.
+	 */
+	public static FloatPrimitive log(Stackable b, Stackable a) {
+		var base = (b instanceof FloatPrimitive) ? ((FloatPrimitive)b).value() : (b instanceof IntPrimitive) ? ((IntPrimitive)b).value() : Double.NaN;
+		if (Double.isNaN(base))
+			throw new CompilerException.Incomplete("type");
+
+		var logb = Math.log(base);
+
+		// log_b(a) = ln(a) / ln(b)
+		if (a instanceof FloatPrimitive)
+			return FloatPrimitive.createFloatPrimitive(Math.log(((FloatPrimitive)a).value()) / logb);
+		if (a instanceof IntPrimitive)
+			return FloatPrimitive.createFloatPrimitive(Math.log(((IntPrimitive)a).value()) / logb);
+		throw new CompilerException.Incomplete("type");
+	}
+
 	//#endregion Math
 }
 
