@@ -1,4 +1,4 @@
-package klfr.sof.lang;
+package klfr.sof.lang.functional;
 
 import klfr.sof.ast.TokenListNode;
 

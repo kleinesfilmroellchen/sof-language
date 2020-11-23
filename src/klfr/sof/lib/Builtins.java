@@ -1,7 +1,9 @@
 package klfr.sof.lib;
 
-import klfr.sof.CompilerException;
+import klfr.sof.*;
 import klfr.sof.lang.*;
+import klfr.sof.lang.functional.*;
+import klfr.sof.lang.primitive.*;
 
 /**
  * Container for most of the builtin functions, i.e. functions that are

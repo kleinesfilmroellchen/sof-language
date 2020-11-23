@@ -2,13 +2,9 @@ package klfr.sof.module;
 
 import java.io.*;
 import java.nio.charset.Charset;
-import java.util.List;
-import java.util.Optional;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.*;
+import java.util.logging.*;
 
-import klfr.sof.CompilerException;
-import klfr.sof.ast.Node;
 import klfr.sof.*;
 
 /**

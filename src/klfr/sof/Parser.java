@@ -7,6 +7,7 @@ import java.util.logging.*;
 import klfr.sof.Tokenizer.TokenizerState;
 import klfr.sof.ast.*;
 import klfr.sof.lang.*;
+import klfr.sof.lang.primitive.*;
 
 /**
  * Parses preprocessed SOF code into an AST.

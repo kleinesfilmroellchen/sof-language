@@ -1,6 +1,9 @@
-package klfr.sof.lang;
+package klfr.sof.lang.primitive;
 
 import klfr.sof.CompilerException;
+import klfr.sof.lang.Stackable;
+import klfr.sof.lang.StackableName;
+import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 
 @StackableName("String")
 public class StringPrimitive extends Primitive {

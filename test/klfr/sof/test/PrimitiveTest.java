@@ -7,6 +7,9 @@ import java.util.Map;
 import org.junit.jupiter.api.*;
 
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
+import klfr.sof.lang.primitive.BoolPrimitive;
+import klfr.sof.lang.primitive.IntPrimitive;
+import klfr.sof.lang.primitive.Primitive;
 import klfr.sof.*;
 import klfr.sof.lang.*;
 

@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 
 import klfr.sof.lang.*;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
+import klfr.sof.lang.functional.FunctionDelimiter;
+import klfr.sof.lang.primitive.IntPrimitive;
 
 class SmallClassesTests extends SofTestSuper {
 

@@ -8,8 +8,12 @@ import java.util.function.*;
 import klfr.sof.ast.*;
 import klfr.sof.cli.CLI;
 import klfr.sof.lang.*;
+// resolve ambiguity java.util.Stack <-> klfr.sof.lang.Stack
 import klfr.sof.lang.Stack;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
+import klfr.sof.lang.functional.*;
+import klfr.sof.lang.oop.*;
+import klfr.sof.lang.primitive.*;
 import klfr.sof.lib.*;
 import klfr.sof.lib.NativeFunctionRegistry.*;
 import klfr.sof.module.*;

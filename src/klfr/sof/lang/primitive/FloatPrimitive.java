@@ -1,9 +1,11 @@
-package klfr.sof.lang;
+package klfr.sof.lang.primitive;
 
 import java.util.logging.Logger;
 
 import klfr.sof.CompilerException;
 import klfr.sof.Patterns;
+import klfr.sof.lang.Stackable;
+import klfr.sof.lang.StackableName;
 
 /**
  * floating point decimal primitive type

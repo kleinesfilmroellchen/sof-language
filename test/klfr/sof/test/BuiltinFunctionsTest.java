@@ -9,6 +9,9 @@ import org.junit.jupiter.api.*;
 
 import static klfr.Utility.*;
 import klfr.sof.lang.*;
+import klfr.sof.lang.primitive.FloatPrimitive;
+import klfr.sof.lang.primitive.IntPrimitive;
+import klfr.sof.lang.primitive.StringPrimitive;
 import klfr.sof.lib.*;
 
 @DisplayName("Test the Builtins SOF builtin function implementor class")

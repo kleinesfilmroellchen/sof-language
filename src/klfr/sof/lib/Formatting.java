@@ -2,6 +2,9 @@ package klfr.sof.lib;
 
 import klfr.sof.Patterns;
 import klfr.sof.lang.*;
+import klfr.sof.lang.primitive.FloatPrimitive;
+import klfr.sof.lang.primitive.IntPrimitive;
+import klfr.sof.lang.primitive.StringPrimitive;
 
 import java.util.logging.Logger;
 import java.util.regex.Matcher;

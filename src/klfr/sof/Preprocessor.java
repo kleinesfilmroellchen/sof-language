@@ -31,7 +31,7 @@ public class Preprocessor {
 	 * 
 	 * @param sofString The SOF literal string token to be processed.
 	 * @return A string that can be used directly to construct a
-	 *         {@link klfr.sof.lang.StringPrimitive}.
+	 *         {@link klfr.sof.lang.primitive.StringPrimitive}.
 	 */
 	public static String preprocessSofString(final String sofString) {
 		final var strm = Patterns.stringPattern.matcher(sofString);

@@ -8,6 +8,9 @@ import java.util.Optional;
 import org.junit.jupiter.api.*;
 
 import klfr.sof.lang.*;
+import klfr.sof.lang.primitive.FloatPrimitive;
+import klfr.sof.lang.primitive.IntPrimitive;
+import klfr.sof.lang.primitive.StringPrimitive;
 import klfr.sof.lib.NativeFunctionRegistry;
 import klfr.sof.lib.NativeFunctionRegistry.*;
 

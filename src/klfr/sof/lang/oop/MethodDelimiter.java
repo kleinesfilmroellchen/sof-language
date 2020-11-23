@@ -1,4 +1,6 @@
-package klfr.sof.lang;
+package klfr.sof.lang.oop;
+
+import klfr.sof.lang.functional.FunctionDelimiter;
 
 /**
  * A method delimiter is a special function delimiter that also represents an object's attributes.

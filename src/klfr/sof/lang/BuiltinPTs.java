@@ -1,6 +1,9 @@
 package klfr.sof.lang;
 
 import klfr.sof.CompilerException;
+import klfr.sof.lang.primitive.BoolPrimitive;
+import klfr.sof.lang.primitive.FloatPrimitive;
+import klfr.sof.lang.primitive.IntPrimitive;
 
 /**
  * Built-in Primitive Tokens is a collection for most PTs, like arithmetic
