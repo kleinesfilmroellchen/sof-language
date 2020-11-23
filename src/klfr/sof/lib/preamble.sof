@@ -16,6 +16,7 @@
 
 { "klfr.sof.lib.Formatting#fmt(StringPrimitive)" nativecall return } 1 function fmt'0 globaldef
 { "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable)" nativecall return } 2 function fmt'1 globaldef
+# TODO: These will cause some sort exception, because 3+ argument functions are not supported yet.
 { "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable)" nativecall return } 3 function fmt'2 globaldef
 { "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable,Stackable)" nativecall return } 4 function fmt'3 globaldef
 { "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable,Stackable,Stackable)" nativecall return } 5 function fmt'4 globaldef

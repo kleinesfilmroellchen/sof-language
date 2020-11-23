@@ -4,36 +4,22 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.DynamicContainer.dynamicContainer;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
+import java.io.*;
 import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.DynamicNode;
-import org.junit.jupiter.api.DynamicTest;
-import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.*;
 import org.opentest4j.TestAbortedException;
 
-import klfr.sof.CompilerException;
-import klfr.sof.IOInterface;
-import klfr.sof.Interpreter;
-import klfr.sof.Parser;
-import klfr.sof.Preprocessor;
-import klfr.sof.SOFFile;
+import klfr.sof.*;
 import klfr.sof.cli.CLI;
+import klfr.sof.lib.Builtins;
+import klfr.sof.lib.Formatting;
+import klfr.sof.lib.NativeFunctionRegistry;
 
 /**
  * The language test class is responsible for running the tests on the SOF
@@ -60,6 +46,11 @@ public class LanguageTests extends SofTestSuper {
 	@DisplayName("SOF language tests from test files")
 	@TestFactory
 	DynamicNode generateLanguageTests() {
+		// TODO: This shouldn't be here. Until we have a reliable way of executing code on class load,
+		// TODO: the native function registration needs to be done manually before starting interpreters.
+		NativeFunctionRegistry.registerNativeFunctions(Builtins.class);
+		NativeFunctionRegistry.registerNativeFunctions(Formatting.class);
+
 		final var files = Arrays.asList(new File(SOURCE_FOLDER).listFiles());
 		log.log(Level.INFO, () -> String.format("Test source directory contents: %s", files));
 		final var sofFiles = files.stream().map(cs -> cs.toString()).filter(f -> f.toString().endsWith(".sof"))

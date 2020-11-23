@@ -69,6 +69,7 @@ public class FloatPrimitive extends Primitive {
 	}
 
 	public static FloatPrimitive createFloatFromString(String doubleString) throws CompilerException {
+		doubleString = doubleString.strip();
 		final var m = Patterns.doublePattern.matcher(doubleString);
 		if (m.matches()) {
 			log.finest(() -> String.format("%s %s %s %s", m.group(1), m.group(2), m.group(3), m.group(4)));
