@@ -338,6 +338,35 @@ public class Interpreter implements Serializable {
 				this.doCall(this.stack.pop());
 				return this.doCall(this.stack.pop());
 			}
+			case ObjectCall: {
+				final Stackable toCall = this.stack.pop();
+				final SObject object = this.stack.popTyped(SObject.class);
+				this.stack.push(object.getAttributes());
+				
+				// note that because we may execute a function, a normal function delimiter is used as the scope
+				final var result = this.doCall(toCall);
+
+				// there may be a return value we want to preserve
+				final var returnValue = this.stack.forcePop();
+				// in this case, a return value is present
+				if (returnValue != object.getAttributes()) {
+					// remove like with local scopes
+					this.stack.popFirstNametable();
+					// push object first so that order is preserved
+					this.stack.push(object);
+					this.stack.push(returnValue);
+				} else {
+					// attribute table was already removed, just add back object
+					this.stack.push(object);
+				}
+				return result;
+			}
+			case ObjectMethodCall: {
+				final var toCall = this.stack.pop();
+				final var object = this.stack.popTyped(SObject.class);
+				this.stack.push(object);
+				return this.doCall(toCall, object.getAttributes());
+			}
 			case NativeCall: {
 				this.doNativeCall(this.stack.pop());
 				return true;
@@ -362,6 +391,13 @@ public class Interpreter implements Serializable {
 				final var argcount = this.stack.popTyped(IntPrimitive.class);
 				final var code = this.stack.popTyped(CodeBlock.class).code;
 				this.stack.push(new SOFunction(code, argcount.value()));
+				return true;
+			}
+			case Constructor: {
+				// similar to normal function code above
+				final var argcount = this.stack.popTyped(IntPrimitive.class);
+				final var code = this.stack.popTyped(CodeBlock.class).code;
+				this.stack.push(new ConstructorFunction(code, argcount.value()));
 				return true;
 			}
 			case Return: {
@@ -487,10 +523,26 @@ public class Interpreter implements Serializable {
 	/**
 	 * Helper function to execute the call operation on the stackable, depending on
 	 * the type. This function may modify the current interpreter state.
+	 * 
+	 * @param toCall The stackable that is to be called.
 	 * @return Whether any of the subcalls encountered a return statement.
 	 * This is necessary so that return statements propagate through CodeBlocks and are only caught by Functions.
 	 */
 	protected boolean doCall(final Stackable toCall) throws CompilerException.Incomplete {
+		return this.doCall(toCall, new FunctionDelimiter());
+	}
+
+	/**
+	 * Helper function to execute the call operation on the stackable, depending on
+	 * the type. This function may modify the current interpreter state.
+	 * 
+	 * @param toCall The stackable that is to be called.
+	 * @param scope  The nametable that should act as the surrounding scope for the call.
+	 *                Note that some call types, such as identifiers, do not use a scope.
+	 * @return Whether any of the subcalls encountered a return statement.
+	 * This is necessary so that return statements propagate through CodeBlocks and are only caught by Functions.
+	 */
+	protected boolean doCall(final Stackable toCall, final Nametable scope) throws CompilerException.Incomplete {
 		if (toCall instanceof Identifier) {
 			final var id = (Identifier) toCall;
 			final var val = this.stack.lookup(id);
@@ -501,6 +553,23 @@ public class Interpreter implements Serializable {
 		} else if (toCall instanceof Primitive) {
 			this.stack.push(toCall);
 			return true;
+		} else if (toCall instanceof ConstructorFunction) {
+			final var constructor = (ConstructorFunction)toCall;
+			final var newObject = new SObject();
+			// push the object nametable as a delimiter, then the object itself as a "self" argument to the method
+			this.stack.push(newObject.getAttributes());
+			this.stack.push(newObject);
+			
+			// run method and ignore state
+			constructor.code.forEach((Function<Node, Boolean>) this::handle);
+			
+			// ignore return value. constructors can still return stuff, so that the user may define multi-purpose functions/constructors.
+			final var table = this.stack.popFirstNametable()
+					.orElseThrow(() -> new RuntimeException("Local nametable was removed unexpectedly."));
+			
+			// re-push the object (was removed by above operation)
+			this.stack.push(newObject);
+			return true;
 		} else if (toCall instanceof SOFunction) {
 			// HINT: handle the function before the codeblock because it inherits from it
 			final var function = (SOFunction) toCall;
@@ -510,7 +579,7 @@ public class Interpreter implements Serializable {
 			// causes overflow issues with extremely large (> 2.5 million) argcounts, which
 			// shouldn't happen.
 			final var args = this.stack.pop((int) function.arguments);
-			this.stack.push(new FunctionDelimiter());
+			this.stack.push(scope);
 			if (function.arguments > 0)
 				this.stack.pushAll(args);
 

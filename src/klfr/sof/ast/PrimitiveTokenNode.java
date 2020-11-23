@@ -75,6 +75,10 @@ public class PrimitiveTokenNode extends Node {
 		Call("."),
 		/** The <code>:</code> primitive token. */
 		DoubleCall(":"),
+		/** The <code>,</code> primitive token. */
+		ObjectCall(","),
+		/** The <code>;</code> primitive token. */
+		ObjectMethodCall(";"),
 		/** The <code>nativecall</code> primitive token. */
 		NativeCall("nativecall"),
 
@@ -85,7 +89,7 @@ public class PrimitiveTokenNode extends Node {
 		/** The <code>return:0</code> primitive token. */
 		ReturnNothing("return:0"),
 		/** The <code>constructor</code> primitive token. */
-		// Constructor("constructor"),
+		Constructor("constructor"),
 
 		/** The <code>use</code> primitive token. */
 		Use("use"),

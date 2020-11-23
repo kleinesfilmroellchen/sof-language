@@ -1,25 +1,47 @@
 package klfr.sof.lang;
 
-public class SObject extends Nametable {
-
+/**
+ * An SOF object. This most importantly holds the nametable representing the
+ * object's attributes.
+ * 
+ * @author klfr
+ */
+public class SObject implements Stackable {
 	private static final long serialVersionUID = 1L;
-	private Identifier name;
 
-	public String getName() {
-		return name.getValue();
+	/**
+	 * The attributes of the object.
+	 */
+	protected final MethodDelimiter attributes;
+
+	/**
+	 * Return the attributes of the object.
+	 * @return the attributes of the object.
+	 */
+	public Nametable getAttributes() {
+		return attributes;
 	}
 
-	public SObject(Identifier name) {
-		this.name = name;
+	public SObject() {
+		this.attributes = new MethodDelimiter();
+	}
+
+	/** needed for copying */
+	private SObject(MethodDelimiter nt) {
+		this.attributes = nt;
+	}
+
+	public String toDebugString(DebugStringExtensiveness e) {
+		return switch (e) {
+			case Full -> "Object" + System.lineSeparator() + this.attributes.toDebugString(e);
+			case Compact -> "Obj(" + this.attributes.toDebugString(e) + ")";
+			default -> this.attributes.toDebugString(e);
+		};
 	}
 
 	@Override
-	public String toDebugString(DebugStringExtensiveness e) {
-		return switch (e) {
-			case Full -> "Object " + getName() + ":" + System.lineSeparator() + super.toDebugString(e);
-			case Compact -> "Obj(" + super.toDebugString(e) + ")";
-			default -> super.toDebugString(e);
-		};
+	public Stackable copy() {
+		return new SObject(this.attributes);
 	}
 
 }
