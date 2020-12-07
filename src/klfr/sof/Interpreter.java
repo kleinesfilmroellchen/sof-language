@@ -363,13 +363,43 @@ public class Interpreter implements Serializable {
 					// attribute table was already removed, just add back object
 					this.stack.push(object);
 				}
+				object.getAttributes().setReturn(null);
 				return result;
 			}
 			case ObjectMethodCall: {
-				final var toCall = this.stack.pop();
+				final var methodName = this.stack.pop();
+				// the name of the method to call is not resolved yet, resolve it first like with double calls
+				this.doCall(methodName);
+				final var method = this.stack.popTyped(SOFunction.class);
+
+				// Because the method is known, its arguments can be removed temporarily to recieve the target object underneath.
+				final var arguments = this.stack.pop((int) method.arguments);
 				final var object = this.stack.popTyped(SObject.class);
-				this.stack.push(object);
-				return this.doCall(toCall, object.getAttributes());
+				
+				// for catching the return value of the method after doCall has finished
+				final var returnSafetyNT = new FunctionDelimiter();
+				this.stack.push(returnSafetyNT);
+				// re-push the arguments after the safety nametable
+				this.stack.pushAll(arguments);
+
+				this.doCall(method, object.getAttributes());
+
+				if (this.stack.peek() == returnSafetyNT) {
+					// no return value
+					this.stack.popFirstNametable();
+					// push the object immediately to restore stack state
+					this.stack.push(object);
+				} else {
+					// remove safety NT, swap return value & object order
+					final var retval = this.stack.pop();
+					this.stack.popFirstNametable();
+					this.stack.push(object);
+					this.stack.push(retval);
+				}
+
+				// deletes the return value to not fuck up future method calls on this object
+				object.getAttributes().setReturn(null);
+				return true;
 			}
 			case NativeCall: {
 				this.doNativeCall(this.stack.pop());

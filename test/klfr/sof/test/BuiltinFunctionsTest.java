@@ -150,6 +150,28 @@ class BuiltinFunctionsTest extends SofTestSuper {
 		assertEquals(System.lineSeparator(), Formatting.handleFormatter("%n", 0, new Stackable[]{}).getRight(), "Newline format specifier");
 	}
 
+	@Test
+	@DisplayName("Test mathematical functions")
+	void testMath() {
+		assertEquals(2d, Builtins.log(FloatPrimitive.createFloatPrimitive(10d), FloatPrimitive.createFloatPrimitive(100d)).value(), "Logarithm float-float");
+		assertEquals(2d, Builtins.log(IntPrimitive.createIntPrimitive(10l), FloatPrimitive.createFloatPrimitive(100d)).value(), "Logarithm int-float");
+		assertEquals(2d, Builtins.log(FloatPrimitive.createFloatPrimitive(10d), IntPrimitive.createIntPrimitive(100l)).value(), "Logarithm float-int");
+		assertEquals(2d, Builtins.log(IntPrimitive.createIntPrimitive(10l), IntPrimitive.createIntPrimitive(100l)).value(), "Logarithm int-int");
+		
+		assertEquals(0d, Builtins.sin(IntPrimitive.createIntPrimitive(0l)).value(), "Sine int");
+		assertEquals(0d, Builtins.sin(FloatPrimitive.createFloatPrimitive(0d)).value(), "Sine float");
+		assertEquals(1d, Builtins.cos(IntPrimitive.createIntPrimitive(0l)).value(), "Cosine int");
+		assertEquals(1d, Builtins.cos(FloatPrimitive.createFloatPrimitive(0d)).value(), "Cosine float");
+		assertEquals(0d, Builtins.tan(IntPrimitive.createIntPrimitive(0l)).value(), "Tangent int");
+		assertEquals(0d, Builtins.tan(FloatPrimitive.createFloatPrimitive(0d)).value(), "Tangent float");
+
+		assertEquals(1d, Builtins.exp(FloatPrimitive.createFloatPrimitive(0d)).value(), "Exponential function float");
+		assertEquals(1d, Builtins.exp(IntPrimitive.createIntPrimitive(0l)).value(), "Exponential function int");
+		
+		assertEquals(1d, Builtins.ln(FloatPrimitive.createFloatPrimitive(Math.E)).value(), "Natural logarithm float");
+		assertEquals(0d, Builtins.ln(IntPrimitive.createIntPrimitive(1l)).value(), "Natural logarithm int");
+	}
+
 }
 
 /*  

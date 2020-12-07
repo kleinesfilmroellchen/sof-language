@@ -1,5 +1,6 @@
 package klfr.sof.lang;
 
+import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
@@ -32,7 +33,8 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * The stack starts out empty. The user of the stack is responsible for adding the global nametable.
+	 * The stack starts out empty. The user of the stack is responsible for adding
+	 * the global nametable.
 	 */
 	public Stack() {
 	}
@@ -118,7 +120,16 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 		}
 		super.push(val);
 		throw new CompilerException.Incomplete("type", "type.checkfail", val,
-				t.getAnnotation(StackableName.class).value());
+				Optional.ofNullable(t.getAnnotation(StackableName.class)).orElse(new StackableName(){
+					@Override
+					public Class<? extends Annotation> annotationType() {
+						return StackableName.class;
+					}
+					@Override
+					public String value() {
+						return "<Anonymous>";
+					}
+				}).value());
 	}
 
 	/**

@@ -17,7 +17,7 @@ public class FunctionDelimiter extends Nametable {
 
 	@Override
 	public Nametable setReturn(Stackable value) {
-		this.returnValue = Optional.of(value);
+		this.returnValue = Optional.ofNullable(value);
 		return this;
 	}
 

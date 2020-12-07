@@ -8,6 +8,7 @@ import klfr.sof.lang.*;
  * 
  * @author klfr
  */
+@StackableName("Object")
 public class SObject implements Stackable {
 	private static final long serialVersionUID = 1L;
 

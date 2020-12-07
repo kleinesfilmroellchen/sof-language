@@ -1,25 +1,32 @@
-# SOF test file - miscellaneous additional tests
+# SOF test file - object tests
 
-23 writeln
-"lol" write
-"blah " "hehe" cat "blah hehe" = assert
+{ true value def } 1 constructor TestObject globaldef
 
-# test that native calls are enacted
-# 0 argument
-random:01 :
-# 1 argument
-"34" convert:int : 34 = assert
-# 2 argument
-20 44 random:int :
-# 3 argument
-"format%s%s" "hehe" "not" fmt'2 :
+# should not throw
+TestObject :
 
-describe describes
+value , assert
+# should work again, object is not deleted
+value , assert
 
-true false swap assert
+# this should be able to use the '.' because the namespace is the object itself
+{ value . return } 0 function getValue globaldef
 
-"blahblah" true . assert
+getValue ; assert
 
+# modify the object by accessing its nametable inside a method
+
+{ 3 three def } 0 function modifyObject globaldef
+
+modifyObject ;
+# now the object should be modified
+three , 3 = assert
+
+# modify an existing value
+{ value def } 1 function setValue globaldef
+
+false setValue ;
+value , not assert
 
 # The SOF programming language interpreter.
 # Copyright (C) 2019-2020  kleinesfilmröllchen
