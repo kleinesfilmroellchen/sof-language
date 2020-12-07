@@ -37,3 +37,9 @@ sof dev files/
 testncoverage.ps1
 jcc-report.report
 jcc-report/
+
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build

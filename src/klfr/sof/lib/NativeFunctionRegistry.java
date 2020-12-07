@@ -52,11 +52,11 @@ public final class NativeFunctionRegistry {
 	private static TreeMap<String, NativeNArgFunction> nativeFunctions = new TreeMap<>();
 
 	/**
-	 * Register all native functions of the provided class.
-	 * <p>
-	 * This method uses reflection to find all methods on the class that can be used
+	 * <p>Register all native functions of the provided class.</p>
+	 * 
+	 * <p>This method uses reflection to find all methods on the class that can be used
 	 * as native functions. A method that is to be registered as a native function
-	 * must satisfy the following conditions:
+	 * must satisfy the following conditions:</p>
 	 * <ul>
 	 * <li>It must be public and static. An easy way of preventing a method from
 	 * being registered is making it private or an instance method.</li>
@@ -67,7 +67,6 @@ public final class NativeFunctionRegistry {
 	 * {@link NativeFunctionRegistry#MAX_PARAMETER_COUNT} arguments. It must also
 	 * not have any vararg parameters.</li>
 	 * </ul>
-	 * </p>
 	 * Classes which are not accessible to this class due to visibility restrictions
 	 * will cause reflection errors to be thrown. Inacessible classes should not be
 	 * passed to this method.

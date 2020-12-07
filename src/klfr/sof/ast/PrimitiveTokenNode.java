@@ -35,13 +35,13 @@ public class PrimitiveTokenNode extends Node {
 		/** The <code>not</code> primitive token. */
 		Not("not"),
 
-		/** The <code>></code> primitive token. */
+		/** The <code>&gt;</code> primitive token. */
 		GreaterThan(">"),
-		/** The <code>>=</code> primitive token. */
+		/** The <code>&gt;=</code> primitive token. */
 		GreaterThanEquals(">="),
-		/** The <code><</code> primitive token. */
+		/** The <code>&lt;</code> primitive token. */
 		LessThan("<"),
-		/** The <code><=</code> primitive token. */
+		/** The <code>&lt;=</code> primitive token. */
 		LessThanEquals("<="),
 
 		/** The <code>=</code> primitive token. */

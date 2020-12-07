@@ -251,7 +251,7 @@ public class Tokenizer implements Iterator<String> {
 	// }
 
 	/**
-	 * Returns the current execution position of the Tokenizer, as a <Line, Index>
+	 * Returns the current execution position of the Tokenizer, as a (Line, Index)
 	 * number tuple. While the line number is one-based (as in text editors), the
 	 * index (inside the line) is zero-based (as in strings).
 	 * 

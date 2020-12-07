@@ -142,7 +142,7 @@ public class Preprocessor {
 	}
 
 	/**
-	 * Searches the String for two matching (open&close, like parenthesis) patterns
+	 * Searches the String for two matching (open&amp;close, like parenthesis) patterns
 	 * and returns the index after the closing character. Also keeps track of
 	 * nesting levels.
 	 * 
@@ -206,7 +206,7 @@ public class Preprocessor {
 	}
 
 	/**
-	 * Searches the String for two matching (open&close, like parenthesis) character
+	 * Searches the String for two matching (open&amp;close, like parenthesis) character
 	 * pairs and returns the index after the closing character. Also keeps track of
 	 * nesting levels.
 	 * 

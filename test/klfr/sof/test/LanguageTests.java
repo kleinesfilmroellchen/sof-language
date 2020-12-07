@@ -38,7 +38,7 @@ public class LanguageTests extends SofTestSuper {
 	 * Directory or package where the SOF source files for the language tests
 	 * reside.
 	 */
-	public static final String SOURCE_FOLDER = "testbins/klfr/sof/test/source/";
+	public static final String SOURCE_FOLDER = "build/out/testbins/klfr/sof/test/source/";
 	public static final Charset TEST_SOURCE_CHARSET = Charset.forName("utf-8");
 
 	public static final Logger log = Logger.getLogger(LanguageTests.class.getCanonicalName());

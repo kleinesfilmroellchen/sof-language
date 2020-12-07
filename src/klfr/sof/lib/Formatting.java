@@ -94,7 +94,7 @@ public final class Formatting {
 	 * This is a subset of C's supported datatypes. SOF supports % (percent escape), d or i (integer),
 	 * o (octal), x (hex), X (uppercase hex), f (float), e (scientific), g (float or scientific, whichever is shorter),
 	 * s (string), n (system newline, this is different from C's n format specifier).</li>
-	 * <li><strong>Flags</strong> specify various formatting flags. SOF supports < (left-justify), ^ (center-justify),
+	 * <li><strong>Flags</strong> specify various formatting flags. SOF supports &lt; (left-justify), ^ (center-justify),
 	 * + (force numbers to print sign), (space) (force blank space in sign location for positive numbers),
 	 * # (force hex to print 0x / 0X, force octal to print leading 0, force decimal numbers to print decimal point),
 	 * 0 (pad with zeroes instead of spaces).</li>
@@ -116,7 +116,7 @@ public final class Formatting {
 	 *         and an index which specifies the index of the next to-be-handled format parameter.
 	 *         This is usually currentIdx+1 for normal format specifiers, and currentIdx for format specifiers
 	 *         which do not handle the specified current format parameter.
-	 * @throws IllegalFormatException    If the format specifier is malformed.
+	 * @throws IllegalArgumentException    If the format specifier is malformed.
 	 * @throws IndexOutOfBoundsException If the current index or an additional argument index is out of bounds.
 	 *                                   This is auto-thrown by the array indexing.
 	 */

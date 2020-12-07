@@ -25,7 +25,6 @@ public final class Utility {
 	 * Uses space padding.
 	 * @param s The string to be padded.
 	 * @param len The minimum length of the string. Longer strings are returned as-is.
-	 * @param padding The padding character for extending the string's length.
 	 * @return A string of minimum length len.
 	 */
 	public static String padLeft(final String s, final int len) {

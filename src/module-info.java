@@ -1,10 +1,9 @@
-module sof {
+open module sof {
 	requires java.base;
 	requires java.logging;
-	opens klfr.sof.test.source;
-	opens klfr.sof.lib;
 	exports klfr.sof;
 }
+// opens klfr.sof.test.source;
 
 /*  
 The SOF programming language interpreter.

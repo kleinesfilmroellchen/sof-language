@@ -21,7 +21,7 @@ public interface Stackable extends Serializable, Cloneable, Comparable<Stackable
 	 * Stackables. Each extensiveness has a character limit and Stackables should
 	 * only return that many characters for their debug string in that particular
 	 * extensiveness. The main use of this enum is in
-	 * {@link Callable#toDebugString(DebugStringExtensiveness)}.
+	 * {@link Stackable#toDebugString(DebugStringExtensiveness)}.
 	 */
 	public static enum DebugStringExtensiveness {
 		/**

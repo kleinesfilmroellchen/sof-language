@@ -4,22 +4,28 @@ An experimental fully stack-based reverse-polish-notation functional and object-
 
 ###### SOF is to be pronounced 'ess-oh-eff' in English or `/əs.ʊu.ˈəf/` in IPA. If you want to make me angry, you can also pronounce it 'sohf'.
 
-**This is a Work In Progress (WIP) experimental programming language.** If you cause a nuclear war and the inevitable destruction of mankind by using this software, I am not to blame.
+**This is an experimental programming language.** If you cause a nuclear war and the inevitable destruction of mankind by using this software, I am not to blame.
+
+SOF is written in Java 15 (cutting edge!) and requires no libraries outside the standard library. It leverages the module system (you may use it in your project as well!) and uses JUnit Jupiter for testing (currently) about 60% of the codebase.
 
 ### Installation and CLI usage
 
-This is an Eclipse project, so I recommend cloning it with git and importing it into your workspace (again, there are great explanations for both of these). After building normally, you should be able to execute the main CLI class with a normal launch configuration. Alternatively, use the command line
+This is a Gradle project using the Java Application plugin with the module system and JUnit Jupiter tests. The usual Gradle tasks for these situations exist and have not been renamed/added to. As a quick reference: Use `gradlew build` to run the full build including tests. Run `gradlew test` to run the tests. Use `gradlew javadoc` to build the javadoc. All building happens into the build/ subfolders. Exception: The main Java class files are built into bin/.
+
+Use the following command line to run SOF. `gradlew run` DOES NOT WORK. For whatever reason, it instantly reads a file terminator and exits.
 
 ```
 java -p bin -m sof/klfr.sof.cli.CLI [arguments]
 ```
 
-assuming that you have java 12+ on your $PATH and you are inside the root folder of the project. Replace \[arguments\] with whatever arguments you want to give to SOF.
+assuming that you have java 15+ on your $PATH and you are inside the root folder of the project. Replace \[arguments\] with whatever arguments you want to give to SOF.
+
+Alternatively, you can use the Gradle-built distribution zip/tar in build/distributions/. This one comes with handy scripts for Windows and Linux that auto-detect your Java.
 
 The command line tool currently supports the following arguments and options (taken from help output):
 
 ```
-sof - Interpreter for Stack with Objects and
+sof - Interpreter for Stack with Objects and       
       Functions (SOF) Programming Language.
 usage: sof [-hvdpP] [-c COMMAND]
            FILENAME [...FILENAMES]
@@ -37,9 +43,12 @@ options:
    -d        Execute in debug mode. Read the manual
              for more information.
    -p        Run the preprocessor and exit.
-   -P        Do not run the preprocessor.
+   -P        Do not run the preprocessor before
+             executing the input file(s).
    --command, -c COMMAND
              Execute COMMAND and exit.
+   --performance
+             Run performance tests and show results
 
 When used without execution-starting arguments (-c
 or filename), sof is started in interactive mode.
@@ -224,20 +233,4 @@ BinaryDigits = "0" | "1" ;
 OctalDigits = BinaryDigits | "2" | "3" | "4" | "5" | "6" | "7" ;
 DecimalDigits = OctalDigits | "8" | "9" ;
 HexDigits = DecimalDigits | "a" | "b" | "c" | "d" | "e" | "f" | "A" | "B" | "C" | "D" | "E" | "F" ;
-```
-
-## The SOF interpreter
-
-The main project at the current date is to complete the SOF interpreter, the program that executes SOF source code. At the current state it is a very bare-bones non-optimized command line program written in Java 12. The interpreter is extremely simple in that it does not do any optimization and just uses an AST as intermediate representation.
-
-While in development, the special primitive tokens `describe` and `describes` can be used when starting the interpreter with the debug flag '-d' to describe the topmost stack element and the entire stack and global nametable, respectively.
-
-Currently many fundamental features, including base features (variables, arithmetic, branching), functions and codeblocks, native calls implemented. However, I will continue to extend the interpreter's capabilities until it reaches the prospected language definition. This means that many times I will talk about and document the language's vision instead of its current state, so don't be confused.
-
-The project is coming up on 70% code coverage through JUnit5 tests, and the long-term goal is as close to 100% as possible. As many of the main files, like the `Interpreter` and `CLI` classes, are hard to test, this will probably never be achieved but anywhere near that goal is good enough. I am very welcome to any test contributions!
-
-Tests can be run with:
-
-```
-java -jar C:\Users\malub\Documents\java-libs\junit-platform-console-standalone-1.7.0-M1.jar --cp bin:testbins -o sof -p klfr.sof.test
 ```

@@ -64,7 +64,7 @@ public class CompilerException extends RuntimeException {
 		 * Constructs a compiler exception that does not have all information for nice
 		 * formatting.
 		 * 
-		 * @param nameKey         Name and explanation of the exception, as an accessor
+		 * @param string          Name and explanation of the exception, as an accessor
 		 *                        into the message resources 'sof.error.type'
 		 */
 		public Incomplete(String string) {
@@ -86,7 +86,7 @@ public class CompilerException extends RuntimeException {
 
 	/**
 	 * Passes its arguments directly to
-	 * {@link #formatMessage(String, int, int, String, String)}. The use of this
+	 * {@link #formatMessage(String, String, int, int, String, String)}. The use of this
 	 * method is discouraged as it often requires precise pre-processing of indices
 	 * and strings. However, it might be useful for very specific error cases.
 	 */
@@ -129,8 +129,7 @@ public class CompilerException extends RuntimeException {
 	 * Makes a compiler exception that takes its positional information from
 	 * tokenizer-like data (all code, index inside code).
 	 * 
-	 * @param filename       The real or virtual filename where the exception occurred.
-	 * @param fullExpression All the code.
+	 * @param source         The source file where the exception occurred.
 	 * @param index          Index inside fullExpression where the exception
 	 *                       occurred.
 	 * @param name           Name of the exception, as an accessor into the message

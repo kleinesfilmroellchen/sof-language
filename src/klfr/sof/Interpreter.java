@@ -27,7 +27,7 @@ public class Interpreter implements Serializable {
 	public static final int MAJOR_VERSION = 0;
 	/** Minor version of the interpreter. */
 	public static final int MINOR_VERSION = 1;
-	/** Bug & security fix version of the interpreter. */
+	/** Bug &amp; security fix version of the interpreter. */
 	public static final int BUG_VERSION = 0;
 	/** Version of the interpreter. */
 	public static final String VERSION = MAJOR_VERSION + "." + MINOR_VERSION
