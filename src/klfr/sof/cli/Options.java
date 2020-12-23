@@ -1,13 +1,8 @@
 package klfr.sof.cli;
 
 import java.io.*;
-import java.nio.charset.Charset;
 import java.util.*;
-import java.util.function.*;
 import java.util.logging.*;
-
-import klfr.sof.*;
-import static klfr.sof.Interpreter.R;
 
 /**
  * Command-line options storage and parsing.

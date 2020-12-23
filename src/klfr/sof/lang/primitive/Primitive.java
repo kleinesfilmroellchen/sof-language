@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import klfr.sof.lang.Stackable;
-import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 
 /**
  * Primitive values in SOF are represented through this interface and its

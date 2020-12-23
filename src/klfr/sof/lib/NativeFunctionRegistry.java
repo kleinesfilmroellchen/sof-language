@@ -7,7 +7,7 @@ import java.util.stream.*;
 
 import klfr.sof.lang.*;
 import klfr.Tuple;
-import klfr.sof.*;
+import klfr.sof.exceptions.*;
 
 /**
  * Responsible for the native function system. Any SOF extension or native
@@ -31,32 +31,36 @@ public final class NativeFunctionRegistry {
 
 	@FunctionalInterface
 	public static interface Native0ArgFunction extends NativeNArgFunction {
-		public Stackable call();
+		public Stackable call() throws IncompleteCompilerException;
 	}
 
 	@FunctionalInterface
 	public static interface Native1ArgFunction extends NativeNArgFunction {
-		public Stackable call(Stackable a);
+		public Stackable call(Stackable a) throws IncompleteCompilerException;
 	}
 
 	@FunctionalInterface
 	public static interface Native2ArgFunction extends NativeNArgFunction {
-		public Stackable call(Stackable a, Stackable b);
+		public Stackable call(Stackable a, Stackable b) throws IncompleteCompilerException;
 	}
 
 	@FunctionalInterface
 	public static interface Native3ArgFunction extends NativeNArgFunction {
-		public Stackable call(Stackable a, Stackable b, Stackable c);
+		public Stackable call(Stackable a, Stackable b, Stackable c) throws IncompleteCompilerException;
 	}
 
 	private static TreeMap<String, NativeNArgFunction> nativeFunctions = new TreeMap<>();
 
 	/**
-	 * <p>Register all native functions of the provided class.</p>
+	 * <p>
+	 * Register all native functions of the provided class.
+	 * </p>
 	 * 
-	 * <p>This method uses reflection to find all methods on the class that can be used
+	 * <p>
+	 * This method uses reflection to find all methods on the class that can be used
 	 * as native functions. A method that is to be registered as a native function
-	 * must satisfy the following conditions:</p>
+	 * must satisfy the following conditions:
+	 * </p>
 	 * <ul>
 	 * <li>It must be public and static. An easy way of preventing a method from
 	 * being registered is making it private or an instance method.</li>
@@ -75,7 +79,8 @@ public final class NativeFunctionRegistry {
 	 *              of this class are registered, whether the caller intended them
 	 *              to be registered or not.
 	 */
-	public static void registerNativeFunctions(Class<?> clazz) {
+	public static void registerNativeFunctions(Class<?> clazz) throws SOFException {
+		try {
 		// FP for da win
 		Arrays.stream(clazz.getDeclaredMethods())
 				// only public static methods, only methods without too many parameters
@@ -92,6 +97,12 @@ public final class NativeFunctionRegistry {
 				.entrySet().parallelStream().flatMap(NativeFunctionRegistry::methodRegistrationFlatMapFtor)
 				// add the methods to the function registry
 				.forEach(ftuple -> nativeFunctions.put(generateDescriptor(ftuple.getRight()), ftuple.getLeft()));
+		} catch (RuntimeException e) {
+			// this will catch the wrapped compiler exceptions
+			if (SOFException.class.isInstance(e.getCause())) {
+				throw (SOFException) e.getCause();
+			}
+		}
 	}
 
 	/**
@@ -111,17 +122,44 @@ public final class NativeFunctionRegistry {
 	/**
 	 * This lambda function is only externalized to make Java recognize the return
 	 * type properly. -_-
+	 * 
+	 * @throws RuntimeException All compiler exceptions are wrapped in runtime exceptions,
+	 *                          so that they can escape normal stream functions.
 	 */
 	private static Stream<Tuple<NativeNArgFunction, Method>> methodRegistrationFlatMapFtor(
-			final Map.Entry<Integer, List<Method>> entry) {
+			final Map.Entry<Integer, List<Method>> entry) throws RuntimeException {
 		final var argcount = entry.getKey();
 		final var functions = entry.getValue().stream();
 		// Yes.
 		return switch (argcount) {
-			case 0 -> functions.map(m -> new Tuple<>(mcall0(m), m));
-			case 1 -> functions.map(m -> new Tuple<>(mcall1(m), m));
-			case 2 -> functions.map(m -> new Tuple<>(mcall2(m), m));
-			case 3 -> functions.map(m -> new Tuple<>(mcall3(m), m));
+			case 0 -> functions.map(m -> {
+				try {
+					return new Tuple<>(mcall0(m), m);
+				} catch (IncompleteCompilerException e) {
+					throw new RuntimeException(e);
+				}
+			});
+			case 1 -> functions.map(m -> {
+				try {
+					return new Tuple<>(mcall1(m), m);
+				} catch (IncompleteCompilerException e) {
+					throw new RuntimeException(e);
+				}
+			});
+			case 2 -> functions.map(m -> {
+				try {
+					return new Tuple<>(mcall2(m), m);
+				} catch (IncompleteCompilerException e) {
+					throw new RuntimeException(e);
+				}
+			});
+			case 3 -> functions.map(m -> {
+				try {
+					return new Tuple<>(mcall3(m), m);
+				} catch (IncompleteCompilerException e) {
+					throw new RuntimeException(e);
+				}
+			});
 			default -> Stream.<Tuple<NativeNArgFunction, Method>>empty();
 		};
 		
@@ -131,20 +169,20 @@ public final class NativeFunctionRegistry {
 	 * Wrapper for 0 argument native function call that redirects all invocation
 	 * errors to CompilerException.
 	 */
-	private static Native0ArgFunction mcall0(Method function) {
+	private static Native0ArgFunction mcall0(Method function) throws IncompleteCompilerException {
 		return () -> {
 			try {
 				return (Stackable) function.invoke(null);
 			} catch (IllegalAccessException | IllegalArgumentException
 					| ExceptionInInitializerError e) {
-				final var ce = new CompilerException.Incomplete("native");
+				final var ce = new IncompleteCompilerException("native");
 				ce.initCause(e);
 				throw ce;
 			} catch (InvocationTargetException e) {
 				final var cause = e.getCause();
-				if (cause instanceof CompilerException.Incomplete)
-					throw (CompilerException.Incomplete)cause;
-				final var ce = new CompilerException.Incomplete("native");
+				if (cause instanceof IncompleteCompilerException)
+					throw (IncompleteCompilerException)cause;
+				final var ce = new IncompleteCompilerException("native");
 				ce.initCause(e);
 				throw ce;
 			}
@@ -155,20 +193,20 @@ public final class NativeFunctionRegistry {
 	 * Wrapper for 1 argument native function call that redirects all invocation
 	 * errors to CompilerException.
 	 */
-	private static Native1ArgFunction mcall1(Method function) {
+	private static Native1ArgFunction mcall1(Method function) throws IncompleteCompilerException {
 		return (a) -> {
 			try {
 				return (Stackable) function.invoke(null, a);
 			} catch (IllegalAccessException | IllegalArgumentException
 					| ExceptionInInitializerError e) {
-				final var ce = new CompilerException.Incomplete("native");
+				final var ce = new IncompleteCompilerException("native");
 				ce.initCause(e);
 				throw ce;
 			} catch (InvocationTargetException e) {
 				final var cause = e.getCause();
-				if (cause instanceof CompilerException.Incomplete)
-					throw (CompilerException.Incomplete)cause;
-				final var ce = new CompilerException.Incomplete("native");
+				if (cause instanceof IncompleteCompilerException)
+					throw (IncompleteCompilerException)cause;
+				final var ce = new IncompleteCompilerException("native");
 				ce.initCause(e);
 				throw ce;
 			}
@@ -179,20 +217,20 @@ public final class NativeFunctionRegistry {
 	 * Wrapper for 2 argument native function call that redirects all invocation
 	 * errors to CompilerException.
 	 */
-	private static Native2ArgFunction mcall2(Method function) {
+	private static Native2ArgFunction mcall2(Method function) throws IncompleteCompilerException {
 		return (a, b) -> {
 			try {
 				return (Stackable) function.invoke(null, a, b);
 			} catch (IllegalAccessException | IllegalArgumentException
 					| ExceptionInInitializerError e) {
-				final var ce = new CompilerException.Incomplete("native");
+				final var ce = new IncompleteCompilerException("native");
 				ce.initCause(e);
 				throw ce;
 			} catch (InvocationTargetException e) {
 				final var cause = e.getCause();
-				if (cause instanceof CompilerException.Incomplete)
-					throw (CompilerException.Incomplete)cause;
-				final var ce = new CompilerException.Incomplete("native");
+				if (cause instanceof IncompleteCompilerException)
+					throw (IncompleteCompilerException)cause;
+				final var ce = new IncompleteCompilerException("native");
 				ce.initCause(e);
 				throw ce;
 			}
@@ -203,20 +241,20 @@ public final class NativeFunctionRegistry {
 	 * Wrapper for 3 argument native function call that redirects all invocation
 	 * errors to CompilerException.
 	 */
-	private static Native3ArgFunction mcall3(Method function) {
+	private static Native3ArgFunction mcall3(Method function) throws IncompleteCompilerException {
 		return (a, b, c) -> {
 			try {
 				return (Stackable) function.invoke(null, a, b, c);
 			} catch (IllegalAccessException | IllegalArgumentException
 					| ExceptionInInitializerError e) {
-				final var ce = new CompilerException.Incomplete("native");
+				final var ce = new IncompleteCompilerException("native");
 				ce.initCause(e);
 				throw ce;
 			} catch (InvocationTargetException e) {
 				final var cause = e.getCause();
-				if (cause instanceof CompilerException.Incomplete)
-					throw (CompilerException.Incomplete)cause;
-				final var ce = new CompilerException.Incomplete("native");
+				if (cause instanceof IncompleteCompilerException)
+					throw (IncompleteCompilerException)cause;
+				final var ce = new IncompleteCompilerException("native");
 				ce.initCause(e);
 				throw ce;
 			}

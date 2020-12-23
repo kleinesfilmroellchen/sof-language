@@ -1,7 +1,8 @@
 package klfr.sof.lang;
 
-import klfr.sof.CompilerException;
 import klfr.sof.*;
+import klfr.sof.exceptions.CompilerException;
+import klfr.sof.exceptions.IncompleteCompilerException;
 
 /**
  * Identifiers are a type of stackable (i.e. basic SOF value) that are used to
@@ -33,10 +34,10 @@ public class Identifier implements Stackable {
 	 * @throws CompilerException If the given string value is not a valid SOF
 	 *                           identifier.
 	 */
-	public Identifier(String value) throws CompilerException {
+	public Identifier(String value) throws IncompleteCompilerException {
 		value = value.trim();
 		if (!isValidIdentifier(value))
-			throw new CompilerException.Incomplete("syntax", "syntax.identifier", value);
+			throw new IncompleteCompilerException("syntax", "syntax.identifier", value);
 		this.value = value;
 	}
 
@@ -66,7 +67,10 @@ public class Identifier implements Stackable {
 
 	@Override
 	public Stackable copy() {
-		return new Identifier(this.value);
+		// this cannot throw b/c otherwise this identifer couldn't have been created
+		try {
+			return new Identifier(this.value);
+		} catch (IncompleteCompilerException e) { throw new RuntimeException(); }
 	}
 
 	public int hashCode() {

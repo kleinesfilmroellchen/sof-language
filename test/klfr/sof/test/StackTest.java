@@ -5,7 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import klfr.sof.CompilerException;
+import klfr.sof.exceptions.CompilerException;
+import klfr.sof.exceptions.IncompleteCompilerException;
 import klfr.sof.lang.Identifier;
 import klfr.sof.lang.Nametable;
 import klfr.sof.lang.Stack;
@@ -37,37 +38,39 @@ public class StackTest extends SofTestSuper {
 	 * Tests basic stacking functions, such as push and pop.
 	 */
 	@Test
-	void testStack() {
+	void testStack() throws CompilerException, IncompleteCompilerException {
 		var a = new Sbl();
 		var b = new Sbl();
 
 		assertDoesNotThrow(() -> stack.push(a), "Push Stackable works");
-		assertEquals(a, assertDoesNotThrow(() -> stack.peek(), "Peek works"), "Peek equivalence check");
+		assertEquals(a, assertDoesNotThrow(() -> stack.peekSafe(), "Peek works"), "Peek equivalence check");
 		assertEquals(1, stack.size(), "Stack size with one element");
 
-		assertEquals(a, assertDoesNotThrow(() -> stack.pop(), "Pop works"), "Pop equivalence check");
+		assertEquals(a, assertDoesNotThrow(() -> stack.popSafe(), "Pop works"), "Pop equivalence check");
 		assertEquals(0, stack.size(), "Stack size with zero elements");
 
 		stack.push(a); stack.push(b);
 		assertEquals(2, stack.size(), "Stack size with two elements");
-		assertEquals(b, stack.peek(), "Stack push order");
-		assertEquals(a, assertDoesNotThrow(() -> stack.getLast(), "getLast works"), "Stack lowest element correctness");
+		assertEquals(b, stack.peekSafe(), "Stack push order");
+		assertEquals(a, assertDoesNotThrow(() -> stack.getLastSafe(), "getLast works"), "Stack lowest element correctness");
 
-		stack.pop();
-		assertEquals(a, stack.peek(), "Stack pop order");
+		stack.popSafe();
+		assertEquals(a, stack.peekSafe(), "Stack pop order");
 		assertEquals(1, stack.size(), "Stack size");
-		stack.pop();
+		stack.popSafe();
 
-		assertThrows(CompilerException.Incomplete.class, () -> stack.pop(), "Stack emptiness with Pop throws");
-		assertThrows(CompilerException.Incomplete.class, () -> stack.getLast(), "Stack emptiness with getLast throws");
-		assertThrows(CompilerException.Incomplete.class, () -> stack.peek(), "Stack emptiness with peek throws");
+		assertThrows(IncompleteCompilerException.class, () -> stack.popSafe(), "Stack emptiness with Pop throws");
+		assertThrows(IncompleteCompilerException.class, () -> stack.getLastSafe(), "Stack emptiness with getLast throws");
+		assertThrows(IncompleteCompilerException.class, () -> stack.peekSafe(), "Stack emptiness with peek throws");
 	}
 
 	/**
 	 * Test the basic nametable functionality.
+	 * 
+	 * @throws CompilerException
 	 */
 	@Test
-	void testNametables() {
+	void testNametables() throws IncompleteCompilerException {
 		final var idA = new Identifier("a");
 		final var idB = new Identifier("Beta");
 

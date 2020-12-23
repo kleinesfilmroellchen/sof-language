@@ -5,7 +5,7 @@ import java.util.Formattable;
 import java.util.FormattableFlags;
 import java.util.Formatter;
 
-import klfr.sof.CompilerException;
+import klfr.sof.exceptions.IncompleteCompilerException;
 
 /**
  * Stackable is the name for all elements that can be put onto the SOF stack,
@@ -147,7 +147,7 @@ public interface Stackable extends Serializable, Cloneable, Comparable<Stackable
 	 */
 	@Override
 	public default int compareTo(Stackable o) {
-		throw new CompilerException.Incomplete("type", "type.compare", this.typename(), o.typename());
+		throw new RuntimeException(new IncompleteCompilerException("type", "type.compare", this.typename(), o.typename()));
 	}
 
 	/**

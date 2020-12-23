@@ -126,7 +126,7 @@ public final class Utility {
 		while (digitIndex > -12) {
 			// Shift decimal point one step to the right
 			dabs *= 10d;
-			final var oldDigit = digit;
+			// final var oldDigit = digit;
 			digit = (long)Math.floor(dabs) % 10;
 			repr.append(digit);
 

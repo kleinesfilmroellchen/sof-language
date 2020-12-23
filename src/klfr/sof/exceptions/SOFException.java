@@ -1,39 +1,20 @@
-package klfr.sof.lang.functional;
+package klfr.sof.exceptions;
 
-import klfr.sof.ast.TokenListNode;
-import klfr.sof.lang.*;
-
-@StackableName("Codeblock")
-public class CodeBlock implements Stackable {
+/**
+ * Supertype of SOF-internal exceptions. Useful for catch block hierarchy. 
+ * 
+ * @author klfr
+ */
+public abstract class SOFException extends Exception {
 	private static final long serialVersionUID = 1L;
 
-	public final TokenListNode code;
-
-	public CodeBlock(TokenListNode code) {
-		this.code = code;
+	public SOFException(String message) {
+		super(message);
 	}
 
-	@Override
-	public String toDebugString(DebugStringExtensiveness e) {
-		String code = this.code.toString();
-		// Java Switch Expression FTW!
-		return switch (e) {
-			case Full -> String.format("[CodeBlock { %s } %h]", code, hashCode());
-			case Compact -> "[CodeBlk " + this.code.count() + "n ]";
-			default -> Stackable.toDebugString(this, e);
-		};
+	public SOFException(String message, Throwable cause) {
+		super(message, cause);
 	}
-
-	@Override
-	public Stackable copy() {
-		return new CodeBlock(this.code);
-	}
-
-	@Override
-	public String print() {
-		return "{ Codeblock }";
-	}
-
 }
 
 /*  

@@ -6,6 +6,7 @@ import klfr.sof.*;
 import klfr.sof.lang.*;
 import klfr.sof.ast.*;
 import klfr.sof.ast.PrimitiveTokenNode.PrimitiveToken;
+import klfr.sof.exceptions.*;
 
 /**
  * A module interpreter is a slightly modified interpreter that handles the
@@ -31,18 +32,18 @@ public class ModuleInterpreter extends Interpreter {
 	}
 
 	@Override
-	protected boolean handle(PrimitiveTokenNode pt) throws CompilerException {
+	protected boolean handle(PrimitiveTokenNode pt) throws CompilerException, IncompleteCompilerException {
 		if (pt.symbol() == PrimitiveToken.Export) {
 			final var exportId = this.stack.popTyped(Identifier.class);
 			// use the calling methodology for future consistency
 			this.doCall(exportId);
-			final var exportBinding = this.stack.pop();
+			final var exportBinding = this.stack.popSafe();
 			this.exports.put(exportId, exportBinding);
 			return true;
 		} else if (pt.symbol() == PrimitiveToken.DefineExport_Sugar) {
 			// does both globaldef and export
 			final var id = this.stack.popTyped(Identifier.class);
-			final var toBeDefined = this.stack.pop();
+			final var toBeDefined = this.stack.popSafe();
 			this.stack.globalNametable().put(id, toBeDefined);
 			this.exports.put(id, toBeDefined);
 			return true;

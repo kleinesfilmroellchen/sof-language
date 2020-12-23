@@ -4,6 +4,8 @@ import java.util.*;
 import java.util.function.*;
 
 import klfr.sof.SOFFile;
+import klfr.sof.exceptions.CompilerException;
+import klfr.sof.exceptions.IncompleteCompilerException;
 
 /**
  * A list of nodes that are to be executed in order. This may be the main
@@ -46,10 +48,10 @@ public class TokenListNode extends Node {
 	 * Run the specified action on every subnode.
 	 */
 	@Override
-	public boolean forEach(Function<? super Node, Boolean> action) {
+	public boolean forEach(Node.ForEachType action) throws CompilerException, IncompleteCompilerException {
 		for (Node subnode : subNodes) {
 			// run the action, if false was returned, return as well
-			if (!action.apply(subnode))
+			if (!action.exec(subnode))
 				return false;
 		}
 		return true;

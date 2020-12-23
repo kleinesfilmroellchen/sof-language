@@ -5,7 +5,8 @@ import java.util.*;
 import java.util.function.*;
 import java.util.logging.Logger;
 
-import klfr.sof.SOFFile;
+import klfr.sof.*;
+import klfr.sof.exceptions.*;
 
 /**
  * A node is an element in the abstract syntax tree (AST) that may contain other
@@ -15,7 +16,12 @@ import klfr.sof.SOFFile;
 public abstract class Node implements Serializable, Cloneable, Iterable<Node> {
 	private static final long serialVersionUID = 1L;
 
-	static final Logger log = Logger.getLogger(Node.class.getCanonicalName());
+	private static final Logger log = Logger.getLogger(Node.class.getCanonicalName());
+
+	@FunctionalInterface
+	public interface ForEachType {
+		public Boolean exec(Node operand) throws CompilerException, IncompleteCompilerException;
+	}
 
 	private final int index;
 	private final SOFFile source;
@@ -27,6 +33,7 @@ public abstract class Node implements Serializable, Cloneable, Iterable<Node> {
 
 	/**
 	 * Returns the index inside the source code where this node was located.
+	 * 
 	 * @return the index inside the source code where this node was located.
 	 */
 	public int getCodeIndex() {
@@ -35,6 +42,7 @@ public abstract class Node implements Serializable, Cloneable, Iterable<Node> {
 
 	/**
 	 * Returns the source file that this node is contained in.
+	 * 
 	 * @return the source file that this node is contained in.
 	 */
 	public SOFFile getSource() {
@@ -47,21 +55,29 @@ public abstract class Node implements Serializable, Cloneable, Iterable<Node> {
 	 */
 	@Override
 	public void forEach(Consumer<? super Node> action) {
-		this.forEach(n -> {
-			action.accept(n);
-			return true;
-		});
+		try {
+			this.forEach(n -> {
+				action.accept(n);
+				return true;
+			});
+		} catch (CompilerException | IncompleteCompilerException e) {
+			throw new RuntimeException("お前はもう死んでいる! (this shouldn't happen)", e);
+		}
 	}
 
 	/**
 	 * The primary method of the node. Traverses the node and all of its children in
 	 * proper order and hands them off to the action for processing. If the action
-	 * ever returns false, any iterative application should stop.<br><br>
+	 * ever returns false, any iterative application should stop.<br>
+	 * <br>
 	 * The default method applies the function to this node directly, which is
 	 * useful for most "primitive" nodes.
+	 * 
+	 * @throws IncompleteCompilerException
+	 * @throws CompilerException
 	 */
-	public boolean forEach(Function<? super Node, Boolean> action) {
-		return action.apply(this);
+	public boolean forEach(ForEachType action) throws IncompleteCompilerException, CompilerException {
+		return action.exec(this);
 	}
 
 	/**

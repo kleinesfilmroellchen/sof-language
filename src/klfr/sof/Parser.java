@@ -6,6 +6,8 @@ import java.util.logging.*;
 
 import klfr.sof.Tokenizer.TokenizerState;
 import klfr.sof.ast.*;
+import klfr.sof.exceptions.CompilerException;
+import klfr.sof.exceptions.IncompleteCompilerException;
 import klfr.sof.lang.*;
 import klfr.sof.lang.primitive.*;
 
@@ -58,7 +60,7 @@ public class Parser {
 					final var endPos = Preprocessor.indexOfMatching(tokenizer.getCode(), tokenizer.start(),
 							Patterns.codeBlockStartPattern, Patterns.codeBlockEndPattern) - 1;
 					if (endPos < 0) {
-						throw CompilerException.fromCurrentPosition(source.sourceFile().getPath(), tokenizer, "syntax", "syntax.codeblock");
+						throw CompilerException.from(source.sourceFile().getPath(), tokenizer, "syntax", "syntax.codeblock");
 					}
 					final Node cbParsed = parse(source, tokenizer.start() + 1, endPos);
 					tokens.add(cbParsed);
@@ -95,9 +97,9 @@ public class Parser {
 					log.finest(() -> String.format("Identifier token %30s @ %4d", token, tokenizer.start()));
 					tokens.add(new LiteralNode(new Identifier(token), tokenizer.start(), source));
 				} else
-					throw CompilerException.fromCurrentPosition(source.sourceFile().getPath(), tokenizer, "syntax", null);
+					throw CompilerException.from(source.sourceFile().getPath(), tokenizer, "syntax", null);
 
-			} catch (final CompilerException.Incomplete e) {
+			} catch (final IncompleteCompilerException e) {
 				throw CompilerException.fromIncomplete(tokenizer, e);
 			}
 		}

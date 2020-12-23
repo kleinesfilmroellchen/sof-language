@@ -5,7 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import klfr.sof.CompilerException;
+import klfr.sof.exceptions.CompilerException;
+import klfr.sof.exceptions.IncompleteCompilerException;
 import klfr.sof.lang.Identifier;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 
@@ -34,21 +35,24 @@ class IdentifierTest extends SofTestSuper {
 	@DisplayName("Test Identifier validity check")
 	@Test
 	void testIsValidIdentifier() {
-		assertThrows(CompilerException.Incomplete.class, () -> new Identifier("-abc-def"), "Invalid Identifier test");
-		assertThrows(CompilerException.Incomplete.class, () -> new Identifier("abc-def  kl"), "Invalid Identifier test spaces");
+		assertThrows(IncompleteCompilerException.class, () -> new Identifier("-abc-def"), "Invalid Identifier test");
+		assertThrows(IncompleteCompilerException.class, () -> new Identifier("abc-def  kl"),
+				"Invalid Identifier test spaces");
 		assertDoesNotThrow(() -> new Identifier("abcdefgはるこ"), "Valid Identifier test");
 		assertDoesNotThrow(() -> new Identifier("   abcdefgはるこ     "), "Valid Identifier test with trim");
 		assertDoesNotThrow(() -> new Identifier("   abc__d9090efg''はるこ     "), "Valid Identifier test with non-alnum");
-		assertThrows(CompilerException.Incomplete.class, () -> new Identifier("90abc__d9090efg"),
+		assertThrows(IncompleteCompilerException.class, () -> new Identifier("90abc__d9090efg"),
 				"Invalid Identifier test with starting numeric");
 	}
 
 	/**
 	 * Tests other methods such as equals(), clone() etc.
+	 * 
+	 * @throws CompilerException
 	 */
 	@DisplayName("Test Identifier minor methods")
 	@Test
-	void testOther() {
+	void testOther() throws IncompleteCompilerException {
 		Identifier i = new Identifier("abc");
 		assertDoesNotThrow(() -> i.hashCode());
 		Identifier clone = (Identifier) assertDoesNotThrow(() -> i.copy());

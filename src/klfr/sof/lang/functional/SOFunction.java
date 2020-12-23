@@ -2,7 +2,6 @@ package klfr.sof.lang.functional;
 
 import klfr.sof.ast.TokenListNode;
 import klfr.sof.lang.*;
-import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 
 /**
  * Function type, one of the most important callable types. Functions are the

@@ -8,8 +8,7 @@ import org.junit.jupiter.api.*;
 
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 import klfr.sof.lang.primitive.*;
-import klfr.sof.*;
-import klfr.sof.lang.*;
+import klfr.sof.exceptions.*;
 
 class PrimitiveTest extends SofTestSuper {
 
@@ -83,10 +82,10 @@ class PrimitiveTest extends SofTestSuper {
 		assertDoesNotThrow(() -> FloatPrimitive.createFloatFromString("-7890.887100  "));
 		assertDoesNotThrow(() -> FloatPrimitive.createFloatFromString(" +229.6e+5"));
 		assertDoesNotThrow(() -> FloatPrimitive.createFloatFromString("		-0.77E-3"));
-		assertThrows(CompilerException.Incomplete.class, () -> FloatPrimitive.createFloatFromString("jksdf"));
-		assertThrows(CompilerException.Incomplete.class, () -> FloatPrimitive.createFloatFromString("	778"));
-		assertThrows(CompilerException.Incomplete.class, () -> FloatPrimitive.createFloatFromString("107.304e12"));
-		assertThrows(CompilerException.Incomplete.class, () -> FloatPrimitive.createFloatFromString(".666"));
+		assertThrows(IncompleteCompilerException.class, () -> FloatPrimitive.createFloatFromString("jksdf"));
+		assertThrows(IncompleteCompilerException.class, () -> FloatPrimitive.createFloatFromString("	778"));
+		assertThrows(IncompleteCompilerException.class, () -> FloatPrimitive.createFloatFromString("107.304e12"));
+		assertThrows(IncompleteCompilerException.class, () -> FloatPrimitive.createFloatFromString(".666"));
 	}
 
 	@DisplayName("Test the creation of integer primitives from string")
@@ -98,10 +97,10 @@ class PrimitiveTest extends SofTestSuper {
 		assertDoesNotThrow(() -> IntPrimitive.createIntegerFromString("-0b1010011  "));
 		assertDoesNotThrow(() -> IntPrimitive.createIntegerFromString(" +0o776352"));
 		assertDoesNotThrow(() -> IntPrimitive.createIntegerFromString("		-0d490"));
-		assertThrows(CompilerException.Incomplete.class, () -> IntPrimitive.createIntegerFromString("jksdf"));
-		assertThrows(CompilerException.Incomplete.class, () -> IntPrimitive.createIntegerFromString("	0xiwo3i"));
-		assertThrows(CompilerException.Incomplete.class, () -> IntPrimitive.createIntegerFromString("0b8373"));
-		assertThrows(CompilerException.Incomplete.class, () -> IntPrimitive.createIntegerFromString("0f879"));
+		assertThrows(IncompleteCompilerException.class, () -> IntPrimitive.createIntegerFromString("jksdf"));
+		assertThrows(IncompleteCompilerException.class, () -> IntPrimitive.createIntegerFromString("	0xiwo3i"));
+		assertThrows(IncompleteCompilerException.class, () -> IntPrimitive.createIntegerFromString("0b8373"));
+		assertThrows(IncompleteCompilerException.class, () -> IntPrimitive.createIntegerFromString("0f879"));
 	}
 
 	@DisplayName("Test the creation of boolean primitives from string")
@@ -111,8 +110,8 @@ class PrimitiveTest extends SofTestSuper {
 		assertEquals(true, b.value());
 		assertDoesNotThrow(() -> BoolPrimitive.createBoolFromString("FALSE"));
 		assertDoesNotThrow(() -> BoolPrimitive.createBoolFromString("trUe"));
-		assertThrows(CompilerException.Incomplete.class, () -> BoolPrimitive.createBoolFromString("Trueblah"));
-		assertThrows(CompilerException.Incomplete.class, () -> BoolPrimitive.createBoolFromString("FALSEfalse"));
+		assertThrows(IncompleteCompilerException.class, () -> BoolPrimitive.createBoolFromString("Trueblah"));
+		assertThrows(IncompleteCompilerException.class, () -> BoolPrimitive.createBoolFromString("FALSEfalse"));
 	}
 
 }

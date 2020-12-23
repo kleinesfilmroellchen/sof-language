@@ -1,6 +1,7 @@
 package klfr.sof.lang.primitive;
 
-import klfr.sof.CompilerException;
+import klfr.sof.exceptions.CompilerException;
+import klfr.sof.exceptions.IncompleteCompilerException;
 import klfr.sof.lang.Stackable;
 import klfr.sof.lang.StackableName;
 
@@ -26,12 +27,12 @@ public class BoolPrimitive extends Primitive {
       return new BoolPrimitive(value);
    }
 
-   public static BoolPrimitive createBoolFromString(String booleanString) throws CompilerException {
+   public static BoolPrimitive createBoolFromString(String booleanString) throws IncompleteCompilerException {
       if (booleanString.toLowerCase().equals("true"))
          return new BoolPrimitive(true);
       if (booleanString.toLowerCase().equals("false"))
          return new BoolPrimitive(false);
-      throw new CompilerException.Incomplete("syntax", "boolean.syntax", booleanString);
+      throw new IncompleteCompilerException("syntax", "boolean.syntax", booleanString);
    }
 
    public boolean equals(Stackable other) {

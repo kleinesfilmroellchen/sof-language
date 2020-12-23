@@ -1,6 +1,6 @@
 package klfr.sof.lang.primitive;
 
-import klfr.sof.CompilerException;
+import klfr.sof.exceptions.IncompleteCompilerException;
 import klfr.sof.lang.Stackable;
 import klfr.sof.lang.StackableName;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
@@ -49,7 +49,7 @@ public class StringPrimitive extends Primitive {
       if (o instanceof StringPrimitive) {
          return this.s.compareTo(((StringPrimitive) o).s);
       }
-      throw new CompilerException.Incomplete("type", "type.compare", this.typename(), o.typename());
+      throw new RuntimeException(new IncompleteCompilerException("type", "type.compare", this.typename(), o.typename()));
    }
 
    @Override

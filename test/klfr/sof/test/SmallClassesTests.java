@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 
+import klfr.sof.exceptions.*;
 import klfr.sof.lang.*;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 import klfr.sof.lang.functional.FunctionDelimiter;
@@ -21,7 +22,7 @@ class SmallClassesTests extends SofTestSuper {
 	}
 
 	@Test
-	void testNametable() {
+	void testNametable() throws IncompleteCompilerException {
 		// For the record:
 		// This is the first piece of code that klfr used the 'var' type inference
 		// statement in. Although this feature has existed since Java 10, I have not

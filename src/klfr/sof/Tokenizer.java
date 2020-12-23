@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 import java.util.regex.*;
 
 import klfr.Tuple;
+import klfr.sof.exceptions.CompilerException;
 
 /**
  * The tokenizer class wraps the regular expression matching functionality to

@@ -7,19 +7,16 @@ import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+import java.util.logging.*;
+import java.util.stream.*;
 
 import org.junit.jupiter.api.*;
 import org.opentest4j.TestAbortedException;
 
 import klfr.sof.*;
 import klfr.sof.cli.CLI;
-import klfr.sof.lib.Builtins;
-import klfr.sof.lib.Formatting;
-import klfr.sof.lib.NativeFunctionRegistry;
+import klfr.sof.exceptions.*;
+import klfr.sof.lib.*;
 
 /**
  * The language test class is responsible for running the tests on the SOF
@@ -45,7 +42,7 @@ public class LanguageTests extends SofTestSuper {
 
 	@DisplayName("SOF language tests from test files")
 	@TestFactory
-	DynamicNode generateLanguageTests() {
+	DynamicNode generateLanguageTests() throws SOFException {
 		// TODO: This shouldn't be here. Until we have a reliable way of executing code on class load,
 		// TODO: the native function registration needs to be done manually before starting interpreters.
 		NativeFunctionRegistry.registerNativeFunctions(Builtins.class);
@@ -104,36 +101,6 @@ public class LanguageTests extends SofTestSuper {
 			}
 		});
 	}
-
-	/**
-	 * Lists all the files in the directory by using this class's resource loader.
-	 * The method is independent of how the resources are stored, as long as the URL
-	 * connection to the resource that is a directory returns the files in the
-	 * directory separated by a newline.
-	 * 
-	 * @param directoryName The directory to be read
-	 * @deprecated This method was previously used for listing directories with any URI.
-	 *              It is now obsolete because all test files are expected to be in a
-	 *              file system directory directly accessible.
-	 * @return A collection of file name strings that represent the files found in
-	 *         the directory
-	 */
-	@Deprecated
-	private static Set<CharSequence> listDirectory(String directoryName) {
-		try {
-			final var resLoader = LanguageTests.class.getModule().getClassLoader();
-			final var rsrc = resLoader.getResource(directoryName);
-			// log.fine(String.format("folder: %s", rsrc));
-			final var out = new ByteArrayOutputStream(256);
-			rsrc.openStream().transferTo(out);
-			final var directory = new String(out.toByteArray());
-			return new HashSet<>(Arrays.asList(Pattern.compile("\n", Pattern.MULTILINE).split(directory)));
-		} catch (IOException e) {
-			log.log(Level.SEVERE, "Could not recieve directory contents.", e);
-			return Collections.emptySet();
-		}
-	}
-
 }
 
 /*

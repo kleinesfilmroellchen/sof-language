@@ -2,8 +2,9 @@ package klfr.sof.lang.primitive;
 
 import java.util.logging.Logger;
 
-import klfr.sof.CompilerException;
 import klfr.sof.Patterns;
+import klfr.sof.exceptions.CompilerException;
+import klfr.sof.exceptions.IncompleteCompilerException;
 import klfr.sof.lang.Stackable;
 import klfr.sof.lang.StackableName;
 
@@ -68,7 +69,7 @@ public class FloatPrimitive extends Primitive {
 		return createFloatPrimitive(this.v - other.v);
 	}
 
-	public static FloatPrimitive createFloatFromString(String doubleString) throws CompilerException {
+	public static FloatPrimitive createFloatFromString(String doubleString) throws IncompleteCompilerException {
 		doubleString = doubleString.strip();
 		final var m = Patterns.doublePattern.matcher(doubleString);
 		if (m.matches()) {
@@ -91,7 +92,7 @@ public class FloatPrimitive extends Primitive {
 			log.finest(String.format("%d * ( %d + %f ) * 10 ^ %d", sign, integerPart, decimalPart, exponent));
 			return new FloatPrimitive(sign * Math.pow(10, exponent) * (integerPart + decimalPart));
 		} else {
-			throw new CompilerException.Incomplete("syntax", "syntax.float", doubleString);
+			throw new IncompleteCompilerException("syntax", "syntax.float", doubleString);
 		}
 	}
 
@@ -123,7 +124,7 @@ public class FloatPrimitive extends Primitive {
 			final var o = (IntPrimitive) x;
 			return (this.v - o.value() > 0 ? 1 : (this.v - o.value() < 0 ? -1 : 0));
 		}
-		throw new CompilerException.Incomplete("type", "type.compare", this.typename(), x.typename());
+		throw new RuntimeException(new IncompleteCompilerException("type", "type.compare", this.typename(), x.typename()));
 	}
 
 	public String print() {

@@ -8,10 +8,10 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.*;
 
 import static klfr.Utility.*;
+
+import klfr.sof.exceptions.*;
 import klfr.sof.lang.*;
-import klfr.sof.lang.primitive.FloatPrimitive;
-import klfr.sof.lang.primitive.IntPrimitive;
-import klfr.sof.lang.primitive.StringPrimitive;
+import klfr.sof.lang.primitive.*;
 import klfr.sof.lib.*;
 
 @DisplayName("Test the Builtins SOF builtin function implementor class")
@@ -127,7 +127,7 @@ class BuiltinFunctionsTest extends SofTestSuper {
 
 	@Test
 	@DisplayName("Test formatting functions - String & Padding")
-	void testFmtString() {
+	void testFmtString() throws IncompleteCompilerException {
 		var str = StringPrimitive.createStringPrimitive("abc");
 		var value = new Identifier("blah");
 		assertEquals("abc", Formatting.handleFormatter("%s", 0, new Stackable[]{str}).getRight(), "Simple string");
@@ -152,7 +152,7 @@ class BuiltinFunctionsTest extends SofTestSuper {
 
 	@Test
 	@DisplayName("Test mathematical functions")
-	void testMath() {
+	void testMath() throws IncompleteCompilerException {
 		assertEquals(2d, Builtins.log(FloatPrimitive.createFloatPrimitive(10d), FloatPrimitive.createFloatPrimitive(100d)).value(), "Logarithm float-float");
 		assertEquals(2d, Builtins.log(IntPrimitive.createIntPrimitive(10l), FloatPrimitive.createFloatPrimitive(100d)).value(), "Logarithm int-float");
 		assertEquals(2d, Builtins.log(FloatPrimitive.createFloatPrimitive(10d), IntPrimitive.createIntPrimitive(100l)).value(), "Logarithm float-int");

@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.logging.*;
 
 import klfr.sof.*;
+import klfr.sof.exceptions.*;
 
 /**
  * The system for discovering modules and providing them to the interpreter.
@@ -96,7 +97,7 @@ public class ModuleDiscoverer {
 	 *         Optional is returned.
 	 */
 	public Optional<SOFFile> getModule(final File requestingSourceFile, final String moduleSpecifier)
-			throws CompilerException {
+			throws CompilerException, IncompleteCompilerException {
 		File fullPath_ = null;
 		try {
 			// Check whether the module is absolute or relative
@@ -121,7 +122,7 @@ public class ModuleDiscoverer {
 				if (sourceFile.exists()) fullFile = sourceFile;
 			}
 			if (fullFile == null) {
-				throw new CompilerException.Incomplete("module", "module", moduleSpecifier);
+				throw new IncompleteCompilerException("module", "module", moduleSpecifier);
 			}
 
 			var fullPath = fullFile.getCanonicalFile(); /*needed for error handling*/ fullPath_ = fullPath;

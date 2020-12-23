@@ -1,6 +1,6 @@
 package klfr.sof.lib;
 
-import klfr.sof.*;
+import klfr.sof.exceptions.*;
 import klfr.sof.lang.*;
 import klfr.sof.lang.functional.*;
 import klfr.sof.lang.primitive.*;
@@ -99,7 +99,7 @@ public final class Builtins {
 	/**
 	 * Implements SOF's convert:int builtin function.
 	 */
-	public static IntPrimitive convertInt(Stackable toConvert) {
+	public static IntPrimitive convertInt(Stackable toConvert) throws IncompleteCompilerException, CompilerException {
 		if (toConvert instanceof FloatPrimitive) {
 			return IntPrimitive.createIntPrimitive(Math.round(((FloatPrimitive) toConvert).value()));
 		} else if (toConvert instanceof StringPrimitive) {
@@ -107,13 +107,13 @@ public final class Builtins {
 		} else if (toConvert instanceof IntPrimitive)
 			return (IntPrimitive) toConvert;
 
-		throw new CompilerException.Incomplete("type");
+		throw new IncompleteCompilerException("type");
 	}
 
 	/**
 	 * Implements SOF's convert:float builtin function.
 	 */
-	public static FloatPrimitive convertFloat(Stackable toConvert) {
+	public static FloatPrimitive convertFloat(Stackable toConvert) throws IncompleteCompilerException, CompilerException {
 		if (toConvert instanceof StringPrimitive) {
 			return FloatPrimitive.createFloatFromString(((StringPrimitive) toConvert).value());
 		} else if (toConvert instanceof IntPrimitive) {
@@ -121,26 +121,26 @@ public final class Builtins {
 		} else if (toConvert instanceof FloatPrimitive)
 			return (FloatPrimitive) toConvert;
 		
-		throw new CompilerException.Incomplete("type");
+		throw new IncompleteCompilerException("type");
 	}
 
 	/**
 	 * Implements SOF's convert:callable builtin function.
 	 */
-	public static Stackable convertCallable(Stackable toConvert) {
+	public static Stackable convertCallable(Stackable toConvert) throws IncompleteCompilerException, CompilerException {
 		if (toConvert instanceof CodeBlock || toConvert instanceof SOFunction) {
 			return toConvert;
 		} else {
 			//TODO: Implement Church Numerals
 		}
 		
-		throw new CompilerException.Incomplete("type");
+		throw new IncompleteCompilerException("type");
 	}
 
 	/**
 	 * Implements SOF's convert:string builtin function.
 	 */
-	public static StringPrimitive convertString(Stackable toConvert) {
+	public static StringPrimitive convertString(Stackable toConvert) throws IncompleteCompilerException {
 		return StringPrimitive.createStringPrimitive(toConvert.print());
 	}
 
@@ -152,77 +152,77 @@ public final class Builtins {
 	/**
 	 * Implements SOF's abs function of the sof.math module.
 	 */
-	public static Stackable abs(Stackable a) {
+	public static Stackable abs(Stackable a) throws IncompleteCompilerException {
 		if (a instanceof FloatPrimitive)
 			return FloatPrimitive.createFloatPrimitive(Math.abs(((FloatPrimitive) a).value()));
 		else if (a instanceof IntPrimitive)
 			return IntPrimitive.createIntPrimitive(Math.abs(((IntPrimitive) a).value()));
 
-		throw new CompilerException.Incomplete("type");
+		throw new IncompleteCompilerException("type");
 	}
 
 	/**
 	 * Implements SOF's sin function of the sof.math module.
 	 */
-	public static FloatPrimitive sin(Stackable a) {
+	public static FloatPrimitive sin(Stackable a) throws IncompleteCompilerException {
 		if (a instanceof FloatPrimitive)
 			return FloatPrimitive.createFloatPrimitive(Math.sin(((FloatPrimitive)a).value()));
 		if (a instanceof IntPrimitive)
 			return FloatPrimitive.createFloatPrimitive(Math.sin(((IntPrimitive)a).value()));
-		throw new CompilerException.Incomplete("type");
+		throw new IncompleteCompilerException("type");
 	}
 
 	/**
 	 * Implements SOF's cos function of the sof.math module.
 	 */
-	public static FloatPrimitive cos(Stackable a) {
+	public static FloatPrimitive cos(Stackable a) throws IncompleteCompilerException {
 		if (a instanceof FloatPrimitive)
 			return FloatPrimitive.createFloatPrimitive(Math.cos(((FloatPrimitive)a).value()));
 		if (a instanceof IntPrimitive)
 			return FloatPrimitive.createFloatPrimitive(Math.cos(((IntPrimitive)a).value()));
-		throw new CompilerException.Incomplete("type");
+		throw new IncompleteCompilerException("type");
 	}
 
 	/**
 	 * Implements SOF's tan function of the sof.math module.
 	 */
-	public static FloatPrimitive tan(Stackable a) {
+	public static FloatPrimitive tan(Stackable a) throws IncompleteCompilerException {
 		if (a instanceof FloatPrimitive)
 			return FloatPrimitive.createFloatPrimitive(Math.tan(((FloatPrimitive)a).value()));
 		if (a instanceof IntPrimitive)
 			return FloatPrimitive.createFloatPrimitive(Math.tan(((IntPrimitive)a).value()));
-		throw new CompilerException.Incomplete("type");
+		throw new IncompleteCompilerException("type");
 	}
 
 	/**
 	 * Implements SOF's exp (e^x) function of the sof.math module.
 	 */
-	public static FloatPrimitive exp(Stackable a) {
+	public static FloatPrimitive exp(Stackable a) throws IncompleteCompilerException {
 		if (a instanceof FloatPrimitive)
 			return FloatPrimitive.createFloatPrimitive(Math.exp(((FloatPrimitive)a).value()));
 		if (a instanceof IntPrimitive)
 			return FloatPrimitive.createFloatPrimitive(Math.exp(((IntPrimitive)a).value()));
-		throw new CompilerException.Incomplete("type");
+		throw new IncompleteCompilerException("type");
 	}
 
 	/**
 	 * Implements SOF's ln (natural logarithm) function of the sof.math module.
 	 */
-	public static FloatPrimitive ln(Stackable a) {
+	public static FloatPrimitive ln(Stackable a) throws IncompleteCompilerException {
 		if (a instanceof FloatPrimitive)
 			return FloatPrimitive.createFloatPrimitive(Math.log(((FloatPrimitive)a).value()));
 		if (a instanceof IntPrimitive)
 			return FloatPrimitive.createFloatPrimitive(Math.log(((IntPrimitive)a).value()));
-		throw new CompilerException.Incomplete("type");
+		throw new IncompleteCompilerException("type");
 	}
 
 	/**
 	 * Implements SOF's log function of the sof.math module.
 	 */
-	public static FloatPrimitive log(Stackable b, Stackable a) {
+	public static FloatPrimitive log(Stackable b, Stackable a) throws IncompleteCompilerException {
 		var base = (b instanceof FloatPrimitive) ? ((FloatPrimitive)b).value() : (b instanceof IntPrimitive) ? ((IntPrimitive)b).value() : Double.NaN;
 		if (Double.isNaN(base))
-			throw new CompilerException.Incomplete("type");
+			throw new IncompleteCompilerException("type");
 
 		var logb = Math.log(base);
 
@@ -231,7 +231,7 @@ public final class Builtins {
 			return FloatPrimitive.createFloatPrimitive(Math.log(((FloatPrimitive)a).value()) / logb);
 		if (a instanceof IntPrimitive)
 			return FloatPrimitive.createFloatPrimitive(Math.log(((IntPrimitive)a).value()) / logb);
-		throw new CompilerException.Incomplete("type");
+		throw new IncompleteCompilerException("type");
 	}
 
 	//#endregion Math

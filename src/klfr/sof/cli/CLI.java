@@ -15,6 +15,9 @@ import java.util.logging.*;
 
 import klfr.sof.*;
 import klfr.sof.ast.*;
+import klfr.sof.exceptions.CompilerException;
+import klfr.sof.exceptions.IncompleteCompilerException;
+import klfr.sof.exceptions.SOFException;
 import klfr.sof.lib.*;
 
 public class CLI {
@@ -32,15 +35,21 @@ public class CLI {
 	private static SOFFile preambleCode;
 
 	/**
-	 * Main entry point of the SOF interpreter system. This method handles command-line arguments
-	 * as described in the documentation and then runs the SOF interpreter system.
+	 * Main entry point of the SOF interpreter system. This method handles
+	 * command-line arguments as described in the documentation and then runs the
+	 * SOF interpreter system.
 	 * 
 	 * @param args Command-line arguments
-	 * @throws InvocationTargetException Should not be thrown: If reflectively invoked methods fail.
-	 * @throws UnsupportedEncodingException Should not be thrown: If the UTF-8 encoding is not supported.
-	 * @throws IOException If any I/O operation fails unrecoverable.
+	 * @throws InvocationTargetException    Should not be thrown: If reflectively
+	 *                                      invoked methods fail.
+	 * @throws UnsupportedEncodingException Should not be thrown: If the UTF-8
+	 *                                      encoding is not supported.
+	 * @throws IOException                  If any I/O operation fails
+	 *                                      unrecoverable.
+	 * @throws SOFException
 	 */
-	public static void main(String[] args) throws InvocationTargetException, UnsupportedEncodingException, IOException {
+	public static void main(String[] args)
+			throws InvocationTargetException, UnsupportedEncodingException, IOException, SOFException {
 		// setup console info logging
 		LogManager.getLogManager().reset();
 		final var bl = Logger.getLogger("");
@@ -142,13 +151,15 @@ public class CLI {
 	/**
 	 * Run a standard SOF system with the given options and IO interface.
 	 * 
-	 * @param clo The options that determine what sort of execution should be done and what other
-	 *            parameters apply to the execution.
-	 * @param io  The I/O interface. Will be passed to any interpreters and is also used internally
-	 *            by this method.
-	 * @return An exception, if something went wrong, or nothing, if everything went fine.
+	 * @param clo The options that determine what sort of execution should be done
+	 *            and what other parameters apply to the execution.
+	 * @param io  The I/O interface. Will be passed to any interpreters and is also
+	 *            used internally by this method.
+	 * @return An exception, if something went wrong, or nothing, if everything went
+	 *         fine.
+	 * @throws CompilerException for such compiler exceptions that should only happen if the user is not responsible for them.
 	 */
-	public static Optional<Throwable> runSOF(Options clo, IOInterface io) {
+	public static Optional<Throwable> runSOF(Options clo, IOInterface io) throws CompilerException {
 		io.debug = (clo.flags & Options.DEBUG) > 0;
 		log.config(() -> String.format("FLAG :: DEBUG %5s", io.debug ? "on" : "off"));
 		switch (clo.executionType) {
@@ -335,7 +346,7 @@ public class CLI {
 	 * 
 	 * @param interpreter The interpreter on which the preamble should be run.
 	 */
-	public static void runPreamble(Interpreter interpreter) {
+	public static void runPreamble(Interpreter interpreter) throws CompilerException {
 		// parse preamble if not yet done
 		if (preambleCode == null) {
 			try {

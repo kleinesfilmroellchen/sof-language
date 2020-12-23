@@ -4,6 +4,8 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import klfr.sof.exceptions.IncompleteCompilerException;
+
 /**
  * The SOF preprocessor is a collection of static methods that normalize and
  * clean code before it can be executed. Unlike normal preprocessors, this
@@ -33,10 +35,10 @@ public class Preprocessor {
 	 * @return A string that can be used directly to construct a
 	 *         {@link klfr.sof.lang.primitive.StringPrimitive}.
 	 */
-	public static String preprocessSofString(final String sofString) {
+	public static String preprocessSofString(final String sofString) throws IncompleteCompilerException {
 		final var strm = Patterns.stringPattern.matcher(sofString);
 		if (!strm.matches()) {
-			throw new CompilerException.Incomplete("syntax", "syntax.string", sofString);
+			throw new IncompleteCompilerException("syntax", "syntax.string", sofString);
 		}
 		final var str = strm.group(1);
 		return Patterns.escapeSequencePattern.matcher(str).replaceAll(escape -> {

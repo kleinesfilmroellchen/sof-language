@@ -1,6 +1,7 @@
 package klfr.sof.lang.primitive;
 
-import klfr.sof.CompilerException;
+import klfr.sof.exceptions.CompilerException;
+import klfr.sof.exceptions.IncompleteCompilerException;
 import klfr.sof.lang.Stackable;
 import klfr.sof.lang.StackableName;
 
@@ -52,7 +53,7 @@ public class IntPrimitive extends Primitive {
     *                      format, to be converted.
     * @return a new IntPrimitive with the parsed integer value.
     */
-   public static IntPrimitive createIntegerFromString(String integerString) throws CompilerException {
+   public static IntPrimitive createIntegerFromString(String integerString) throws IncompleteCompilerException {
       integerString = integerString.strip();
       long sign = 1;
       int radix = 10;
@@ -75,7 +76,7 @@ public class IntPrimitive extends Primitive {
             case 'o' ->       8;
             case 'd' ->      10;
             case 'h', 'x' -> 16;
-            default -> throw new CompilerException.Incomplete("syntax", "syntax.integer", integerString);
+            default -> throw new IncompleteCompilerException("syntax", "syntax.integer", integerString);
          };
          integerString = integerString.substring(2);
       }
@@ -85,7 +86,7 @@ public class IntPrimitive extends Primitive {
       for (int place = 0; place < reverseInt.length(); ++place) {
          char magnitude = reverseInt.charAt(place);
          if (!numberChars.containsKey(magnitude) || numberChars.get(magnitude) >= radix) {
-            throw new CompilerException.Incomplete("syntax", "syntax.integer.base", magnitude, radix);
+            throw new IncompleteCompilerException("syntax", "syntax.integer.base", magnitude, radix);
          }
          value += numberChars.get(magnitude) * (long) (Math.pow(radix, place));
       }
@@ -114,7 +115,7 @@ public class IntPrimitive extends Primitive {
          // invert the comparison result, therefore effectively switching sides
          return -((FloatPrimitive) o).compareTo(this);
       }
-      throw new CompilerException.Incomplete("type", "type.compare", this.typename(), o.typename());
+      throw new RuntimeException(new IncompleteCompilerException("type", "type.compare", this.typename(), o.typename()));
    }
 
    @Override

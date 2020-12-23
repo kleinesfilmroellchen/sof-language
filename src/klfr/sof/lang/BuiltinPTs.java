@@ -1,6 +1,6 @@
 package klfr.sof.lang;
 
-import klfr.sof.CompilerException;
+import klfr.sof.exceptions.IncompleteCompilerException;
 import klfr.sof.lang.primitive.BoolPrimitive;
 import klfr.sof.lang.primitive.FloatPrimitive;
 import klfr.sof.lang.primitive.IntPrimitive;
@@ -13,7 +13,7 @@ import klfr.sof.lang.primitive.IntPrimitive;
  */
 public final class BuiltinPTs {
 
-	public static final Stackable divide(Stackable a, Stackable b) {
+	public static final Stackable divide(Stackable a, Stackable b) throws IncompleteCompilerException {
 		try {
 			if (a instanceof IntPrimitive && b instanceof IntPrimitive) {
 				return ((IntPrimitive) a).divide((IntPrimitive) b);
@@ -27,13 +27,13 @@ public final class BuiltinPTs {
 			if (b instanceof FloatPrimitive && a instanceof IntPrimitive) {
 				return FloatPrimitive.createFloatPrimitive(((IntPrimitive) a).value() / ((FloatPrimitive) b).value());
 			}
-			throw new CompilerException.Incomplete("type", "type.divide", a.typename(), b.typename());
+			throw new IncompleteCompilerException("type", "type.divide", a.typename(), b.typename());
 		} catch (ArithmeticException e) {
-			throw new CompilerException.Incomplete("arithmetic", "div-by-zero");
+			throw new IncompleteCompilerException("arithmetic", "div-by-zero");
 		}
 	}
 
-	public static final Stackable add(Stackable a, Stackable b) {
+	public static final Stackable add(Stackable a, Stackable b) throws IncompleteCompilerException {
 		if (a instanceof IntPrimitive && b instanceof IntPrimitive) {
 			return ((IntPrimitive) a).add((IntPrimitive) b);
 		}
@@ -46,10 +46,10 @@ public final class BuiltinPTs {
 		if (b instanceof FloatPrimitive && a instanceof IntPrimitive) {
 			return FloatPrimitive.createFloatPrimitive(((FloatPrimitive) b).value() + ((IntPrimitive) a).value());
 		}
-		throw new CompilerException.Incomplete("type", "type.add", a.typename(), b.typename());
+		throw new IncompleteCompilerException("type", "type.add", a.typename(), b.typename());
 	}
 
-	public static final Stackable multiply(Stackable a, Stackable b) {
+	public static final Stackable multiply(Stackable a, Stackable b) throws IncompleteCompilerException {
 		if (a instanceof IntPrimitive && b instanceof IntPrimitive) {
 			return ((IntPrimitive) a).multiply((IntPrimitive) b);
 		}
@@ -62,10 +62,10 @@ public final class BuiltinPTs {
 		if (b instanceof FloatPrimitive && a instanceof IntPrimitive) {
 			return FloatPrimitive.createFloatPrimitive(((FloatPrimitive) b).value() * ((IntPrimitive) a).value());
 		}
-		throw new CompilerException.Incomplete("type", "type.multiply", a.typename(), b.typename());
+		throw new IncompleteCompilerException("type", "type.multiply", a.typename(), b.typename());
 	}
 
-	public static final Stackable subtract(Stackable a, Stackable b) {
+	public static final Stackable subtract(Stackable a, Stackable b) throws IncompleteCompilerException {
 		if (a instanceof IntPrimitive && b instanceof IntPrimitive) {
 			return ((IntPrimitive) a).subtract((IntPrimitive) b);
 		}
@@ -78,7 +78,7 @@ public final class BuiltinPTs {
 		if (b instanceof FloatPrimitive && a instanceof IntPrimitive) {
 			return FloatPrimitive.createFloatPrimitive(((IntPrimitive) a).value() - ((FloatPrimitive) b).value());
 		}
-		throw new CompilerException.Incomplete("type", "type.subtract", a.typename(), b.typename());
+		throw new IncompleteCompilerException("type", "type.subtract", a.typename(), b.typename());
 	}
 
 	public static final Stackable logicalAnd(Stackable a, Stackable b) {
@@ -104,20 +104,48 @@ public final class BuiltinPTs {
 		return BoolPrimitive.createBoolPrimitive(b.isTrue() != a.isTrue());
 	}
 
-	public static final Stackable lessThan(Stackable a, Stackable b) {
-		return BoolPrimitive.createBoolPrimitive(a.compareTo(b) < 0);
+	public static final Stackable lessThan(Stackable a, Stackable b) throws IncompleteCompilerException {
+		try {
+			return BoolPrimitive.createBoolPrimitive(a.compareTo(b) < 0);
+		} catch (RuntimeException e) {
+			if (IncompleteCompilerException.class.isAssignableFrom(e.getCause().getClass())) {
+				throw (IncompleteCompilerException) e.getCause();
+			}
+			throw e;
+		}
 	}
 
-	public static final Stackable greaterThan(Stackable a, Stackable b) {
-		return BoolPrimitive.createBoolPrimitive(a.compareTo(b) > 0);
+	public static final Stackable greaterThan(Stackable a, Stackable b) throws IncompleteCompilerException {
+		try {
+			return BoolPrimitive.createBoolPrimitive(a.compareTo(b) > 0);
+		} catch (RuntimeException e) {
+			if (IncompleteCompilerException.class.isAssignableFrom(e.getCause().getClass())) {
+				throw (IncompleteCompilerException) e.getCause();
+			}
+			throw e;
+		}
 	}
 
-	public static final Stackable greaterEqualThan(Stackable a, Stackable b) {
-		return BoolPrimitive.createBoolPrimitive(a.compareTo(b) >= 0);
+	public static final Stackable greaterEqualThan(Stackable a, Stackable b) throws IncompleteCompilerException {
+		try {
+			return BoolPrimitive.createBoolPrimitive(a.compareTo(b) >= 0);
+		} catch (RuntimeException e) {
+			if (IncompleteCompilerException.class.isAssignableFrom(e.getCause().getClass())) {
+				throw (IncompleteCompilerException) e.getCause();
+			}
+			throw e;
+		}
 	}
 
-	public static final Stackable lessEqualThan(Stackable a, Stackable b) {
-		return BoolPrimitive.createBoolPrimitive(a.compareTo(b) <= 0);
+	public static final Stackable lessEqualThan(Stackable a, Stackable b) throws IncompleteCompilerException {
+		try {
+			return BoolPrimitive.createBoolPrimitive(a.compareTo(b) <= 0);
+		} catch (RuntimeException e) {
+			if (IncompleteCompilerException.class.isAssignableFrom(e.getCause().getClass())) {
+				throw (IncompleteCompilerException) e.getCause();
+			}
+			throw e;
+		}
 	}
 
 	public static final Stackable equals(Stackable a, Stackable b) {

@@ -3,8 +3,8 @@ package klfr.sof.test;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
-import klfr.sof.CompilerException;
 import klfr.sof.Preprocessor;
+import klfr.sof.exceptions.CompilerException;
 
 /**
  * Tests the interpreter and preprocessor basic functionality.
@@ -12,21 +12,19 @@ import klfr.sof.Preprocessor;
 class PreprocessorTest extends SofTestSuper {
 
 	@Test
-	void testPreprocessor() {
-		try {
-			assertEquals("abc def ghi jkl", Preprocessor.preprocessCode("abc def ghi jkl"),
-					"Basic code without cleaning required");
-			assertEquals("abc def ghi jkl                   \nand a newline",
-					Preprocessor.preprocessCode("abc def ghi jkl # a simple comment\nand a newline"));
-			assertEquals("abc def ghi jkl                       \n             \n                 \nthis comes after the blockcomment", Preprocessor.preprocessCode(
-					"abc def ghi jkl #* a multiline comment\nand a newline\nand another one*#\nthis comes after the blockcomment"));
-			assertEquals("abc \" def # here is no comment\" ghi\n",
-					Preprocessor.preprocessCode("abc \" def # here is no comment\" ghi\n"));
-			assertEquals("abc \" def # here is no comment\"\n                                \n",
-					Preprocessor.preprocessCode("abc \" def # here is no comment\"\n#but here is one \" with strings.\n"));
-		} catch (CompilerException e) {
-			fail(e);
-		}
+	void testPreprocessor() throws CompilerException {
+		assertEquals("abc def ghi jkl", Preprocessor.preprocessCode("abc def ghi jkl"),
+				"Basic code without cleaning required");
+		assertEquals("abc def ghi jkl                   \nand a newline",
+				Preprocessor.preprocessCode("abc def ghi jkl # a simple comment\nand a newline"));
+		assertEquals(
+				"abc def ghi jkl                       \n             \n                 \nthis comes after the blockcomment",
+				Preprocessor.preprocessCode(
+						"abc def ghi jkl #* a multiline comment\nand a newline\nand another one*#\nthis comes after the blockcomment"));
+		assertEquals("abc \" def # here is no comment\" ghi\n",
+				Preprocessor.preprocessCode("abc \" def # here is no comment\" ghi\n"));
+		assertEquals("abc \" def # here is no comment\"\n                                \n",
+				Preprocessor.preprocessCode("abc \" def # here is no comment\"\n#but here is one \" with strings.\n"));
 	}
 
 	@Test

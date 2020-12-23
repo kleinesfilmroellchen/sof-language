@@ -19,6 +19,7 @@ import static klfr.sof.lib.NativeFunctionRegistry.generateDescriptor;
 /**
  * This test suite tests several parts of the library system. It needs to be public because some of its public static methods are used as test methods for native function registration and execution.
  */
+@SuppressWarnings("unused")
 public class LibrarySystemTest extends SofTestSuper {
 
 	public static final String ntm1Name = "klfr.sof.test.LibrarySystemTest#namingTestMethod1()";

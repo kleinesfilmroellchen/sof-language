@@ -53,6 +53,7 @@ public class Tuple<A, B>
       };
    }
 
+   @SuppressWarnings("unchecked")
    @Override
    public boolean equals(Object other) {
       try {
