@@ -19,6 +19,7 @@ public class SObject implements Stackable {
 
 	/**
 	 * Return the attributes of the object.
+	 * 
 	 * @return the attributes of the object.
 	 */
 	public Nametable getAttributes() {
@@ -45,6 +46,35 @@ public class SObject implements Stackable {
 	@Override
 	public Stackable copy() {
 		return new SObject(this.attributes);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return obj instanceof SObject ? this.equals((Stackable)obj) : false;
+	}
+
+	@Override
+	public int hashCode() {
+		return attributes.hashCode() ^ 0x9f7193da;
+	}
+
+	/**
+	 * SOF object equality is structural equality. This means that objects with the same attributes and their values are considered equal.
+	 * @param other The other stackable that this one is compared against.
+	 * @return Whether the objects are equal according to structural equality.
+	 */
+	@Override
+	public boolean equals(Stackable other) {
+		if (other instanceof SObject) {
+			return attributes.equals(((SObject)other).attributes);
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public String print() {
+		return "[Object]";
 	}
 
 }

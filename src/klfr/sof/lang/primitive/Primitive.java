@@ -94,6 +94,16 @@ public abstract class Primitive implements Stackable {
 		return v().toString();
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		return this.getClass().isInstance(obj) ? this.equals((Stackable)obj) : false;
+	}
+
+	@Override
+	public int hashCode() {
+		return v().hashCode();
+	}
+
 }
 
 /*  

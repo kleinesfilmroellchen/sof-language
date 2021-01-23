@@ -26,6 +26,10 @@ public class StackTest extends SofTestSuper {
 		public Stackable copy() {
 			return new Sbl();
 		}
+		@Override
+		public boolean equals(Stackable other) {
+			return false;
+		}
 	}
 
 	@BeforeEach

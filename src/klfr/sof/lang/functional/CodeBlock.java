@@ -34,6 +34,20 @@ public class CodeBlock implements Stackable {
 		return "{ Codeblock }";
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		return obj instanceof CodeBlock ? this.equals((CodeBlock)obj): false;
+	}
+
+	@Override
+	public boolean equals(Stackable other) {
+		if (other instanceof CodeBlock) {
+			return code.equals(((CodeBlock)other).code);
+		} else {
+			return false;
+		}
+	}
+
 }
 
 /*  

@@ -34,6 +34,18 @@ x . "hello" = assert
 } 0 function .
 x . "global" = assert
 
+# binary operation rebind
+3 n def
+n 4 +
+n . 7 = assert
+n 2 *
+n . 14 = assert
+n -1 -
+n . 15 = assert
+n 3 /
+n . 5 = assert
+# not testing all of them, unnecessary
+
 # The SOF programming language interpreter.
 # Copyright (C) 2019-2020  kleinesfilmröllchen
 

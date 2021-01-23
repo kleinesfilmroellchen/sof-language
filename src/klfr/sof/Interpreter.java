@@ -186,43 +186,35 @@ public class Interpreter implements Serializable {
 			// -- repetitive code, I know. It's fasther though.
 			case Add: {
 				// type-checking inside builtin, same story below
-				final Stackable rhs = this.stack.popSafe(), lhs = this.stack.popSafe();
-				this.stack.push(BuiltinPTs.add(lhs, rhs));
+				doBinaryOperation(BuiltinOperations::add);
 				return true;
 			}
 			case Subtract: {
-				final Stackable rhs = this.stack.popSafe(), lhs = this.stack.popSafe();
-				this.stack.push(BuiltinPTs.subtract(lhs, rhs));
+				doBinaryOperation(BuiltinOperations::subtract);
 				return true;
 			}
 			case Multiply: {
-				final Stackable rhs = this.stack.popSafe(), lhs = this.stack.popSafe();
-				this.stack.push(BuiltinPTs.multiply(lhs, rhs));
+				doBinaryOperation(BuiltinOperations::multiply);
 				return true;
 			}
 			case Divide: {
-				final Stackable rhs = this.stack.popSafe(), lhs = this.stack.popSafe();
-				this.stack.push(BuiltinPTs.divide(lhs, rhs));
+				doBinaryOperation(BuiltinOperations::divide);
 				return true;
 			}
 			case Concatenate: {
-				final Stackable rhs = this.stack.popSafe(), lhs = this.stack.popSafe();
-				this.stack.push(StringPrimitive.createStringPrimitive(lhs.print() + rhs.print()));
+				doBinaryOperation((a, b) -> StringPrimitive.createStringPrimitive(a.print() + b.print()));
 				return true;
 			}
 			case And: {
-				final Stackable rhs = this.stack.popSafe(), lhs = this.stack.popSafe();
-				this.stack.push(BuiltinPTs.logicalAnd(lhs, rhs));
+				doBinaryOperation(BuiltinOperations::logicalAnd);
 				return true;
 			}
 			case Or: {
-				final Stackable rhs = this.stack.popSafe(), lhs = this.stack.popSafe();
-				this.stack.push(BuiltinPTs.logicalOr(lhs, rhs));
+				doBinaryOperation(BuiltinOperations::logicalOr);
 				return true;
 			}
 			case ExclusiveOr: {
-				final Stackable rhs = this.stack.popSafe(), lhs = this.stack.popSafe();
-				this.stack.push(BuiltinPTs.logicalXor(lhs, rhs));
+				doBinaryOperation(BuiltinOperations::logicalXor);
 				return true;
 			}
 			case Not: {
@@ -232,33 +224,27 @@ public class Interpreter implements Serializable {
 			}
 			// comparison and equality
 			case Equals: {
-				final Stackable rhs = this.stack.popSafe(), lhs = this.stack.popSafe();
-				this.stack.push(BuiltinPTs.equals(lhs, rhs));
+				doBinaryOperation(BuiltinOperations::equals);
 				return true;
 			}
 			case NotEquals: {
-				final Stackable rhs = this.stack.popSafe(), lhs = this.stack.popSafe();
-				this.stack.push(BuiltinPTs.notEquals(lhs, rhs));
+				doBinaryOperation(BuiltinOperations::notEquals);
 				return true;
 			}
 			case GreaterThan: {
-				final Stackable rhs = this.stack.popSafe(), lhs = this.stack.popSafe();
-				this.stack.push(BuiltinPTs.greaterThan(lhs, rhs));
+				doBinaryOperation(BuiltinOperations::greaterThan);
 				return true;
 			}
 			case GreaterThanEquals: {
-				final Stackable rhs = this.stack.popSafe(), lhs = this.stack.popSafe();
-				this.stack.push(BuiltinPTs.greaterEqualThan(lhs, rhs));
+				doBinaryOperation(BuiltinOperations::greaterEqualThan);
 				return true;
 			}
 			case LessThan: {
-				final Stackable rhs = this.stack.popSafe(), lhs = this.stack.popSafe();
-				this.stack.push(BuiltinPTs.lessThan(lhs, rhs));
+				doBinaryOperation(BuiltinOperations::lessThan);
 				return true;
 			}
 			case LessThanEquals: {
-				final Stackable rhs = this.stack.popSafe(), lhs = this.stack.popSafe();
-				this.stack.push(BuiltinPTs.lessEqualThan(lhs, rhs));
+				doBinaryOperation(BuiltinOperations::lessEqualThan);
 				return true;
 			}
 			// stack operations
@@ -513,6 +499,38 @@ public class Interpreter implements Serializable {
 			}
 			default:
 				throw new RuntimeException("Unhandled primitive token.");
+		}
+	}
+
+	/**
+	 * Executes the given binary operation on the stack. Two operands are pulled of
+	 * the stack and passed to the binary operation. The first operand is the lower
+	 * one on the stack.
+	 * 
+	 * @param operation The binary operation function that shall be executed. Most
+	 *                  of these are defined in {@link klfr.sof.lang.BuiltinOperations}.
+	 * @throws IncompleteCompilerException If the binary operation or the stack
+	 *                                     manipulation fails.
+	 * @throws CompilerException If the binary operation or the stack
+	 *                           manipulation fails.
+	 */
+	protected void doBinaryOperation(BuiltinOperations.BinaryOperation operation)
+			throws IncompleteCompilerException, CompilerException {
+		final Stackable rhs = this.stack.popSafe();
+		Optional<Identifier> lhsName = Optional.empty();
+		if (this.stack.peek() instanceof Identifier) {
+			lhsName = Optional.of((Identifier)this.stack.popSafe());
+			// do a call on the identifier to replace it with its value
+			this.doCall(lhsName.get());
+		}
+		final Stackable lhs = this.stack.popSafe();
+		final Stackable result = operation.apply(lhs, rhs);
+
+		if (lhsName.isEmpty()) {
+			stack.push(result);
+		} else {
+			// if there is a name, i.e. we need to rebind an identifier
+			stack.localScope().put(lhsName.get(), result);
 		}
 	}
 

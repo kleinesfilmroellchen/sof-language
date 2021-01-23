@@ -1,17 +1,23 @@
 package klfr.sof.lang;
 
 import klfr.sof.exceptions.IncompleteCompilerException;
-import klfr.sof.lang.primitive.BoolPrimitive;
-import klfr.sof.lang.primitive.FloatPrimitive;
-import klfr.sof.lang.primitive.IntPrimitive;
+import klfr.sof.lang.primitive.*;
 
 /**
- * Built-in Primitive Tokens is a collection for most PTs, like arithmetic
+ * Built-in Operations is a collection for most PTs that implement operations, like arithmetic
  * operations, comparisons, stack operations.
  * 
  * @author klfr
  */
-public final class BuiltinPTs {
+public final class BuiltinOperations {
+
+	/**
+	 * A simple functional interface that defines the structure of all multi-type capable binary operations.
+	 */
+	@FunctionalInterface
+	public static interface BinaryOperation {
+		public Stackable apply(Stackable a, Stackable b) throws IncompleteCompilerException;
+	}
 
 	public static final Stackable divide(Stackable a, Stackable b) throws IncompleteCompilerException {
 		try {

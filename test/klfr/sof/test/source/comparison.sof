@@ -5,12 +5,13 @@
 3 3 = assert # int
 4.0 4.0 = assert # float
 "abc" "abc" = assert "" "" = assert "\nza warudo" "\nza warudo" # string
+{ blah } { blah } = assert # code block
 
 #### inequality
 4 80 /= assert # int
 4.20 6.9 /= assert # float
 "abc" "de\tf" /= assert # string
-{ blah } { blah } /= assert # code block
+{ blah } { 134 } /= assert # code block
 
 #### comparison
 

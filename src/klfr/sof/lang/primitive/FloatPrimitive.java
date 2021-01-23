@@ -3,10 +3,8 @@ package klfr.sof.lang.primitive;
 import java.util.logging.Logger;
 
 import klfr.sof.Patterns;
-import klfr.sof.exceptions.CompilerException;
 import klfr.sof.exceptions.IncompleteCompilerException;
-import klfr.sof.lang.Stackable;
-import klfr.sof.lang.StackableName;
+import klfr.sof.lang.*;
 
 /**
  * floating point decimal primitive type
@@ -69,6 +67,12 @@ public class FloatPrimitive extends Primitive {
 		return createFloatPrimitive(this.v - other.v);
 	}
 
+	/**
+	 * Parses an SOF-syntax float in a string into an actual SOF float.
+	 * @param doubleString The string that is contains a single SOF float according to SOF float syntax. There may be leading or trailing whitespace.
+	 * @return An SOF float primitive that represents the value of the float contained in the string.
+	 * @throws IncompleteCompilerException If the string does not conform to SOF float syntax.
+	 */
 	public static FloatPrimitive createFloatFromString(String doubleString) throws IncompleteCompilerException {
 		doubleString = doubleString.strip();
 		final var m = Patterns.doublePattern.matcher(doubleString);
@@ -87,6 +91,7 @@ public class FloatPrimitive extends Primitive {
 			}
 
 			for (var i = 0; i < decimalPartStr.length(); ++i) {
+				// add in a decimal digit at its respective power of ten
 				decimalPart += numberChars.get(decimalPartStr.charAt(i)) * Math.pow(10, -(i + 1));
 			}
 			log.finest(String.format("%d * ( %d + %f ) * 10 ^ %d", sign, integerPart, decimalPart, exponent));
@@ -108,11 +113,12 @@ public class FloatPrimitive extends Primitive {
 		return Math.round(d * Math.pow(10, decimals)) / Math.pow(10, decimals);
 	}
 
+	@Override
 	public boolean equals(Stackable other) {
 		if (other instanceof FloatPrimitive) {
 			return round(((FloatPrimitive) other).v, EQUALITY_PRECISION) == round(this.v, EQUALITY_PRECISION);
 		}
-		return super.equals(other);
+		return false;
 	}
 
 	@Override
@@ -127,6 +133,7 @@ public class FloatPrimitive extends Primitive {
 		throw new RuntimeException(new IncompleteCompilerException("type", "type.compare", this.typename(), x.typename()));
 	}
 
+	@Override
 	public String print() {
 		// Java float tostring is almost fine, except for allowing exponents with simple
 		// "E###" format, where ### is the actual positive exponent. Using this simple

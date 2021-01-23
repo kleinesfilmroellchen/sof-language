@@ -11,6 +11,7 @@ import klfr.sof.lang.*;
  * @version 0.1a1
  *
  */
+@StackableName("Function Nametable")
 public class FunctionDelimiter extends Nametable {
 	private static final long serialVersionUID = 1L;
 	public Optional<Stackable> returnValue = Optional.empty();
@@ -35,6 +36,34 @@ public class FunctionDelimiter extends Nametable {
 			return true;
 		}
 		return false;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return obj instanceof FunctionDelimiter ? this.equals((FunctionDelimiter)obj) : false;
+	}
+
+	@Override
+	public boolean equals(Stackable other) {
+		if (other instanceof FunctionDelimiter) {
+			return super.equals(other) && this.returnValue.equals(((FunctionDelimiter)other).returnValue);
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public String print() {
+		return "[Function Nametable (" + this.size() + " entries) ]";
+	}
+
+	@Override
+	public String toDebugString(DebugStringExtensiveness e) {
+		return switch(e) {
+			case Full -> "Function Nametable: return " + returnValue.toString() + System.lineSeparator() + super.toDebugString(e);
+			case Compact -> "FNT[" + this.size() + "](" + returnValue.toString() + ")";
+			default -> Stackable.toDebugString(this, e);
+		};
 	}
 }
 

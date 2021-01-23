@@ -158,7 +158,7 @@ public class CompilerException extends SOFException {
 	}
 
 	public Object[] getFormatArguments() {
-		return formatArguments;
+		return formatArguments.clone();
 	}
 }
 

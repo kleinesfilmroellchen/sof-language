@@ -9,44 +9,58 @@ import klfr.sof.lang.*;
  */
 public class SOFunction extends CodeBlock {
 
-    private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
-    public final long arguments;
+	public final long arguments;
 
-    /**
-     * Create a function with this code, with given numbers of arguments.
-     * 
-     * @param code      code of the function
-     * @param arguments number of arguments the function recieves
-     */
-    public SOFunction(TokenListNode code, long arguments) {
-        super(code);
-        this.arguments = arguments;
-    }
+	/**
+	 * Create a function with this code, with given numbers of arguments.
+	 * 
+	 * @param code      code of the function
+	 * @param arguments number of arguments the function recieves
+	 */
+	public SOFunction(TokenListNode code, long arguments) {
+		super(code);
+		this.arguments = arguments;
+	}
 
-    @Override
-    public String toDebugString(DebugStringExtensiveness e) {
-        return switch (e) {
-            case Compact -> String.format("[Function/%d %dn ]", this.arguments, this.code.count());
-            case Full -> String.format("[Function/%d { %s } %h]", this.arguments, this.code, this.hashCode());
-            case Type -> "Function";
-            default -> Stackable.toDebugString(this, e);
-        };
-    }
+	@Override
+	public String toDebugString(DebugStringExtensiveness e) {
+		return switch (e) {
+			case Compact -> String.format("[Function/%d %dn ]", this.arguments, this.code.count());
+			case Full -> String.format("[Function/%d { %s } %h]", this.arguments, this.code, this.hashCode());
+			case Type -> "Function";
+			default -> Stackable.toDebugString(this, e);
+		};
+	}
 
-    @Override
-    public String print() {
-        return String.format("{ %d argument Function }", this.arguments);
-    }
+	public static SOFunction fromCodeBlock(CodeBlock origin, int arguments) {
+		return new SOFunction(origin.code, arguments);
+	}
 
-    @Override
-    public Stackable clone() {
-        return new SOFunction(this.code, this.arguments);
-    }
+	@Override
+	public String print() {
+		return String.format("{ %d argument Function }", this.arguments);
+	}
 
-    public static SOFunction fromCodeBlock(CodeBlock origin, int arguments) {
-        return new SOFunction(origin.code, arguments);
-    }
+	@Override
+	public Stackable clone() {
+		return new SOFunction(this.code, this.arguments);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return obj instanceof SOFunction ? this.equals((SOFunction)obj): false;
+	}
+
+	@Override
+	public boolean equals(Stackable other) {
+		if (other instanceof SOFunction) {
+			return code.equals(((SOFunction)other).code) && (arguments == ((SOFunction)other).arguments);
+		} else {
+			return false;
+		}
+	}
 
 }
 

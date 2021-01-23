@@ -11,6 +11,7 @@ import klfr.sof.*;
  * 
  * @author klfr
  */
+@StackableName("Nametable")
 public class Nametable implements Stackable {
 	private static final long serialVersionUID = 1L;
 
@@ -50,12 +51,13 @@ public class Nametable implements Stackable {
 	/**
 	 * Applies all of the mappings that the given map uses to this nametable.
 	 * Existing identifier's bindings in this nametable are overwritten.
+	 * 
 	 * @param m The map whose mappings are to be copied.
 	 */
 	public void putAll(Map<? extends Identifier, ? extends Stackable> m) {
 		entries.putAll(m);
 	}
-	
+
 	/**
 	 * Sets the return value for the nametable. The default implementation does
 	 * nothing and it is to be overridden by subclasses who specify the behavior of
@@ -76,15 +78,16 @@ public class Nametable implements Stackable {
 	}
 
 	/**
-	 * Map backing this nametable.<br><br>
+	 * Map backing this nametable.<br>
+	 * <br>
 	 * 
-	 * For the main nametables, a hash-based map is chosen.
-	 * The main tables are frequently accessed and modified, therefore, the constant lookup
-	 * and store times are very beneficial.
-	 * It is therefore also fine to take some size penalty compared to e.g. TreeMaps.
-	 * Neither load factor nor initial capacity are chosen with much consideration.
-	 * The load factor is slightly lower to prevent frequent resizing as well as collisions.
-	 * The initial capacity is a reasonable size and a power of two with possible benefits.
+	 * For the main nametables, a hash-based map is chosen. The main tables are
+	 * frequently accessed and modified, therefore, the constant lookup and store
+	 * times are very beneficial. It is therefore also fine to take some size
+	 * penalty compared to e.g. TreeMaps. Neither load factor nor initial capacity
+	 * are chosen with much consideration. The load factor is slightly lower to
+	 * prevent frequent resizing as well as collisions. The initial capacity is a
+	 * reasonable size and a power of two with possible benefits.
 	 */
 	private final Map<Identifier, Stackable> entries = new HashMap<>(32, 0.6f);
 
@@ -93,14 +96,14 @@ public class Nametable implements Stackable {
 		return switch (e) {
 			case Compact -> "NT[" + entries.size() + "]";
 			case Full -> "┌" + Interpreter.line66.substring(2) + "┐" + System.lineSeparator() + // top of the table
-						mappingStream().collect( // the stream is parallel b/c order does not exist
-								() -> new StringBuilder(66), // create a new string builder as the starting point
-								(strb, entry) -> // for each new entry, append its formatted string to the string builder
-								strb.append(String.format("╞%20s ->%40s ╡%n", entry.getKey().getValue(),
-										DebugStringExtensiveness.Compact
-												.ensureLength(entry.getValue().toDebugString(DebugStringExtensiveness.Compact)))),
-								(strb1, strb2) -> strb1.append(strb2)) // combine stringbuilders with a newline
-						+ "└" + Interpreter.line66.substring(2) + "┘"; // bottom of the table
+					mappingStream().collect( // the stream is parallel b/c order does not exist
+							() -> new StringBuilder(66), // create a new string builder as the starting point
+							(strb, entry) -> // for each new entry, append its formatted string to the string builder
+							strb.append(String.format("╞%20s ->%40s ╡%n", entry.getKey().getValue(),
+									DebugStringExtensiveness.Compact
+											.ensureLength(entry.getValue().toDebugString(DebugStringExtensiveness.Compact)))),
+							(strb1, strb2) -> strb1.append(strb2)) // combine stringbuilders with a newline
+					+ "└" + Interpreter.line66.substring(2) + "┘"; // bottom of the table
 			default -> Stackable.toDebugString(this, e);
 		};
 	}
@@ -110,6 +113,32 @@ public class Nametable implements Stackable {
 		return mappingStream().map(x -> Map.entry(x.getKey().copy(), x.getValue().copy())).collect(() -> new Nametable(),
 				(nt, entry) -> nt.put((Identifier) entry.getKey(), entry.getValue()),
 				(nt1, nt2) -> nt1.mappingStream().forEach(x -> nt2.put(x.getKey(), x.getValue())));
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return obj instanceof Nametable ? this.equals((Nametable)obj) : false;
+	}
+
+	@Override
+	public boolean equals(Stackable other) {
+		if (other == this) return true;
+		if (other instanceof Nametable) {
+			final var otherNt = (Nametable)other;
+			for (final var entry : this.entries.entrySet()) {
+				if (!otherNt.entries.get(entry.getValue()).equals(entry.getKey())) {
+					return false;
+				}
+			}
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public String print() {
+		return "[ Nametable (" + this.entries.size() + " entries) ]";
 	}
 }
 

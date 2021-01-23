@@ -137,9 +137,7 @@ public interface Stackable extends Serializable, Cloneable, Comparable<Stackable
 	 * @return true if the Stackables are considered equal according to SOF logic,
 	 *         false if they aren't.
 	 */
-	public default boolean equals(Stackable other) {
-		return false;
-	}
+	public boolean equals(Stackable other);
 
 	/**
 	 * Compares this stackable to another stackable, with the ususal Comparable
