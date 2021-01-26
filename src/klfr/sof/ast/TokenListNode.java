@@ -1,7 +1,6 @@
 package klfr.sof.ast;
 
 import java.util.*;
-import java.util.function.*;
 
 import klfr.sof.SOFFile;
 import klfr.sof.exceptions.CompilerException;

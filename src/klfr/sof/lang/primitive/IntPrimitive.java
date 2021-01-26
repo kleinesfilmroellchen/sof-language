@@ -1,9 +1,7 @@
 package klfr.sof.lang.primitive;
 
-import klfr.sof.exceptions.CompilerException;
-import klfr.sof.exceptions.IncompleteCompilerException;
-import klfr.sof.lang.Stackable;
-import klfr.sof.lang.StackableName;
+import klfr.sof.exceptions.*;
+import klfr.sof.lang.*;
 
 /**
  * Integer, i.e. whole positive or negative number primitive type.

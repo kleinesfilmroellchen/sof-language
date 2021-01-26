@@ -3,7 +3,6 @@ package klfr.sof;
 import java.util.logging.*;
 import java.io.Serializable;
 import java.util.*;
-import java.util.function.*;
 
 import klfr.sof.ast.*;
 import klfr.sof.cli.CLI;
