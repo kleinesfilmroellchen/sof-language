@@ -12,6 +12,7 @@ import klfr.sof.lang.primitive.*;
  * code file that is included in every execution of every program without
  * external control.
  */
+@NativeFunctionCollection
 public final class Builtins {
 
 	// static {

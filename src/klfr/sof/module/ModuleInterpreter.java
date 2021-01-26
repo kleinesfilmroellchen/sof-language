@@ -4,6 +4,7 @@ import java.util.*;
 
 import klfr.sof.*;
 import klfr.sof.lang.*;
+import klfr.sof.lib.NativeFunctionRegistry;
 import klfr.sof.ast.*;
 import klfr.sof.ast.PrimitiveTokenNode.PrimitiveToken;
 import klfr.sof.exceptions.*;
@@ -18,8 +19,8 @@ public class ModuleInterpreter extends Interpreter {
 
 	private final Map<Identifier, Stackable> exports = new TreeMap<>();
 
-	public ModuleInterpreter(IOInterface io, ModuleDiscoverer md) {
-		super(io, md);
+	public ModuleInterpreter(IOInterface io, ModuleDiscoverer md, NativeFunctionRegistry registry) {
+		super(io, md, registry);
 	}
 
 	/**

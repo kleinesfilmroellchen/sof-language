@@ -32,6 +32,8 @@ public class CLI {
 	 */
 	private static SOFFile preambleCode;
 
+	private static NativeFunctionRegistry nativeFunctionRegistry = new NativeFunctionRegistry();
+
 	/**
 	 * Main entry point of the SOF interpreter system. This method handles
 	 * command-line arguments as described in the documentation and then runs the
@@ -61,10 +63,6 @@ public class CLI {
 		// System.out.println(R.getBaseBundleName());
 		// System.out.println(ResourceBundle.getBundle(Interpreter.MESSAGE_RESOURCE).getBaseBundleName());
 		//bl.setResourceBundle(R);
-
-		//TODO: move this into some centralized system
-		NativeFunctionRegistry.registerNativeFunctions(Builtins.class);
-		NativeFunctionRegistry.registerNativeFunctions(Formatting.class);
 
 		Options opt = null;
 		try {
@@ -134,6 +132,10 @@ public class CLI {
 			}
 		}
 
+		// main code starts here
+
+		nativeFunctionRegistry.registerAllFromPackage("klfr.sof.lib");
+
 		// execute
 		final var error = runSOF(opt, io);
 
@@ -176,7 +178,7 @@ public class CLI {
 							CLI.runPreprocessor(new FileReader(file, Charset.forName("utf-8")), io);
 							io.println("^D");
 						} else
-							CLI.doFullExecution(file, new Interpreter(io), io, clo.flags);
+							CLI.doFullExecution(file, new Interpreter(io, nativeFunctionRegistry), io, clo.flags);
 						return null;
 					} catch (Throwable t) {
 						io.println(t.getMessage());
@@ -198,7 +200,8 @@ public class CLI {
 			case Literal: {
 				//// Single literal to be executed
 				try {
-					CLI.doFullExecution(new StringReader(clo.executionStrings.get(0)), new Interpreter(io), io, clo.flags);
+					CLI.doFullExecution(new StringReader(clo.executionStrings.get(0)), new Interpreter(io,
+							nativeFunctionRegistry), io, clo.flags);
 				} catch (Throwable t) {
 					io.println(t.getLocalizedMessage());
 					return Optional.of(t);
@@ -208,7 +211,7 @@ public class CLI {
 			case Interactive: {
 				//// Interactive interpretation
 				io.println(CLI.INFO_STRING);
-				Interpreter engine = new Interpreter(io);
+				Interpreter engine = new Interpreter(io, nativeFunctionRegistry);
 				CLI.runPreamble(engine);
 				Scanner scanner = io.newInputScanner();
 				// scanner.useDelimiter("[[^\n]\\s+]");

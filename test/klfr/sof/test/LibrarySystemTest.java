@@ -48,12 +48,13 @@ public class LibrarySystemTest extends SofTestSuper {
 	@DisplayName("Test native function discovery and registration")
 	@Test
 	void testRegister() {
-		assertDoesNotThrow(() -> NativeFunctionRegistry.registerNativeFunctions(LibrarySystemTest.class));
+		var nfr = new NativeFunctionRegistry();
+		assertDoesNotThrow(() -> nfr.registerNativeFunctions(LibrarySystemTest.class));
 		// there should now be three functions registered
-		final var m1funcN = assertDoesNotThrow(() -> NativeFunctionRegistry.getNativeFunction(ntm1Name).orElseThrow(), "Function 1 was registered and can be retrieved");
-		final var m2funcN = assertDoesNotThrow(() -> NativeFunctionRegistry.getNativeFunction(ntm2Name).orElseThrow(), "Function 2 was registered and can be retrieved");
-		final var m3funcN = assertDoesNotThrow(() -> NativeFunctionRegistry.getNativeFunction(ntm3Name).orElseThrow(), "Function 3 was registered and can be retrieved");
-		assertTrue(Optional.empty().equals(NativeFunctionRegistry.getNativeFunction("not a function")), "unregistered random string has no function name assigned");
+		final var m1funcN = assertDoesNotThrow(() -> nfr.getNativeFunction(ntm1Name).orElseThrow(), "Function 1 was registered and can be retrieved");
+		final var m2funcN = assertDoesNotThrow(() -> nfr.getNativeFunction(ntm2Name).orElseThrow(), "Function 2 was registered and can be retrieved");
+		final var m3funcN = assertDoesNotThrow(() -> nfr.getNativeFunction(ntm3Name).orElseThrow(), "Function 3 was registered and can be retrieved");
+		assertTrue(Optional.empty().equals(nfr.getNativeFunction("not a function")), "unregistered random string has no function name assigned");
 		try {
 			final var m1func = (Native0ArgFunction) m1funcN;
 			final var m2func = (Native1ArgFunction) m2funcN;

@@ -43,10 +43,12 @@ public class LanguageTests extends SofTestSuper {
 	@DisplayName("SOF language tests from test files")
 	@TestFactory
 	DynamicNode generateLanguageTests() throws SOFException {
-		// TODO: This shouldn't be here. Until we have a reliable way of executing code on class load,
-		// TODO: the native function registration needs to be done manually before starting interpreters.
-		NativeFunctionRegistry.registerNativeFunctions(Builtins.class);
-		NativeFunctionRegistry.registerNativeFunctions(Formatting.class);
+		var nfRegistry = new NativeFunctionRegistry();
+		try {
+			nfRegistry.registerAllFromPackage("klfr.sof.lib");
+		} catch (IOException e1) {
+			fail(e1);
+		}
 
 		final var files = Arrays.asList(new File(SOURCE_FOLDER).listFiles());
 		log.log(Level.INFO, () -> String.format("Test source directory contents: %s", files));
@@ -77,7 +79,7 @@ public class LanguageTests extends SofTestSuper {
 								try {
 									log.info(String.format("Source test %s initializing...", file));
 									final IOInterface iface = new IOInterface(InputStream.nullInputStream(), System.out);
-									final var engine = new Interpreter(iface);
+									final var engine = new Interpreter(iface, nfRegistry);
 									final var codeUnit = Parser.parse(new File(file), code);
 									final var time = System.nanoTime();
 									CLI.runPreamble(engine);

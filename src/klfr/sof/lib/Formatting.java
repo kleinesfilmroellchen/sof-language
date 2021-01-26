@@ -15,6 +15,7 @@ import klfr.Utility;
 import static klfr.Utility.*;
 
 /** Library class that handles SOF's string formatting. */
+@NativeFunctionCollection
 public final class Formatting {
 	private static final Logger log = Logger.getLogger(Formatting.class.getCanonicalName());
 

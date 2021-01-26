@@ -79,9 +79,20 @@ public class Interpreter implements Serializable {
 	 */
 	protected final Stack stack;
 
+	/**
+	 * The number of successful asserts executed by this interpreter.
+	 */
 	protected int assertCount;
 
-	protected ModuleDiscoverer moduleDiscoverer;
+	/**
+	 * The module discovery system that this interpreter uses.
+	 */
+	protected final ModuleDiscoverer moduleDiscoverer;
+
+	/**
+	 * The native function registry that this interpreter uses.
+	 */
+	protected final NativeFunctionRegistry nativeFunctionRegistry;
 
 	/**
 	 * Returns the number of asserts that were successfully performed by this
@@ -93,15 +104,16 @@ public class Interpreter implements Serializable {
 
 	// #endregion
 
-	public Interpreter(IOInterface io) {
-		this(io, new ModuleDiscoverer());
+	public Interpreter(IOInterface io, NativeFunctionRegistry nativeFunctionRegistry) {
+		this(io, new ModuleDiscoverer(), nativeFunctionRegistry);
 	}
 
 	// for subclasses
-	protected Interpreter(IOInterface io, ModuleDiscoverer md) {
+	protected Interpreter(IOInterface io, ModuleDiscoverer md, NativeFunctionRegistry registry) {
 		this.io = io;
 		this.stack = new Stack();
 		this.moduleDiscoverer = md;
+		this.nativeFunctionRegistry = registry;
 		this.reset();
 	}
 
@@ -445,7 +457,7 @@ public class Interpreter implements Serializable {
 				final var module = maybeModule.get();
 				
 				// dispatch module to a new interpreter that can handle `export` keywords
-				final var moduleRunner = new ModuleInterpreter(this.io, this.moduleDiscoverer);
+				final var moduleRunner = new ModuleInterpreter(this.io, this.moduleDiscoverer, nativeFunctionRegistry);
 				CLI.runPreamble(moduleRunner);
 				moduleRunner.run(module);
 
@@ -544,7 +556,7 @@ public class Interpreter implements Serializable {
 			throw new IncompleteCompilerException("type");
 		final var fname = ((StringPrimitive) _fname).value();
 		log.fine(() -> String.format("Native call function '%s'", fname));
-		final var nativeFunc_ = NativeFunctionRegistry.getNativeFunction(fname);
+		final var nativeFunc_ = nativeFunctionRegistry.getNativeFunction(fname);
 		if (nativeFunc_.isEmpty())
 			throw new IncompleteCompilerException("native", "native.unknown", fname);
 		final var nativeFunc = nativeFunc_.get();

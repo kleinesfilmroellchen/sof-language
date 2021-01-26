@@ -1,6 +1,12 @@
 package klfr.sof.lib;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.*;
+import java.nio.*;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.*;
@@ -49,7 +55,72 @@ public final class NativeFunctionRegistry {
 		public Stackable call(Stackable a, Stackable b, Stackable c) throws IncompleteCompilerException;
 	}
 
-	private static TreeMap<String, NativeNArgFunction> nativeFunctions = new TreeMap<>();
+	private TreeMap<String, NativeNArgFunction> nativeFunctions = new TreeMap<>();
+
+	/**
+	 * Loads all native functions in the specified package.</br>
+	 * </br>
+	 * 
+	 * This method will search through all classes in this package (including
+	 * subpackages) and load native functions from native function collection
+	 * classes. These are classes annotated with
+	 * {@link klfr.sof.lib.NativeFunctionCollection}.
+	 * 
+	 * @param package The package name. Its subpackages are searched as well.
+	 * @throws IOException  If any exception occurs, also in the class discovery an
+	 *                      reflection access process.
+	 * @throws SOFException If any exception occurs, also in the class discovery an
+	 *                      reflection access process.
+	 */
+	public void registerAllFromPackage(String packageName) throws IOException, SOFException {
+		try {
+			var classes = getClassesForPackage(packageName);
+			log.fine(String.format("In package %s found classes: %s", packageName, classes.toString()));
+			var toRegister = classes.stream().filter(clazz -> clazz.getAnnotation(NativeFunctionCollection.class) != null).collect(Collectors.toSet());
+
+			for (var clazz : toRegister) {
+				this.registerNativeFunctions(clazz);
+			}
+		} catch (IOException | URISyntaxException e) {
+			throw new IOException(e);
+		}
+	}
+
+	/**
+	 * Utility method to return all classes in a package given by its name. The subpackages are also searched.
+	 * @param pkgName The name of the package to be searched.
+	 * @return A list of class objects that are contained in the specified package.
+	 * @throws IOException
+	 * @throws URISyntaxException
+	 */
+	public static List<Class<?>> getClassesForPackage(final String pkgName) throws IOException, URISyntaxException {
+		final String pkgPath = pkgName.replace('.', '/');
+		final URI pkg = Objects.requireNonNull(ClassLoader.getSystemClassLoader().getResource(pkgPath)).toURI();
+		final ArrayList<Class<?>> allClasses = new ArrayList<Class<?>>();
+  
+		Path root;
+		if (pkg.toString().startsWith("jar:")) {
+			 try {
+				  root = FileSystems.getFileSystem(pkg).getPath(pkgPath);
+			 } catch (final FileSystemNotFoundException e) {
+				  root = FileSystems.newFileSystem(pkg, Collections.emptyMap()).getPath(pkgPath);
+			 }
+		} else {
+			 root = Paths.get(pkg);
+		}
+  
+		final String extension = ".class";
+		try (final Stream<Path> allPaths = Files.walk(root)) {
+			 allPaths.filter(Files::isRegularFile).forEach(file -> {
+				 try {
+						final String path = file.toString().replace(File.separatorChar, '.');
+						final String name = path.substring(path.indexOf(pkgName), path.length() - extension.length());
+						allClasses.add(Class.forName(name));
+				  } catch (final ClassNotFoundException | StringIndexOutOfBoundsException ignored) { }
+			 });
+		}
+		return allClasses;
+  }
 
 	/**
 	 * <p>
@@ -79,7 +150,7 @@ public final class NativeFunctionRegistry {
 	 *              of this class are registered, whether the caller intended them
 	 *              to be registered or not.
 	 */
-	public static void registerNativeFunctions(Class<?> clazz) throws SOFException {
+	public void registerNativeFunctions(Class<?> clazz) throws SOFException {
 		try {
 		// FP for da win
 		Arrays.stream(clazz.getDeclaredMethods())
@@ -115,7 +186,7 @@ public final class NativeFunctionRegistry {
 	 *         does nothing and returns null if the specified native function was
 	 *         not found.
 	 */
-	public static Optional<NativeNArgFunction> getNativeFunction(String fidentifier) {
+	public Optional<NativeNArgFunction> getNativeFunction(String fidentifier) {
 		return Optional.ofNullable(nativeFunctions.getOrDefault(fidentifier, null));
 	}
 
