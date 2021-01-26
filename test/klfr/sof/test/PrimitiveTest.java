@@ -114,6 +114,30 @@ class PrimitiveTest extends SofTestSuper {
 		assertThrows(IncompleteCompilerException.class, () -> BoolPrimitive.createBoolFromString("FALSEfalse"));
 	}
 
+	@DisplayName("Test the list primitive")
+	@Test
+	void testListPrimitive() {
+		// these tests are pretty basic because all of the code should delegate to java lists
+		var l = assertDoesNotThrow(() -> new ListPrimitive());
+		IntPrimitive five = IntPrimitive.createIntPrimitive(5l), ten = IntPrimitive.createIntPrimitive(10l);
+		assertDoesNotThrow(() -> l.add(five));
+		assertEquals(five, l.get(0), "First element in the list");
+		assertEquals(1, l.size(), "List size");
+		assertDoesNotThrow(() -> l.add(five), "Add elements twice");
+		l.add(ten);
+		assertEquals(ten, l.get(2), "Add to the end");
+		assertEquals(five, l.get(1), "Get from specific location");
+
+		assertEquals(3, l.size());
+		assertDoesNotThrow(() -> l.remove(1));
+		assertEquals(2, l.size(), "Size after removing");
+		assertEquals(ten, l.get(1), "Other elements were shifted");
+
+		assertDoesNotThrow(() -> l.clear());
+		assertEquals(0, l.size(), "Size after clearing");
+		assertThrows(IndexOutOfBoundsException.class, () -> l.get(3), "Index out of bounds");
+	}
+
 }
 
 /*  
