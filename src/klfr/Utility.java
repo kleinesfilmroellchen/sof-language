@@ -5,6 +5,9 @@ package klfr;
  */
 public final class Utility {
 
+	/**
+	 * The default padding string for the padding functions: A space character.
+	 */
 	public static final char DEFAULT_PADDING = ' ';
 
 	/**

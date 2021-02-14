@@ -20,7 +20,7 @@ import klfr.sof.lib.NativeFunctionRegistry.*;
 import klfr.sof.module.*;
 
 /**
- * 
+ * The SOF main Interpreter. This executes SOF code (in AST form).
  */
 public class Interpreter implements Serializable {
 	// #region Globals
@@ -35,6 +35,7 @@ public class Interpreter implements Serializable {
 			+ (BUG_VERSION > 0 ? ("." + BUG_VERSION) : "");
 	private static final long serialVersionUID = (MAJOR_VERSION << 12) | (MINOR_VERSION << 6) | BUG_VERSION;
 
+	/** The Interpreter logger. */
 	protected static final Logger log = Logger.getLogger(Interpreter.class.getCanonicalName());
 
 	/**
@@ -43,6 +44,11 @@ public class Interpreter implements Serializable {
 	 * error messages and debug terms.
 	 */
 	public static final String MESSAGE_RESOURCE = "klfr.sof.SOFMessages";
+	/**
+	 * The resource bundle that contains the SOF messages. It
+	 * contains all messages that the command line interpreter produces, as well as
+	 * error messages and debug terms.
+	 */
 	public static final ResourceBundle R = ResourceBundle.getBundle(MESSAGE_RESOURCE);
 
 	// #endregion
@@ -59,6 +65,7 @@ public class Interpreter implements Serializable {
 	/**
 	 * <a href=
 	 * "https://www.reddit.com/r/ProgrammerHumor/comments/auz30h/when_you_make_documentation_for_a_settergetter/?utm_source=share&utm_medium=web2x">...</a>
+	 * @return The I/O interface of this interpreter.
 	 */
 	public IOInterface getIO() {
 		return io;
@@ -95,8 +102,8 @@ public class Interpreter implements Serializable {
 	protected final NativeFunctionRegistry nativeFunctionRegistry;
 
 	/**
-	 * Returns the number of asserts that were successfully performed by this
-	 * interpreter.
+	 * Returns the number of asserts that were successfully performed by this interpreter.
+	 * @return The number of asserts that were successfully performed by this interpreter.
 	 */
 	public int getAssertCount() {
 		return assertCount;
@@ -104,11 +111,21 @@ public class Interpreter implements Serializable {
 
 	// #endregion
 
+	/**
+	 * Create a new interpreter.
+	 * @param io The I/O interface of this interpreter.
+	 * @param nativeFunctionRegistry The native function registry that is used to execute native functions.
+	 */
 	public Interpreter(IOInterface io, NativeFunctionRegistry nativeFunctionRegistry) {
 		this(io, new ModuleDiscoverer(), nativeFunctionRegistry);
 	}
 
-	// for subclasses
+	/**
+	 * Create a new interpreter. This is intended to be used by subclasses.
+	 * @param md The module discoverer that is used to load and execute SOF modules.
+	 * @param io The I/O interface of this interpreter.
+	 * @param registry The native function registry that is used to execute native functions.
+	 */
 	protected Interpreter(IOInterface io, ModuleDiscoverer md, NativeFunctionRegistry registry) {
 		this.io = io;
 		this.stack = new Stack();
@@ -120,7 +137,7 @@ public class Interpreter implements Serializable {
 	/**
 	 * Reset the interpreter's stack and nametable
 	 * 
-	 * @return this interpreter.
+	 * @return This interpreter.
 	 */
 	public Interpreter reset() {
 		this.stack.clear();
@@ -137,9 +154,9 @@ public class Interpreter implements Serializable {
 	 * interpreter and is therefore suitable for interactive execution or any other
 	 * kind of execution that is done in steps.
 	 * 
-	 * @return this interpreter.
-	 * @throws IncompleteCompilerException
-	 * @throws CompilerException
+	 * @param sofProgram The parsed program to run.
+	 * @return This interpreter.
+	 * @throws CompilerException If the execution fails with an error.
 	 */
 	public Interpreter run(SOFFile sofProgram) throws CompilerException {
 		synchronized (this) {
@@ -156,6 +173,11 @@ public class Interpreter implements Serializable {
 
 	/**
 	 * Callback for handling a node.
+	 * 
+	 * @param n The node to be handled.
+	 * @return Whether the current scope should be continued to be executed.
+	 * @throws CompilerException If an error in the execution occurred.
+	 * @see klfr.sof.ast.Node.ForEachType#exec(Node)
 	 */
 	protected boolean handle(Node n) throws CompilerException {
 		try {
@@ -173,20 +195,36 @@ public class Interpreter implements Serializable {
 		}
 	}
 
-	protected boolean handle(TokenListNode codeblock) throws CompilerException, IncompleteCompilerException {
+	/**
+	 * Callback for handling a token list node. This method pushes a new code block to the stack.
+	 * @param codeblock The token list node to be handled.
+	 * @return Whether the current scope should be continued to be executed.
+	 * @see klfr.sof.ast.Node.ForEachType#exec(Node)
+	 */
+	protected boolean handle(TokenListNode codeblock) {
 		this.stack.push(new CodeBlock(codeblock));
 		return true;
 	}
 
-	protected boolean handle(LiteralNode literal) throws CompilerException, IncompleteCompilerException {
+	/**
+	 * Callback for handling a literal node. This method pushes the value of the literal node to the stack.
+	 * @param literal The literal node to be handled.
+	 * @return Whether the current scope should be continued to be executed.
+	 * @see klfr.sof.ast.Node.ForEachType#exec(Node)
+	 */
+	protected boolean handle(LiteralNode literal) {
 		this.stack.push(literal.getValue());
 		return true;
 	}
 
 	/**
-	 * Primitive token handler; takes care of much of the central logic.
+	 * Primitive token handler; takes care of much of the central logic. Executes the action of the given primitive token.
 	 * 
-	 * @param pt The primitive token to execute.
+	 * @param pt The primitive token to handle.
+	 * @return Whether the current scope should be continued to be executed.
+	 * @see klfr.sof.ast.Node.ForEachType#exec(Node)
+	 * @throws CompilerException If an error occurred while executing.
+	 * @throws IncompleteCompilerException If a non-locatable error occurred while executing.
 	 */
 	protected boolean handle(PrimitiveTokenNode pt) throws CompilerException, IncompleteCompilerException {
 		// BEHOLD THE SWITCH CASE OF DOOM
@@ -553,6 +591,7 @@ public class Interpreter implements Serializable {
 	 * Executes a native call on this interpreter, using the given native function
 	 * name as an SOF string. This may modify the stack.
 	 * @param _fname The native function name, as an SOF string.
+	 * @throws IncompleteCompilerException If the native call fails internally or externally (arguments etc.).
 	 */
 	protected void doNativeCall(Stackable _fname) throws IncompleteCompilerException {
 		// typecheck and retrieve function
@@ -603,7 +642,8 @@ public class Interpreter implements Serializable {
 	 * @return Whether any of the subcalls encountered a return statement. This is
 	 *         necessary so that return statements propagate through CodeBlocks and
 	 *         are only caught by Functions.
-	 * @throws CompilerException
+	 * @throws CompilerException If the call fails with a specified location.
+	 * @throws IncompleteCompilerException If the call fails with no specified location.
 	 */
 	protected boolean doCall(final Stackable toCall) throws IncompleteCompilerException, CompilerException {
 		return this.doCall(toCall, new FunctionDelimiter());
@@ -620,7 +660,8 @@ public class Interpreter implements Serializable {
 	 * @return Whether any of the subcalls encountered a return statement. This is
 	 *         necessary so that return statements propagate through CodeBlocks and
 	 *         are only caught by Functions.
-	 * @throws CompilerException
+	 * @throws CompilerException If the call fails with a specified location.
+	 * @throws IncompleteCompilerException If the call fails with no specified location.
 	 */
 	protected boolean doCall(final Stackable toCall, final Nametable scope)
 			throws IncompleteCompilerException, CompilerException {

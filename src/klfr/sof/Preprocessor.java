@@ -20,10 +20,6 @@ public class Preprocessor {
 
 	private static final Logger log = Logger.getLogger(Preprocessor.class.getCanonicalName());
 
-	// private static String replaceBySpace(MatchResult comment) {
-	// 	return comment.group().replaceAll("[^\n]", " ");
-	// }
-
 	/**
 	 * Preprocesses an SOF literal string token that has already been processed by
 	 * {@link Preprocessor#preprocessCode(String)}. The given token must still
@@ -34,6 +30,7 @@ public class Preprocessor {
 	 * @param sofString The SOF literal string token to be processed.
 	 * @return A string that can be used directly to construct a
 	 *         {@link klfr.sof.lang.primitive.StringPrimitive}.
+	 * @throws IncompleteCompilerException If the string is malformed.
 	 */
 	public static String preprocessSofString(final String sofString) throws IncompleteCompilerException {
 		final var strm = Patterns.stringPattern.matcher(sofString);
@@ -60,6 +57,11 @@ public class Preprocessor {
 		}).replace("\\\"", "\"");
 	}
 
+	/**
+	 * Preprocesses the given code by removing comments and replacing some string escapes.
+	 * @param dirtyCode The unpreprocessed code.
+	 * @return Code that is preprocessed but whose indices still match up with the unpreprocessed code.
+	 */
 	public static String preprocessCode(String dirtyCode) {
 		var state = PreprocessorState.CODE;
 		boolean acceptNextChar = false;
@@ -137,9 +139,6 @@ public class Preprocessor {
 					break;
 			}
 		}
-		// if (state == PreprocessorState.STRING)
-		// 	throw CompilerException.fromCurrentPosition(dirtyCode, dirtyCode.length() - 1, "syntax",
-		// 			"syntax.string.unclosed");
 		return clean.toString();
 	}
 

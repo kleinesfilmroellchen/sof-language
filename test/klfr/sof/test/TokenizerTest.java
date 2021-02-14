@@ -54,21 +54,6 @@ class TokenizerTest extends SofTestSuper {
 	}
 
 	@Test
-	void testWithCodeAppended() {
-		Tokenizer t = Tokenizer.fromSourceCode("hello code");
-		Tokenizer more = assertDoesNotThrow(() -> t.withCodeAppended("newline"));
-		assertEquals(String.format("hello code\nnewline"), more.getCode());
-		assertEquals(String.format("hello code"), t.getCode());
-	}
-
-	@Test
-	void testAppendCode() {
-		Tokenizer t = Tokenizer.fromSourceCode("hello code");
-		t.appendCode("newline");
-		assertEquals(String.format("hello code\nnewline"), t.getCode());
-	}
-
-	@Test
 	void testClone() {
 		Tokenizer t = assertDoesNotThrow(() -> Tokenizer.fromSourceCode("hello code"));
 		Tokenizer clone = assertDoesNotThrow(() -> t.clone());
@@ -80,26 +65,12 @@ class TokenizerTest extends SofTestSuper {
 	void testStateStack() {
 		Tokenizer t = assertDoesNotThrow(() -> Tokenizer.fromSourceCode("hello other code"));
 		assertDoesNotThrow(() -> t.next());
-		Matcher m = t.getMatcher();
-		int regS = m.regionStart(), regE = m.regionEnd();
-		t.pushState();
 		var st = assertDoesNotThrow(() -> t.getState());
 		st.regionStart = 3;
 		st.regionEnd = 6;
 		assertDoesNotThrow(() -> t.setState(st));
 		assertEquals(3, t.getState().regionStart);
 		assertEquals(6, t.getState().regionEnd);
-		int currentStart = t.getState().start, currentEnd = t.getState().end;
-		t.pushState();
-		t.popState();
-		assertEquals(currentStart, t.getState().start);
-		assertEquals(currentEnd, t.getState().end);
-		assertEquals(3, t.getState().regionStart);
-		assertEquals(6, t.getState().regionEnd);
-		t.popState();
-		assertEquals(regS, t.getState().regionStart);
-		assertEquals(regE, t.getState().regionEnd);
-		assertThrows(NoSuchElementException.class, () -> t.popState());
 	}
 
 }

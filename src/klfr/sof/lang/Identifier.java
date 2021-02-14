@@ -17,6 +17,7 @@ public class Identifier implements Stackable {
 
 	private static final long serialVersionUID = 1L;
 
+	/** The identifier text symbol. */
 	private String value;
 
 	/**
@@ -31,8 +32,9 @@ public class Identifier implements Stackable {
 	/**
 	 * Constructs an identifier with the string value.
 	 * 
-	 * @throws CompilerException If the given string value is not a valid SOF
-	 *                           identifier.
+	 * @param value The string to be used for the identifier.
+	 * @throws IncompleteCompilerException If the given string value is not a valid SOF
+	 *                                      identifier.
 	 */
 	public Identifier(String value) throws IncompleteCompilerException {
 		value = value.trim();
@@ -79,6 +81,14 @@ public class Identifier implements Stackable {
 		return this.value.hashCode() ^ 0xFF00FF00;
 	}
 
+	/**
+	 * Checks whether the given string would be a valid SOF identifier character sequence.
+	 * <br/><br/>
+	 * The actual check is done with the identifier pattern.
+	 * @param id The string to check.
+	 * @return Whether the given string would be a valid SOF identifier character sequence.
+	 * @see klfr.sof.Patterns#identifierPattern
+	 */
 	public static boolean isValidIdentifier(String id) {
 		return Patterns.identifierPattern.matcher(id).matches();
 	}
@@ -90,7 +100,6 @@ public class Identifier implements Stackable {
 		throw new ClassCastException(
 				"Cannot compare Identifier " + this.toString() + " to " + other.getClass().toString());
 	}
-
 }
 
 /*  

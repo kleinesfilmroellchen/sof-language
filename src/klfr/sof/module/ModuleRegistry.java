@@ -13,8 +13,12 @@ import klfr.sof.SOFFile;
 public class ModuleRegistry implements Serializable {
 	private static final long serialVersionUID = 1L;
 
+	/** The SOF modules cached by this registry. */
 	private final Map<File, SOFFile> modules = new TreeMap<>();
 
+	/**
+	 * Create a new module registry.
+	 */
 	public ModuleRegistry() {}
 
 	/**

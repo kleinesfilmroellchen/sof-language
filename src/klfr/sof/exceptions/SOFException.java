@@ -8,10 +8,19 @@ package klfr.sof.exceptions;
 public abstract class SOFException extends Exception {
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * Create a new SOF exception with the given message.
+	 * @param message The exception message.
+	 */
 	public SOFException(String message) {
 		super(message);
 	}
 
+	/**
+	 * Create a new SOF exception with the given message and underlying cause.
+	 * @param message The exception message.
+	 * @param cause The cause of this exception.
+	 */
 	public SOFException(String message, Throwable cause) {
 		super(message, cause);
 	}

@@ -13,7 +13,7 @@ import klfr.sof.lang.Stackable;
  * 
  * @author klfr
  */
-public class ListPrimitive extends Primitive implements Collection<Stackable> {
+public class ListPrimitive extends Primitive implements List<Stackable> {
 
 	private static final long serialVersionUID = 1L;
 
@@ -52,84 +52,134 @@ public class ListPrimitive extends Primitive implements Collection<Stackable> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	//#region DELEGATED METHODS
 
+	@Override
 	public void forEach(Consumer<? super Stackable> action) {
 		list.forEach(action);
 	}
 
+	@Override
 	public boolean isEmpty() {
 		return list.isEmpty();
 	}
 
+	@Override
 	public boolean contains(Object o) {
 		return list.contains(o);
 	}
 
+	@Override
 	public Iterator<Stackable> iterator() {
 		return list.iterator();
 	}
 
+	@Override
 	public boolean add(Stackable e) {
 		return list.add(e);
 	}
 
+	@Override
 	public boolean remove(Object o) {
 		return list.remove(o);
 	}
 
+	@Override
 	public boolean containsAll(Collection<?> c) {
 		return list.containsAll(c);
 	}
 
+	@Override
 	public boolean addAll(Collection<? extends Stackable> c) {
 		return list.addAll(c);
 	}
 
+	@Override
 	public boolean addAll(int index, Collection<? extends Stackable> c) {
 		return list.addAll(index, c);
 	}
 
+	@Override
 	public boolean removeAll(Collection<?> c) {
 		return list.removeAll(c);
 	}
 
+	@Override
 	public boolean retainAll(Collection<?> c) {
 		return list.retainAll(c);
 	}
 
+	@Override
 	public void replaceAll(UnaryOperator<Stackable> operator) {
 		list.replaceAll(operator);
 	}
 
+	@Override
 	public void clear() {
 		list.clear();
 	}
 
+	@Override
 	public Stackable get(int index) {
 		return list.get(index);
 	}
 
+	@Override
 	public int indexOf(Object o) {
 		return list.indexOf(o);
 	}
 
+	@Override
 	public Stream<Stackable> stream() {
 		return list.stream();
 	}
 
+	@Override
 	public Object[] toArray() {
 		return list.toArray();
 	}
 
+	@Override
 	public <T> T[] toArray(T[] a) {
 		return list.toArray(a);
 	}
 
+	@Override
 	public int size() {
 		return list.size();
 	}
 
+	@Override
 	public Stackable remove(int index) {
 		return list.remove(index);
+	}
+
+	@Override
+	public Stackable set(int index, Stackable element) {
+		return list.set(index, element);
+	}
+
+	@Override
+	public void add(int index, Stackable element) {
+		list.add(index, element);
+	}
+
+	@Override
+	public int lastIndexOf(Object o) {
+		return list.lastIndexOf(o);
+	}
+
+	@Override
+	public ListIterator<Stackable> listIterator() {
+		return list.listIterator();
+	}
+
+	@Override
+	public ListIterator<Stackable> listIterator(int index) {
+		return list.listIterator(index);
+	}
+
+	@Override
+	public List<Stackable> subList(int fromIndex, int toIndex) {
+		return list.subList(fromIndex, toIndex);
 	}
 
 	//#endregion Delegated Methods

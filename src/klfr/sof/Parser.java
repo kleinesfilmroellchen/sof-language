@@ -34,6 +34,17 @@ public class Parser {
 		return source;
 	}
 
+	/**
+	 * Parse the SOF source code from the start index to the end index.
+	 * This means that the SOF source code is read, syntax is checked, and an AST is created.
+	 * The code must already be preprocessed.
+	 * @param source The source code to be parsed.
+	 * @param start The start index, inclusive, that determines the substring to parse.
+	 * @param end The end index, exclusive, that determines the substring to parse.
+	 * @return The parsed AST. The root node will always be a {@link klfr.sof.ast.TokenListNode}.
+	 * @throws CompilerException If a syntax error is encountered.
+	 * @see Preprocessor#preprocessCode(String)
+	 */
 	@SuppressWarnings("deprecation")
 	public static Node parse(SOFFile source, int start, int end) throws CompilerException {
 		String code = source.code();

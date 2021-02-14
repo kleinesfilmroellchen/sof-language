@@ -11,6 +11,10 @@ import java.lang.annotation.*;
 @Inherited
 @Target(ElementType.TYPE)
 public @interface StackableName {
+   /**
+    * Returns the actual stackable name.
+    * @return the actual stackable name.
+    */
    public String value();
 
 }

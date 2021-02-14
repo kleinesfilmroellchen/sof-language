@@ -1,3 +1,9 @@
+/**
+ * The SOF interpreter system.<br/><br/>
+ * 
+ * This module contains all parts necessary for the SOF interpreter system.
+ * This includes the standard library, the module system and the standard command line interface.
+ */
 open module sof {
 	requires java.base;
 	requires java.logging;

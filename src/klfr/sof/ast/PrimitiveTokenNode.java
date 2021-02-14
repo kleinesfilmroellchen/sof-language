@@ -11,7 +11,10 @@ import klfr.sof.SOFFile;
 public class PrimitiveTokenNode extends Node {
 	private static final long serialVersionUID = 1L;
 
-	public enum PrimitiveToken {
+	/**
+	 * The enumeration of all primitive tokens in SOF.
+	 */
+	public static enum PrimitiveToken {
 		/** The <code>+</code> primitive token. */
 		Add("+"),
 		/** The <code>-</code> primitive token. */
@@ -114,6 +117,9 @@ public class PrimitiveTokenNode extends Node {
 
 		;
 
+		/**
+		 * The string symbol that is used in source code to specify this primitive token.
+		 */
 		public final String symbol;
 
 		private PrimitiveToken(String symbol) {
@@ -121,19 +127,35 @@ public class PrimitiveTokenNode extends Node {
 		}
 	}
 
+	/** The symbol that this primitive token node represents. */
 	private final PrimitiveToken symbol;
 
+	/**
+	 * Returns the primitive token itself represented by this AST node.
+	 * @return The primitive token represented by this AST node.
+	 */
 	public PrimitiveToken symbol() {
 		return symbol;
 	}
 
+	/**
+	 * Create a new primitive token.
+	 * @param symbol The primitive token itself represented by this AST node.
+	 * @param index The index inside the source code where this primitive token is located.
+	 * @param source The SOF source file unit where this primitive token comes from.
+	 */
 	public PrimitiveTokenNode(PrimitiveToken symbol, int index, SOFFile source) {
 		super(index, source);
 		this.symbol = symbol;
 	}
 
 	/**
-	 * Returns the primitive token associated with the symbol, if it exists.
+	 * Returns the primitive token associated with the string symbol, if it exists.
+	 * @param symbol The primitive token that should be represented, as a string.
+	 * @param index The index inside the source code where the new primitive token is located.
+	 * @param source The SOF source file unit where the new primitive token comes from.
+	 * @return An Optional containing a primitive token if one exists for the given symbol,
+	 *         or an empty Optional if the string symbol does not represent a primitive token.
 	 */
 	public static Optional<PrimitiveTokenNode> make(final String symbol, final int index, SOFFile source) {
 		for (PrimitiveToken pt : PrimitiveToken.values()) {
@@ -149,7 +171,7 @@ public class PrimitiveTokenNode extends Node {
 	}
 
 	@Override
-	public Object cloneNode() throws CloneNotSupportedException {
+	public Node cloneNode() throws CloneNotSupportedException {
 		return new PrimitiveTokenNode(this.symbol, this.getCodeIndex(), getSource());
 	}
 

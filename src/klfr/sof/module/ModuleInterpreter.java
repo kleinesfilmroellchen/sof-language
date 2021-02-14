@@ -17,8 +17,15 @@ import klfr.sof.exceptions.*;
 public class ModuleInterpreter extends Interpreter {
 	private static final long serialVersionUID = 1L;
 
+	/** The export bindings that are defined and later returned to the module importer. */
 	private final Map<Identifier, Stackable> exports = new TreeMap<>();
 
+	/**
+	 * Create a new module interpreter.
+	 * @param io The I/O interface that this module interpreter should use.
+	 * @param md The module discoverer used by this module interpreter to in turn load other modules.
+	 * @param registry The native function registry to execute native functions.
+	 */
 	public ModuleInterpreter(IOInterface io, ModuleDiscoverer md, NativeFunctionRegistry registry) {
 		super(io, md, registry);
 	}

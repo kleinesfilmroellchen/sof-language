@@ -3,10 +3,19 @@ package klfr.sof.lang.primitive;
 import klfr.sof.exceptions.IncompleteCompilerException;
 import klfr.sof.lang.*;
 
+/**
+ * A boolean primitive of SOF.
+ * 
+ * @author klfr
+ */
 @StackableName("Boolean")
 public class BoolPrimitive extends Primitive {
 	private static final long serialVersionUID = 1L;
+	/** The boolean that is represented by this primitive. */
 	private final Boolean value;
+
+	private static final BoolPrimitive FALSE = new BoolPrimitive(false);
+	private static final BoolPrimitive TRUE = new BoolPrimitive(true);
 
 	private BoolPrimitive(Boolean value) {
 		this.value = value;
@@ -17,19 +26,35 @@ public class BoolPrimitive extends Primitive {
 		return value;
 	}
 
+	/**
+	 * Returns the boolean value represented by this primitive.
+	 * @return The boolean value represented by this primitive.
+	 */
 	public Boolean value() {
 		return value;
 	}
 
+	/**
+	 * Create a new boolean primitive from the given boolean.
+	 * @param value the boolean value to wrap in a primitive.
+	 * @return a new boolean primitive with the value of the given boolean.
+	 */
 	public static BoolPrimitive createBoolPrimitive(Boolean value) {
-		return new BoolPrimitive(value);
+		return value ? TRUE : FALSE;
 	}
 
+	/**
+	 * Parse a new boolean primitive from the given boolean string.
+	 * 
+	 * @param booleanString The string to parse a boolean from.
+	 * @return a new boolean primitive that has the value represented by the string.
+	 * @throws IncompleteCompilerException If the string is neither "true" nor "false".
+	 */
 	public static BoolPrimitive createBoolFromString(String booleanString) throws IncompleteCompilerException {
 		if (booleanString.toLowerCase().equals("true"))
-			return new BoolPrimitive(true);
+			return TRUE;
 		if (booleanString.toLowerCase().equals("false"))
-			return new BoolPrimitive(false);
+			return FALSE;
 		throw new IncompleteCompilerException("syntax", "boolean.syntax", booleanString);
 	}
 

@@ -1,24 +1,17 @@
 package klfr.sof;
 
 import java.io.Serializable;
-import java.util.Deque;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.logging.Logger;
 import java.util.regex.*;
 
 import klfr.Tuple;
-import klfr.sof.exceptions.CompilerException;
 
 /**
- * The tokenizer class wraps the regular expression matching functionality to
- * provide an interpreter or other SOF source code analysis tool with easy
- * methods to examine SOF source code, change interpretation locations
- * on-the-fly and modify the source code during execution.<br>
- * <br>
- * Of course, this class makes heavy use of regular expressions for string
- * analysis.
+ * The tokenizer is used by the parsing tools to quickly scan through SOF tokens.
+ * <br/><br/>
+ * It wraps the terrible behavior of {@link Matcher}.
  * 
  * @author klfr
  */
@@ -42,12 +35,25 @@ public class Tokenizer implements Iterator<String> {
 	public static class TokenizerState implements Serializable {
 		private static final long serialVersionUID = 1L;
 
+		/** The start index in the code. */
 		public int start;
+		/** The end index (exclusive) in the code. */
 		public int end;
+		/** The start of the region that is set in the matcher. */
 		public int regionStart;
+		/** The end of the region (exclusive) that is set in the matcher. */
 		public int regionEnd;
+		/** The code that the tokenizer operates on. */
 		public String code;
 
+		/**
+		 * Create a new tokenizer state with the given parameters.
+		 * @param start The start index.
+		 * @param end The end index.
+		 * @param regionStart The region start index for the matcher.
+		 * @param regionEnd The region end index for the matcher.
+		 * @param code The code to operate on.
+		 */
 		public TokenizerState(int start, int end, int regionStart, int regionEnd, String code) {
 			super();
 			this.start = start;
@@ -62,10 +68,16 @@ public class Tokenizer implements Iterator<String> {
 			return new TokenizerState(this.start, this.end, this.regionStart, this.regionEnd, this.code);
 		}
 
+		@Override
 		public boolean equals(Object other) {
 			return other instanceof TokenizerState ? equals((TokenizerState) other) : false;
 		}
 
+		/**
+		 * Checks equality on this tokenizer and the other tokenizer.
+		 * @param other The other tokenizer to compare to.
+		 * @return Whether the two tokenizers are equal.
+		 */
 		public boolean equals(TokenizerState other) {
 			return other.start == this.start && other.end == this.end && other.regionStart == this.regionStart
 					&& other.regionEnd == this.regionEnd && other.code.equals(this.code);
@@ -89,35 +101,24 @@ public class Tokenizer implements Iterator<String> {
 
 	/**
 	 * Returns the index of the last matched token.
+	 * @return The index of the last matched token.
 	 */
 	public int start() {
 		return this.currentState.start;
 	}
 
 	/**
-	 * Returns the matcher that is used to match tokens and limit the token search
-	 * space. The user is free to modify the matcher however they want, though any
-	 * modification of the matcher might break this class's proper behavior.
-	 * 
-	 * @return The internal matcher, uncloned.
-	 */
-	public Matcher getMatcher() {
-		return m;
-	}
-
-	/** nested code block information */
-	private Deque<TokenizerState> stateStack;
-
-	/**
-	 * Constructor for factory methods, do not use externally. Code needs to be
-	 * cleaned beforehand
+	 * Constructor for factory methods, do not use externally.
 	 */
 	private Tokenizer(String code) {
 		this.m = Patterns.tokenPattern.matcher(code);
-		this.stateStack = new LinkedBlockingDeque<>();
 		this.currentState = new TokenizerState(0, 0, 0, code.length(), code);
 	}
 
+	/**
+	 * Returns the code that this tokenizer operates on.
+	 * @return The code that this tokenizer operates on.
+	 */
 	public String getCode() {
 		return this.currentState.code;
 	}
@@ -126,8 +127,8 @@ public class Tokenizer implements Iterator<String> {
 	 * Creates a new tokenizer from a source code string. The tokenizer's state is
 	 * set up to start scanning the code from the beginning.
 	 * 
-	 * @param code the SOF source code to be used with this Tokenizer
-	 * @return a new tokenizer
+	 * @param code The SOF source code to be used with this Tokenizer.
+	 * @return A new tokenizer.
 	 */
 	public static Tokenizer fromSourceCode(String code) {
 		return new Tokenizer(code);
@@ -164,6 +165,7 @@ public class Tokenizer implements Iterator<String> {
 	/**
 	 * Sets the state's parameters on this tokenizer.
 	 * 
+	 * @param state The state to be set.
 	 * @deprecated This method will easily break the tokenizer's proper behavior.
 	 */
 	@Deprecated
@@ -172,84 +174,6 @@ public class Tokenizer implements Iterator<String> {
 		this.m = Patterns.tokenPattern.matcher(this.currentState.code);
 		this.m.region(state.regionStart, state.regionEnd);
 	}
-
-	/**
-	 * Returns a new tokenizer that is the same as this one, except that the given
-	 * code is appended to the new tokenizer. This tokenizer is not modified.
-	 * 
-	 * @param code the code to be appended, without leading newlines. A newline is
-	 *             inserted between the current code and the new code.
-	 * @return a new, independed Tokenizer with this tokenizer's state and the given
-	 *         code appended.
-	 */
-	public Tokenizer withCodeAppended(String code) throws CompilerException {
-		Tokenizer nt = this.clone();
-		nt.appendCode(code);
-		return nt;
-	}
-
-	/**
-	 * Appends the given code to this tokenizer, thereby modifying this tokenizer.
-	 * The old region settings are discarded.
-	 * 
-	 * @param code the code to be appended, without leading newlines. A newline is
-	 *             inserted between the current code and the new code.
-	 * @return this tokenizer
-	 */
-	public Tokenizer appendCode(String code) {
-		TokenizerState state = this.currentState;
-		this.log.finer("State before appending: " + state);
-		var needsNewline = !this.currentState.code.isEmpty() && !this.currentState.code.endsWith("\n");
-		this.currentState.code += (needsNewline ? "\n" : "") + code;
-		this.m = Patterns.tokenPattern.matcher(this.currentState.code);
-		this.currentState.end = state.end;
-		this.currentState.regionStart = 0;
-		this.currentState.regionEnd = this.currentState.code.length();
-		this.log.finer("State after appending: " + this.getState());
-		return this;
-	}
-
-	// /**
-	// * Returns the current line the tokenizer points to. This is in human-readable
-	// * form, i.e. line number 1 is actually the first line of code (and not the
-	// * second).
-	// *
-	// * @return the current line the tokenizer points to.
-	// */
-	// public int getCurrentLine() {
-	// Matcher linefinder = Interpreter.nlPat.matcher(getCode());
-	// int realIndex = this.start(), linenum = 0;
-	// // increment line number while the text index is still after the searched
-	// line
-	// // beginning
-	// while (linefinder.find() &&
-	// realIndex > linefinder.start() - 1)
-	// ++linenum;
-	// // return line number - 1 because we advanced past the line itself
-	// return linenum - 1;
-	// }
-
-	// /**
-	// * Returns the index of the current position inside (respective to) its line
-	// in
-	// * the code.
-	// *
-	// * @return the index of the current position inside (respective to) its line
-	// in
-	// * the code.
-	// */
-	// public int getIndexInsideLine() {
-	// Matcher linefinder = Interpreter.nlPat.matcher(getCode());
-	// int realIndex = this.start(), linestart = 0;
-	// while (linefinder.find() && realIndex > linefinder.start()) {
-	// linestart = linefinder.start() + 1;
-	// }
-	// // last line now contains the index where the line starts that begins before
-	// the
-	// // matcher's index
-	// // i.e. the line of the matcher
-	// return realIndex - linestart;
-	// }
 
 	/**
 	 * Returns the current execution position of the Tokenizer, as a (Line, Index)
@@ -276,20 +200,14 @@ public class Tokenizer implements Iterator<String> {
 
 	@Override
 	public Tokenizer clone() {
-		Tokenizer nt = Tokenizer.fromState(this.getState());
-		Iterator<TokenizerState> it = this.stateStack.stream().map(x -> x.clone()).iterator();
-		while (it.hasNext()) {
-			nt.stateStack.add(it.next());
-		}
-		return nt;
+		return Tokenizer.fromState(this.getState());
 	}
 
 	/**
 	 * Returns whether the tokenizer has exceeded its searching region.
-	 * 
 	 * @return whether the tokenizer has exceeded its searching region.
 	 */
-	public boolean regionExceeded() {
+	private boolean regionExceeded() {
 		return this.currentState.regionEnd < Math.max(this.currentState.start, this.currentState.end)
 				|| this.currentState.regionStart > Math.min(this.currentState.start, this.currentState.end);
 	}
@@ -354,21 +272,6 @@ public class Tokenizer implements Iterator<String> {
 		if (!this.findNextToken(true))
 			throw new NoSuchElementException("No more tokens");
 		return this.lastMatchedToken;
-	}
-
-	/**
-	 * Pushes a state onto the internal state stack.
-	 */
-	public void pushState() {
-		this.stateStack.push(this.getState());
-	}
-
-	/**
-	 * Pops and restores a state from the internal stack. This will re-initialize
-	 * the matcher, be careful.
-	 */
-	public void popState() throws NoSuchElementException {
-		this.setState(this.stateStack.pop());
 	}
 }
 

@@ -21,7 +21,9 @@ public abstract class Primitive implements Stackable {
 	private static final long serialVersionUID = 1L;
 	private static final Logger log = Logger.getLogger(Primitive.class.getCanonicalName());
 
-	// all chars that can make up integers base 16 and lower, in ascending value
+	/**
+	 * Áll chars that can make up integers base 16 and lower, in ascending value.
+	 */
 	public static final Map<Character, Integer> numberChars = new Hashtable<>();
 	static {
 		numberChars.put('0', 0);

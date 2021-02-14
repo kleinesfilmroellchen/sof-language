@@ -12,20 +12,31 @@ import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 public class LiteralNode extends Node {
 	private static final long serialVersionUID = 1L;
 
+	/** The value that this literal node represents and places on the stack. */
 	private final Stackable value;
 
+	/**
+	 * Return the SOF data that this literal represents.
+	 * @return the SOF data that this literal represents.
+	 */
 	public Stackable getValue() {
 		return value;
 	}
 
+	/**
+	 * Create a new literal node.
+	 * @param data The SOF data that this literal represents.
+	 * @param codeIndex The index in the code where this literal was parsed from.
+	 * @param source The source code unit where this literal resides.
+	 */
 	public LiteralNode(final Stackable data, final int codeIndex, final SOFFile source) {
 		super(codeIndex, source);
 		this.value = data;
 	}
 
 	@Override
-	public Object cloneNode() {
-		return new LiteralNode(value, getCodeIndex(), getSource());
+	public Node cloneNode() {
+		return new LiteralNode(value.copy(), getCodeIndex(), getSource());
 	}
 
 	@Override

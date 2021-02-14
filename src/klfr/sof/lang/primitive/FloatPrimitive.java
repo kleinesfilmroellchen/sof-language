@@ -5,6 +5,7 @@ import java.util.logging.Logger;
 import klfr.sof.Patterns;
 import klfr.sof.exceptions.IncompleteCompilerException;
 import klfr.sof.lang.*;
+import klfr.sof.lib.Builtins;
 
 /**
  * floating point decimal primitive type
@@ -23,6 +24,7 @@ public class FloatPrimitive extends Primitive {
 	 */
 	public static final int EQUALITY_PRECISION = 10;
 
+	/** The double that is represented by this primitive. */
 	private final Double v;
 
 	private FloatPrimitive(double d) {
@@ -34,16 +36,28 @@ public class FloatPrimitive extends Primitive {
 		return v;
 	}
 
+	/**
+	 * Returns the value represented by this primitive.
+	 * @return the value represented by this primitive.
+	 */
 	public Double value() {
 		return v;
 	}
 
+	/**
+	 * Creates a new float primitive from the given double.
+	 * @param d The double to create a primitive from.
+	 * @return A new float primitive with the value of the given double.
+	 */
 	public static FloatPrimitive createFloatPrimitive(Double d) {
 		return new FloatPrimitive(d);
 	}
 
 	/**
 	 * Execute optimized arithmetic add.
+	 * @param other The float to add.
+	 * @return The sum of this float and the other.
+	 * @see BuiltinOperations#add(Stackable, Stackable)
 	 */
 	public FloatPrimitive add(FloatPrimitive other) {
 		if (this.v == 0)
@@ -53,10 +67,22 @@ public class FloatPrimitive extends Primitive {
 		return createFloatPrimitive(this.v + other.v);
 	}
 
+	/**
+	 * Execute optimized arithmetic divide.
+	 * @param other The float to divide.
+	 * @return {@code this / other}
+	 * @see BuiltinOperations#divide(Stackable, Stackable)
+	 */
 	public FloatPrimitive divide(FloatPrimitive other) throws ArithmeticException {
 		return other.v == 0 ? this : createFloatPrimitive(this.v / other.v);
 	}
 
+	/**
+	 * Execute optimized arithmetic modulus.
+	 * @param other The float to modulus with.
+	 * @return {@code this % other}
+	 * @see BuiltinOperations#modulus(Stackable, Stackable)
+	 */
 	public FloatPrimitive modulus(FloatPrimitive other) throws ArithmeticException {
 		if (other.v == 0) {
 			throw new ArithmeticException(String.format("Modulus by zero: %f mod %f", this.v, other.v));
@@ -64,10 +90,22 @@ public class FloatPrimitive extends Primitive {
 		return this.v == 0 ? this : createFloatPrimitive(this.v % other.v);
 	}
 
+	/**
+	 * Execute optimized arithmetic multiply.
+	 * @param other The float to multiply.
+	 * @return {@code this * other}
+	 * @see BuiltinOperations#multiply(Stackable, Stackable)
+	 */
 	public FloatPrimitive multiply(FloatPrimitive other) {
 		return this.v == 1 ? other : (other.v == 1 ? this : createFloatPrimitive(this.v * other.v));
 	}
 
+	/**
+	 * Execute optimized arithmetic subtract.
+	 * @param other The float to subtract.
+	 * @return {@code this - other}
+	 * @see BuiltinOperations#subtract(Stackable, Stackable)
+	 */
 	public FloatPrimitive subtract(FloatPrimitive other) {
 		if (other.v == 0)
 			return this;

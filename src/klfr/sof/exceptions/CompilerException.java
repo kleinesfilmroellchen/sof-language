@@ -62,12 +62,15 @@ public class CompilerException extends SOFException {
 	 * Makes a compiler exception that takes its positional information from a
 	 * tokenizer.
 	 * 
+	 * @param filename The filename where the exception occurred.
 	 * @param expressionInfo A tokenizer pointing to the position where the
 	 *                       exception occurred
 	 * @param name           Name of the exception, as an accessor into the message
 	 *                       resources 'sof.error.type'
 	 * @param reason         Why the exception occurred, as an accessor into the
 	 *                       message resources 'sof.error.message'
+	 * @param formatArguments The formatting arguments to the exception reason.
+	 *                         Refer to the reason to find out what arguments are required.
 	 * @return nicely formatted multi-line string
 	 */
 	public static CompilerException from(String filename, Tokenizer expressionInfo, String name,
@@ -87,6 +90,8 @@ public class CompilerException extends SOFException {
 	 *               resources 'sof.error.type'.
 	 * @param reason Why the exception occurred, as an accessor into the message
 	 *               resources 'sof.error.message'.
+	 * @param formatArguments The formatting arguments to the exception reason.
+	 *                         Refer to the reason to find out what arguments are required.
 	 * @return nicely formatted multi-line string.
 	 */
 	public static CompilerException from(SOFFile source, int index, String name, String reason,
@@ -119,6 +124,8 @@ public class CompilerException extends SOFException {
 	 * Incomplete compiler exceptions which were thrown by parts of the SOF system
 	 * unaware of code positions.
 	 * 
+	 * @param sofFile The file that the error occurred in.
+	 * @param index The location of the error inside the file.
 	 * @param cause The cause of this exception, an instance of the stub class
 	 *              {@link IncompleteCompilerException}
 	 * @return The newly constructed compiler exception.
@@ -141,22 +148,42 @@ public class CompilerException extends SOFException {
 		return formatter.formatCLI(Locale.ENGLISH);
 	}
 
+	/**
+	 * Returns the file where this error occurred.
+	 * @return the file where this error occurred.
+	 */
 	public SOFFile getLocation() {
 		return location;
 	}
 
+	/**
+	 * Returns the index inside the file where this error occurred.
+	 * @return the index inside the file where this error occurred.
+	 */
 	public int getIndex() {
 		return index;
 	}
 
+	/**
+	 * Returns the type name of this error, to be resolved by a localization package.
+	 * @return the type name of this error, to be resolved by a localization package.
+	 */
 	public String getNameKey() {
 		return nameKey;
 	}
 
+	/**
+	 * Returns the reason of this error, to be resolved by a localization package.
+	 * @return the reason of this error, to be resolved by a localization package.
+	 */
 	public String getReasonKey() {
 		return reasonKey;
 	}
 
+	/**
+	 * Returns the formatting arguments that are used in the reason message.
+	 * @return the formatting arguments that are used in the reason message.
+	 */
 	public Object[] getFormatArguments() {
 		return formatArguments.clone();
 	}

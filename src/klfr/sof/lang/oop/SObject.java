@@ -26,6 +26,9 @@ public class SObject implements Stackable {
 		return attributes;
 	}
 
+	/**
+	 * Create a new SOF object.
+	 */
 	public SObject() {
 		this.attributes = new MethodDelimiter();
 	}

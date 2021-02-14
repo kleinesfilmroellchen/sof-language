@@ -73,9 +73,11 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	/**
 	 * Pushes all values in the given collection to the stack, in the order that the
 	 * iterator returns them.
+	 * @param contentsToPush The collection whose contents to push to the stack.
+	 * @return This stack.
 	 */
-	public Stack pushAll(Collection<Stackable> args) {
-		for (var arg : args) {
+	public Stack pushAll(Collection<Stackable> contentsToPush) {
+		for (var arg : contentsToPush) {
 			this.push(arg);
 		}
 		return this;
@@ -119,6 +121,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 * @param count how many elements to pop.
 	 * @return a list containing the elements popped, with the last popped element
 	 *         first.
+	 * @throws IncompleteCompilerException If at least one pop operation fails.
 	 */
 	public List<Stackable> popSafe(int count) throws IncompleteCompilerException {
 		// array for efficiency; it can be pre-allocated to specific size and then
@@ -138,6 +141,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 * @param t   The class of the type, to allow for runtime type checking.
 	 * @throws IncompleteCompilerException if the popped element is not of type T, or if pop()
 	 *                                     itself failed.
+	 * @return The popped element.
 	 */
 	@SuppressWarnings("unchecked")
 	public <T extends Stackable> T popTyped(final Class<T> t) throws IncompleteCompilerException {
@@ -161,10 +165,15 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 
 	/**
 	 * Forces the stack to pop its topmost element, regardless of stack access
-	 * restrictions. <strong>Users should use this function with great
-	 * caution.</strong>
+	 * restrictions.<br/><br/>
+	 * <strong>Users should use this method with great caution.
+	 * It is not advised to use this in any circumstance where the SOF programmer controls the stack.
+	 * This means that this method is only to be used when the element to be removed is known with great certanity
+	 * to not cause any issues once it is removed.</strong>
+	 * For example, this may be used to remove a nametable from the stack that is no longer needed.
+	 * But first, the user should check that the topmost element <em>is</em> the nametable before removing it with {@code forcePop}.
 	 * 
-	 * @return the popped value
+	 * @return The popped value.
 	 */
 	public Stackable forcePop() {
 		return super.pop();
@@ -174,7 +183,8 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 * Returns the global nametable, which is always the lowest element of the
 	 * stack.
 	 * 
-	 * @throws RuntimeException if you managed to delete or replace the global
+	 * @return The global nametable.
+	 * @throws RuntimeException If you managed to delete or replace the global
 	 *                          nametable (ノಠ益ಠ)ノ彡 ┻━━┻
 	 */
 	public Nametable globalNametable() throws RuntimeException {
@@ -187,8 +197,10 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	}
 
 	/**
-	 * Returns the current local scope, i.e. the topmost nametable that is on the
-	 * stack.
+	 * Returns the current local scope, i.e. the topmost nametable that is on the stack.
+	 * 
+	 * @return The local, topmost nametable.
+	 * @throws RuntimeException If the stack is empty or there are no nametables on the stack (an absolutely illegal state).
 	 */
 	public Nametable localScope() throws RuntimeException {
 		for (var elmt : this) {
@@ -205,8 +217,8 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 * identifier is not found in one nametable, the next lower one is searched and
 	 * so on. May return null when the identifier is not found at all.
 	 * 
-	 * @param id the identifier to search for
-	 * @return the most local value that is associated with the identifier
+	 * @param id The identifier to search for.
+	 * @return The most local value that is associated with the identifier.
 	 */
 	public Stackable lookup(final Identifier id) {
 		for (var elmt : this) {
@@ -220,34 +232,10 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	}
 
 	/**
-	 * Sets the namespace where file global name definitions are put into. Replaces
-	 * an existing namespace, if necessary.<br>
-	 * <strong>ATTENTION: Does not put the namespace into the global nametable for
-	 * reference from other locations! You have to insert the namespace as an entry
-	 * into the global nametable manually.</strong>
-	 * 
-	 * @return this stack
-	 */
-	public Stack setNamespace(final Nametable namespace) {
-		final Iterator<Stackable> helperIt = this.descendingIterator();
-		helperIt.next();// skip global nametable
-		final Stackable maybeOldNamespace = helperIt.next();
-		// take off global nametable temporarily
-		final Nametable globalNametable = (Nametable) this.removeLast();
-		// if the second-to-last element is a nametable but no local scope delimiter, we
-		// found a namespace, remove it
-		if (maybeOldNamespace instanceof Nametable && !(maybeOldNamespace instanceof FunctionDelimiter))
-			this.removeLast();
-		// add new namespace and global nametable
-		this.addLast(namespace);
-		this.addLast(globalNametable);
-
-		return this;
-	}
-
-	/**
 	 * Traverses the stack and returns the first nametable that is found on it. All
-	 * elements above and including the nametable are discarded. This method is
+	 * elements above and including the nametable are discarded.
+	 * <br/><br/>
+	 * This method is
 	 * intended to be used for destroying local scopes when exiting them. This
 	 * method will not remove the global nametable and return Optional.empty()
 	 * instead. It will, however, still remove all elements above it. Therefore,
@@ -255,26 +243,24 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 * are then to be found by this method.
 	 * 
 	 * @return The highest nametable that was found, or none if none was found.
+	 * @see Stack#forcePop()
 	 */
-	public Optional<Nametable> popFirstNametable() throws IncompleteCompilerException {
-		try {
-			var nt = this.forcePop();
-			while (!(nt instanceof Nametable))
-				nt = this.forcePop();
-			// popped the gnt
-			if (this.isEmpty()) {
-				this.push(nt);
-				return Optional.empty();
-			}
-			return Optional.of((Nametable) nt);
-		} catch (NoSuchElementException e) {
-			throw new IncompleteCompilerException("stackaccess");
+	public Optional<Nametable> popFirstNametable() {
+		var nt = this.forcePop();
+		while (!(nt instanceof Nametable))
+			nt = this.forcePop();
+		// popped the gnt
+		if (this.isEmpty()) {
+			this.push(nt);
+			return Optional.empty();
 		}
+		return Optional.of((Nametable) nt);
 	}
 
 	/**
-	 * toString method that creates a visual multiline representation of the stack
+	 * ToString method that creates a visual multiline representation of the stack
 	 * and its contents.
+	 * @return a visual multiline representation of the stack and its contents.
 	 */
 	public String toStringExtended() {
 		return "┌─" + Interpreter.line66.substring(0, 37) + "─┐" + System.lineSeparator()

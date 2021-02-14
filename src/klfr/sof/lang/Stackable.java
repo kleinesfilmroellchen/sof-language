@@ -38,7 +38,13 @@ public interface Stackable extends Serializable, Cloneable, Comparable<Stackable
 		/** Only show internal type descriptor; shortest debug string. */
 		Type("Only show internal type descriptor; shortest debug string.", 10);
 
+		/**
+		 * A description for what this debug string extensiveness does.
+		 */
 		public final String description;
+		/**
+		 * The maximum length of string that this debug string extensiveness allows.
+		 */
 		public final int maxlength;
 
 		private DebugStringExtensiveness(String description, int maxlength) {
@@ -49,6 +55,8 @@ public interface Stackable extends Serializable, Cloneable, Comparable<Stackable
 		/**
 		 * Enforces this extensiveness' length restriction onto the given string by
 		 * trimming from the end.
+		 * @param s The string to be trimmed.
+		 * @return A string that at maximum has maxlength characters.
 		 */
 		public String ensureLength(String s) {
 			return s.substring(0, Math.min(s.length(), maxlength));

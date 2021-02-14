@@ -19,7 +19,7 @@ public class ModuleDiscoverer {
 	public static final String DEFAULT_STDLIB_DIRECTORY = "./bin/klfr/sof/lib";
 	/** Allowed file extensions, tried in the given order. */
 	public static final List<String> EXTENSIONS = List.of("sof", "stackof");
-	public static final Logger log = Logger.getLogger(ModuleDiscoverer.class.getCanonicalName());
+	private static final Logger log = Logger.getLogger(ModuleDiscoverer.class.getCanonicalName());
 
 	private final ModuleRegistry registry;
 	private final File stdlibBaseDirectory;
@@ -95,6 +95,8 @@ public class ModuleDiscoverer {
 	 * @return The AST of the found module, if it exists or was previously
 	 *         registered in the registry. If the module was not found, an empty
 	 *         Optional is returned.
+	 * @throws CompilerException If the preprocessing of a file fails.
+	 * @throws IncompleteCompilerException If another part of the module compilation, such as finding the module in the first place, fails.
 	 */
 	public Optional<SOFFile> getModule(final File requestingSourceFile, final String moduleSpecifier)
 			throws CompilerException, IncompleteCompilerException {

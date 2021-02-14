@@ -1,28 +1,47 @@
 package klfr.sof.ast;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import klfr.sof.SOFFile;
 import klfr.sof.exceptions.CompilerException;
 import klfr.sof.exceptions.IncompleteCompilerException;
 
 /**
- * A list of nodes that are to be executed in order. This may be the main
- * program itself, or a code block literal.
+ * A list of AST nodes that are to be executed in order. This may be the main
+ * program itself, a code block literal or other callables.
  */
 public class TokenListNode extends Node {
 	private static final long serialVersionUID = 1L;
 
+	/** The list of nodes that are contained in this token list. */
 	private final List<Node> subNodes;
 
-	public TokenListNode(List<Node> subNodes, int index, SOFFile source) {
+	/**
+	 * Create a new list of SOF tokens.
+	 * @param subNodes The list of AST nodes to be contained in this list of nodes.
+	 * @param index The index inside the source code where this token list is located.
+	 * @param source The SOF source file unit where this token list comes from.
+	 */
+	public TokenListNode(final List<Node> subNodes, final int index, final SOFFile source) {
 		super(index, source);
-		this.subNodes = subNodes;
+		this.subNodes = new ArrayList<>(subNodes);
 	}
 
 	@Override
-	public Object cloneNode() throws CloneNotSupportedException {
-		return new TokenListNode(subNodes, getCodeIndex(), getSource());
+	public Node cloneNode() throws CloneNotSupportedException {
+		// just give me maybes plz
+		final var newSubNodes = subNodes.stream().map(node -> {
+			try {
+				return node.cloneNode();
+			} catch (CloneNotSupportedException e) {
+				return null;
+			}
+		}).collect(Collectors.toList());
+		if (newSubNodes.stream().anyMatch(node -> node == null)) {
+			throw new CloneNotSupportedException("A subnode could not be cloned.");
+		}
+		return new TokenListNode(newSubNodes, getCodeIndex(), getSource());
 	}
 
 	@Override
@@ -43,9 +62,6 @@ public class TokenListNode extends Node {
 				+ System.lineSeparator() + "} @ " + this.getCodeIndex();
 	}
 
-	/**
-	 * Run the specified action on every subnode.
-	 */
 	@Override
 	public boolean forEach(Node.ForEachType action) throws CompilerException, IncompleteCompilerException {
 		for (Node subnode : subNodes) {
@@ -61,6 +77,10 @@ public class TokenListNode extends Node {
 		return subNodes.iterator();
 	}
 
+	/**
+	 * Returns the number of nodes in this list. Does NOT recursively count the subnodes in the child nodes themselves.
+	 * @return the number of nodes in this list.
+	 */
 	public int count() {
 		return subNodes.size();
 	}

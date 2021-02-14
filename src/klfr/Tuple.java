@@ -2,6 +2,7 @@ package klfr;
 
 import java.io.Serializable;
 import java.util.Iterator;
+import java.util.Objects;
 
 /**
  * Simple tuple type, nothing fancy.
@@ -10,14 +11,29 @@ public class Tuple<A, B>
       implements Serializable, Iterable<Object>, Cloneable {
    private static final long serialVersionUID = 1L;
 
+   /** The left element of the Tuple. */
    private final A left;
+   /** The right element of the Tuple. */
    private final B right;
 
+   /**
+    * Create a new tuple.
+    * @param l The left part of the tuple.
+    * @param r The right part of the tuple.
+    */
    public Tuple(A l, B r) {
       left = l;
       right = r;
    }
 
+   /**
+    * Create a new tuple.
+    * @param l The left part of the tuple.
+    * @param r The right part of the tuple.
+    * @param <D> The right type of the tuple.
+    * @param <C> The left type of the tuple.
+    * @return A new tuple.
+    */
    public static <D extends Comparable<D>, C extends Comparable<C>> Tuple<C, D> t(C l, D r) {
       return new Tuple<C, D>(l, r);
    }
@@ -63,14 +79,22 @@ public class Tuple<A, B>
       }
    }
 
+   /**
+    * Compare this tuple to another tuple for equality.
+    * Two tuples are considered equal if the left elements are equal and the right elements are equal.
+    * @param other The other tuple to compare to.
+    * @return Whether the two tuples are equal.
+    */
    public boolean equals(Tuple<A, B> other) {
       return other.left.equals(this.left) && other.right.equals(this.right);
    }
 
+   @Override
    public int hashCode() {
-      return this.left.hashCode() ^ this.right.hashCode();
+      return Objects.hash(this.left.hashCode(), this.right.hashCode());
    }
 
+   @Override
    public Tuple<A, B> clone() throws CloneNotSupportedException {
       try {
          return new Tuple<A, B>((A) (left), (B) (right));
@@ -81,12 +105,14 @@ public class Tuple<A, B>
       }
    }
 
+   @Override
    public String toString() {
       return String.format("(%s, %s)", left, right);
    }
 
    /**
     * Returns the left, or first element of the tuple.
+    * @return the left, or first element of the tuple.
     */
    public A getLeft() {
       return left;
@@ -94,6 +120,7 @@ public class Tuple<A, B>
 
    /**
     * Returns the right, or second element of the tuple.
+    * @return the right, or second element of the tuple.
     */
    public B getRight() {
       return right;

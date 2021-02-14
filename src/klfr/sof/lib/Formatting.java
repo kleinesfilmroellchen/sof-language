@@ -21,8 +21,10 @@ public final class Formatting {
 
 	/**
 	 * General version of the fmt functions that implements all the actual formatting.
+	 * 
 	 * @param fstring The format string.
 	 * @param fparams The format parameters.
+	 * @return The formatted string; use SOF string formatting syntax.
 	 */
 	public static String internalFormat(String fstring, Stackable... fparams) {
 		final var matcher = Patterns.formatSpecifierPattern.matcher(fstring);
@@ -117,11 +119,12 @@ public final class Formatting {
 	 *         and an index which specifies the index of the next to-be-handled format parameter.
 	 *         This is usually currentIdx+1 for normal format specifiers, and currentIdx for format specifiers
 	 *         which do not handle the specified current format parameter.
-	 * @throws IllegalArgumentException    If the format specifier is malformed.
+	 * @throws IllegalArgumentException If the format specifier is malformed.
 	 * @throws IndexOutOfBoundsException If the current index or an additional argument index is out of bounds.
 	 *                                   This is auto-thrown by the array indexing.
+	 * @throws NumberFormatException If number formatting fails, this is auto-thrown by the number formatters.
 	 */
-	public static Tuple<Integer, String> handleFormatter(String fspecifier, int currentIdx, Stackable[] fparams) throws IllegalArgumentException, ClassCastException, IndexOutOfBoundsException, NumberFormatException {
+	public static Tuple<Integer, String> handleFormatter(String fspecifier, int currentIdx, Stackable[] fparams) throws IllegalArgumentException, IndexOutOfBoundsException, NumberFormatException {
 		// percent escape
 		if (fspecifier.equals("%%")) return Tuple.t(currentIdx, "%");
 
@@ -237,7 +240,7 @@ public final class Formatting {
 		return Tuple.t(currentIdx+1, formatted.toString());
 	}
 
-	private static FormatSpecification parseFormatSpecifier(String fspecifier) throws IllegalArgumentException, ClassCastException, NumberFormatException {
+	private static FormatSpecification parseFormatSpecifier(String fspecifier) throws IllegalArgumentException, NumberFormatException {
 		final var fspec = new FormatSpecification();
 		Matcher fmatcher = Patterns.formatSpecifierPattern.matcher(fspecifier);
 		if (!fmatcher.matches()) throw new IllegalArgumentException("Format specifier " + fspecifier + " malformed.");
@@ -277,71 +280,113 @@ public final class Formatting {
 		}
 
 		return fspec;
-
-		// int fidx = 0; var currentChar = fspecifier.charAt(fidx);
-		// // handle flags
-		// while (currentChar == '<' || currentChar == '^' || currentChar == '+' || currentChar == ' ' || currentChar == '#' || currentChar == '0') {
-		// 	if (currentChar == '<') fspec.justify = FormatSpecification.Justify.Left;
-		// 	else if (currentChar == '^') fspec.justify = FormatSpecification.Justify.Center;
-		// 	else if (currentChar == '+') fspec.flags |= FormatSpecification.SIGN;
-		// 	else if (currentChar == ' ') fspec.flags |= FormatSpecification.ALIGN_SIGN;
-		// 	else if (currentChar == '#') fspec.flags |= FormatSpecification.FULLFORM;
-		// 	else if (currentChar == '0') fspec.flags |= FormatSpecification.PAD_ZERO;
-		// 	fidx++; currentChar = fspecifier.charAt(fidx);
-		// }
-
-		// // parse width
-		// StringBuilder widthString = new StringBuilder();
-		// while ('\u0030' <= currentChar && currentChar <= '\u0039') {
-		// 	widthString.append(currentChar);
-		// 	fidx++; currentChar = fspecifier.charAt(fidx);
-		// }
-		// if (!widthString.isEmpty()) fspec.width = Integer.parseInt(widthString, 0, widthString.length(), 10);
-
-		// // parse precision
-		// if (currentChar == '.') {
-		// 	StringBuilder precString = new StringBuilder();
-		// 	fidx++; currentChar = fspecifier.charAt(fidx);
-		// 	while ('\u0030' <= currentChar && currentChar <= '\u0039') {
-		// 		precString.append(currentChar);
-		// 		fidx++; currentChar = fspecifier.charAt(fidx);
-		// 	}
-		// 	if (!precString.isEmpty()) fspec.precision = Integer.parseInt(precString, 0, precString.length(), 10);
-		// }
-
-		// // parse format specifier
-		// // decimal has two specifiers, handle 'i' specially
-		// if (currentChar == 'i') fspec.fspec = FormatSpecification.FormatSpec.Decimal;
-		// fspec.fspec = FormatSpecification.FormatSpec.make(currentChar);
-		// if (fspec.fspec == null) throw new IllegalArgumentException("Format specifier " + currentChar + " unknown");
-
-		// return fspec;
 	}
 
+	/**
+	 * Format with 0 arguments.
+	 * @param fstring The string to format.
+	 * @return The formatted string.
+	 */
 	public static StringPrimitive fmt(StringPrimitive fstring) {
 		return StringPrimitive.createStringPrimitive(internalFormat(fstring.value()));
 	}
+	/**
+	 * Format with 1 arguments.
+	 * @param fstring The string to format.
+	 * @param farg0 The first formatting argument.
+	 * @return The formatted string.
+	 */
 	public static StringPrimitive fmt(StringPrimitive fstring, Stackable farg0) {
 		return StringPrimitive.createStringPrimitive(internalFormat(fstring.value(), farg0));
 	}
+	/**
+	 * Format with 2 arguments.
+	 * @param fstring The string to format.
+	 * @param farg0 The first formatting argument.
+	 * @param farg1 The second formatting argument.
+	 * @return The formatted string.
+	 */
 	public static StringPrimitive fmt(StringPrimitive fstring, Stackable farg0, Stackable farg1) {
 		return StringPrimitive.createStringPrimitive(internalFormat(fstring.value(), farg0, farg1));
 	}
+	/**
+	 * Format with 3 arguments.
+	 * @param fstring The string to format.
+	 * @param farg0 The first formatting argument.
+	 * @param farg1 The second formatting argument.
+	 * @param farg2 The third formatting argument.
+	 * @return The formatted string.
+	 */
 	public static StringPrimitive fmt(StringPrimitive fstring, Stackable farg0, Stackable farg1, Stackable farg2) {
 		return StringPrimitive.createStringPrimitive(internalFormat(fstring.value(), farg0, farg1, farg2));
 	}
+	/**
+	 * Format with 4 arguments.
+	 * @param fstring The string to format.
+	 * @param farg0 The first formatting argument.
+	 * @param farg1 The second formatting argument.
+	 * @param farg2 The third formatting argument.
+	 * @param farg3 The fourth formatting argument.
+	 * @return The formatted string.
+	 */
 	public static StringPrimitive fmt(StringPrimitive fstring, Stackable farg0, Stackable farg1, Stackable farg2, Stackable farg3) {
 		return StringPrimitive.createStringPrimitive(internalFormat(fstring.value(), farg0, farg1, farg2, farg3));
 	}
+	/**
+	 * Format with 5 arguments.
+	 * @param fstring The string to format.
+	 * @param farg0 The first formatting argument.
+	 * @param farg1 The second formatting argument.
+	 * @param farg2 The third formatting argument.
+	 * @param farg3 The fourth formatting argument.
+	 * @param farg4 The fifth formatting argument.
+	 * @return The formatted string.
+	 */
 	public static StringPrimitive fmt(StringPrimitive fstring, Stackable farg0, Stackable farg1, Stackable farg2, Stackable farg3, Stackable farg4) {
 		return StringPrimitive.createStringPrimitive(internalFormat(fstring.value(), farg0, farg1, farg2, farg3, farg4));
 	}
+	/**
+	 * Format with 6 arguments.
+	 * @param fstring The string to format.
+	 * @param farg0 The first formatting argument.
+	 * @param farg1 The second formatting argument.
+	 * @param farg2 The third formatting argument.
+	 * @param farg3 The fourth formatting argument.
+	 * @param farg4 The fifth formatting argument.
+	 * @param farg5 The sixth formatting argument.
+	 * @return The formatted string.
+	 */
 	public static StringPrimitive fmt(StringPrimitive fstring, Stackable farg0, Stackable farg1, Stackable farg2, Stackable farg3, Stackable farg4, Stackable farg5) {
 		return StringPrimitive.createStringPrimitive(internalFormat(fstring.value(), farg0, farg1, farg2, farg3, farg4, farg5));
 	}
+	/**
+	 * Format with 7 arguments.
+	 * @param fstring The string to format.
+	 * @param farg0 The first formatting argument.
+	 * @param farg1 The second formatting argument.
+	 * @param farg2 The third formatting argument.
+	 * @param farg3 The fourth formatting argument.
+	 * @param farg4 The fifth formatting argument.
+	 * @param farg5 The sixth formatting argument.
+	 * @param farg6 The seventh formatting argument.
+	 * @return The formatted string.
+	 */
 	public static StringPrimitive fmt(StringPrimitive fstring, Stackable farg0, Stackable farg1, Stackable farg2, Stackable farg3, Stackable farg4, Stackable farg5, Stackable farg6) {
 		return StringPrimitive.createStringPrimitive(internalFormat(fstring.value(), farg0, farg1, farg2, farg3, farg4, farg5, farg6));
 	}
+	/**
+	 * Format with 8 arguments.
+	 * @param fstring The string to format.
+	 * @param farg0 The first formatting argument.
+	 * @param farg1 The second formatting argument.
+	 * @param farg2 The third formatting argument.
+	 * @param farg3 The fourth formatting argument.
+	 * @param farg4 The fifth formatting argument.
+	 * @param farg5 The sixth formatting argument.
+	 * @param farg6 The seventh formatting argument.
+	 * @param farg7 The eighth formatting argument.
+	 * @return The formatted string.
+	 */
 	public static StringPrimitive fmt(StringPrimitive fstring, Stackable farg0, Stackable farg1, Stackable farg2, Stackable farg3, Stackable farg4, Stackable farg5, Stackable farg6, Stackable farg7) {
 		return StringPrimitive.createStringPrimitive(internalFormat(fstring.value(), farg0, farg1, farg2, farg3, farg4, farg5, farg6, farg7));
 	}

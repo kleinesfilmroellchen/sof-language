@@ -3,11 +3,20 @@ package klfr.sof.lang.primitive;
 import klfr.sof.exceptions.IncompleteCompilerException;
 import klfr.sof.lang.*;
 
+/**
+ * A string primitive of SOF.
+ * 
+ * @author klfr
+ */
 @StackableName("String")
 public class StringPrimitive extends Primitive {
    private static final long serialVersionUID = 1L;
 
+   /** The string that is represented by this primitive. */
    private final String s;
+   /**
+    * The length of the string primitive.
+    */
    public final long length;
 
    private StringPrimitive(String s) {
@@ -20,10 +29,19 @@ public class StringPrimitive extends Primitive {
       return s;
    }
 
+   /**
+    * Returns the string that this primitive represents.
+    * @return The string that this primitive represents.
+    */
    public String value() {
       return s;
    }
 
+   /**
+    * Create a new string primitive from the given string.
+    * @param s The string that the primitive represents.
+    * @return A new string primitive representing the given string.
+    */
    public static StringPrimitive createStringPrimitive(String s) {
       return new StringPrimitive(s);
    }

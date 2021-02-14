@@ -18,17 +18,24 @@ public class Nametable implements Stackable {
 	/**
 	 * Returns a stream over all the identifier-value mappings that this nametable
 	 * contains. Useful for operating on and/or traversing the entire nametable.
+	 * @return a stream over all the identifier-value mappings that this nametable contains. 
 	 */
 	public Stream<Map.Entry<Identifier, Stackable>> mappingStream() {
 		return entries.entrySet().parallelStream();
 	}
 
+	/**
+	 * Returns the size of the nametable, i.e. how many bindings are defined.
+	 * @return the size of the nametable, i.e. how many bindings are defined.
+	 */
 	public int size() {
 		return entries.size();
 	}
 
 	/**
 	 * Checks whether the identifier is already defined.
+	 * @param key The identifier to check.
+	 * @return {@code true} if the identifier is already defined.
 	 */
 	public boolean hasMapping(Identifier key) {
 		return entries.containsKey(key);
@@ -36,6 +43,8 @@ public class Nametable implements Stackable {
 
 	/**
 	 * Returns the value associated with the identifier, or null if there is none.
+	 * @param key The identifier to return the associated value for.
+	 * @return The value associated with the identifier, or null if there is none.
 	 */
 	public Stackable get(Identifier key) {
 		return entries.get(key);
@@ -43,6 +52,9 @@ public class Nametable implements Stackable {
 
 	/**
 	 * Binds the given value to the identifier.
+	 * @param key The identifier to bind to.
+	 * @param value The value to be bound.
+	 * @return The value previously associated with the identifier.
 	 */
 	public Stackable put(Identifier key, Stackable value) {
 		return entries.put(key, value);
@@ -72,6 +84,7 @@ public class Nametable implements Stackable {
 
 	/**
 	 * Returns all identifiers present in the nametable.
+	 * @return All identifiers present in the nametable.
 	 */
 	public Set<Identifier> identifiers() {
 		return entries.keySet();
@@ -108,6 +121,7 @@ public class Nametable implements Stackable {
 		};
 	}
 
+	@Override
 	public Stackable copy() {
 		// hell fucking yes 'functional' programming
 		return mappingStream().map(x -> Map.entry(x.getKey().copy(), x.getValue().copy())).collect(() -> new Nametable(),

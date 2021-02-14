@@ -29,6 +29,7 @@ public final class Builtins {
 	private static class Random extends java.util.Random {
 		private static final long serialVersionUID = 1L;
 
+		@Override
 		public int next(int bits) {
 			return super.next(bits);
 		}
@@ -49,7 +50,11 @@ public final class Builtins {
 	/** The RNG used by SOF's builtin random functions. */
 	private static final Random sofRandom = new Random();
 
-	/** Find the most significant bit number of the number that is set. */
+	/**
+	 * Find the most significant bit number of the number that is set.
+	 * @param n The number to check.
+	 * @return The (binary) position of the most significant bit that is set (1).
+	 */
 	public static int mostSignificantSetBit(long n) {
 		if (n == 0)
 			return 0;
@@ -61,12 +66,16 @@ public final class Builtins {
 
 	/**
 	 * Implements SOF's random:int builtin function.
+	 * 
+	 * @param from The start value, inclusive.
+	 * @param to The end value, exclusive.
+	 * @return A random number between start (inclusive) and end (exclusive).
 	 */
-	public static IntPrimitive random(IntPrimitive from, IntPrimitive to) {
+	public static IntPrimitive random(final IntPrimitive from, final IntPrimitive to) {
 		final long start = from.value(), end = to.value(), range = end - start + 1;
 		// to arrive at a suitable number with less RNG calls, determine the msb of the
 		// range. This way, only rng values with these bits may be computed.
-		int rangeMsb = mostSignificantSetBit(range) + 1;
+		final int rangeMsb = mostSignificantSetBit(range) + 1;
 		long rnumber = 0;
 		do {
 			rnumber = sofRandom.nextL(rangeMsb);
@@ -76,6 +85,7 @@ public final class Builtins {
 
 	/**
 	 * Implements SOF's random:01 builtin function.
+	 * @return A random float between 0 (inclusive) and 1 (exclusive).
 	 */
 	public static FloatPrimitive random01() {
 		return FloatPrimitive.createFloatPrimitive(sofRandom.nextDouble());
@@ -83,8 +93,12 @@ public final class Builtins {
 
 	/**
 	 * Implements SOF's random:float builtin function.
+	 * 
+	 * @param _from The start value, inclusive.
+	 * @param _to The end value, exclusive.
+	 * @return A random number between start (inclusive) and end (exclusive).
 	 */
-	public static FloatPrimitive random(FloatPrimitive _from, FloatPrimitive _to) {
+	public static FloatPrimitive random(final FloatPrimitive _from, final FloatPrimitive _to) {
 		final double from = _from.value(), to = _to.value(),
 						interval = to - from;
 		return FloatPrimitive.createFloatPrimitive(
@@ -99,8 +113,12 @@ public final class Builtins {
 
 	/**
 	 * Implements SOF's convert:int builtin function.
+	 * 
+	 * @param toConvert The value to convert to integer.
+	 * @return An integer that was converted from the given value.
+	 * @throws IncompleteCompilerException If the value cannot be converted.
 	 */
-	public static IntPrimitive convertInt(Stackable toConvert) throws IncompleteCompilerException, CompilerException {
+	public static IntPrimitive convertInt(Stackable toConvert) throws IncompleteCompilerException {
 		if (toConvert instanceof FloatPrimitive) {
 			return IntPrimitive.createIntPrimitive(Math.round(((FloatPrimitive) toConvert).value()));
 		} else if (toConvert instanceof StringPrimitive) {
@@ -113,8 +131,12 @@ public final class Builtins {
 
 	/**
 	 * Implements SOF's convert:float builtin function.
+	 * 
+	 * @param toConvert The value to convert to float.
+	 * @return An float that was converted from the given value.
+	 * @throws IncompleteCompilerException If the value cannot be converted.
 	 */
-	public static FloatPrimitive convertFloat(Stackable toConvert) throws IncompleteCompilerException, CompilerException {
+	public static FloatPrimitive convertFloat(Stackable toConvert) throws IncompleteCompilerException {
 		if (toConvert instanceof StringPrimitive) {
 			return FloatPrimitive.createFloatFromString(((StringPrimitive) toConvert).value());
 		} else if (toConvert instanceof IntPrimitive) {
@@ -124,11 +146,14 @@ public final class Builtins {
 		
 		throw new IncompleteCompilerException("type");
 	}
-
 	/**
 	 * Implements SOF's convert:callable builtin function.
+	 * 
+	 * @param toConvert The value to convert to callable.
+	 * @return An callable that was converted from the given value.
+	 * @throws IncompleteCompilerException If the value cannot be converted.
 	 */
-	public static Stackable convertCallable(Stackable toConvert) throws IncompleteCompilerException, CompilerException {
+	public static Stackable convertCallable(Stackable toConvert) throws IncompleteCompilerException {
 		if (toConvert instanceof CodeBlock || toConvert instanceof SOFunction) {
 			return toConvert;
 		} else {
@@ -140,6 +165,10 @@ public final class Builtins {
 
 	/**
 	 * Implements SOF's convert:string builtin function.
+	 * 
+	 * @param toConvert The value to convert to string.
+	 * @return An string that was converted from the given value.
+	 * @throws IncompleteCompilerException If the value cannot be converted.
 	 */
 	public static StringPrimitive convertString(Stackable toConvert) throws IncompleteCompilerException {
 		return StringPrimitive.createStringPrimitive(toConvert.print());
@@ -152,6 +181,10 @@ public final class Builtins {
 
 	/**
 	 * Implements SOF's abs function of the sof.math module.
+	 * 
+	 * @param a The number to compute the absolute value of.
+	 * @return The absolute value of the argument.
+	 * @throws IncompleteCompilerException If the value is not a number type.
 	 */
 	public static Stackable abs(Stackable a) throws IncompleteCompilerException {
 		if (a instanceof FloatPrimitive)
@@ -164,6 +197,10 @@ public final class Builtins {
 
 	/**
 	 * Implements SOF's sin function of the sof.math module.
+	 * 
+	 * @param a The number to compute the sine of.
+	 * @return The sine of the argument.
+	 * @throws IncompleteCompilerException If the value is not a number type.
 	 */
 	public static FloatPrimitive sin(Stackable a) throws IncompleteCompilerException {
 		if (a instanceof FloatPrimitive)
@@ -175,6 +212,10 @@ public final class Builtins {
 
 	/**
 	 * Implements SOF's cos function of the sof.math module.
+	 * 
+	 * @param a The number to compute the cosine of.
+	 * @return The cosine of the argument.
+	 * @throws IncompleteCompilerException If the value is not a number type.
 	 */
 	public static FloatPrimitive cos(Stackable a) throws IncompleteCompilerException {
 		if (a instanceof FloatPrimitive)
@@ -186,6 +227,10 @@ public final class Builtins {
 
 	/**
 	 * Implements SOF's tan function of the sof.math module.
+	 * 
+	 * @param a The number to compute the tangent of.
+	 * @return The tangent of the argument.
+	 * @throws IncompleteCompilerException If the value is not a number type.
 	 */
 	public static FloatPrimitive tan(Stackable a) throws IncompleteCompilerException {
 		if (a instanceof FloatPrimitive)
@@ -197,6 +242,10 @@ public final class Builtins {
 
 	/**
 	 * Implements SOF's exp (e^x) function of the sof.math module.
+	 * 
+	 * @param a The number to compute the exponent of.
+	 * @return The exponent of the argument.
+	 * @throws IncompleteCompilerException If the value is not a number type.
 	 */
 	public static FloatPrimitive exp(Stackable a) throws IncompleteCompilerException {
 		if (a instanceof FloatPrimitive)
@@ -208,6 +257,10 @@ public final class Builtins {
 
 	/**
 	 * Implements SOF's ln (natural logarithm) function of the sof.math module.
+	 * 
+	 * @param a The number to compute the natural logarithm of.
+	 * @return The natural logarithm of the argument.
+	 * @throws IncompleteCompilerException If the value is not a number type.
 	 */
 	public static FloatPrimitive ln(Stackable a) throws IncompleteCompilerException {
 		if (a instanceof FloatPrimitive)
@@ -219,6 +272,11 @@ public final class Builtins {
 
 	/**
 	 * Implements SOF's log function of the sof.math module.
+	 * 
+	 * @param b The base of the logarithm.
+	 * @param a The number to compute the logarithm of.
+	 * @return The logarithm of a to the base b.
+	 * @throws IncompleteCompilerException If the values are not a number type.
 	 */
 	public static FloatPrimitive log(Stackable b, Stackable a) throws IncompleteCompilerException {
 		var base = (b instanceof FloatPrimitive) ? ((FloatPrimitive)b).value() : (b instanceof IntPrimitive) ? ((IntPrimitive)b).value() : Double.NaN;

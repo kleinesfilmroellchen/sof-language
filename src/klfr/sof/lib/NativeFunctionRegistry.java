@@ -30,49 +30,88 @@ public final class NativeFunctionRegistry {
 	 * interfaces
 	 */
 	public static interface NativeNArgFunction {
+		/**
+		 * A dummy function that doesn't do anything.
+		 */
 		public static Native0ArgFunction dummy = () -> {
 			return null;
 		};
 	}
 
+	/**
+	 * The signature for a native function of zero arguments.
+	 */
 	@FunctionalInterface
 	public static interface Native0ArgFunction extends NativeNArgFunction {
+		/**
+		 * Call the native function.
+		 * @return The result of the native function.
+		 * @throws IncompleteCompilerException If the native function fails.
+		 */
 		public Stackable call() throws IncompleteCompilerException;
 	}
 
+	/**
+	 * The signature for a native function of one argument.
+	 */
 	@FunctionalInterface
 	public static interface Native1ArgFunction extends NativeNArgFunction {
+		/**
+		 * Call the native function.
+		 * @param a The first argument to the native function.
+		 * @return The result of the native function.
+		 * @throws IncompleteCompilerException If the native function fails.
+		 */
 		public Stackable call(Stackable a) throws IncompleteCompilerException;
 	}
 
+	/**
+	 * The signature for a native function of two arguments.
+	 */
 	@FunctionalInterface
 	public static interface Native2ArgFunction extends NativeNArgFunction {
+		/**
+		 * Call the native function.
+		 * @param a The first argument to the native function.
+		 * @param b The second argument to the native function.
+		 * @return The result of the native function.
+		 * @throws IncompleteCompilerException If the native function fails.
+		 */
 		public Stackable call(Stackable a, Stackable b) throws IncompleteCompilerException;
 	}
 
+	/**
+	 * The signature for a native function of three arguments.
+	 */
 	@FunctionalInterface
 	public static interface Native3ArgFunction extends NativeNArgFunction {
+		/**
+		 * Call the native function.
+		 * @param a The first argument to the native function.
+		 * @param b The second argument to the native function.
+		 * @param c The third argument to the native function.
+		 * @return The result of the native function.
+		 * @throws IncompleteCompilerException If the native function fails.
+		 */
 		public Stackable call(Stackable a, Stackable b, Stackable c) throws IncompleteCompilerException;
 	}
 
 	private TreeMap<String, NativeNArgFunction> nativeFunctions = new TreeMap<>();
 
 	/**
-	 * Loads all native functions in the specified package.</br>
-	 * </br>
+	 * Loads all native functions in the specified package.<br/>
+	 * <br/>
 	 * 
 	 * This method will search through all classes in this package (including
 	 * subpackages) and load native functions from native function collection
 	 * classes. These are classes annotated with
 	 * {@link klfr.sof.lib.NativeFunctionCollection}.
 	 * 
-	 * @param package The package name. Its subpackages are searched as well.
+	 * @param packageName The package name. Its subpackages are searched as well.
 	 * @throws IOException  If any exception occurs, also in the class discovery an
 	 *                      reflection access process.
-	 * @throws SOFException If any exception occurs, also in the class discovery an
-	 *                      reflection access process.
 	 */
-	public void registerAllFromPackage(String packageName) throws IOException, SOFException {
+	public void registerAllFromPackage(String packageName) throws IOException {
 		try {
 			var classes = getClassesForPackage(packageName);
 			log.fine(String.format("In package %s found classes: %s", packageName, classes.toString()));
@@ -81,7 +120,7 @@ public final class NativeFunctionRegistry {
 			for (var clazz : toRegister) {
 				this.registerNativeFunctions(clazz);
 			}
-		} catch (IOException | URISyntaxException e) {
+		} catch (URISyntaxException e) {
 			throw new IOException(e);
 		}
 	}
@@ -90,8 +129,8 @@ public final class NativeFunctionRegistry {
 	 * Utility method to return all classes in a package given by its name. The subpackages are also searched.
 	 * @param pkgName The name of the package to be searched.
 	 * @return A list of class objects that are contained in the specified package.
-	 * @throws IOException
-	 * @throws URISyntaxException
+	 * @throws IOException If an I/O error occurred.
+	 * @throws URISyntaxException Should not happen.
 	 */
 	public static List<Class<?>> getClassesForPackage(final String pkgName) throws IOException, URISyntaxException {
 		final String pkgPath = pkgName.replace('.', '/');
@@ -151,8 +190,7 @@ public final class NativeFunctionRegistry {
 	 *              of this class are registered, whether the caller intended them
 	 *              to be registered or not.
 	 */
-	public void registerNativeFunctions(Class<?> clazz) throws SOFException {
-		try {
+	public void registerNativeFunctions(Class<?> clazz) {
 		// FP for da win
 		Arrays.stream(clazz.getDeclaredMethods())
 				// only public static methods, only methods without too many parameters
@@ -169,12 +207,6 @@ public final class NativeFunctionRegistry {
 				.entrySet().parallelStream().flatMap(NativeFunctionRegistry::methodRegistrationFlatMapFtor)
 				// add the methods to the function registry
 				.forEach(ftuple -> nativeFunctions.put(generateDescriptor(ftuple.getRight()), ftuple.getLeft()));
-		} catch (RuntimeException e) {
-			// this will catch the wrapped compiler exceptions
-			if (SOFException.class.isInstance(e.getCause())) {
-				throw (SOFException) e.getCause();
-			}
-		}
 	}
 
 	/**
@@ -195,43 +227,19 @@ public final class NativeFunctionRegistry {
 	 * This lambda function is only externalized to make Java recognize the return
 	 * type properly. -_-
 	 * 
-	 * @throws RuntimeException All compiler exceptions are wrapped in runtime exceptions,
-	 *                          so that they can escape normal stream functions.
+	 * Maps a given map entry with a number of arguments and its respective methods
+	 * to tuples that contain the method call wrapper to the left and the original method to the right.
 	 */
 	private static Stream<Tuple<NativeNArgFunction, Method>> methodRegistrationFlatMapFtor(
-			final Map.Entry<Integer, List<Method>> entry) throws RuntimeException {
+			final Map.Entry<Integer, List<Method>> entry) {
 		final var argcount = entry.getKey();
 		final var functions = entry.getValue().stream();
 		// Yes.
 		return switch (argcount) {
-			case 0 -> functions.map(m -> {
-				try {
-					return new Tuple<>(mcall0(m), m);
-				} catch (IncompleteCompilerException e) {
-					throw new RuntimeException(e);
-				}
-			});
-			case 1 -> functions.map(m -> {
-				try {
-					return new Tuple<>(mcall1(m), m);
-				} catch (IncompleteCompilerException e) {
-					throw new RuntimeException(e);
-				}
-			});
-			case 2 -> functions.map(m -> {
-				try {
-					return new Tuple<>(mcall2(m), m);
-				} catch (IncompleteCompilerException e) {
-					throw new RuntimeException(e);
-				}
-			});
-			case 3 -> functions.map(m -> {
-				try {
-					return new Tuple<>(mcall3(m), m);
-				} catch (IncompleteCompilerException e) {
-					throw new RuntimeException(e);
-				}
-			});
+			case 0 -> functions.map(m -> new Tuple<>(mcall0(m), m));
+			case 1 -> functions.map(m -> new Tuple<>(mcall1(m), m));
+			case 2 -> functions.map(m -> new Tuple<>(mcall2(m), m));
+			case 3 -> functions.map(m -> new Tuple<>(mcall3(m), m));
 			default -> Stream.<Tuple<NativeNArgFunction, Method>>empty();
 		};
 		
@@ -241,7 +249,7 @@ public final class NativeFunctionRegistry {
 	 * Wrapper for 0 argument native function call that redirects all invocation
 	 * errors to CompilerException.
 	 */
-	private static Native0ArgFunction mcall0(Method function) throws IncompleteCompilerException {
+	private static Native0ArgFunction mcall0(Method function) {
 		return () -> {
 			try {
 				return (Stackable) function.invoke(null);
@@ -265,7 +273,7 @@ public final class NativeFunctionRegistry {
 	 * Wrapper for 1 argument native function call that redirects all invocation
 	 * errors to CompilerException.
 	 */
-	private static Native1ArgFunction mcall1(Method function) throws IncompleteCompilerException {
+	private static Native1ArgFunction mcall1(Method function) {
 		return (a) -> {
 			try {
 				return (Stackable) function.invoke(null, a);
@@ -289,7 +297,7 @@ public final class NativeFunctionRegistry {
 	 * Wrapper for 2 argument native function call that redirects all invocation
 	 * errors to CompilerException.
 	 */
-	private static Native2ArgFunction mcall2(Method function) throws IncompleteCompilerException {
+	private static Native2ArgFunction mcall2(Method function) {
 		return (a, b) -> {
 			try {
 				return (Stackable) function.invoke(null, a, b);
@@ -313,7 +321,7 @@ public final class NativeFunctionRegistry {
 	 * Wrapper for 3 argument native function call that redirects all invocation
 	 * errors to CompilerException.
 	 */
-	private static Native3ArgFunction mcall3(Method function) throws IncompleteCompilerException {
+	private static Native3ArgFunction mcall3(Method function) {
 		return (a, b, c) -> {
 			try {
 				return (Stackable) function.invoke(null, a, b, c);

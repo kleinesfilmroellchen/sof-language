@@ -18,8 +18,18 @@ import klfr.sof.exceptions.CompilerException;
 import klfr.sof.exceptions.SOFException;
 import klfr.sof.lib.*;
 
+/**
+ * The SOF Language standard command line interface.
+ * This implements the SOF file interpreter and the REPL.
+ * It is the most important main class in the project.
+ * 
+ * @author klfr
+ */
 public class CLI {
 
+	/**
+	 * The SOF info string printed as the first output before the REPL starts.
+	 */
 	public static final String INFO_STRING = String.format(R.getString("sof.cli.version"), Interpreter.VERSION,
 			// awww yesss, the Java Time API 😋
 			DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).format(buildTime().atZone(ZoneId.systemDefault())));
@@ -46,10 +56,9 @@ public class CLI {
 	 *                                      encoding is not supported.
 	 * @throws IOException                  If any I/O operation fails
 	 *                                      unrecoverable.
-	 * @throws SOFException
 	 */
 	public static void main(String[] args)
-			throws InvocationTargetException, UnsupportedEncodingException, IOException, SOFException {
+			throws InvocationTargetException, UnsupportedEncodingException, IOException {
 		// setup console info logging
 		LogManager.getLogManager().reset();
 		final var bl = Logger.getLogger("");
@@ -133,18 +142,17 @@ public class CLI {
 		}
 
 		// main code starts here
+		try {
+			nativeFunctionRegistry.registerAllFromPackage("klfr.sof.lib");
 
-		nativeFunctionRegistry.registerAllFromPackage("klfr.sof.lib");
+			// execute
+			runSOF(opt, io);
 
-		// execute
-		final var error = runSOF(opt, io);
-
-		if (error.isPresent()) {
-			final var t = error.get();
-			log.log(Level.SEVERE,
-					String.format("Uncaught Interpreter exception: %s%nStack trace:%n%s", t.getLocalizedMessage(),
-							Arrays.asList(t.getStackTrace()).stream().map(ste -> ste.toString())
-									.reduce((a, b) -> a + System.lineSeparator() + b).orElse("")));
+		} catch (CompilerException error){
+				log.log(Level.SEVERE,
+						String.format("Uncaught Interpreter exception: %s%nStack trace:%n%s", error.getLocalizedMessage(),
+								Arrays.asList(error.getStackTrace()).stream().map(ste -> ste.toString())
+										.reduce((a, b) -> a + System.lineSeparator() + b).orElse("")));
 		}
 	}
 
@@ -155,11 +163,10 @@ public class CLI {
 	 *            and what other parameters apply to the execution.
 	 * @param io  The I/O interface. Will be passed to any interpreters and is also
 	 *            used internally by this method.
-	 * @return An exception, if something went wrong, or nothing, if everything went
-	 *         fine.
-	 * @throws CompilerException for such compiler exceptions that should only happen if the user is not responsible for them.
+	 * @throws CompilerException If the interpreter encounters an error.
+	 * @throws IOException If an I/O error occurs, e.g. reading a source code file.
 	 */
-	public static Optional<Throwable> runSOF(Options clo, IOInterface io) throws CompilerException {
+	public static void runSOF(Options clo, IOInterface io) throws CompilerException, IOException {
 		io.debug = (clo.flags & Options.DEBUG) > 0;
 		log.config(() -> String.format("FLAG :: DEBUG %5s", io.debug ? "on" : "off"));
 		switch (clo.executionType) {
@@ -171,7 +178,7 @@ public class CLI {
 					File f = new File(filename);
 					files.add(f);
 				}
-				return files.stream().map(file -> {
+				final var throwable = files.stream().map(file -> {
 					try {
 						log.log(Level.INFO, () -> String.format("EXECUTE :: %30s", file));
 						if ((clo.flags & Options.ONLY_PREPROCESSOR) > 0) {
@@ -187,7 +194,7 @@ public class CLI {
 				})
 						// The above map will execute on all readers and then return null, if the
 						// execution method just exited normally. If, however, some exception was
-						// raised, whether controlled (CompilerException, IllegalArgumentException etc.)
+						// raised, whether controlled (CompilerException, IOException etc.)
 						// or not (ArrayIndexOutOfBoundsException, RuntimeException), the Throwable is
 						// returned. Thus, in the first step, we "map" all readers to a possibly null
 						// Throwable. The filter then removes all nulls with the instanceof check. We
@@ -196,16 +203,22 @@ public class CLI {
 						// need: return an Optional<Throwable> if any error occurred, or an empty
 						// Optional otherwise. I call all of this "Java do notation". Praise Haskell!
 						.filter(val -> val instanceof Throwable).findFirst();
+				
+				// error handling
+				if (throwable.isPresent()) {
+					final var error = throwable.get();
+					if (error instanceof CompilerException) {
+						throw (CompilerException) error;
+					} else if (error instanceof IOException) {
+						throw (IOException) error;
+					}
+					throw new RuntimeException("Unhandled exception in executing SOF.", error);
+				}
 			}
 			case Literal: {
 				//// Single literal to be executed
-				try {
-					CLI.doFullExecution(new StringReader(clo.executionStrings.get(0)), new Interpreter(io,
-							nativeFunctionRegistry), io, clo.flags);
-				} catch (Throwable t) {
-					io.println(t.getLocalizedMessage());
-					return Optional.of(t);
-				}
+				CLI.doFullExecution(new StringReader(clo.executionStrings.get(0)), new Interpreter(io,
+						nativeFunctionRegistry), io, clo.flags);
 				break;
 			}
 			case Interactive: {
@@ -263,53 +276,59 @@ public class CLI {
 				break;
 			}
 		}
-		return Optional.empty();
 	}
 
 	/**
-	 * Does full execution on SOF source code given the environment.
+	 * Does full execution on SOF source code given the environment. This takes a file to read code from.
 	 * 
 	 * @param codeSource  A file that points to SOF source code.
 	 * @param interpreter The interpreter to use for the execution.
 	 * @param io          The Input-Output interface that the full execution should
 	 *                    use.
 	 * @param flags       The flags passed to the program on the command line.
+	 * 
+	 * @throws CompilerException If the execution of the code fails.
+	 * @throws IOException If the file cannot be read, for example, it does not exist.
 	 */
 	public static void doFullExecution(File codeSource, Interpreter interpreter, IOInterface io, int flags)
-			throws Exception {
+			throws IOException, CompilerException {
 		log.entering(CLI.class.getCanonicalName(), "doFullExecution");
 		String code = "";
-		try {
-			final var codeStream = new FileReader(codeSource, Charset.forName("utf-8"));
-			final StringWriter writer = new StringWriter();
-			codeStream.transferTo(writer);
-			codeStream.close();
-			code = writer.getBuffer().toString();
-		} catch (IOException e) {
-			throw new Exception("Unknown exception occurred during input reading.", e);
-		}
+		final var codeStream = new FileReader(codeSource, Charset.forName("utf-8"));
+		final StringWriter writer = new StringWriter();
+		codeStream.transferTo(writer);
+		codeStream.close();
+		code = writer.getBuffer().toString();
 		doFullExecution(codeSource, code, interpreter, io, flags);
 	}
 
-	public static void doFullExecution(Reader codeStream, Interpreter interpreter, IOInterface io, int flags) throws Exception {
+	/**
+	 * Does full execution on SOF source code given the environment. This takes a reader as a code source.
+	 * 
+	 * @param codeStream  A reader that reads SOF source code.
+	 * @param interpreter The interpreter to use for the execution.
+	 * @param io          The Input-Output interface that the full execution should
+	 *                    use.
+	 * @param flags       The flags passed to the program on the command line.
+	 * 
+	 * @throws CompilerException If the execution of the code fails.
+	 * @throws IOException If the file cannot be read, for example, it does not exist.
+	 */
+	public static void doFullExecution(Reader codeStream, Interpreter interpreter, IOInterface io, int flags) throws IOException, CompilerException {
 		log.entering(CLI.class.getCanonicalName(), "doFullExecution");
 		// Because this file is never read, it is safe to create it with a placeholder name that indicates a literal string from a reader.
 		final var dummyFile = new File("<literal>");
 		String code = "";
-		try {
-			final StringWriter writer = new StringWriter();
-			codeStream.transferTo(writer);
-			code = writer.getBuffer().toString();
-		} catch (IOException e) {
-			throw new Exception("Unknown exception occurred during input reading.", e);
-		}
+		final StringWriter writer = new StringWriter();
+		codeStream.transferTo(writer);
+		code = writer.getBuffer().toString();
 		doFullExecution(dummyFile, code, interpreter, io, flags);
 	}
 
 	/**
 	 * Handler for the common part of all full execution routines; retrieves finished SOF source code and a "dummy" file that is never read.
 	 */
-	private static void doFullExecution(File fdummy, String code, Interpreter interpreter, IOInterface io, int flags) throws Exception {
+	private static void doFullExecution(File fdummy, String code, Interpreter interpreter, IOInterface io, int flags) throws IOException, CompilerException {
 		// if no preprocessing flag NOT set
 		if ((flags & Options.NO_PREPROCESSOR) == 0)
 			code = Preprocessor.preprocessCode(code);
@@ -346,6 +365,7 @@ public class CLI {
 	 * the preamble code if necessary.
 	 * 
 	 * @param interpreter The interpreter on which the preamble should be run.
+	 * @throws CompilerException If the preamble encounters an error when executing.
 	 */
 	public static void runPreamble(Interpreter interpreter) throws CompilerException {
 		// parse preamble if not yet done
@@ -374,25 +394,26 @@ public class CLI {
 	 * Runs the SOF preprocessor on the reader and prints the result to the given IO
 	 * interface output
 	 * 
+	 * @param io The I/O interface to be used for printing out the preprocessor result.
 	 * @param reader A reader that reads SOF source code.
+	 * @throws IOException If an error occurs when reading the input.
 	 */
-	public static void runPreprocessor(Reader reader, IOInterface io) throws Exception {
+	public static void runPreprocessor(Reader reader, IOInterface io) throws IOException {
 		String code = "";
 		try {
 			StringWriter writer = new StringWriter();
 			reader.transferTo(writer);
 			code = writer.getBuffer().toString();
 		} catch (IOException e) {
-			throw new Exception("Unknown exception occurred during input reading.", e);
+			throw new IOException("Unknown exception occurred during input reading.", e);
 		}
 		io.print(Preprocessor.preprocessCode(code));
 	}
 
-	public static void exitUnnormal(int status) {
-		System.out.println("So long, and thank's for all the fish...");
-		System.exit(status);
-	}
-
+	/**
+	 * Return the build time of SOF, i.e. the last time that the CLI class file was modified.
+	 * @return the build time of SOF, i.e. the last time that the CLI class file was modified.
+	 */
 	public static Instant buildTime() {
 		try {
 			URI classuri = CLI.class.getClassLoader()

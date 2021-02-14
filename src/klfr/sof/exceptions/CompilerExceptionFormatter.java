@@ -18,6 +18,9 @@ import klfr.sof.Tokenizer.TokenizerState;
 public class CompilerExceptionFormatter {
 	private static final String EXCEPTION_FORMAT = "%s Error in file %s line %d at index %d:%n %s%n %s%n    %s";
 	
+	/**
+	 * The maximum length of the outputted source code.
+	 */
 	public static final int EXPRESSION_OUTPUT_LEN = 70;
 	
 	/**
@@ -100,8 +103,15 @@ public class CompilerExceptionFormatter {
 		return (EXPRESSION_OUTPUT_LEN / 2);
 	}
 
+	/**
+	 * The compiler exception that this formatter is using to produce formatted output.
+	 */
 	public final CompilerException exception;
 
+	/**
+	 * Creates a new formatter for the given exception.
+	 * @param exception The exception that this formatter will format.
+	 */
 	public CompilerExceptionFormatter(CompilerException exception) {
 		this.exception = exception;
 	}

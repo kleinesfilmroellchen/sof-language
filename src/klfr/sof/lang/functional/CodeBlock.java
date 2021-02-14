@@ -3,12 +3,28 @@ package klfr.sof.lang.functional;
 import klfr.sof.ast.TokenListNode;
 import klfr.sof.lang.*;
 
+/**
+ * The most basic form of callable data in SOF.
+ * A code block is a collection of SOF tokens (statements) enclosed by <code>{ }</code> in SOF source code.
+ * Its execution is delayed and manually triggered by the user via some call instruction, such as {@code .} .<br/><br/>
+ * 
+ * Internally, a code block is just holds a reference to a list of tokens, i.e. a part of the AST.
+ * 
+ * @author klfr
+ */
 @StackableName("Codeblock")
 public class CodeBlock implements Stackable {
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * The code of this code block, as an AST node that contains a list of other nodes (tokens).
+	 */
 	public final TokenListNode code;
 
+	/**
+	 * Create a new code block based on the given AST.
+	 * @param code The AST list of nodes that this code block 
+	 */
 	public CodeBlock(TokenListNode code) {
 		this.code = code;
 	}
@@ -36,7 +52,7 @@ public class CodeBlock implements Stackable {
 
 	@Override
 	public boolean equals(Object obj) {
-		return obj instanceof CodeBlock ? this.equals((CodeBlock)obj): false;
+		return obj instanceof CodeBlock ? this.equals((CodeBlock)obj) : false;
 	}
 
 	@Override

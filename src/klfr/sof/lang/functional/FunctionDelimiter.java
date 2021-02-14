@@ -14,6 +14,9 @@ import klfr.sof.lang.*;
 @StackableName("Function Nametable")
 public class FunctionDelimiter extends Nametable {
 	private static final long serialVersionUID = 1L;
+	/**
+	 * The return value of the function that this function delimiter is the nametable of.
+	 */
 	public Optional<Stackable> returnValue = Optional.empty();
 
 	@Override

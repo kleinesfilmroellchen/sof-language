@@ -11,6 +11,9 @@ public class SOFunction extends CodeBlock {
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * The number of arguments that this function has.
+	 */
 	public final long arguments;
 
 	/**
@@ -34,6 +37,13 @@ public class SOFunction extends CodeBlock {
 		};
 	}
 
+	/**
+	 * Create a new SOF function based on the given code block.
+	 * This is a utility for the interpreter because functions in SOF programming are created from code blocks.
+	 * @param origin The code block whose code is to be copied as this function's behavior.
+	 * @param arguments The number of arguments to this function.
+	 * @return A new SOF function with the given code block tokens as the behavior and the given number of arguments.
+	 */
 	public static SOFunction fromCodeBlock(CodeBlock origin, int arguments) {
 		return new SOFunction(origin.code, arguments);
 	}

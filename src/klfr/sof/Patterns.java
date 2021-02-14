@@ -48,7 +48,7 @@ public final class Patterns {
 	 * Identifier pattern. An identifier is any unicode letter possibly followed by
 	 * more unicode letters, numbers or the punctuation {@code : _ '} Note that
 	 * using <code>\p{L}</code> allows for inter-language identifiers; one could
-	 * write variable names completely with Chinese logographs, for example.
+	 * write variable names completely with Han logographs ("Chinese characters"), for example.
 	 */
 	public static final Pattern identifierPattern = Pattern.compile("\\p{L}[\\p{L}0-9_'\\:]*");
 	/**
@@ -78,8 +78,14 @@ public final class Patterns {
 	 * "^" in MULTILINE mode.
 	 */
 	public static final Pattern nlPat = Pattern.compile("^", Pattern.MULTILINE);
+	/**
+	 * Pattern for a line break.
+	 */
 	public static final Pattern lineBreakPattern = Pattern.compile("\\R");
 
+	/**
+	 * Format of the format specifiers in SOF format strings.
+	 */
 	public static final Pattern formatSpecifierPattern = Pattern.compile("(\\%n)|\\%([\\<\\^\\+ \\#0]+)?([1-9][0-9]*)?(?:\\.([1-9][0-9]*))?([diboxXefgs])");
 
 }
