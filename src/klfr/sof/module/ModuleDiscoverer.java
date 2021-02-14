@@ -16,7 +16,7 @@ import klfr.sof.exceptions.*;
  */
 public class ModuleDiscoverer {
 	/** The default directory of the standard library. This value facilitates development. */
-	public static final String DEFAULT_STDLIB_DIRECTORY = "./bin/klfr/sof/lib";
+	public static final String DEFAULT_STDLIB_DIRECTORY = "./build/out/bin/klfr/sof/lib";
 	/** Allowed file extensions, tried in the given order. */
 	public static final List<String> EXTENSIONS = List.of("sof", "stackof");
 	private static final Logger log = Logger.getLogger(ModuleDiscoverer.class.getCanonicalName());

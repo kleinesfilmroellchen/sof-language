@@ -293,6 +293,21 @@ public final class Builtins {
 		throw new IncompleteCompilerException("type");
 	}
 
+	/**
+	 * Implements SOF's sqrt function of the sof.math module.
+	 * @param a The element to be square rooted.
+	 * @return The square root of the argument.
+	 * @throws IncompleteCompilerException If the value is not a number type.
+	 */
+	public static Stackable sqrt(Stackable a) throws IncompleteCompilerException {
+		if (a instanceof FloatPrimitive) {
+			return FloatPrimitive.createFloatPrimitive(Math.sqrt(((FloatPrimitive)a).value()));
+		} else if (a instanceof IntPrimitive) {
+			return FloatPrimitive.createFloatPrimitive(Math.sqrt(((IntPrimitive)a).value()));
+		}
+		throw new IncompleteCompilerException("type");
+	}
+
 	//#endregion Math
 }
 

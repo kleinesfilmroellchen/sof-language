@@ -14,6 +14,8 @@
 
 { "klfr.sof.lib.Builtins#log(Stackable,Stackable)" nativecall return } 2 function log dexport
 
+{ "klfr.sof.lib.Builtins#sqrt(Stackable)" nativecall return } 1 function sqrt dexport
+
 3.1415926535897932384626433832795 dup
 PI dexport π dexport
 
