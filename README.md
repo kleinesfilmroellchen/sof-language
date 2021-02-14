@@ -10,17 +10,17 @@ SOF is written in Java 15 (cutting edge!) and requires no libraries outside the 
 
 ### Installation and CLI usage
 
-This is a Gradle project using the Java Application plugin with the module system and JUnit Jupiter tests. The usual Gradle tasks for these situations exist and have not been renamed/added to. As a quick reference: Use `gradlew build` to run the full build including tests. Run `gradlew test` to run the tests. Use `gradlew javadoc` to build the javadoc. All building happens into the build/ subfolders. Exception: The main Java class files are built into bin/.
+This is a Gradle project using the Java Application plugin with the module system and JUnit Jupiter tests. The usual Gradle tasks for these situations exist and have not been renamed/added to. As a quick reference: Use `gradlew build` to run the full build including tests. Run `gradlew test` to run the tests. Use `gradlew javadoc` to build the javadoc. All building happens into the build/ subfolders.
 
-Use the following command line to run SOF. `gradlew run` DOES NOT WORK. For whatever reason, it instantly reads a file terminator and exits.
+Use the following command line to run SOF. `gradlew run` works but is somewhat buggy.
 
 ```
-java -p bin -m sof/klfr.sof.cli.CLI [arguments]
+java -p ./build/out/bin -m sof/klfr.sof.cli.CLI [arguments]
 ```
 
-assuming that you have java 15+ on your $PATH and you are inside the root folder of the project. Replace \[arguments\] with whatever arguments you want to give to SOF.
+assuming that you have Java 15+ on your $PATH and you are inside the root folder of the project. Replace \[arguments\] with whatever arguments you want to give to SOF.
 
-Alternatively, you can use the Gradle-built distribution zip/tar in build/distributions/. This one comes with handy scripts for Windows and Linux that auto-detect your Java.
+Alternatively, you can use the Gradle-built distributions in build/distributions/. This one comes with handy scripts for Windows and Linux that auto-detect your Java. It however currently does not work with the module system, see #6.
 
 The command line tool currently supports the following arguments and options (taken from help output):
 
