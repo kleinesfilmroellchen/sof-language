@@ -212,6 +212,10 @@ public class Interpreter implements Serializable {
 				doBinaryOperation(BuiltinOperations::divide);
 				return true;
 			}
+			case Modulus: {
+				doBinaryOperation(BuiltinOperations::modulus);
+				return true;
+			}
 			case Concatenate: {
 				doBinaryOperation((a, b) -> StringPrimitive.createStringPrimitive(a.print() + b.print()));
 				return true;

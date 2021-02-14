@@ -95,6 +95,7 @@ public final class NativeFunctionRegistry {
 	 */
 	public static List<Class<?>> getClassesForPackage(final String pkgName) throws IOException, URISyntaxException {
 		final String pkgPath = pkgName.replace('.', '/');
+		log.fine(String.format("get classes from path %s", pkgPath));
 		final URI pkg = Objects.requireNonNull(ClassLoader.getSystemClassLoader().getResource(pkgPath)).toURI();
 		final ArrayList<Class<?>> allClasses = new ArrayList<Class<?>>();
   

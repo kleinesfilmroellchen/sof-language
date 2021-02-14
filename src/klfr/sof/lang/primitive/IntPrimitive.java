@@ -94,6 +94,13 @@ public class IntPrimitive extends Primitive {
    public IntPrimitive divide(IntPrimitive other) throws ArithmeticException {
       return createIntPrimitive(this.value / other.value);
    }
+   
+	public IntPrimitive modulus(IntPrimitive other) throws ArithmeticException {
+		if (other.value == 0) {
+			throw new ArithmeticException(String.format("Modulus by zero: %f mod %f", this.value, other.value));
+		}
+		return this.value == 0 ? this : createIntPrimitive(this.value % other.value);
+	}
 
    public IntPrimitive multiply(IntPrimitive other) {
       return this.value == 1 ? other : (other.value == 1 ? this : createIntPrimitive(this.value * other.value));

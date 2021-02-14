@@ -57,6 +57,13 @@ public class FloatPrimitive extends Primitive {
 		return other.v == 0 ? this : createFloatPrimitive(this.v / other.v);
 	}
 
+	public FloatPrimitive modulus(FloatPrimitive other) throws ArithmeticException {
+		if (other.v == 0) {
+			throw new ArithmeticException(String.format("Modulus by zero: %f mod %f", this.v, other.v));
+		}
+		return this.v == 0 ? this : createFloatPrimitive(this.v % other.v);
+	}
+
 	public FloatPrimitive multiply(FloatPrimitive other) {
 		return this.v == 1 ? other : (other.v == 1 ? this : createFloatPrimitive(this.v * other.v));
 	}

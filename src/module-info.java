@@ -2,6 +2,7 @@ open module sof {
 	requires java.base;
 	requires java.logging;
 	exports klfr.sof;
+	exports klfr.sof.lib;
 }
 // opens klfr.sof.test.source;
 

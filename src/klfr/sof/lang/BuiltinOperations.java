@@ -39,6 +39,27 @@ public final class BuiltinOperations {
 		}
 	}
 
+	
+	public static final Stackable modulus(Stackable a, Stackable b) throws IncompleteCompilerException {
+		try {
+			if (a instanceof IntPrimitive && b instanceof IntPrimitive) {
+				return ((IntPrimitive) a).modulus((IntPrimitive) b);
+			}
+			if (a instanceof FloatPrimitive && b instanceof FloatPrimitive) {
+				return ((FloatPrimitive) a).modulus((FloatPrimitive) b);
+			}
+			if (a instanceof FloatPrimitive && b instanceof IntPrimitive) {
+				return FloatPrimitive.createFloatPrimitive(((FloatPrimitive) a).value() % ((IntPrimitive) b).value());
+			}
+			if (b instanceof FloatPrimitive && a instanceof IntPrimitive) {
+				return FloatPrimitive.createFloatPrimitive(((IntPrimitive) a).value() % ((FloatPrimitive) b).value());
+			}
+			throw new IncompleteCompilerException("type", "type.modulus", a.typename(), b.typename());
+		} catch (ArithmeticException e) {
+			throw new IncompleteCompilerException("arithmetic", "mod-by-zero");
+		}
+	}
+
 	public static final Stackable add(Stackable a, Stackable b) throws IncompleteCompilerException {
 		if (a instanceof IntPrimitive && b instanceof IntPrimitive) {
 			return ((IntPrimitive) a).add((IntPrimitive) b);

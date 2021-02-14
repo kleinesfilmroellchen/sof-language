@@ -49,8 +49,8 @@ sourceSets {
 		resources {
 			srcDirs = ['src']
 		}
-		output.resourcesDir = file('bin')
-		java.outputDir = file('bin')
+		output.resourcesDir = file('build/out/bin')
+		java.outputDir = file('build/out/bin')
 	}
 
 	test {

@@ -21,7 +21,7 @@ public class PrimitiveTokenNode extends Node {
 		/** The <code>/</code> primitive token. */
 		Divide("/"),
 		/** The <code>%</code> primitive token. */
-		// Modulus("%"),
+		Modulus("%"),
 
 		/** The <code>cat</code> primitive token. */
 		Concatenate("cat"),
