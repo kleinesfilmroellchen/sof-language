@@ -72,6 +72,10 @@ application {
 	applicationDefaultJvmArgs = ["-Dfile.encoding=UTF-8"]
 }
 
+tasks.named('run') {
+	standardInput = System.in
+}
+
 tasks.named('test') {
 	// Use junit platform for unit tests.
 	useJUnitPlatform()
