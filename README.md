@@ -203,36 +203,3 @@ Just to be pretentious; Antoine de Saint-Exupéry is famously quoted on
 > Perfection is achieved, not when there is nothing more to add, but when there is nothing left to take away.
 
 I think that SOF is an excellent example of this. I cannot currently think of anything that you can take away from SOF without making it inferior in capability (or, at least, severely less usable, like removing the function PT would do, for example). It is very surprising indeed that such a simple thing as a reverse-polish notation language with three token types and literally less than 30 lines of syntax definition could be as feature-rich and capable as any other modern programming language, even if with odd syntax and inferior speed. (The latter is down to me being simply not capable of writing an efficient interpreter or any sort of compiler. PostScript and Forth prove that postfix languages can be extremely performant.)
-
-## 5. EBNF Syntax definition
-
-This formal syntax definition utilizes standard Extended Backus-Naur Form formal language grammar notation. An entire SOF program needs to conform to the syntax of `SofProgram`. Note that this syntax may be incorrect and will be rechecked with the language in the future.
-
-Identifiers are quite restricted in the characters they can contain. The characters `'`, `:` and `_` are to be used for word separation or language conventions that denote return type, argument count etc. [see here](https://github.com/kleinesfilmroellchen/sof-language/wiki/Programming-conventions). However, all normal Unicode alphabetical characters are allowed, i.e. every character that is used in some language's normal text. SOF is therefore suited for international use by design. In contrast to identifiers, primitive tokens may contain any characters but are most often valid identifiers, as well.
-
-```ebnf
-SofProgram = { Token } ;
-Token = "def" | "dup" | "pop" | "swap" | "write" | "writeln" | "input" | "inputln"
-      | "if" | "else" | "elseif" | "while" | "switch"
-      | "+" | "-" | "*" | "/" | "%" | "and" | "or" | "xor" | "not" | "." | ":"
-      | "<" | "<=" | ">" | ">=" | "=" | "/="
-      | "[" | "]"
-      | Number | String | Boolean
-      | Identifier | CodeBlock ;
-Identifier = ? Unicode "Alphabetical" ? { ? Unicode "Alphabetical" ? | DecimalDigits | "_" | "'" | ":" } ;
-CodeBlock = "{" { Token } "}" ;
-(* Literals *)
-String = '"' { ? any character ? '\"' } '"' ;
-Boolean = "true" | "false" | "True" | "False" ;
-Number = [ "+" | "-" ] ( Integer | Decimal ) ;
-Integer = "0" ( "h" | "x" ) HexDigits { HexDigits }
-        | [ "0d" ] DecimalDigits { DecimalDigits }
-	| "0o" OctalDigits { DecimalDigits }
-	| "0b" BinaryDigits { BinaryDigits } ;
-Decimal = DecimalDigits { DecimalDigits } "." DecimalDigits { DecimalDigits }
-          [ ("e" | "E") ( "+" | "-" ) DecimalDigits { DecimalDigits } ] ;
-BinaryDigits = "0" | "1" ;
-OctalDigits = BinaryDigits | "2" | "3" | "4" | "5" | "6" | "7" ;
-DecimalDigits = OctalDigits | "8" | "9" ;
-HexDigits = DecimalDigits | "a" | "b" | "c" | "d" | "e" | "f" | "A" | "B" | "C" | "D" | "E" | "F" ;
-```
