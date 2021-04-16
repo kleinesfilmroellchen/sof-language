@@ -1,11 +1,15 @@
 package klfr.sof.module;
 
 import java.io.*;
+import java.nio.file.*;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.logging.*;
 
 import klfr.sof.*;
+import klfr.sof.cli.CLI;
 import klfr.sof.exceptions.*;
 
 /**
@@ -15,8 +19,8 @@ import klfr.sof.exceptions.*;
  * {@link klfr.sof.Parser} system for parsing modules.
  */
 public class ModuleDiscoverer {
-	/** The default directory of the standard library. This value facilitates development. */
-	public static final String DEFAULT_STDLIB_DIRECTORY = "./build/out/bin/klfr/sof/lib";
+	/** The default directory of the standard library, relative to the base install directory. */
+	private static final String DEFAULT_STDLIB_DIRECTORY = "lib";
 	/** Allowed file extensions, tried in the given order. */
 	public static final List<String> EXTENSIONS = List.of("sof", "stackof");
 	private static final Logger log = Logger.getLogger(ModuleDiscoverer.class.getCanonicalName());
@@ -50,7 +54,7 @@ public class ModuleDiscoverer {
 	 */
 	public ModuleDiscoverer(final ModuleRegistry registry) {
 		this.registry = registry;
-		this.stdlibBaseDirectory = new File(DEFAULT_STDLIB_DIRECTORY);
+		this.stdlibBaseDirectory = getDefaultStdlibDirectory();
 	}
 
 	/**
@@ -70,10 +74,36 @@ public class ModuleDiscoverer {
 	 */
 	public ModuleDiscoverer() {
 		this.registry = new ModuleRegistry();
-		this.stdlibBaseDirectory = new File(DEFAULT_STDLIB_DIRECTORY);
+		this.stdlibBaseDirectory = getDefaultStdlibDirectory();
 	}
 
 	// #endregion Constructors
+
+	/**
+	 * Helper method to get the a default standard library directory.
+	 * This is complicated because it needs to be computed from the code location.
+	 * @return A file pointing to the root directory of the standard library.
+	 */
+	public static File getDefaultStdlibDirectory() {
+		try {
+			var main = Interpreter.class.getClassLoader().getResource(Interpreter.class.getCanonicalName().replace(".", "/") + ".class").toURI();
+			log.finest(() -> main.toString());
+			if ("file".equalsIgnoreCase(main.getScheme())) {
+				final var intpPath = Path.of(main).toAbsolutePath();
+				// HINT: This depends on the location of the Interpreter class, which is unlikely to change in the near future.
+				final var libPath = intpPath.getParent().getParent().getParent().getParent().getParent().getParent().resolve(DEFAULT_STDLIB_DIRECTORY).toAbsolutePath();
+				return libPath.toFile();
+			} else if ("jar".equalsIgnoreCase(main.getScheme())) {
+				// the host of a jar URI is the path to the containing jar
+				final var jarPath = Path.of(Path.of(main).getFileSystem().toString());
+				log.finest(() -> jarPath.toString());
+				return jarPath.getParent().resolve(DEFAULT_STDLIB_DIRECTORY).toAbsolutePath().toFile();
+			}
+			throw new RuntimeException("Interpreter class in an unsupported resource type. Run SOF from a JAR or from class files.");
+		} catch (URISyntaxException e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 	/**
 	 * Retrieves the specified module for the specified requesting source file

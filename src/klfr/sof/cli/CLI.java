@@ -17,6 +17,7 @@ import klfr.sof.*;
 import klfr.sof.exceptions.CompilerException;
 import klfr.sof.exceptions.SOFException;
 import klfr.sof.lib.*;
+import klfr.sof.module.ModuleDiscoverer;
 
 /**
  * The SOF Language standard command line interface.
@@ -372,7 +373,7 @@ public class CLI {
 		if (preambleCode == null) {
 			try {
 				// get code
-				final var pStream = CLI.class.getModule().getClassLoader().getResource("klfr/sof/lib/preamble.sof").openStream();
+				final var pStream = new FileInputStream(new File(ModuleDiscoverer.getDefaultStdlibDirectory(), "preamble.sof"));
 				final var pReader = new InputStreamReader(pStream, Charset.forName("utf-8"));
 				final var pWriter = new StringWriter();
 				pReader.transferTo(pWriter);
