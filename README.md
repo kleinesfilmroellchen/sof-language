@@ -1,3 +1,5 @@
+[![CodeQL](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/codeql-analysis.yml)
+
 # SOF - Stack with Objects and Functions
 
 An experimental fully stack-based reverse-polish-notation functional and object-oriented programming language concieved and implemented by kleinesfilmröllchen.
