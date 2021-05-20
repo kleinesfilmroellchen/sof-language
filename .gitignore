@@ -24,13 +24,11 @@ bin/
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 
-# experimental stack vm folder
-vm/
+# preferences
+.settings/org.eclipse.buildship.core.prefs
 
 # others
-bin*/*.launch
 .vscode
-/testbins/
 sof dev files/
 
 # test and coverage
@@ -44,3 +42,6 @@ jcc-report/
 
 # Ignore Gradle build output directory
 build
+# build directories
+bin*/*.launch
+/testbins/

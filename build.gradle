@@ -12,8 +12,6 @@ plugins {
 }
 
 repositories {
-	// Use JCenter for resolving dependencies.
-	jcenter()
 	mavenCentral()
 }
 
@@ -29,7 +27,7 @@ version = '0.1'
 
 java {
 	modularity.inferModulePath = true
-	toolchain.languageVersion = JavaLanguageVersion.of(15)
+	toolchain.languageVersion = JavaLanguageVersion.of(16)
 }
 
 // fuck fuck fuck fuck fuck you encoding, for god's sake why won't java JUST USE UNICODE TRANSFORMATION FORMAT 8 ?????????
