@@ -208,10 +208,10 @@ public class CLI {
 				// error handling
 				if (throwable.isPresent()) {
 					final var error = throwable.get();
-					if (error instanceof CompilerException) {
-						throw (CompilerException) error;
-					} else if (error instanceof IOException) {
-						throw (IOException) error;
+					if (error instanceof CompilerException ceError) {
+						throw ceError;
+					} else if (error instanceof IOException ioError) {
+						throw ioError;
 					}
 					throw new RuntimeException("Unhandled exception in executing SOF.", error);
 				}

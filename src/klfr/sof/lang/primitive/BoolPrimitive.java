@@ -60,8 +60,8 @@ public class BoolPrimitive extends Primitive {
 
 	@Override
 	public boolean equals(Stackable other) {
-		if (other instanceof BoolPrimitive) {
-			return ((BoolPrimitive) other).value == this.value;
+		if (other instanceof BoolPrimitive otherBool) {
+			return otherBool.value == this.value;
 		}
 		return false;
 	}

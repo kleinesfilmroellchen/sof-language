@@ -57,8 +57,8 @@ public class CodeBlock implements Stackable {
 
 	@Override
 	public boolean equals(Stackable other) {
-		if (other instanceof CodeBlock) {
-			return code.equals(((CodeBlock)other).code);
+		if (other instanceof CodeBlock otherCb) {
+			return code.equals(otherCb.code);
 		} else {
 			return false;
 		}

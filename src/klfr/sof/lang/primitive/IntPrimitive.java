@@ -152,19 +152,19 @@ public class IntPrimitive extends Primitive {
 
    @Override
    public int compareTo(Stackable o) {
-      if (o instanceof IntPrimitive) {
-         return this.value().compareTo(((IntPrimitive) o).value);
-      } else if (o instanceof FloatPrimitive) {
+      if (o instanceof IntPrimitive otherInt) {
+         return this.value().compareTo(otherInt.value);
+      } else if (o instanceof FloatPrimitive otherFloat) {
          // invert the comparison result, therefore effectively switching sides
-         return -((FloatPrimitive) o).compareTo(this);
+         return -otherFloat.compareTo(this);
       }
       throw new RuntimeException(new IncompleteCompilerException("type", "type.compare", this.typename(), o.typename()));
    }
 
    @Override
    public boolean equals(Stackable other) {
-      if (other instanceof IntPrimitive) {
-         return ((IntPrimitive) other).value == this.value;
+      if (other instanceof IntPrimitive otherInt) {
+         return otherInt.value == this.value;
       }
       return false;
    }

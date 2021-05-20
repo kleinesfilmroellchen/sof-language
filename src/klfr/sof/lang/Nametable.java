@@ -137,8 +137,7 @@ public class Nametable implements Stackable {
 	@Override
 	public boolean equals(Stackable other) {
 		if (other == this) return true;
-		if (other instanceof Nametable) {
-			final var otherNt = (Nametable)other;
+		if (other instanceof Nametable otherNt) {
 			for (final var entry : this.entries.entrySet()) {
 				if (!otherNt.entries.get(entry.getValue()).equals(entry.getKey())) {
 					return false;

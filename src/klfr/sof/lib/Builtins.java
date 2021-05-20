@@ -119,12 +119,12 @@ public final class Builtins {
 	 * @throws IncompleteCompilerException If the value cannot be converted.
 	 */
 	public static IntPrimitive convertInt(Stackable toConvert) throws IncompleteCompilerException {
-		if (toConvert instanceof FloatPrimitive) {
-			return IntPrimitive.createIntPrimitive(Math.round(((FloatPrimitive) toConvert).value()));
-		} else if (toConvert instanceof StringPrimitive) {
-			return IntPrimitive.createIntegerFromString(((StringPrimitive) toConvert).value());
-		} else if (toConvert instanceof IntPrimitive)
-			return (IntPrimitive) toConvert;
+		if (toConvert instanceof FloatPrimitive flt) {
+			return IntPrimitive.createIntPrimitive(Math.round(flt.value()));
+		} else if (toConvert instanceof StringPrimitive string) {
+			return IntPrimitive.createIntegerFromString(string.value());
+		} else if (toConvert instanceof IntPrimitive integer)
+			return integer;
 
 		throw new IncompleteCompilerException("type");
 	}
@@ -137,12 +137,12 @@ public final class Builtins {
 	 * @throws IncompleteCompilerException If the value cannot be converted.
 	 */
 	public static FloatPrimitive convertFloat(Stackable toConvert) throws IncompleteCompilerException {
-		if (toConvert instanceof StringPrimitive) {
-			return FloatPrimitive.createFloatFromString(((StringPrimitive) toConvert).value());
-		} else if (toConvert instanceof IntPrimitive) {
-			return FloatPrimitive.createFloatPrimitive(((IntPrimitive) toConvert).value().doubleValue());
-		} else if (toConvert instanceof FloatPrimitive)
-			return (FloatPrimitive) toConvert;
+		if (toConvert instanceof StringPrimitive string) {
+			return FloatPrimitive.createFloatFromString(string.value());
+		} else if (toConvert instanceof IntPrimitive integer) {
+			return FloatPrimitive.createFloatPrimitive(integer.value().doubleValue());
+		} else if (toConvert instanceof FloatPrimitive flt)
+			return flt;
 		
 		throw new IncompleteCompilerException("type");
 	}
@@ -179,6 +179,76 @@ public final class Builtins {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	//#region Math
 
+	@FunctionalInterface
+	private static interface MathFunction1 {
+		public Double calc(Double a) throws IncompleteCompilerException;
+	}
+	@FunctionalInterface
+	private static interface MathFunction2 {
+		public Double calc(Double a, Double b) throws IncompleteCompilerException;
+	}
+
+	/**
+	 * Computes a single-argument math function and handles the surrounding type checks.
+	 * @param a The argument to the math function, may be of any number type.
+	 * @param func The math function to be called. 
+	 * @param autoWiden Whether to automatically widen Integers to Floats (and not re-narrow).
+	 * This depends on what sort of function is used. For real-valued functions such as the trigonometric sin, cos, tan,
+	 * widening the type is expected and intended behavior. For other functions such as abs, the domain and range are
+	 * identical, so the return type should be the same as the input type. If autoWiden is true, the return type is
+	 * guaranteed to be FloatPrimitive.
+	 * @return The result of computing the math function on the argument, with the specified type widening behavior.
+	 * @throws IncompleteCompilerException If the math calculation failed, or if there is a type error.
+	 */
+	private static Stackable computeMathFunction1(Stackable a, MathFunction1 func, boolean autoWiden) throws IncompleteCompilerException {
+		if (a instanceof FloatPrimitive aFloat)
+			return FloatPrimitive.createFloatPrimitive(func.calc(aFloat.value()));
+		else if (a instanceof IntPrimitive aInt) {
+			final var doubleValue = func.calc(aInt.value().doubleValue());
+			if (autoWiden) {
+				return FloatPrimitive.createFloatPrimitive(doubleValue);
+			}
+			return IntPrimitive.createIntPrimitive(doubleValue.longValue());
+		}
+		throw new IncompleteCompilerException("type");
+	}
+
+	/**
+	 * Computes a two-argument math function and handles the surrounding type checks.
+	 * @param a The first argument to the math function, may be of any number type.
+	 * @param a The second argument to the math function, may be of any number type.
+	 * @param func The math function to be called. 
+	 * @param autoWiden Whether to automatically widen Integers to Floats (and not re-narrow).
+	 * This depends on what sort of function is used. For real-valued functions such as the trigonometric sin, cos, tan,
+	 * widening the type is expected and intended behavior. For other functions such as abs, the domain and range are
+	 * identical, so the return type should be the same as the input type. If autoWiden is true, the return type is
+	 * guaranteed to be FloatPrimitive.
+	 * @return The result of computing the math function on the argument, with the specified type widening behavior.
+	 * @throws IncompleteCompilerException If the math calculation failed, or if there is a type error.
+	 */
+	private static Stackable computeMathFunction2(Stackable a, Stackable b, MathFunction2 func, boolean autoWiden) throws IncompleteCompilerException {
+		// use NaN as a signal here, as any sensible math function fails on NaN anyways
+		var bFloat = Double.NaN;
+		if (b instanceof FloatPrimitive b_) {
+			bFloat = b_.value();
+		} else if (b instanceof IntPrimitive b_) {
+			bFloat = b_.value();
+		}
+		if (Double.isNaN(bFloat))
+			throw new IncompleteCompilerException("type");
+
+		if (a instanceof FloatPrimitive aFloat)
+			return FloatPrimitive.createFloatPrimitive(func.calc(aFloat.value(), bFloat));
+		else if (a instanceof IntPrimitive aInt) {
+			final var doubleValue = func.calc(aInt.value().doubleValue(), bFloat);
+			if (autoWiden || b instanceof FloatPrimitive) {
+				return FloatPrimitive.createFloatPrimitive(doubleValue);
+			}
+			return IntPrimitive.createIntPrimitive(doubleValue.longValue());
+		}
+		throw new IncompleteCompilerException("type");
+	}
+
 	/**
 	 * Implements SOF's abs function of the sof.math module.
 	 * 
@@ -187,12 +257,7 @@ public final class Builtins {
 	 * @throws IncompleteCompilerException If the value is not a number type.
 	 */
 	public static Stackable abs(Stackable a) throws IncompleteCompilerException {
-		if (a instanceof FloatPrimitive)
-			return FloatPrimitive.createFloatPrimitive(Math.abs(((FloatPrimitive) a).value()));
-		else if (a instanceof IntPrimitive)
-			return IntPrimitive.createIntPrimitive(Math.abs(((IntPrimitive) a).value()));
-
-		throw new IncompleteCompilerException("type");
+		return computeMathFunction1(a, Math::abs, false);
 	}
 
 	/**
@@ -203,11 +268,7 @@ public final class Builtins {
 	 * @throws IncompleteCompilerException If the value is not a number type.
 	 */
 	public static FloatPrimitive sin(Stackable a) throws IncompleteCompilerException {
-		if (a instanceof FloatPrimitive)
-			return FloatPrimitive.createFloatPrimitive(Math.sin(((FloatPrimitive)a).value()));
-		if (a instanceof IntPrimitive)
-			return FloatPrimitive.createFloatPrimitive(Math.sin(((IntPrimitive)a).value()));
-		throw new IncompleteCompilerException("type");
+		return (FloatPrimitive)computeMathFunction1(a, Math::sin, true);
 	}
 
 	/**
@@ -218,11 +279,7 @@ public final class Builtins {
 	 * @throws IncompleteCompilerException If the value is not a number type.
 	 */
 	public static FloatPrimitive cos(Stackable a) throws IncompleteCompilerException {
-		if (a instanceof FloatPrimitive)
-			return FloatPrimitive.createFloatPrimitive(Math.cos(((FloatPrimitive)a).value()));
-		if (a instanceof IntPrimitive)
-			return FloatPrimitive.createFloatPrimitive(Math.cos(((IntPrimitive)a).value()));
-		throw new IncompleteCompilerException("type");
+		return (FloatPrimitive)computeMathFunction1(a, Math::cos, true);
 	}
 
 	/**
@@ -233,11 +290,7 @@ public final class Builtins {
 	 * @throws IncompleteCompilerException If the value is not a number type.
 	 */
 	public static FloatPrimitive tan(Stackable a) throws IncompleteCompilerException {
-		if (a instanceof FloatPrimitive)
-			return FloatPrimitive.createFloatPrimitive(Math.tan(((FloatPrimitive)a).value()));
-		if (a instanceof IntPrimitive)
-			return FloatPrimitive.createFloatPrimitive(Math.tan(((IntPrimitive)a).value()));
-		throw new IncompleteCompilerException("type");
+		return (FloatPrimitive)computeMathFunction1(a, Math::tan, true);
 	}
 
 	/**
@@ -248,11 +301,7 @@ public final class Builtins {
 	 * @throws IncompleteCompilerException If the value is not a number type.
 	 */
 	public static FloatPrimitive exp(Stackable a) throws IncompleteCompilerException {
-		if (a instanceof FloatPrimitive)
-			return FloatPrimitive.createFloatPrimitive(Math.exp(((FloatPrimitive)a).value()));
-		if (a instanceof IntPrimitive)
-			return FloatPrimitive.createFloatPrimitive(Math.exp(((IntPrimitive)a).value()));
-		throw new IncompleteCompilerException("type");
+		return (FloatPrimitive)computeMathFunction1(a, Math::exp, true);
 	}
 
 	/**
@@ -263,11 +312,7 @@ public final class Builtins {
 	 * @throws IncompleteCompilerException If the value is not a number type.
 	 */
 	public static FloatPrimitive ln(Stackable a) throws IncompleteCompilerException {
-		if (a instanceof FloatPrimitive)
-			return FloatPrimitive.createFloatPrimitive(Math.log(((FloatPrimitive)a).value()));
-		if (a instanceof IntPrimitive)
-			return FloatPrimitive.createFloatPrimitive(Math.log(((IntPrimitive)a).value()));
-		throw new IncompleteCompilerException("type");
+		return (FloatPrimitive)computeMathFunction1(a, Math::log, true);
 	}
 
 	/**
@@ -279,18 +324,20 @@ public final class Builtins {
 	 * @throws IncompleteCompilerException If the values are not a number type.
 	 */
 	public static FloatPrimitive log(Stackable b, Stackable a) throws IncompleteCompilerException {
-		var base = (b instanceof FloatPrimitive) ? ((FloatPrimitive)b).value() : (b instanceof IntPrimitive) ? ((IntPrimitive)b).value() : Double.NaN;
-		if (Double.isNaN(base))
-			throw new IncompleteCompilerException("type");
+		return (FloatPrimitive)computeMathFunction2(b, a, Builtins::log, true);
+	}
 
-		var logb = Math.log(base);
-
-		// log_b(a) = ln(a) / ln(b)
-		if (a instanceof FloatPrimitive)
-			return FloatPrimitive.createFloatPrimitive(Math.log(((FloatPrimitive)a).value()) / logb);
-		if (a instanceof IntPrimitive)
-			return FloatPrimitive.createFloatPrimitive(Math.log(((IntPrimitive)a).value()) / logb);
-		throw new IncompleteCompilerException("type");
+	/**
+	 * Computes the logarithm of a with the base b.<br>
+	 * <br>
+	 * The implementation makes use of the logarithmic law that {@code log_b(a) = log(a) / log(b)}
+	 * where {@code log} can have any base. Here, the very precise {@code ln} (log base e) is used.
+	 * @param a The number of which to calculate the logarithm
+	 * @param b The base of the logarithm
+	 * @return mathematically {@code log_b(a)}.
+	 */
+	private static Double log(Double b, Double a) {
+		return Math.log(a) / Math.log(b);
 	}
 
 	/**
@@ -300,12 +347,7 @@ public final class Builtins {
 	 * @throws IncompleteCompilerException If the value is not a number type.
 	 */
 	public static Stackable sqrt(Stackable a) throws IncompleteCompilerException {
-		if (a instanceof FloatPrimitive) {
-			return FloatPrimitive.createFloatPrimitive(Math.sqrt(((FloatPrimitive)a).value()));
-		} else if (a instanceof IntPrimitive) {
-			return FloatPrimitive.createFloatPrimitive(Math.sqrt(((IntPrimitive)a).value()));
-		}
-		throw new IncompleteCompilerException("type");
+		return (FloatPrimitive)computeMathFunction1(a, Math::sqrt, true);
 	}
 
 	//#endregion Math

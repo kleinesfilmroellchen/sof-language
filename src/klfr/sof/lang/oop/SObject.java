@@ -68,8 +68,8 @@ public class SObject implements Stackable {
 	 */
 	@Override
 	public boolean equals(Stackable other) {
-		if (other instanceof SObject) {
-			return attributes.equals(((SObject)other).attributes);
+		if (other instanceof SObject otherObject) {
+			return attributes.equals(otherObject.attributes);
 		} else {
 			return false;
 		}

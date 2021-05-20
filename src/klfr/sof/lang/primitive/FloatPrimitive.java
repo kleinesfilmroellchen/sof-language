@@ -54,6 +54,27 @@ public class FloatPrimitive extends Primitive {
 	}
 
 	/**
+	 * Returns a float primitive from the given stackable.
+	 * <ul>
+	 * <li>If the stackable is already a float primitive, it is returned.</li>
+	 * <li>If the stackable is an integer primitive, the integer is trivially converted.</li>
+	 * <li>If the stackable is any other data type, a runtime error is thrown.</li>
+	 * </ul>
+	 * This method is intended to only be used if the caller knows that the data is of a number type.
+	 * @param s The stackable to be converted.
+	 * @return The converted stackable.
+	 */
+	public static FloatPrimitive fromStackable(Stackable s) {
+		if (s instanceof FloatPrimitive f) {
+			return f;
+		}
+		if (s instanceof IntPrimitive i) {
+			return FloatPrimitive.createFloatPrimitive(i.value().doubleValue());
+		}
+		throw new RuntimeException("SOF Type " + s.typename() + " is not trivially convertable to Float.");
+	}
+
+	/**
 	 * Execute optimized arithmetic add.
 	 * @param other The float to add.
 	 * @return The sum of this float and the other.
@@ -160,19 +181,17 @@ public class FloatPrimitive extends Primitive {
 
 	@Override
 	public boolean equals(Stackable other) {
-		if (other instanceof FloatPrimitive) {
-			return round(((FloatPrimitive) other).v, EQUALITY_PRECISION) == round(this.v, EQUALITY_PRECISION);
+		if (other instanceof FloatPrimitive otherFloat) {
+			return round(otherFloat.v, EQUALITY_PRECISION) == round(this.v, EQUALITY_PRECISION);
 		}
 		return false;
 	}
 
 	@Override
 	public int compareTo(Stackable x) {
-		if (x instanceof FloatPrimitive) {
-			final var o = (FloatPrimitive) x;
+		if (x instanceof FloatPrimitive o) {
 			return (this.v - o.v > 0 ? 1 : (this.v - o.v < 0 ? -1 : 0));
-		} else if (x instanceof IntPrimitive) {
-			final var o = (IntPrimitive) x;
+		} else if (x instanceof IntPrimitive o) {
 			return (this.v - o.value() > 0 ? 1 : (this.v - o.value() < 0 ? -1 : 0));
 		}
 		throw new RuntimeException(new IncompleteCompilerException("type", "type.compare", this.typename(), x.typename()));

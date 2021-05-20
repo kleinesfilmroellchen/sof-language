@@ -54,12 +54,12 @@ public abstract class Primitive implements Stackable {
 		// ifelse of doom - i hate java
 		if (value instanceof Long || value instanceof Integer || value instanceof Short || value instanceof Byte) {
 			return IntPrimitive.createIntPrimitive(((Number) value).longValue());
-		} else if (value instanceof Boolean) {
-			return BoolPrimitive.createBoolPrimitive((Boolean) value);
-		} else if (value instanceof Float) {
-			return FloatPrimitive.createFloatPrimitive(((Float) value).doubleValue());
-		} else if (value instanceof Double) {
-			return FloatPrimitive.createFloatPrimitive((Double) value);
+		} else if (value instanceof Boolean bool) {
+			return BoolPrimitive.createBoolPrimitive(bool);
+		} else if (value instanceof Float flt) {
+			return FloatPrimitive.createFloatPrimitive(flt.doubleValue());
+		} else if (value instanceof Double dbl) {
+			return FloatPrimitive.createFloatPrimitive(dbl);
 		} else if (value instanceof CharSequence || value instanceof Character) {
 			return StringPrimitive.createStringPrimitive(value.toString());
 		}

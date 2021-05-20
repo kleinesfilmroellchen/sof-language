@@ -62,16 +62,16 @@ public class StringPrimitive extends Primitive {
 
    @Override
    public int compareTo(Stackable o) {
-      if (o instanceof StringPrimitive) {
-         return this.s.compareTo(((StringPrimitive) o).s);
+      if (o instanceof StringPrimitive otherString) {
+         return this.s.compareTo(otherString.s);
       }
       throw new RuntimeException(new IncompleteCompilerException("type", "type.compare", this.typename(), o.typename()));
    }
 
    @Override
    public boolean equals(Stackable other) {
-      if (other instanceof StringPrimitive)
-         return this.s.equals(((StringPrimitive) other).s);
+      if (other instanceof StringPrimitive otherString)
+         return this.s.equals(otherString.s);
       return false;
    }
 

@@ -95,8 +95,8 @@ public class Identifier implements Stackable {
 
 	@Override
 	public int compareTo(Stackable other) {
-		if (other instanceof Identifier)
-			return this.getValue().compareTo(((Identifier) other).getValue());
+		if (other instanceof Identifier otherId)
+			return this.getValue().compareTo(otherId.getValue());
 		throw new ClassCastException(
 				"Cannot compare Identifier " + this.toString() + " to " + other.getClass().toString());
 	}

@@ -204,8 +204,8 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 */
 	public Nametable localScope() throws RuntimeException {
 		for (var elmt : this) {
-			if (elmt instanceof Nametable)
-				return (Nametable) elmt;
+			if (elmt instanceof Nametable localNt)
+				return localNt;
 		}
 		// fallback (should not happen, as the last iteration of the loop should find
 		// the global NT)
@@ -222,8 +222,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 */
 	public Stackable lookup(final Identifier id) {
 		for (var elmt : this) {
-			if (elmt instanceof Nametable) {
-				final var nt = (Nametable) elmt;
+			if (elmt instanceof Nametable nt) {
 				if (nt.hasMapping(id))
 					return nt.get(id);
 			}

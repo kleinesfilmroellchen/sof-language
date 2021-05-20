@@ -260,8 +260,8 @@ public final class NativeFunctionRegistry {
 				throw ce;
 			} catch (InvocationTargetException e) {
 				final var cause = e.getCause();
-				if (cause instanceof IncompleteCompilerException)
-					throw (IncompleteCompilerException)cause;
+				if (cause instanceof IncompleteCompilerException compilerException)
+					throw compilerException;
 				final var ce = new IncompleteCompilerException("native");
 				ce.initCause(e);
 				throw ce;
@@ -284,8 +284,8 @@ public final class NativeFunctionRegistry {
 				throw ce;
 			} catch (InvocationTargetException e) {
 				final var cause = e.getCause();
-				if (cause instanceof IncompleteCompilerException)
-					throw (IncompleteCompilerException)cause;
+				if (cause instanceof IncompleteCompilerException compilerException)
+					throw compilerException;
 				final var ce = new IncompleteCompilerException("native");
 				ce.initCause(e);
 				throw ce;
@@ -308,8 +308,8 @@ public final class NativeFunctionRegistry {
 				throw ce;
 			} catch (InvocationTargetException e) {
 				final var cause = e.getCause();
-				if (cause instanceof IncompleteCompilerException)
-					throw (IncompleteCompilerException)cause;
+				if (cause instanceof IncompleteCompilerException compilerException)
+					throw compilerException;
 				final var ce = new IncompleteCompilerException("native");
 				ce.initCause(e);
 				throw ce;
@@ -332,8 +332,8 @@ public final class NativeFunctionRegistry {
 				throw ce;
 			} catch (InvocationTargetException e) {
 				final var cause = e.getCause();
-				if (cause instanceof IncompleteCompilerException)
-					throw (IncompleteCompilerException)cause;
+				if (cause instanceof IncompleteCompilerException compilerException)
+					throw compilerException;
 				final var ce = new IncompleteCompilerException("native");
 				ce.initCause(e);
 				throw ce;

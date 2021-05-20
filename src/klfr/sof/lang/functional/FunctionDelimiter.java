@@ -48,8 +48,8 @@ public class FunctionDelimiter extends Nametable {
 
 	@Override
 	public boolean equals(Stackable other) {
-		if (other instanceof FunctionDelimiter) {
-			return super.equals(other) && this.returnValue.equals(((FunctionDelimiter)other).returnValue);
+		if (other instanceof FunctionDelimiter otherFd) {
+			return super.equals(other) && this.returnValue.equals(otherFd.returnValue);
 		} else {
 			return false;
 		}

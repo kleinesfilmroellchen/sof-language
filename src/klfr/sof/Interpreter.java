@@ -182,12 +182,12 @@ public class Interpreter implements Serializable {
 	protected boolean handle(Node n) throws CompilerException {
 		try {
 			// manual dynamic dispatch -- there isn't a better reflection-free way
-			if (n instanceof TokenListNode)
-				return handle((TokenListNode) n);
-			else if (n instanceof LiteralNode)
-				return handle((LiteralNode) n);
-			else if (n instanceof PrimitiveTokenNode)
-				return handle((PrimitiveTokenNode) n);
+			if (n instanceof TokenListNode tln)
+				return handle(tln);
+			else if (n instanceof LiteralNode ln)
+				return handle(ln);
+			else if (n instanceof PrimitiveTokenNode ptn)
+				return handle(ptn);
 			else
 				throw new RuntimeException("Unknown node type.");
 		} catch (IncompleteCompilerException incomplete) {
@@ -353,7 +353,7 @@ public class Interpreter implements Serializable {
 						return retflag;
 					} else {
 						final var elt = this.stack.popSafe();
-						if (elt instanceof Identifier && ((Identifier) elt).getValue().equals("switch::")) {
+						if (elt instanceof Identifier maybeSwitchEnd && maybeSwitchEnd.getValue().equals("switch::")) {
 							// switch end was reached without executing any case: execute default callable
 							return this.doCall(defaultCallable);
 						} else {
@@ -605,26 +605,22 @@ public class Interpreter implements Serializable {
 		final var nativeFunc = nativeFunc_.get();
 		
 		// switch over type
-		if (nativeFunc instanceof Native0ArgFunction) {
-			final var func = (Native0ArgFunction) nativeFunc;
+		if (nativeFunc instanceof Native0ArgFunction func) {
 			final var res = func.call();
 			log.finer(() -> String.format("Native call 0 arg function returned %s", res.toDebugString(DebugStringExtensiveness.Compact)));
 			if (res != null) this.stack.push(res);
-		} else if (nativeFunc instanceof Native1ArgFunction) {
-			final var func = (Native1ArgFunction) nativeFunc;
+		} else if (nativeFunc instanceof Native1ArgFunction func) {
 			final var arg0 = this.stack.popSafe();
 			final var res = func.call(arg0);
 			log.finer(() -> String.format("Native call 1 arg function returned %s", res.toDebugString(DebugStringExtensiveness.Compact)));
 			if (res != null) this.stack.push(res);
-		} else if (nativeFunc instanceof Native2ArgFunction) {
-			final var func = (Native2ArgFunction) nativeFunc;
+		} else if (nativeFunc instanceof Native2ArgFunction func) {
 			final var arg1 = this.stack.popSafe();
 			final var arg0 = this.stack.popSafe();
 			final var res = func.call(arg0, arg1);
 			log.finer(() -> String.format("Native call 2 arg function returned %s", res.toDebugString(DebugStringExtensiveness.Compact)));
 			if (res != null) this.stack.push(res);
-		} else if (nativeFunc instanceof Native3ArgFunction) {
-			final var func = (Native3ArgFunction) nativeFunc;
+		} else if (nativeFunc instanceof Native3ArgFunction func) {
 			final var arg2 = this.stack.popSafe();
 			final var arg1 = this.stack.popSafe();
 			final var arg0 = this.stack.popSafe();
@@ -665,8 +661,7 @@ public class Interpreter implements Serializable {
 	 */
 	protected boolean doCall(final Stackable toCall, final Nametable scope)
 			throws IncompleteCompilerException, CompilerException {
-		if (toCall instanceof Identifier) {
-			final var id = (Identifier) toCall;
+		if (toCall instanceof Identifier id) {
 			final var val = this.stack.lookup(id);
 			if (val == null)
 				throw new IncompleteCompilerException("name", id);
@@ -675,8 +670,7 @@ public class Interpreter implements Serializable {
 		} else if (toCall instanceof Primitive) {
 			this.stack.push(toCall);
 			return true;
-		} else if (toCall instanceof ConstructorFunction) {
-			final var constructor = (ConstructorFunction)toCall;
+		} else if (toCall instanceof ConstructorFunction constructor) {
 			final var newObject = new SObject();
 			// push the object nametable as a delimiter, then the object itself as a "self" argument to the method
 			this.stack.push(newObject.getAttributes());
@@ -692,9 +686,8 @@ public class Interpreter implements Serializable {
 			// re-push the object (was removed by above operation)
 			this.stack.push(newObject);
 			return true;
-		} else if (toCall instanceof SOFunction) {
+		} else if (toCall instanceof SOFunction function) {
 			// HINT: handle the function before the codeblock because it inherits from it
-			final var function = (SOFunction) toCall;
 			final var subProgram = function.code;
 
 			// setup stack
@@ -715,8 +708,8 @@ public class Interpreter implements Serializable {
 				throw new RuntimeException("Unexpected nametable type " + table.getClass().toString());
 			((FunctionDelimiter) table).pushReturnValue(this.stack);
 			return true;
-		} else if (toCall instanceof CodeBlock) {
-			final var subProgram = ((CodeBlock) toCall).code;
+		} else if (toCall instanceof CodeBlock codeblock) {
+			final var subProgram = codeblock.code;
 			// just run, no return value, no stack protect
 			return subProgram.forEach((Node.ForEachType) this::handle);
 		} else

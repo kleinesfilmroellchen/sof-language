@@ -65,8 +65,8 @@ public class SOFunction extends CodeBlock {
 
 	@Override
 	public boolean equals(Stackable other) {
-		if (other instanceof SOFunction) {
-			return code.equals(((SOFunction)other).code) && (arguments == ((SOFunction)other).arguments);
+		if (other instanceof SOFunction otherFunction) {
+			return code.equals(otherFunction.code) && (arguments == otherFunction.arguments);
 		} else {
 			return false;
 		}

@@ -42,17 +42,17 @@ public final class BuiltinOperations {
 	 */
 	public static final Stackable divide(Stackable a, Stackable b) throws IncompleteCompilerException {
 		try {
-			if (a instanceof IntPrimitive && b instanceof IntPrimitive) {
-				return ((IntPrimitive) a).divide((IntPrimitive) b);
+			if (a instanceof IntPrimitive ia && b instanceof IntPrimitive ib) {
+				return ia.divide(ib);
 			}
-			if (a instanceof FloatPrimitive && b instanceof FloatPrimitive) {
-				return ((FloatPrimitive) a).divide((FloatPrimitive) b);
+			if (a instanceof FloatPrimitive fa && b instanceof FloatPrimitive fb) {
+				return fa.divide(fb);
 			}
-			if (a instanceof FloatPrimitive && b instanceof IntPrimitive) {
-				return FloatPrimitive.createFloatPrimitive(((FloatPrimitive) a).value() / ((IntPrimitive) b).value());
+			if (a instanceof FloatPrimitive fa && b instanceof IntPrimitive ib) {
+				return FloatPrimitive.createFloatPrimitive(fa.value() / ib.value());
 			}
-			if (b instanceof FloatPrimitive && a instanceof IntPrimitive) {
-				return FloatPrimitive.createFloatPrimitive(((IntPrimitive) a).value() / ((FloatPrimitive) b).value());
+			if (b instanceof FloatPrimitive fb && a instanceof IntPrimitive ia) {
+				return FloatPrimitive.createFloatPrimitive(ia.value() / fb.value());
 			}
 			throw new IncompleteCompilerException("type", "type.divide", a.typename(), b.typename());
 		} catch (ArithmeticException e) {
@@ -72,17 +72,17 @@ public final class BuiltinOperations {
 	 */
 	public static final Stackable modulus(Stackable a, Stackable b) throws IncompleteCompilerException {
 		try {
-			if (a instanceof IntPrimitive && b instanceof IntPrimitive) {
-				return ((IntPrimitive) a).modulus((IntPrimitive) b);
+			if (a instanceof IntPrimitive ia && b instanceof IntPrimitive ib) {
+				return ia.modulus(ib);
 			}
-			if (a instanceof FloatPrimitive && b instanceof FloatPrimitive) {
-				return ((FloatPrimitive) a).modulus((FloatPrimitive) b);
+			if (a instanceof FloatPrimitive fa && b instanceof FloatPrimitive fb) {
+				return fa.modulus(fb);
 			}
-			if (a instanceof FloatPrimitive && b instanceof IntPrimitive) {
-				return FloatPrimitive.createFloatPrimitive(((FloatPrimitive) a).value() % ((IntPrimitive) b).value());
+			if (a instanceof FloatPrimitive fa && b instanceof IntPrimitive ib) {
+				return FloatPrimitive.createFloatPrimitive(fa.value() % ib.value());
 			}
-			if (b instanceof FloatPrimitive && a instanceof IntPrimitive) {
-				return FloatPrimitive.createFloatPrimitive(((IntPrimitive) a).value() % ((FloatPrimitive) b).value());
+			if (b instanceof FloatPrimitive fb && a instanceof IntPrimitive ia) {
+				return FloatPrimitive.createFloatPrimitive(ia.value() % fb.value());
 			}
 			throw new IncompleteCompilerException("type", "type.modulus", a.typename(), b.typename());
 		} catch (ArithmeticException e) {
@@ -98,17 +98,17 @@ public final class BuiltinOperations {
 	 * @throws IncompleteCompilerException If the types cannot be used in an addition.
 	 */
 	public static final Stackable add(Stackable a, Stackable b) throws IncompleteCompilerException {
-		if (a instanceof IntPrimitive && b instanceof IntPrimitive) {
-			return ((IntPrimitive) a).add((IntPrimitive) b);
+		if (a instanceof IntPrimitive ia && b instanceof IntPrimitive ib) {
+			return ia.add(ib);
 		}
-		if (a instanceof FloatPrimitive && b instanceof FloatPrimitive) {
-			return ((FloatPrimitive) a).add((FloatPrimitive) b);
+		if (a instanceof FloatPrimitive fa && b instanceof FloatPrimitive fb) {
+			return fa.add(fb);
 		}
-		if (a instanceof FloatPrimitive && b instanceof IntPrimitive) {
-			return FloatPrimitive.createFloatPrimitive(((FloatPrimitive) a).value() + ((IntPrimitive) b).value());
+		if (a instanceof FloatPrimitive fa && b instanceof IntPrimitive ib) {
+			return FloatPrimitive.createFloatPrimitive(fa.value() + ib.value());
 		}
-		if (b instanceof FloatPrimitive && a instanceof IntPrimitive) {
-			return FloatPrimitive.createFloatPrimitive(((FloatPrimitive) b).value() + ((IntPrimitive) a).value());
+		if (b instanceof FloatPrimitive fb && a instanceof IntPrimitive ia) {
+			return FloatPrimitive.createFloatPrimitive(fb.value() + ia.value());
 		}
 		throw new IncompleteCompilerException("type", "type.add", a.typename(), b.typename());
 	}
@@ -121,17 +121,17 @@ public final class BuiltinOperations {
 	 * @throws IncompleteCompilerException If the types cannot be used in a multiplication.
 	 */
 	public static final Stackable multiply(Stackable a, Stackable b) throws IncompleteCompilerException {
-		if (a instanceof IntPrimitive && b instanceof IntPrimitive) {
-			return ((IntPrimitive) a).multiply((IntPrimitive) b);
+		if (a instanceof IntPrimitive ia && b instanceof IntPrimitive ib) {
+			return ia.multiply(ib);
 		}
-		if (a instanceof FloatPrimitive && b instanceof FloatPrimitive) {
-			return ((FloatPrimitive) a).multiply((FloatPrimitive) b);
+		if (a instanceof FloatPrimitive fa && b instanceof FloatPrimitive fb) {
+			return fa.multiply(fb);
 		}
-		if (a instanceof FloatPrimitive && b instanceof IntPrimitive) {
-			return FloatPrimitive.createFloatPrimitive(((FloatPrimitive) a).value() * ((IntPrimitive) b).value());
+		if (a instanceof FloatPrimitive fa && b instanceof IntPrimitive ib) {
+			return FloatPrimitive.createFloatPrimitive(fa.value() * ib.value());
 		}
-		if (b instanceof FloatPrimitive && a instanceof IntPrimitive) {
-			return FloatPrimitive.createFloatPrimitive(((FloatPrimitive) b).value() * ((IntPrimitive) a).value());
+		if (b instanceof FloatPrimitive fb && a instanceof IntPrimitive ia) {
+			return FloatPrimitive.createFloatPrimitive(fb.value() * ia.value());
 		}
 		throw new IncompleteCompilerException("type", "type.multiply", a.typename(), b.typename());
 	}
@@ -144,17 +144,17 @@ public final class BuiltinOperations {
 	 * @throws IncompleteCompilerException If the types cannot be used in a subtraction.
 	 */
 	public static final Stackable subtract(Stackable a, Stackable b) throws IncompleteCompilerException {
-		if (a instanceof IntPrimitive && b instanceof IntPrimitive) {
-			return ((IntPrimitive) a).subtract((IntPrimitive) b);
+		if (a instanceof IntPrimitive ia && b instanceof IntPrimitive ib) {
+			return ia.subtract(ib);
 		}
-		if (a instanceof FloatPrimitive && b instanceof FloatPrimitive) {
-			return ((FloatPrimitive) a).subtract((FloatPrimitive) b);
+		if (a instanceof FloatPrimitive fa && b instanceof FloatPrimitive fb) {
+			return fa.subtract(fb);
 		}
-		if (a instanceof FloatPrimitive && b instanceof IntPrimitive) {
-			return FloatPrimitive.createFloatPrimitive(((FloatPrimitive) a).value() - ((IntPrimitive) b).value());
+		if (a instanceof FloatPrimitive fa && b instanceof IntPrimitive ib) {
+			return FloatPrimitive.createFloatPrimitive(fa.value() - ib.value());
 		}
-		if (b instanceof FloatPrimitive && a instanceof IntPrimitive) {
-			return FloatPrimitive.createFloatPrimitive(((IntPrimitive) a).value() - ((FloatPrimitive) b).value());
+		if (b instanceof FloatPrimitive fb && a instanceof IntPrimitive ia) {
+			return FloatPrimitive.createFloatPrimitive(ia.value() - fb.value());
 		}
 		throw new IncompleteCompilerException("type", "type.subtract", a.typename(), b.typename());
 	}
