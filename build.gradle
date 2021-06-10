@@ -30,8 +30,11 @@ java {
 	toolchain.languageVersion = JavaLanguageVersion.of(16)
 }
 
-// fuck fuck fuck fuck fuck you encoding, for god's sake why won't java JUST USE UNICODE TRANSFORMATION FORMAT 8 ?????????
-compileJava.options.encoding = 'UTF-8'
+compileJava {
+	options.encoding = 'UTF-8'
+	options.fork = true
+}
+
 tasks.withType(JavaCompile) {
 	options.encoding = "UTF-8"
 }
@@ -63,6 +66,27 @@ sourceSets {
 	}
 }
 
+// Copy library into the run directories.
+task copyForRun(type: Copy) {
+	from 'lib'
+	into 'build/libs/lib'
+}
+tasks.run {
+	dependsOn copyForRun
+}
+
+task copyForInstall(type: Copy) {
+	from 'lib'
+	into 'build/install/sof-language/lib/lib'
+	configure {
+		mustRunAfter installDist
+	}
+}
+
+task install {
+	dependsOn copyForInstall, installDist
+}
+
 application {
 	mainModule = 'sof'
 	mainClass = 'klfr.sof.cli.CLI'
@@ -70,7 +94,7 @@ application {
 	applicationDefaultJvmArgs = ["-Dfile.encoding=UTF-8"]
 }
 
-tasks.named('run') {
+tasks.run {
 	standardInput = System.in
 }
 
