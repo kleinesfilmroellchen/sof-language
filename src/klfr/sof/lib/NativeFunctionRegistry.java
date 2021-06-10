@@ -137,27 +137,31 @@ public final class NativeFunctionRegistry {
 		log.fine(String.format("get classes from path %s", pkgPath));
 		final URI pkg = Objects.requireNonNull(NativeFunctionRegistry.class.getClassLoader().getResource(pkgPath)).toURI();
 		final ArrayList<Class<?>> allClasses = new ArrayList<Class<?>>();
-  
+
+		boolean isJar_ = false;
 		Path root;
-		if (pkg.toString().startsWith("jar:")) {
-			 try {
-				  root = FileSystems.getFileSystem(pkg).getPath(pkgPath);
-			 } catch (final FileSystemNotFoundException e) {
-				  root = FileSystems.newFileSystem(pkg, Collections.emptyMap()).getPath(pkgPath);
-			 }
+		if (pkg.getScheme().equals("jar")) {
+			isJar_ = true;
+			try {
+				root = FileSystems.getFileSystem(pkg).getPath(pkgPath);
+			} catch (final FileSystemNotFoundException e) {
+				root = FileSystems.newFileSystem(pkg, Collections.emptyMap()).getPath(pkgPath);
+			}
 		} else {
-			 root = Paths.get(pkg);
+			root = Paths.get(pkg);
 		}
-  
+		
+		final boolean isJar = isJar_;
 		final String extension = ".class";
 		try (final Stream<Path> allPaths = Files.walk(root)) {
-			 allPaths.filter(Files::isRegularFile).forEach(file -> {
-				 try {
-						final String path = file.toString().replace(File.separatorChar, '.');
-						final String name = path.substring(path.indexOf(pkgName), path.length() - extension.length());
-						allClasses.add(Class.forName(name));
-				  } catch (final ClassNotFoundException | StringIndexOutOfBoundsException ignored) { }
-			 });
+			allPaths.filter(Files::isRegularFile).forEach(file -> {
+				try {
+					final String path = file.toString().replace(isJar ? '/' : File.separatorChar, '.');
+					final String name = path.substring(0, path.length() - extension.length());
+					final Class<?> clazz = Class.forName(name);
+					allClasses.add(clazz);
+				} catch (final ClassNotFoundException | StringIndexOutOfBoundsException ignored) { }
+			});
 		}
 		return allClasses;
   }
