@@ -1,7 +1,10 @@
 package klfr.sof.lib;
 
+import java.util.logging.Logger;
+
 import klfr.sof.exceptions.*;
 import klfr.sof.lang.*;
+import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 import klfr.sof.lang.functional.*;
 import klfr.sof.lang.primitive.*;
 
@@ -14,6 +17,7 @@ import klfr.sof.lang.primitive.*;
  */
 @NativeFunctionCollection
 public final class Builtins {
+	private static final Logger log = Logger.getLogger(Builtins.class.getCanonicalName());
 
 	// static {
 	// 	System.out.println("Registering builtins...");

@@ -5,7 +5,6 @@ import java.util.logging.Logger;
 import klfr.sof.Patterns;
 import klfr.sof.exceptions.IncompleteCompilerException;
 import klfr.sof.lang.*;
-import klfr.sof.lib.Builtins;
 
 /**
  * floating point decimal primitive type
@@ -23,6 +22,7 @@ public class FloatPrimitive extends Primitive {
 	 * of comparisons.
 	 */
 	public static final int EQUALITY_PRECISION = 10;
+	public static final Stackable NaN = FloatPrimitive.createFloatPrimitive(Double.NaN);
 
 	/** The double that is represented by this primitive. */
 	private final Double v;
