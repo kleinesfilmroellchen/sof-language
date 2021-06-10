@@ -239,7 +239,7 @@ public final class Builtins {
 			bFloat = b_.value();
 		}
 		if (Double.isNaN(bFloat))
-			throw new IncompleteCompilerException("type");
+			return FloatPrimitive.NaN;
 
 		if (a instanceof FloatPrimitive aFloat)
 			return FloatPrimitive.createFloatPrimitive(func.calc(aFloat.value(), bFloat));
@@ -262,6 +262,20 @@ public final class Builtins {
 	 */
 	public static Stackable abs(Stackable a) throws IncompleteCompilerException {
 		return computeMathFunction1(a, Math::abs, false);
+	}
+
+	/**
+	 * Implements SOF's hypot function of the sof.math module.
+	 * This calculates the hypotenuse of a right-angled triangle without overflow or underflow.
+	 * 
+	 * @param a The first value
+	 * @param b The second value
+	 * @return {@code sqrt(a^2 + b^2)} without underflow or overflow
+	 * @throws IncompleteCompilerException If the types are not number types.
+	 */
+	public static Stackable hypot(Stackable a, Stackable b) throws IncompleteCompilerException {
+		log.info(String.format("hypot types %s, %s", a.toDebugString(DebugStringExtensiveness.Compact), b.toDebugString(DebugStringExtensiveness.Compact)));
+		return (FloatPrimitive)computeMathFunction2(a, b, Math::hypot, true);
 	}
 
 	/**

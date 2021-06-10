@@ -2,6 +2,8 @@
 
 { "klfr.sof.lib.Builtins#abs(Stackable)" nativecall return } 1 function abs dexport
 
+{ "klfr.sof.lib.Builtins#hypot(Stackable,Stackable)" nativecall return } 2 function hypot dexport
+
 { "klfr.sof.lib.Builtins#sin(Stackable)" nativecall return } 1 function sin dexport
 
 { "klfr.sof.lib.Builtins#cos(Stackable)" nativecall return } 1 function cos dexport
