@@ -8,11 +8,11 @@ An experimental fully stack-based reverse-polish-notation functional and object-
 
 **This is an experimental programming language.** If you cause a nuclear war and the inevitable destruction of mankind by using this software, I am not to blame.
 
-SOF is written in Java 15 (cutting edge!) and requires no libraries outside the standard library. It leverages the module system (you may use it in your project as well!) and uses JUnit Jupiter for testing (currently) about 60% of the codebase.
+SOF is written in Java 16 (cutting edge!) and requires no libraries outside the standard library. It leverages the module system (you may use it in your project as well!) and uses JUnit Jupiter for testing (currently) about 60% of the codebase.
 
-### Installation and CLI usage
+### Installation and CLI Usage
 
-This is a Gradle project using the Java Application plugin with the module system and JUnit Jupiter tests. The usual Gradle tasks for these situations exist and have not been renamed/added to. As a quick reference: Use `gradlew build` to run the full build including tests. Run `gradlew test` to run the tests. Use `gradlew javadoc` to build the javadoc. All building happens into the build/ subfolders.
+This is a Gradle 7 project using the Java Application plugin with the module system and JUnit Jupiter tests. The usual Gradle tasks for these situations exist and have not been renamed/added to. As a quick reference: Use `gradlew build` to run the full build including tests. Run `gradlew test` to run the tests. Use `gradlew javadoc` to build the javadoc. All building happens into the `build/` subfolders.
 
 Use the following command line to run SOF. `gradlew run` works but is somewhat buggy.
 
@@ -20,9 +20,9 @@ Use the following command line to run SOF. `gradlew run` works but is somewhat b
 java -p ./build/out/bin -m sof/klfr.sof.cli.CLI [arguments]
 ```
 
-assuming that you have Java 15+ on your $PATH and you are inside the root folder of the project. Replace \[arguments\] with whatever arguments you want to give to SOF.
+assuming that you have Java 16+ on your $PATH and you are inside the root folder of the project. Replace \[arguments\] with whatever arguments you want to give to SOF.
 
-Alternatively, you can use the Gradle-built distributions in build/distributions/. This one comes with handy scripts for Windows and Linux that auto-detect your Java. It however currently does not work with the module system, see #6.
+Alternatively, you can use the Gradle-built distributions in build/distributions/. This one comes with handy scripts for Windows and Linux that auto-detect your Java.
 
 The command line tool currently supports the following arguments and options (taken from help output):
 
@@ -76,9 +76,9 @@ This means that SOF has the following main features:
 - All code is sequential and every token you write out operates on the stack in some way, be it a literal, an arithmetic operation, a function call, a block of code or otherwise. This leads to SOF exclusively using reverse-polish notation, or postfix notation, where operations come after the operands. In essence, the entire programming language can be broken down into its few types of tokens and a description of what each of them does with the stack.
 - SOF does not distinguish between data and code; code is first-class by design. Code can be grouped into manipulatable data with the code block construct `{ }` (cmp. PostScript). This is the only nesting/recursive token of the entire language, which powers turing-completeness (branching & conditional execution) as well as FP and OOP.
 
-## 2. Some sample programs
+## 2. Some Sample Programs
 
-To get a taste of SOF, here are several sample programs written in SOF. Note that not every program might work with the current state of the interpreter, as the interpreter is in early alpha development and not complete by any means.
+To get a taste of SOF, here are several sample programs written in SOF. Also checkout the [examples folder](./examples).
 
 ```sof
 # fibbonachi
@@ -168,7 +168,7 @@ N . sum :
 "The result (function) is: " swap cat writeln 
 ```
 
-## 3. Basic principles of SOF
+## 3. Basic Principles of SOF
 
 An SOF program consist of a list of "tokens", input elements that can be one of three basic syntatic types:
 
@@ -186,15 +186,15 @@ Every token can be seen as an action that operates on the stack. Some basic toke
 - Call operator: The special token `.` calls functions and code blocks, retrieves variable values and creates objects. Quite special, that little guy! As it turns out, this operator is fairly simple in behavior, but at the same time can handle several apparently distinct language features. The Double Call operator `:` is just an abbreviation for two calls head-to-head, useful for invoking named functions.
 - Identifier token: An identifier that will later be used to access some named code (a function), some named value (a variable) or some named constructor function (a class). Identifiers are normal data as they simply place themselves onto the stack like literals.
 
-### For more information, [visit the wiki](https://github.com/kleinesfilmroellchen/sof-language/wiki).
+### For more information, [take a look at the official documentation](https://github.com/kleinesfilmroellchen/sof-language/wiki).
 
-## 4. The Simplicity of SOF - A Personal Note
+## 4. The Minimalism of SOF - A Personal Note
 
-SOF is a simple language. By simple, I do not mean easy to learn or understand, although I put some effort towards self-explanatory syntax and features. I mean:
+SOF is a minimalist language.
 
 - The way SOF works can be explained in very simple terms and does not contain many complicated algorithms and decision trees.
-- SOF syntax is extremely basic (see 5. EBNF Syntax definition) and therefore easy to interpret and compile by many primitive tools.
-- SOF is so basic in its I/O and internal operations that one can translate any SOF program into any bytecode utilizing nothing more than one temporary register containing a number and a pure stack of numbers. Although I have not yet written such a compiler for an elemental ultra-pure-stack-based language (like the pure lambda calculus in functional programming), a skilled reader should have no trouble of writing down the translation instructions and/or a program to do that for you.
+- SOF syntax is extremely simple (see [the syntax definition](https://github.com/kleinesfilmroellchen/sof-language/wiki/SOF-Language-Specification)) and therefore easy to interpret and compile by many primitive tools.
+- SOF is so basic in its I/O and internal operations that one can translate any SOF program into any bytecode utilizing nothing more than a couple of temporary register containing a number and a pure stack of numbers. Although I have not yet written such a compiler for an elemental ultra-pure-stack-based language (like the pure lambda calculus in functional programming), a skilled reader should have no trouble of writing down the translation instructions and/or a program to do that for you.
 
 SOF is a tool for understanding programming languages. It is very usable, the learning curve is not very steep regardless of whether you have programming experience or not, and it is turing-complete and universal. At the same time, it is so simple that I can write its interpreter or even a compiler without knowing how 'real' compilers work or how to write a 'real' compiler. Even very primitive environments should be able to parse and run SOF.
 
