@@ -71,6 +71,15 @@ public class Interpreter implements Serializable {
 		return io;
 	}
 
+	/**
+	 * <a href=
+	 * "https://www.reddit.com/r/ProgrammerHumor/comments/auz30h/when_you_make_documentation_for_a_settergetter/?utm_source=share&utm_medium=web2x">...</a>
+	 * @return The stack of this interpreter.
+	 */
+	public Stack getStack() {
+		return stack;
+	}
+
 	// #endregion
 
 	// #region Variables
@@ -603,30 +612,12 @@ public class Interpreter implements Serializable {
 		if (nativeFunc_.isEmpty())
 			throw new IncompleteCompilerException("native", "native.unknown", fname);
 		final var nativeFunc = nativeFunc_.get();
-		
-		// switch over type
-		if (nativeFunc instanceof Native0ArgFunction func) {
-			final var res = func.call();
-			log.finer(() -> String.format("Native call 0 arg function returned %s", res.toDebugString(DebugStringExtensiveness.Compact)));
-			if (res != null) this.stack.push(res);
-		} else if (nativeFunc instanceof Native1ArgFunction func) {
-			final var arg0 = this.stack.popSafe();
-			final var res = func.call(arg0);
-			log.finer(() -> String.format("Native call 1 arg function returned %s", res.toDebugString(DebugStringExtensiveness.Compact)));
-			if (res != null) this.stack.push(res);
-		} else if (nativeFunc instanceof Native2ArgFunction func) {
-			final var arg1 = this.stack.popSafe();
-			final var arg0 = this.stack.popSafe();
-			final var res = func.call(arg0, arg1);
-			log.finer(() -> String.format("Native call 2 arg function returned %s", res.toDebugString(DebugStringExtensiveness.Compact)));
-			if (res != null) this.stack.push(res);
-		} else if (nativeFunc instanceof Native3ArgFunction func) {
-			final var arg2 = this.stack.popSafe();
-			final var arg1 = this.stack.popSafe();
-			final var arg0 = this.stack.popSafe();
-			final var res = func.call(arg0, arg1, arg2);
-			log.finer(() -> String.format("Native call 3 arg function returned %s", res.toDebugString(DebugStringExtensiveness.Compact)));
-			if (res != null) this.stack.push(res);
+		final var result = nativeFunc.call(this);
+		if (result != null) {
+			log.finer(() -> String.format("Native call function returned %s", result.toDebugString(DebugStringExtensiveness.Compact)));
+			this.stack.push(result);
+		} else {
+			log.finer("Native call function returned null");
 		}
 	}
 

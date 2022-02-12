@@ -16,6 +16,7 @@ import static org.reflections.scanners.Scanners.*;
 
 import klfr.sof.lang.*;
 import klfr.Tuple;
+import klfr.sof.Interpreter;
 import klfr.sof.exceptions.*;
 
 /**
@@ -25,78 +26,19 @@ import klfr.sof.exceptions.*;
 public final class NativeFunctionRegistry {
 	private static final Logger log = Logger.getLogger(NativeFunctionRegistry.class.getCanonicalName());
 
-	/** The maximum number of parameters the native function system supports. */
-	public static int MAX_PARAMETER_COUNT = 3;
-
 	/**
-	 * Dummy interface as a supertype for all the native function functional
-	 * interfaces
+	 * Functional interface for native functions.
 	 */
+	@FunctionalInterface
 	public static interface NativeNArgFunction {
 		/**
-		 * A dummy function that doesn't do anything.
-		 */
-		public static Native0ArgFunction dummy = () -> {
-			return null;
-		};
-	}
-
-	/**
-	 * The signature for a native function of zero arguments.
-	 */
-	@FunctionalInterface
-	public static interface Native0ArgFunction extends NativeNArgFunction {
-		/**
 		 * Call the native function.
+		 * 
+		 * @param interpreter The interpreter that is calling this function.
 		 * @return The result of the native function.
 		 * @throws IncompleteCompilerException If the native function fails.
 		 */
-		public Stackable call() throws IncompleteCompilerException;
-	}
-
-	/**
-	 * The signature for a native function of one argument.
-	 */
-	@FunctionalInterface
-	public static interface Native1ArgFunction extends NativeNArgFunction {
-		/**
-		 * Call the native function.
-		 * @param a The first argument to the native function.
-		 * @return The result of the native function.
-		 * @throws IncompleteCompilerException If the native function fails.
-		 */
-		public Stackable call(Stackable a) throws IncompleteCompilerException;
-	}
-
-	/**
-	 * The signature for a native function of two arguments.
-	 */
-	@FunctionalInterface
-	public static interface Native2ArgFunction extends NativeNArgFunction {
-		/**
-		 * Call the native function.
-		 * @param a The first argument to the native function.
-		 * @param b The second argument to the native function.
-		 * @return The result of the native function.
-		 * @throws IncompleteCompilerException If the native function fails.
-		 */
-		public Stackable call(Stackable a, Stackable b) throws IncompleteCompilerException;
-	}
-
-	/**
-	 * The signature for a native function of three arguments.
-	 */
-	@FunctionalInterface
-	public static interface Native3ArgFunction extends NativeNArgFunction {
-		/**
-		 * Call the native function.
-		 * @param a The first argument to the native function.
-		 * @param b The second argument to the native function.
-		 * @param c The third argument to the native function.
-		 * @return The result of the native function.
-		 * @throws IncompleteCompilerException If the native function fails.
-		 */
-		public Stackable call(Stackable a, Stackable b, Stackable c) throws IncompleteCompilerException;
+		public Stackable call(Interpreter interpreter) throws IncompleteCompilerException;
 	}
 
 	private TreeMap<String, NativeNArgFunction> nativeFunctions = new TreeMap<>();
@@ -111,12 +53,13 @@ public final class NativeFunctionRegistry {
 	 * {@link klfr.sof.lib.NativeFunctionCollection}.
 	 * 
 	 * @param packageName The package name. Its subpackages are searched as well.
-	 * @throws IOException  If any exception occurs, also in the class discovery an
-	 *                      reflection access process.
+	 * @throws IOException If any exception occurs, also in the class discovery an
+	 *                     reflection access process.
 	 */
 	public void registerAllFromPackage(String packageName) throws IOException {
 		Reflections pakage = new Reflections(packageName);
-		var classes = pakage.get(SubTypes.of(TypesAnnotated.with(NativeFunctionCollection.class)).asClass());;
+		var classes = pakage.get(SubTypes.of(TypesAnnotated.with(NativeFunctionCollection.class)).asClass());
+		;
 		log.fine(String.format("In package %s found classes: %s", packageName, classes.toString()));
 
 		for (var clazz : classes) {
@@ -155,18 +98,14 @@ public final class NativeFunctionRegistry {
 	public void registerNativeFunctions(Class<?> clazz) {
 		// FP for da win
 		Arrays.stream(clazz.getDeclaredMethods())
-				// only public static methods, only methods without too many parameters
+				// only public static methods, only methods with only Stackable or Stackable
+				// subtype parameters, only methods with Stackable return type (or no return
+				// value)
 				.filter(m -> Modifier.isStatic(m.getModifiers()) && Modifier.isPublic(m.getModifiers())
-						&& m.getParameterCount() <= MAX_PARAMETER_COUNT)
-				// only methods with only Stackable or Stackable subtype parameters
-				.filter(
-						m -> Arrays.stream(m.getParameterTypes()).allMatch(ptype -> Stackable.class.isAssignableFrom(ptype)))
-				// only methods with Stackable return type (or no return value)
-				.filter(m -> Stackable.class.isAssignableFrom(m.getReturnType()) || (m.getReturnType() == void.class))
-				// group by parameter count
-				.collect(Collectors.groupingByConcurrent(Method::getParameterCount))
+						&& Arrays.stream(m.getParameterTypes()).allMatch(ptype -> Stackable.class.isAssignableFrom(ptype))
+						&& Stackable.class.isAssignableFrom(m.getReturnType()) || (m.getReturnType() == void.class))
 				// map the methods to one of the mcallN a proxies and flatten streams
-				.entrySet().parallelStream().flatMap(NativeFunctionRegistry::methodRegistrationFlatMapFtor)
+				.map(NativeFunctionRegistry::createNativeFunctionWrapper)
 				// add the methods to the function registry
 				.forEach(ftuple -> nativeFunctions.put(generateDescriptor(ftuple.getRight()), ftuple.getLeft()));
 	}
@@ -190,31 +129,16 @@ public final class NativeFunctionRegistry {
 	 * type properly. -_-
 	 * 
 	 * Maps a given map entry with a number of arguments and its respective methods
-	 * to tuples that contain the method call wrapper to the left and the original method to the right.
+	 * to tuples that contain the method call wrapper to the left and the original
+	 * method to the right.
 	 */
-	private static Stream<Tuple<NativeNArgFunction, Method>> methodRegistrationFlatMapFtor(
-			final Map.Entry<Integer, List<Method>> entry) {
-		final var argcount = entry.getKey();
-		final var functions = entry.getValue().stream();
-		// Yes.
-		return switch (argcount) {
-			case 0 -> functions.map(m -> new Tuple<>(mcall0(m), m));
-			case 1 -> functions.map(m -> new Tuple<>(mcall1(m), m));
-			case 2 -> functions.map(m -> new Tuple<>(mcall2(m), m));
-			case 3 -> functions.map(m -> new Tuple<>(mcall3(m), m));
-			default -> Stream.<Tuple<NativeNArgFunction, Method>>empty();
-		};
-		
-	}
-
-	/**
-	 * Wrapper for 0 argument native function call that redirects all invocation
-	 * errors to CompilerException.
-	 */
-	private static Native0ArgFunction mcall0(Method function) {
-		return () -> {
+	private static Tuple<NativeNArgFunction, Method> createNativeFunctionWrapper(
+			final Method method) {
+		final var argcount = method.getParameterCount();
+		return new Tuple<NativeNArgFunction, Method>(interpreter -> {
+			final var list = interpreter.getStack().popSafe(argcount);
 			try {
-				return (Stackable) function.invoke(null);
+				return (Stackable) method.invoke(null, list.toArray());
 			} catch (IllegalAccessException | IllegalArgumentException
 					| ExceptionInInitializerError e) {
 				final var ce = new IncompleteCompilerException("native");
@@ -228,79 +152,7 @@ public final class NativeFunctionRegistry {
 				ce.initCause(e);
 				throw ce;
 			}
-		};
-	}
-
-	/**
-	 * Wrapper for 1 argument native function call that redirects all invocation
-	 * errors to CompilerException.
-	 */
-	private static Native1ArgFunction mcall1(Method function) {
-		return (a) -> {
-			try {
-				return (Stackable) function.invoke(null, a);
-			} catch (IllegalAccessException | IllegalArgumentException
-					| ExceptionInInitializerError e) {
-				final var ce = new IncompleteCompilerException("native");
-				ce.initCause(e);
-				throw ce;
-			} catch (InvocationTargetException e) {
-				final var cause = e.getCause();
-				if (cause instanceof IncompleteCompilerException compilerException)
-					throw compilerException;
-				final var ce = new IncompleteCompilerException("native");
-				ce.initCause(e);
-				throw ce;
-			}
-		};
-	}
-
-	/**
-	 * Wrapper for 2 argument native function call that redirects all invocation
-	 * errors to CompilerException.
-	 */
-	private static Native2ArgFunction mcall2(Method function) {
-		return (a, b) -> {
-			try {
-				return (Stackable) function.invoke(null, a, b);
-			} catch (IllegalAccessException | IllegalArgumentException
-					| ExceptionInInitializerError e) {
-				final var ce = new IncompleteCompilerException("native");
-				ce.initCause(e);
-				throw ce;
-			} catch (InvocationTargetException e) {
-				final var cause = e.getCause();
-				if (cause instanceof IncompleteCompilerException compilerException)
-					throw compilerException;
-				final var ce = new IncompleteCompilerException("native");
-				ce.initCause(e);
-				throw ce;
-			}
-		};
-	}
-
-	/**
-	 * Wrapper for 3 argument native function call that redirects all invocation
-	 * errors to CompilerException.
-	 */
-	private static Native3ArgFunction mcall3(Method function) {
-		return (a, b, c) -> {
-			try {
-				return (Stackable) function.invoke(null, a, b, c);
-			} catch (IllegalAccessException | IllegalArgumentException
-					| ExceptionInInitializerError e) {
-				final var ce = new IncompleteCompilerException("native");
-				ce.initCause(e);
-				throw ce;
-			} catch (InvocationTargetException e) {
-				final var cause = e.getCause();
-				if (cause instanceof IncompleteCompilerException compilerException)
-					throw compilerException;
-				final var ce = new IncompleteCompilerException("native");
-				ce.initCause(e);
-				throw ce;
-			}
-		};
+		}, method);
 	}
 
 	/**
@@ -316,7 +168,8 @@ public final class NativeFunctionRegistry {
 	public static String generateDescriptor(Method function) {
 		final String className = function.getDeclaringClass().getSimpleName(), methodName = function.getName(),
 				packageName = function.getDeclaringClass().getPackageName();
-		final var arguments = Arrays.stream(function.getParameterTypes()).map(pt -> pt.getSimpleName()).collect(Collectors.joining(","));
+		final var arguments = Arrays.stream(function.getParameterTypes()).map(pt -> pt.getSimpleName())
+				.collect(Collectors.joining(","));
 		return new StringBuilder(packageName).append(".").append(className).append("#").append(methodName).append("(")
 				.append(arguments).append(")").toString();
 	}
@@ -324,19 +177,19 @@ public final class NativeFunctionRegistry {
 }
 
 /*
-The SOF programming language interpreter. Copyright (C) 2019-2020
-kleinesfilmröllchen
-
-This program is free software: you can redistribute it and/or modify it under
-the terms of the GNU General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later
-version.
-
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
-details.
-
-You should have received a copy of the GNU General Public License along with
-this program. If not, see <https://www.gnu.org/licenses/>.
-*/
+ * The SOF programming language interpreter. Copyright (C) 2019-2020
+ * kleinesfilmröllchen
+ * 
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ * 
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <https://www.gnu.org/licenses/>.
+ */

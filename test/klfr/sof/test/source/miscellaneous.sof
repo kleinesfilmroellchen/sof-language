@@ -12,9 +12,9 @@ random:01 :
 # 2 argument
 20 44 random:int :
 # 3 argument
-"format%s%s" "hehe" "not" fmt'2 :
-
-describe describes
+"format%s%s" "hehe" "not" fmt'2 : describe
+# 8 argument
+"%s%s%s%s%s%s%s%s" "1" "2" "3" "4" "5" "6" "7" "8" fmt'8 : describe
 
 true false swap assert
 

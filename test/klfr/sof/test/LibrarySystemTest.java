@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.*;
 
+import klfr.sof.*;
 import klfr.sof.lang.*;
 import klfr.sof.lang.primitive.FloatPrimitive;
 import klfr.sof.lang.primitive.IntPrimitive;
@@ -48,22 +49,20 @@ public class LibrarySystemTest extends SofTestSuper {
 	@DisplayName("Test native function discovery and registration")
 	@Test
 	void testRegister() {
-		var nfr = new NativeFunctionRegistry();
+		final var nfr = new NativeFunctionRegistry();
 		assertDoesNotThrow(() -> nfr.registerNativeFunctions(LibrarySystemTest.class));
+		final var interpreter = new Interpreter(new IOInterface(), nfr);
 		// there should now be three functions registered
-		final var m1funcN = assertDoesNotThrow(() -> nfr.getNativeFunction(ntm1Name).orElseThrow(), "Function 1 was registered and can be retrieved");
-		final var m2funcN = assertDoesNotThrow(() -> nfr.getNativeFunction(ntm2Name).orElseThrow(), "Function 2 was registered and can be retrieved");
-		final var m3funcN = assertDoesNotThrow(() -> nfr.getNativeFunction(ntm3Name).orElseThrow(), "Function 3 was registered and can be retrieved");
+		final var m1func = assertDoesNotThrow(() -> nfr.getNativeFunction(ntm1Name).orElseThrow(), "Function 1 was registered and can be retrieved");
+		final var m2func = assertDoesNotThrow(() -> nfr.getNativeFunction(ntm2Name).orElseThrow(), "Function 2 was registered and can be retrieved");
+		final var m3func = assertDoesNotThrow(() -> nfr.getNativeFunction(ntm3Name).orElseThrow(), "Function 3 was registered and can be retrieved");
 		assertTrue(Optional.empty().equals(nfr.getNativeFunction("not a function")), "unregistered random string has no function name assigned");
 		try {
-			final var m1func = (Native0ArgFunction) m1funcN;
-			final var m2func = (Native1ArgFunction) m2funcN;
-			//final var m3func = (Native2ArgFunction) m3funcN;
-
-			final var res1 = assertDoesNotThrow(() -> m1func.call(), "Function 1 call does not throw");
+			final var res1 = assertDoesNotThrow(() -> m1func.call(interpreter), "Function 1 call does not throw");
 			assertTrue(IntPrimitive.createIntPrimitive(42l).equals(res1), "Function 1 call returns 42");
 
-			final var res2 = assertDoesNotThrow(() -> m2func.call(StringPrimitive.createStringPrimitive("123")), "Function 2 call does not throw");
+			interpreter.getStack().push(StringPrimitive.createStringPrimitive("123"));
+			final var res2 = assertDoesNotThrow(() -> m2func.call(interpreter), "Function 2 call does not throw");
 			assertTrue(res2 == null, "Function 2 returns null");
 
 		} catch (ClassCastException e) {
