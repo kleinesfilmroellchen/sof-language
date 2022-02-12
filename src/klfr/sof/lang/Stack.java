@@ -83,16 +83,6 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 		return this;
 	}
 
-	@Override
-	public Stackable pop() {
-		final Stackable elmt = super.pop();
-		if (elmt instanceof Nametable) {
-			super.push(elmt);
-			throw new RuntimeException("Nametable on the stack cannot be accessed");
-		}
-		return elmt;
-	}
-
 	/**
 	 * Safe version of the {@link ConcurrentLinkedDeque#pop()} method.
 	 * This variant will throw IncompleteCompilerExceptions on all errors.
