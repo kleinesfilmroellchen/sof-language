@@ -151,10 +151,7 @@ public class CLI {
 			runSOF(opt, io);
 
 		} catch (CompilerException error){
-				log.log(Level.SEVERE,
-						String.format("Uncaught Interpreter exception: %s%nStack trace:%n%s", error.getLocalizedMessage(),
-								Arrays.asList(error.getStackTrace()).stream().map(ste -> ste.toString())
-										.reduce((a, b) -> a + System.lineSeparator() + b).orElse("")));
+			log.log(Level.SEVERE, "Uncaught Interpreter exception", error);
 		}
 	}
 
