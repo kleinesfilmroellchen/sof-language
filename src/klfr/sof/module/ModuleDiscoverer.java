@@ -2,6 +2,7 @@ package klfr.sof.module;
 
 import java.io.*;
 import java.nio.file.*;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -94,14 +95,25 @@ public class ModuleDiscoverer {
 				final var libPath = intpPath.getParent().getParent().getParent().getParent().getParent().getParent().resolve(DEFAULT_STDLIB_DIRECTORY).toAbsolutePath();
 				return libPath.toFile();
 			} else if ("jar".equalsIgnoreCase(main.getScheme())) {
+				final var fileSystem = initFileSystem(main);
 				// the host of a jar URI is the path to the containing jar
-				final var jarPath = Path.of(Path.of(main).getFileSystem().toString());
+				final var jarPath = Path.of(fileSystem.toString());
 				log.finest(() -> jarPath.toString());
 				return jarPath.getParent().resolve(DEFAULT_STDLIB_DIRECTORY).toAbsolutePath().toFile();
 			}
 			throw new RuntimeException("Interpreter class in an unsupported resource type. Run SOF from a JAR or from class files.");
-		} catch (URISyntaxException e) {
+		} catch (URISyntaxException | IOException e) {
 			throw new RuntimeException(e);
+		}
+	}
+
+	private static FileSystem initFileSystem(URI uri) throws IOException {
+		try {
+			return FileSystems.getFileSystem(uri);
+		} catch (FileSystemNotFoundException e) {
+			Map<String, String> env = new HashMap<>();
+			env.put("create", "true");
+			return FileSystems.newFileSystem(uri, env);
 		}
 	}
 

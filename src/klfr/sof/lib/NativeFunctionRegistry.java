@@ -11,6 +11,9 @@ import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.*;
 
+import org.reflections.*;
+import static org.reflections.scanners.Scanners.*;
+
 import klfr.sof.lang.*;
 import klfr.Tuple;
 import klfr.sof.exceptions.*;
@@ -112,59 +115,14 @@ public final class NativeFunctionRegistry {
 	 *                      reflection access process.
 	 */
 	public void registerAllFromPackage(String packageName) throws IOException {
-		try {
-			var classes = getClassesForPackage(packageName);
-			log.fine(String.format("In package %s found classes: %s", packageName, classes.toString()));
-			var toRegister = classes.stream().filter(clazz -> clazz.getAnnotation(NativeFunctionCollection.class) != null).collect(Collectors.toSet());
+		Reflections pakage = new Reflections(packageName);
+		var classes = pakage.get(SubTypes.of(TypesAnnotated.with(NativeFunctionCollection.class)).asClass());;
+		log.fine(String.format("In package %s found classes: %s", packageName, classes.toString()));
 
-			for (var clazz : toRegister) {
-				this.registerNativeFunctions(clazz);
-			}
-		} catch (URISyntaxException e) {
-			throw new IOException(e);
+		for (var clazz : classes) {
+			this.registerNativeFunctions(clazz);
 		}
 	}
-
-	/**
-	 * Utility method to return all classes in a package given by its name. The subpackages are also searched.
-	 * @param pkgName The name of the package to be searched.
-	 * @return A list of class objects that are contained in the specified package.
-	 * @throws IOException If an I/O error occurred.
-	 * @throws URISyntaxException Should not happen.
-	 */
-	public static List<Class<?>> getClassesForPackage(final String pkgName) throws IOException, URISyntaxException {
-		final String pkgPath = pkgName.replace('.', '/');
-		log.fine(String.format("get classes from path %s", pkgPath));
-		final URI pkg = Objects.requireNonNull(NativeFunctionRegistry.class.getClassLoader().getResource(pkgPath)).toURI();
-		final ArrayList<Class<?>> allClasses = new ArrayList<Class<?>>();
-
-		boolean isJar_ = false;
-		Path root;
-		if (pkg.getScheme().equals("jar")) {
-			isJar_ = true;
-			try {
-				root = FileSystems.getFileSystem(pkg).getPath(pkgPath);
-			} catch (final FileSystemNotFoundException e) {
-				root = FileSystems.newFileSystem(pkg, Collections.emptyMap()).getPath(pkgPath);
-			}
-		} else {
-			root = Paths.get(pkg);
-		}
-		
-		final boolean isJar = isJar_;
-		final String extension = ".class";
-		try (final Stream<Path> allPaths = Files.walk(root)) {
-			allPaths.filter(Files::isRegularFile).forEach(file -> {
-				try {
-					final String path = file.toString().replace(isJar ? '/' : File.separatorChar, '.');
-					final String name = path.substring(0, path.length() - extension.length());
-					final Class<?> clazz = Class.forName(name);
-					allClasses.add(clazz);
-				} catch (final ClassNotFoundException | StringIndexOutOfBoundsException ignored) { }
-			});
-		}
-		return allClasses;
-  }
 
 	/**
 	 * <p>

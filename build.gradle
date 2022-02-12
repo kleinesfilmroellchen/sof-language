@@ -21,6 +21,8 @@ dependencies {
 
 	// Use JUnit Jupiter Engine for testing.
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+
+	implementation 'org.reflections:reflections:0.10.2'
 }
 
 version = '0.1'

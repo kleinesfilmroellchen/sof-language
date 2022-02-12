@@ -7,6 +7,7 @@
 open module sof {
 	requires java.base;
 	requires java.logging;
+	requires org.reflections;
 	exports klfr.sof;
 	exports klfr.sof.lib;
 }
