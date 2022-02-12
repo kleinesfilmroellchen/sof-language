@@ -678,7 +678,6 @@ public class Interpreter implements Serializable {
 			this.stack.push(newObject);
 			return true;
 		} else if (toCall instanceof CurriedFunction function) {
-			log.fine("calling a curried function");
 			this.stack.pushAll(function.getCurriedArguments());
 			return doCall(function.getRegularFunction(), scope);
 		} else if (toCall instanceof SOFunction function) {
@@ -691,7 +690,6 @@ public class Interpreter implements Serializable {
 			var remainingArguments = function.arguments;
 			log.fine(stack.toStringExtended());
 			while (remainingArguments > 0) {
-				log.fine(String.format("remaining arguments %d", remainingArguments));
 				final var argumentOrCurryDelimiter = this.stack.popSafe(false);
 				if (argumentOrCurryDelimiter instanceof TransparentData transparentData){
 					// Any other transparent data is skipped as normally.
@@ -706,7 +704,6 @@ public class Interpreter implements Serializable {
 
 			// This function is not curried; we can just execute it.
 			if (remainingArguments == 0) {
-				log.fine(String.format("%s arguments remaining", remainingArguments));
 				this.stack.push(scope);
 				if (function.arguments > 0)
 					this.stack.pushAll(args);
@@ -724,7 +721,6 @@ public class Interpreter implements Serializable {
 			}
 			// This function is curried; we create a proxy for it.
 			else {
-				log.fine("creating a curried function");
 				final var curriedFunction = new CurriedFunction(function, args);
 				this.stack.push(curriedFunction);
 				return true;
