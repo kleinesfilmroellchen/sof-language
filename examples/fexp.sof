@@ -1,0 +1,19 @@
+# Fast exponentiation (modular power) sample program
+
+{
+	base def exponent def modulus def
+	{ 0 return } modulus . 1 = if
+	
+	1 result def
+	base . modulus . % base def
+	{
+		{ result . base . * modulus . % result def } exponent . 2 % 1 = if
+		# TODO: implement bit shifting
+		exponent . 2 / exponent def
+		base . dup * modulus . % base def
+	} { exponent . 0 > } while
+	
+	result . return
+} 3 function modularPow globaldef
+
+"Enter m, e, b: " write input convert:int : input convert:int : input convert:int : modularPow : writeln
