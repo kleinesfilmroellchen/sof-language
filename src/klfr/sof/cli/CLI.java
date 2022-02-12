@@ -141,6 +141,7 @@ public class CLI {
 				e.printStackTrace();
 			}
 		}
+		log.config(opt.toString());
 
 		// main code starts here
 		try {
@@ -215,6 +216,7 @@ public class CLI {
 					}
 					throw new RuntimeException("Unhandled exception in executing SOF.", error);
 				}
+				break;
 			}
 			case Literal: {
 				//// Single literal to be executed
