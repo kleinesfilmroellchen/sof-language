@@ -76,7 +76,14 @@ public final class Builtins {
 	 * @return A random number between start (inclusive) and end (exclusive).
 	 */
 	public static IntPrimitive random(final IntPrimitive from, final IntPrimitive to) {
-		final long start = from.value(), end = to.value(), range = end - start + 1;
+		long start = from.value(), end = to.value();
+		if (start > end) {
+			final long tmp = start;
+			start = end;
+			end = tmp;
+		}
+
+		final long range = end - start + 1;
 		// to arrive at a suitable number with less RNG calls, determine the msb of the
 		// range. This way, only rng values with these bits may be computed.
 		final int rangeMsb = mostSignificantSetBit(range) + 1;
