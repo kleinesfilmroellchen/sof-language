@@ -26,6 +26,26 @@ test : assert
 "string" { true return } 0 function . assert
 "string" = assert
 
+## Currying
+
+{ + return } 2 function add globaldef
+| 4 add : add4 globaldef
+1 add4 : 5 = assert
+-20 add4 15 = assert
+
+# unnecessary currying delimiter
+1 | 2 7 add : 9 = assert
+   # ignored for anything else
+   1 = assert
+
+# no define after currying
+| 80 add : 5 swap . 85 = assert
+
+# argument order
+{ pop return } 2 function discardOne globaldef
+| "blah blah" discardOne : id globaldef
+4 id : 4 = assert "not blah blah" id : "not blah blah" = assert
+
 # The SOF programming language interpreter.
 # Copyright (C) 2019-2020  kleinesfilmröllchen
 

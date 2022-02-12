@@ -3,6 +3,7 @@ package klfr.sof.lang;
 import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.logging.Logger;
 
 import klfr.sof.*;
 import klfr.sof.exceptions.*;
@@ -32,6 +33,8 @@ import klfr.sof.lang.functional.*;
  */
 public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	private static final long serialVersionUID = 1L;
+
+	private static final Logger log = Logger.getLogger(Stack.class.getCanonicalName());
 
 	/**
 	 * The stack starts out empty. The user of the stack is responsible for adding
@@ -87,21 +90,40 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 * Safe version of the {@link ConcurrentLinkedDeque#pop()} method.
 	 * This variant will throw IncompleteCompilerExceptions on all errors.
 	 * 
-	 * @return The topmost element on the stack, which is removed.
+	 * @param ignoreTransparentData Whether to ignore transparent data. If this value is true,
+	 *                              all {@link TransparentData} on the stack is discarded and
+	 *                              never returned by this function.
+	 * @return The topmost non-transparent element on the stack, which is removed.
 	 * @throws IncompleteCompilerException if there is no element on the stack.
 	 * 											   or if there was a stack access violation.
 	 */
-	public Stackable popSafe() throws IncompleteCompilerException {
+	public Stackable popSafe(final boolean ignoreTransparentData) throws IncompleteCompilerException {
 		try {
 			final Stackable elmt = super.pop();
 			if (elmt instanceof Nametable) {
 				super.push(elmt);
 				throw new IncompleteCompilerException("stackaccess");
+			} else if ((elmt instanceof TransparentData) && ignoreTransparentData) {
+				log.fine("skipping transparent data");
+				return this.popSafe();
 			}
 			return elmt;
 		} catch (final NoSuchElementException e) {
 			throw new IncompleteCompilerException("stack");
 		}
+	}
+
+	/**
+	 * Safe version of the {@link ConcurrentLinkedDeque#pop()} method.
+	 * This variant will throw IncompleteCompilerExceptions on all errors.
+	 * This function discards all transparent data.
+	 * 
+	 * @return The topmost non-transparent element on the stack, which is removed.
+	 * @throws IncompleteCompilerException if there is no element on the stack.
+	 * 											   or if there was a stack access violation.
+	 */
+	public Stackable popSafe() throws IncompleteCompilerException {
+		return popSafe(true);
 	}
 
 	/**

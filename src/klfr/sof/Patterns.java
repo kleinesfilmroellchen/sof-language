@@ -88,6 +88,11 @@ public final class Patterns {
 	 */
 	public static final Pattern formatSpecifierPattern = Pattern.compile("(\\%n)|\\%([\\<\\^\\+ \\#0]+)?([1-9][0-9]*)?(?:\\.([1-9][0-9]*))?([diboxXefgs])");
 
+	/**
+	 * Pattern for all transparent markers.
+	 */
+	public static final Pattern transparentPattern = Pattern.compile("[\\|\\[\\]]");
+
 }
 
 /*  

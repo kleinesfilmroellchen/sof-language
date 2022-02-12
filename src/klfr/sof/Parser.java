@@ -108,6 +108,11 @@ public class Parser {
 					log.finest(() -> String.format("Identifier token %30s @ %4d", token, tokenizer.start()));
 					tokens.add(new LiteralNode(new Identifier(token), tokenizer.start(), source));
 				} else
+				// transparent marker
+				if (Patterns.transparentPattern.matcher(token).matches()) {
+					log.finest(() -> String.format("Transparent token %30s @ %4d", token, tokenizer.start()));
+					tokens.add(new LiteralNode(new TransparentData(TransparentData.TransparentType.fromSymbol(token)), tokenizer.start(), source));
+				} else
 					throw CompilerException.from(source.sourceFile().getPath(), tokenizer, "syntax", null);
 
 			} catch (final IncompleteCompilerException e) {

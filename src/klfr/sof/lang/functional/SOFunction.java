@@ -7,6 +7,7 @@ import klfr.sof.lang.*;
  * Function type, one of the most important callable types. Functions are the
  * most primitive scoped callable.
  */
+@StackableName("Function")
 public class SOFunction extends CodeBlock {
 
 	private static final long serialVersionUID = 1L;

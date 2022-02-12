@@ -677,28 +677,58 @@ public class Interpreter implements Serializable {
 			// re-push the object (was removed by above operation)
 			this.stack.push(newObject);
 			return true;
+		} else if (toCall instanceof CurriedFunction function) {
+			log.fine("calling a curried function");
+			this.stack.pushAll(function.getCurriedArguments());
+			return doCall(function.getRegularFunction(), scope);
 		} else if (toCall instanceof SOFunction function) {
 			// HINT: handle the function before the codeblock because it inherits from it
 			final var subProgram = function.code;
 
-			// setup stack
-			// causes overflow issues with extremely large (> 2.5 million) argcounts, which
-			// shouldn't happen.
-			final var args = this.stack.popSafe((int) function.arguments);
-			this.stack.push(scope);
-			if (function.arguments > 0)
-				this.stack.pushAll(args);
+			// setup stack with arguments
+			// at the same time, detect a curried function
+			final var args = new LinkedList<Stackable>();
+			var remainingArguments = function.arguments;
+			log.fine(stack.toStringExtended());
+			while (remainingArguments > 0) {
+				log.fine(String.format("remaining arguments %d", remainingArguments));
+				final var argumentOrCurryDelimiter = this.stack.popSafe(false);
+				if (argumentOrCurryDelimiter instanceof TransparentData transparentData){
+					// Any other transparent data is skipped as normally.
+					if (transparentData.getType() == TransparentData.TransparentType.CurryPipe)
+						break;
+				}
+				else {
+					args.addFirst(argumentOrCurryDelimiter);
+					remainingArguments--;
+				}
+			}
 
-			// run and ignore return state
-			subProgram.forEach((Node.ForEachType) this::handle);
+			// This function is not curried; we can just execute it.
+			if (remainingArguments == 0) {
+				log.fine(String.format("%s arguments remaining", remainingArguments));
+				this.stack.push(scope);
+				if (function.arguments > 0)
+					this.stack.pushAll(args);
 
-			// get return value through nametable
-			final var table = this.stack.popFirstNametable()
-					.orElseThrow(() -> new RuntimeException("Local nametable was removed unexpectedly."));
-			if (!(table instanceof FunctionDelimiter))
-				throw new RuntimeException("Unexpected nametable type " + table.getClass().toString());
-			((FunctionDelimiter) table).pushReturnValue(this.stack);
-			return true;
+				// run and ignore return state
+				subProgram.forEach((Node.ForEachType) this::handle);
+
+				// get return value through nametable
+				final var table = this.stack.popFirstNametable()
+						.orElseThrow(() -> new RuntimeException("Local nametable was removed unexpectedly."));
+				if (!(table instanceof FunctionDelimiter))
+					throw new RuntimeException("Unexpected nametable type " + table.getClass().toString());
+				((FunctionDelimiter) table).pushReturnValue(this.stack);
+				return true;
+			}
+			// This function is curried; we create a proxy for it.
+			else {
+				log.fine("creating a curried function");
+				final var curriedFunction = new CurriedFunction(function, args);
+				this.stack.push(curriedFunction);
+				return true;
+			}
 		} else if (toCall instanceof CodeBlock codeblock) {
 			final var subProgram = codeblock.code;
 			// just run, no return value, no stack protect
@@ -713,7 +743,7 @@ public class Interpreter implements Serializable {
 
 /*  
 The SOF programming language interpreter.
-Copyright (C) 2019-2020  kleinesfilmröllchen
+Copyright (C) 2019-2022  kleinesfilmröllchen
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
