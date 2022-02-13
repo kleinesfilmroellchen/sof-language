@@ -1,5 +1,7 @@
 package klfr.sof.lang;
 
+import java.util.logging.Logger;
+
 import klfr.sof.exceptions.IncompleteCompilerException;
 
 /**
@@ -9,7 +11,9 @@ import klfr.sof.exceptions.IncompleteCompilerException;
  * 
  * @author klfr
  */
+@StackableName("Marker")
 public final class TransparentData implements Stackable {
+	private static final Logger log = Logger.getLogger(TransparentData.class.getCanonicalName());
 
 	/**
 	 * The underlying type of transparent object.
@@ -20,7 +24,7 @@ public final class TransparentData implements Stackable {
 	 */
 	public static enum TransparentType {
 		/** Currently unused. */
-		// ListStart("["),
+		ListStart("["),
 		/**
 		 * Function currying marker. A function cannot consume arguments past this
 		 * marker on the stack.
@@ -38,10 +42,11 @@ public final class TransparentData implements Stackable {
 		}
 
 		public static final TransparentType fromSymbol(final String symbol) throws IncompleteCompilerException {
-			return switch (symbol) {
-				case "|" -> TransparentType.CurryPipe;
-				default -> throw new IncompleteCompilerException("syntax");
-			};
+			for (TransparentType td : TransparentType.values()) {
+				if (td.symbol.equals(symbol))
+					return td;
+			}
+			throw new IncompleteCompilerException("syntax");
 		}
 	}
 
@@ -61,6 +66,15 @@ public final class TransparentData implements Stackable {
 	 */
 	public TransparentData(final TransparentType type) {
 		this.type = type;
+	}
+
+	@Override
+	public String toDebugString(DebugStringExtensiveness e) {
+		// TODO Auto-generated method stub
+		return switch(e) {
+			case Full, Compact -> type.getSymbol();
+			case Type -> "Marker";
+		};
 	}
 
 	@Override

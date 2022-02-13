@@ -91,7 +91,7 @@ public final class Patterns {
 	/**
 	 * Pattern for all transparent markers.
 	 */
-	public static final Pattern transparentPattern = Pattern.compile("[\\|\\[\\]]");
+	public static final Pattern transparentPattern = Pattern.compile("[\\|\\[]");
 
 }
 

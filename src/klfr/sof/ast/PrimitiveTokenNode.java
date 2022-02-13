@@ -115,6 +115,9 @@ public final class PrimitiveTokenNode extends Node {
 		/** The <code>assert</code> primitive token. */
 		Assert("assert"),
 
+		/** The <code>]</code> primitive token. */
+		CreateList("]"),
+
 		;
 
 		/**

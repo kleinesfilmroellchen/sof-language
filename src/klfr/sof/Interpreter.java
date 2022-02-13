@@ -12,6 +12,7 @@ import klfr.sof.lang.*;
 // resolve ambiguity java.util.Stack <-> klfr.sof.lang.Stack
 import klfr.sof.lang.Stack;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
+import klfr.sof.lang.TransparentData.TransparentType;
 import klfr.sof.lang.functional.*;
 import klfr.sof.lang.oop.*;
 import klfr.sof.lang.primitive.*;
@@ -556,6 +557,17 @@ public class Interpreter implements Serializable {
 				if (this.stack.popSafe().isFalse())
 					throw CompilerException.from(pt.getSource(), pt.getCodeIndex(), "assert", null);
 				++this.assertCount;
+				return true;
+			}
+			case CreateList: {
+				final var listElements = new LinkedList<Stackable>();
+				var currentElement = this.stack.popSafe(false);
+				var listEndMarker = new TransparentData(TransparentType.ListStart);
+				while (!currentElement.equals(listEndMarker)) {
+					listElements.addFirst(currentElement);
+					currentElement = this.stack.popSafe(false);
+				}
+				this.stack.push(new ListPrimitive(listElements));
 				return true;
 			}
 			default:
