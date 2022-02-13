@@ -9,7 +9,7 @@ import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 /**
  * A node that holds a simple Stackable to be placed on the stack.
  */
-public class LiteralNode extends Node {
+public final class LiteralNode extends Node {
 	private static final long serialVersionUID = 1L;
 
 	/** The value that this literal node represents and places on the stack. */
@@ -19,7 +19,7 @@ public class LiteralNode extends Node {
 	 * Return the SOF data that this literal represents.
 	 * @return the SOF data that this literal represents.
 	 */
-	public Stackable getValue() {
+	public final Stackable getValue() {
 		return value;
 	}
 

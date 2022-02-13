@@ -7,7 +7,7 @@ import java.util.logging.*;
 /**
  * Command-line options storage and parsing.
  */
-class Options implements Serializable {
+final class Options implements Serializable {
 	private static final long serialVersionUID = 1L;
 	private static Logger log = Logger.getLogger(Options.class.getCanonicalName());
 
@@ -43,7 +43,7 @@ class Options implements Serializable {
 	 */
 	public int flags;
 
-	public String toString() {
+	public final String toString() {
 		return "Options:" + executionType + executionStrings.toString() + "f:" + Integer.toBinaryString(flags);
 	}
 

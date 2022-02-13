@@ -20,7 +20,7 @@ public class Nametable implements Stackable {
 	 * contains. Useful for operating on and/or traversing the entire nametable.
 	 * @return a stream over all the identifier-value mappings that this nametable contains. 
 	 */
-	public Stream<Map.Entry<Identifier, Stackable>> mappingStream() {
+	public final Stream<Map.Entry<Identifier, Stackable>> mappingStream() {
 		return entries.entrySet().parallelStream();
 	}
 
@@ -28,7 +28,7 @@ public class Nametable implements Stackable {
 	 * Returns the size of the nametable, i.e. how many bindings are defined.
 	 * @return the size of the nametable, i.e. how many bindings are defined.
 	 */
-	public int size() {
+	public final int size() {
 		return entries.size();
 	}
 
@@ -37,7 +37,7 @@ public class Nametable implements Stackable {
 	 * @param key The identifier to check.
 	 * @return {@code true} if the identifier is already defined.
 	 */
-	public boolean hasMapping(Identifier key) {
+	public final boolean hasMapping(Identifier key) {
 		return entries.containsKey(key);
 	}
 
@@ -46,7 +46,7 @@ public class Nametable implements Stackable {
 	 * @param key The identifier to return the associated value for.
 	 * @return The value associated with the identifier, or null if there is none.
 	 */
-	public Stackable get(Identifier key) {
+	public final Stackable get(Identifier key) {
 		return entries.get(key);
 	}
 
@@ -56,7 +56,7 @@ public class Nametable implements Stackable {
 	 * @param value The value to be bound.
 	 * @return The value previously associated with the identifier.
 	 */
-	public Stackable put(Identifier key, Stackable value) {
+	public final Stackable put(Identifier key, Stackable value) {
 		return entries.put(key, value);
 	}
 
@@ -66,7 +66,7 @@ public class Nametable implements Stackable {
 	 * 
 	 * @param m The map whose mappings are to be copied.
 	 */
-	public void putAll(Map<? extends Identifier, ? extends Stackable> m) {
+	public final void putAll(Map<? extends Identifier, ? extends Stackable> m) {
 		entries.putAll(m);
 	}
 
@@ -86,7 +86,7 @@ public class Nametable implements Stackable {
 	 * Returns all identifiers present in the nametable.
 	 * @return All identifiers present in the nametable.
 	 */
-	public Set<Identifier> identifiers() {
+	public final Set<Identifier> identifiers() {
 		return entries.keySet();
 	}
 

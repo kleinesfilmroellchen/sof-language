@@ -9,7 +9,7 @@ import klfr.sof.lang.*;
  * @author klfr
  */
 @StackableName("String")
-public class StringPrimitive extends Primitive {
+public final class StringPrimitive extends Primitive {
    private static final long serialVersionUID = 1L;
 
    /** The string that is represented by this primitive. */
@@ -33,7 +33,7 @@ public class StringPrimitive extends Primitive {
     * Returns the string that this primitive represents.
     * @return The string that this primitive represents.
     */
-   public String value() {
+   public final String value() {
       return s;
    }
 

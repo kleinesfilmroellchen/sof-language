@@ -7,7 +7,7 @@ import java.util.Objects;
 /**
  * Simple tuple type, nothing fancy.
  */
-public class Tuple<A, B>
+public final class Tuple<A, B>
       implements Serializable, Iterable<Object>, Cloneable {
    private static final long serialVersionUID = 1L;
 
@@ -85,7 +85,7 @@ public class Tuple<A, B>
     * @param other The other tuple to compare to.
     * @return Whether the two tuples are equal.
     */
-   public boolean equals(Tuple<A, B> other) {
+   public final boolean equals(Tuple<A, B> other) {
       return other.left.equals(this.left) && other.right.equals(this.right);
    }
 
@@ -114,7 +114,7 @@ public class Tuple<A, B>
     * Returns the left, or first element of the tuple.
     * @return the left, or first element of the tuple.
     */
-   public A getLeft() {
+   public final A getLeft() {
       return left;
    }
 
@@ -122,7 +122,7 @@ public class Tuple<A, B>
     * Returns the right, or second element of the tuple.
     * @return the right, or second element of the tuple.
     */
-   public B getRight() {
+   public final B getRight() {
       return right;
    }
 }

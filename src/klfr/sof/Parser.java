@@ -14,7 +14,7 @@ import klfr.sof.lang.primitive.*;
 /**
  * Parses preprocessed SOF code into an AST.
  */
-public class Parser {
+public final class Parser {
 	private static final Logger log = Logger.getLogger(Parser.class.getCanonicalName());
 
 	/**

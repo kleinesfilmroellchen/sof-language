@@ -16,7 +16,6 @@ import klfr.sof.lang.functional.*;
 import klfr.sof.lang.oop.*;
 import klfr.sof.lang.primitive.*;
 import klfr.sof.lib.*;
-import klfr.sof.lib.NativeFunctionRegistry.*;
 import klfr.sof.module.*;
 
 /**
@@ -67,7 +66,7 @@ public class Interpreter implements Serializable {
 	 * "https://www.reddit.com/r/ProgrammerHumor/comments/auz30h/when_you_make_documentation_for_a_settergetter/?utm_source=share&utm_medium=web2x">...</a>
 	 * @return The I/O interface of this interpreter.
 	 */
-	public IOInterface getIO() {
+	public final IOInterface getIO() {
 		return io;
 	}
 
@@ -76,7 +75,7 @@ public class Interpreter implements Serializable {
 	 * "https://www.reddit.com/r/ProgrammerHumor/comments/auz30h/when_you_make_documentation_for_a_settergetter/?utm_source=share&utm_medium=web2x">...</a>
 	 * @return The stack of this interpreter.
 	 */
-	public Stack getStack() {
+	public final Stack getStack() {
 		return stack;
 	}
 
@@ -114,7 +113,7 @@ public class Interpreter implements Serializable {
 	 * Returns the number of asserts that were successfully performed by this interpreter.
 	 * @return The number of asserts that were successfully performed by this interpreter.
 	 */
-	public int getAssertCount() {
+	public final int getAssertCount() {
 		return assertCount;
 	}
 
@@ -148,7 +147,7 @@ public class Interpreter implements Serializable {
 	 * 
 	 * @return This interpreter.
 	 */
-	public Interpreter reset() {
+	public final Interpreter reset() {
 		this.stack.clear();
 		stack.push(new Nametable());
 		return this;
@@ -167,7 +166,7 @@ public class Interpreter implements Serializable {
 	 * @return This interpreter.
 	 * @throws CompilerException If the execution fails with an error.
 	 */
-	public Interpreter run(SOFFile sofProgram) throws CompilerException {
+	public final Interpreter run(SOFFile sofProgram) throws CompilerException {
 		synchronized (this) {
 			log.entering(Interpreter.class.getCanonicalName(), "run # synchronized");
 			try {
@@ -576,7 +575,7 @@ public class Interpreter implements Serializable {
 	 * @throws CompilerException If the binary operation or the stack
 	 *                           manipulation fails.
 	 */
-	protected void doBinaryOperation(BuiltinOperations.BinaryOperation operation)
+	protected final void doBinaryOperation(BuiltinOperations.BinaryOperation operation)
 			throws IncompleteCompilerException, CompilerException {
 		final Stackable rhs = this.stack.popSafe();
 		Optional<Identifier> lhsName = Optional.empty();
@@ -602,7 +601,7 @@ public class Interpreter implements Serializable {
 	 * @param _fname The native function name, as an SOF string.
 	 * @throws IncompleteCompilerException If the native call fails internally or externally (arguments etc.).
 	 */
-	protected void doNativeCall(Stackable _fname) throws IncompleteCompilerException {
+	protected final void doNativeCall(Stackable _fname) throws IncompleteCompilerException {
 		// typecheck and retrieve function
 		if (!(_fname instanceof StringPrimitive))
 			throw new IncompleteCompilerException("type");
@@ -632,7 +631,7 @@ public class Interpreter implements Serializable {
 	 * @throws CompilerException If the call fails with a specified location.
 	 * @throws IncompleteCompilerException If the call fails with no specified location.
 	 */
-	protected boolean doCall(final Stackable toCall) throws IncompleteCompilerException, CompilerException {
+	protected final boolean doCall(final Stackable toCall) throws IncompleteCompilerException, CompilerException {
 		return this.doCall(toCall, new FunctionDelimiter());
 	}
 
@@ -650,7 +649,7 @@ public class Interpreter implements Serializable {
 	 * @throws CompilerException If the call fails with a specified location.
 	 * @throws IncompleteCompilerException If the call fails with no specified location.
 	 */
-	protected boolean doCall(final Stackable toCall, final Nametable scope)
+	protected final boolean doCall(final Stackable toCall, final Nametable scope)
 			throws IncompleteCompilerException, CompilerException {
 		if (toCall instanceof Identifier id) {
 			final var val = this.stack.lookup(id);

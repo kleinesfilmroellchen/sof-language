@@ -7,7 +7,7 @@ package klfr.sof.exceptions;
  * 
  * This class is immutable.
  */
-public class IncompleteCompilerException extends SOFException {
+public final class IncompleteCompilerException extends SOFException {
 	private static final long serialVersionUID = 1L;
 	/**
 	 * String that is used as a name for the 'sof.error.type.*' resource messages.

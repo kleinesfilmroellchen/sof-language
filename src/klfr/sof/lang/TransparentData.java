@@ -9,7 +9,7 @@ import klfr.sof.exceptions.IncompleteCompilerException;
  * 
  * @author klfr
  */
-public class TransparentData implements Stackable {
+public final class TransparentData implements Stackable {
 
 	/**
 	 * The underlying type of transparent object.
@@ -18,7 +18,7 @@ public class TransparentData implements Stackable {
 	 *           the automatic Comparable implementation of enums clashes with the
 	 *           Comparable implementation of Stackable.
 	 */
-	public enum TransparentType {
+	public static enum TransparentType {
 		/** Currently unused. */
 		// ListStart("["),
 		/**
@@ -51,7 +51,7 @@ public class TransparentData implements Stackable {
 	 * Returns the proper internal type of the transparent object.
 	 * @return the proper internal type of the transparent object.
 	 */
-	public TransparentType getType() {
+	public final TransparentType getType() {
 		return type;
 	}
 

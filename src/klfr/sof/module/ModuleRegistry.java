@@ -10,7 +10,7 @@ import klfr.sof.SOFFile;
  * The module registry stores all discovered modules and their AST.
  * Any module is identified by its file path, which tells the module discovery system where to search for the module.
  */
-public class ModuleRegistry implements Serializable {
+public final class ModuleRegistry implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/** The SOF modules cached by this registry. */
@@ -30,7 +30,7 @@ public class ModuleRegistry implements Serializable {
 	 *         another module with the same identifier was already registered
 	 *         and replaced by this module.
 	 */
-	public boolean storeModule(File moduleName, SOFFile module) {
+	public final boolean storeModule(File moduleName, SOFFile module) {
 		final var prev = this.modules.put(moduleName, module);
 		return prev != null;
 	}
@@ -40,7 +40,7 @@ public class ModuleRegistry implements Serializable {
 	 * @param moduleName The module identifier to be checked.
 	 * @return whether this module registry has the specified module identifier registered.
 	 */
-	public boolean hasModule(File moduleName) {
+	public final boolean hasModule(File moduleName) {
 		return this.modules.containsKey(moduleName);
 	}
 
@@ -49,7 +49,7 @@ public class ModuleRegistry implements Serializable {
 	 * @param moduleName The identifier of the module to be retrieved.
 	 * @return the module associated with the specified module identifier.
 	 */
-	public SOFFile getModule(File moduleName) {
+	public final SOFFile getModule(File moduleName) {
 		return this.modules.get(moduleName);
 	}
 	

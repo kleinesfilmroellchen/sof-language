@@ -11,7 +11,7 @@ import klfr.sof.lang.StackableName;
  * @author klfr
  */
 @StackableName("Constructor")
-public class ConstructorFunction extends SOFunction {
+public final class ConstructorFunction extends SOFunction {
 	private static final long serialVersionUID = 1L;
 
 	/**

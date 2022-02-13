@@ -26,7 +26,7 @@ import klfr.sof.module.ModuleDiscoverer;
  * 
  * @author klfr
  */
-public class CLI {
+public final class CLI {
 
 	/**
 	 * The SOF info string printed as the first output before the REPL starts.

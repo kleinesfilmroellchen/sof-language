@@ -41,7 +41,7 @@ public final class NativeFunctionRegistry {
 		public Stackable call(Interpreter interpreter) throws IncompleteCompilerException;
 	}
 
-	private TreeMap<String, NativeNArgFunction> nativeFunctions = new TreeMap<>();
+	private final TreeMap<String, NativeNArgFunction> nativeFunctions = new TreeMap<>();
 
 	/**
 	 * Loads all native functions in the specified package.<br/>
@@ -56,7 +56,7 @@ public final class NativeFunctionRegistry {
 	 * @throws IOException If any exception occurs, also in the class discovery an
 	 *                     reflection access process.
 	 */
-	public void registerAllFromPackage(String packageName) throws IOException {
+	public final void registerAllFromPackage(String packageName) throws IOException {
 		Reflections pakage = new Reflections(packageName);
 		var classes = pakage.get(SubTypes.of(TypesAnnotated.with(NativeFunctionCollection.class)).asClass());
 		;
@@ -95,7 +95,7 @@ public final class NativeFunctionRegistry {
 	 *              of this class are registered, whether the caller intended them
 	 *              to be registered or not.
 	 */
-	public void registerNativeFunctions(Class<?> clazz) {
+	public final void registerNativeFunctions(Class<?> clazz) {
 		// FP for da win
 		Arrays.stream(clazz.getDeclaredMethods())
 				// only public static methods, only methods with only Stackable or Stackable
@@ -120,7 +120,7 @@ public final class NativeFunctionRegistry {
 	 *         does nothing and returns null if the specified native function was
 	 *         not found.
 	 */
-	public Optional<NativeNArgFunction> getNativeFunction(String fidentifier) {
+	public final Optional<NativeNArgFunction> getNativeFunction(String fidentifier) {
 		return Optional.ofNullable(nativeFunctions.getOrDefault(fidentifier, null));
 	}
 

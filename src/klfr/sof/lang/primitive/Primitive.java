@@ -50,7 +50,7 @@ public abstract class Primitive implements Stackable {
 	 * @param value the underlying value.
 	 * @return a new Primitive.
 	 */
-	public Primitive createPrimitive(Object value) {
+	public final Primitive createPrimitive(Object value) {
 		// ifelse of doom - i hate java
 		if (value instanceof Long || value instanceof Integer || value instanceof Short || value instanceof Byte) {
 			return IntPrimitive.createIntPrimitive(((Number) value).longValue());

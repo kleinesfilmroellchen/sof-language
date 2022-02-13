@@ -10,7 +10,7 @@ import klfr.sof.ast.*;
  * Apart from that, this class is immutable.
  */
 // just barely I can't use records here, ffs
-public class SOFFile implements Serializable {
+public final class SOFFile implements Serializable {
 	private static final long serialVersionUID = 1L;
 	
 	/** The source file, purely symbolic. */
@@ -38,7 +38,7 @@ public class SOFFile implements Serializable {
 	 * Therefore, this method makes no guarantees that this file exists.
 	 * @return The Java file where this code comes from.
 	 */
-	public File sourceFile() {
+	public final File sourceFile() {
 		return sourceFile;
 	}
 
@@ -46,7 +46,7 @@ public class SOFFile implements Serializable {
 	 * Returns the unedited source code that was compiled into this file's AST.
 	 * @return The unedited source code that was compiled into this file's AST.
 	 */
-	public String code() {
+	public final String code() {
 		return code;
 	}
 
@@ -54,7 +54,7 @@ public class SOFFile implements Serializable {
 	 * Returns the Abstract Syntax Tree (AST) that was compiled from this file's source code.
 	 * @return The Abstract Syntax Tree (AST) that was compiled from this file's source code.
 	 */
-	public Node ast() {
+	public final Node ast() {
 		return ast;
 	}
 
@@ -66,7 +66,7 @@ public class SOFFile implements Serializable {
 	 * 
 	 * @param ast The node to use as the AST.
 	 */
-	public void setAST(Node ast) {
+	public final void setAST(Node ast) {
 		if (this.ast == null)
 			this.ast = ast;
 	}

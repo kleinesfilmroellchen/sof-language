@@ -8,7 +8,7 @@ import klfr.sof.SOFFile;
  * A node representing primitive tokens. It uses the inner enum type
  * {@link PrimitiveToken} to represent all possible primitive tokens.
  */
-public class PrimitiveTokenNode extends Node {
+public final class PrimitiveTokenNode extends Node {
 	private static final long serialVersionUID = 1L;
 
 	/**
@@ -134,7 +134,7 @@ public class PrimitiveTokenNode extends Node {
 	 * Returns the primitive token itself represented by this AST node.
 	 * @return The primitive token represented by this AST node.
 	 */
-	public PrimitiveToken symbol() {
+	public final PrimitiveToken symbol() {
 		return symbol;
 	}
 

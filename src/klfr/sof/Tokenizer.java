@@ -15,7 +15,7 @@ import klfr.Tuple;
  * 
  * @author klfr
  */
-public class Tokenizer implements Iterator<String> {
+public final class Tokenizer implements Iterator<String> {
 
 	private Logger log = Logger.getLogger(this.getClass().getCanonicalName());
 
@@ -78,7 +78,7 @@ public class Tokenizer implements Iterator<String> {
 		 * @param other The other tokenizer to compare to.
 		 * @return Whether the two tokenizers are equal.
 		 */
-		public boolean equals(TokenizerState other) {
+		public final boolean equals(TokenizerState other) {
 			return other.start == this.start && other.end == this.end && other.regionStart == this.regionStart
 					&& other.regionEnd == this.regionEnd && other.code.equals(this.code);
 		}
@@ -103,7 +103,7 @@ public class Tokenizer implements Iterator<String> {
 	 * Returns the index of the last matched token.
 	 * @return The index of the last matched token.
 	 */
-	public int start() {
+	public final int start() {
 		return this.currentState.start;
 	}
 
@@ -119,7 +119,7 @@ public class Tokenizer implements Iterator<String> {
 	 * Returns the code that this tokenizer operates on.
 	 * @return The code that this tokenizer operates on.
 	 */
-	public String getCode() {
+	public final String getCode() {
 		return this.currentState.code;
 	}
 
@@ -158,7 +158,7 @@ public class Tokenizer implements Iterator<String> {
 	 * 
 	 * @return a new, independed TokenizerState
 	 */
-	public TokenizerState getState() {
+	public final TokenizerState getState() {
 		return this.currentState.clone();
 	}
 
@@ -169,7 +169,7 @@ public class Tokenizer implements Iterator<String> {
 	 * @deprecated This method will easily break the tokenizer's proper behavior.
 	 */
 	@Deprecated
-	public void setState(TokenizerState state) {
+	public final void setState(TokenizerState state) {
 		this.currentState = state;
 		this.m = Patterns.tokenPattern.matcher(this.currentState.code);
 		this.m.region(state.regionStart, state.regionEnd);
@@ -183,7 +183,7 @@ public class Tokenizer implements Iterator<String> {
 	 * @return A tuple with two integers that represent the line position and index
 	 *         inside the line; see above notes.
 	 */
-	public Tuple<Integer, Integer> getCurrentPosition() {
+	public final Tuple<Integer, Integer> getCurrentPosition() {
 		Matcher linefinder = Patterns.nlPat.matcher(getCode());
 		int realIndex = this.start(), linenum = 0, lineStart = 0;
 		// increment line number while the text index is still after the searched line
@@ -207,7 +207,7 @@ public class Tokenizer implements Iterator<String> {
 	 * Returns whether the tokenizer has exceeded its searching region.
 	 * @return whether the tokenizer has exceeded its searching region.
 	 */
-	private boolean regionExceeded() {
+	private final boolean regionExceeded() {
 		return this.currentState.regionEnd < Math.max(this.currentState.start, this.currentState.end)
 				|| this.currentState.regionStart > Math.min(this.currentState.start, this.currentState.end);
 	}
@@ -217,7 +217,7 @@ public class Tokenizer implements Iterator<String> {
 	 * 
 	 * @return whether the tokenizer can provide more tokens.
 	 */
-	public boolean hasNext() {
+	public final boolean hasNext() {
 		return findNextToken(false);
 	}
 
@@ -228,7 +228,7 @@ public class Tokenizer implements Iterator<String> {
 	 *                example, will set this to false to not change the state on
 	 *                repeated invocations.
 	 */
-	private boolean findNextToken(boolean advance) {
+	private final boolean findNextToken(boolean advance) {
 		if (this.regionExceeded())
 			return false;
 		// whether there are more tokens to be found: perform one additional match

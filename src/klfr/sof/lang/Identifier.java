@@ -1,7 +1,6 @@
 package klfr.sof.lang;
 
 import klfr.sof.*;
-import klfr.sof.exceptions.CompilerException;
 import klfr.sof.exceptions.IncompleteCompilerException;
 
 /**
@@ -13,19 +12,19 @@ import klfr.sof.exceptions.IncompleteCompilerException;
  * @author klfr
  */
 @StackableName("Identifier")
-public class Identifier implements Stackable {
+public final class Identifier implements Stackable {
 
 	private static final long serialVersionUID = 1L;
 
 	/** The identifier text symbol. */
-	private String value;
+	private final String value;
 
 	/**
 	 * Returns the value string represented by this identifier.
 	 * 
 	 * @return the value string represented by this identifier.
 	 */
-	public String getValue() {
+	public final String getValue() {
 		return value;
 	}
 
@@ -75,7 +74,7 @@ public class Identifier implements Stackable {
 		} catch (IncompleteCompilerException e) { throw new RuntimeException(); }
 	}
 
-	public int hashCode() {
+	public final int hashCode() {
 		// change this from the string hashcode to not get hashtable collisions when
 		// strings are attempted to be used as keys
 		return this.value.hashCode() ^ 0xFF00FF00;

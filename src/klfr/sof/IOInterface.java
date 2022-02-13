@@ -5,7 +5,6 @@ import static klfr.sof.Interpreter.R;
 import java.io.*;
 import java.util.*;
 
-import klfr.sof.lang.*;
 import klfr.sof.lang.Stack;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 
@@ -14,7 +13,7 @@ import klfr.sof.lang.Stackable.DebugStringExtensiveness;
  * 
  * @author klfr
  */
-public class IOInterface {
+public final class IOInterface {
 
 	/**
 	 * Number of milliseconds to wait between short prints until flushing anyways.
@@ -66,7 +65,7 @@ public class IOInterface {
 	 * Returns the output writer of this I/O interface.
 	 * @return the output writer of this I/O interface.
 	 */
-	public Writer getOutput() {
+	public final Writer getOutput() {
 		return output;
 	}
 
@@ -74,7 +73,7 @@ public class IOInterface {
 	 * Returns the input reader of this I/O interface.
 	 * @return The input reader of this I/O interface.
 	 */
-	public Readable getInput() {
+	public final Readable getInput() {
 		return input;
 	}
 
@@ -84,7 +83,7 @@ public class IOInterface {
 	 * 
 	 * @param out The output stream to be set.
 	 */
-	public void setOut(OutputStream out) {
+	public final void setOut(OutputStream out) {
 		if (out != null)
 			this.setOut(new OutputStreamWriter(out));
 	}
@@ -94,7 +93,7 @@ public class IOInterface {
 	 * 
 	 * @param out The output stream to be set.
 	 */
-	public void setOut(Writer out) {
+	public final void setOut(Writer out) {
 		// hijack the output to do special auto-flushing
 		if (out != null)
 			this.output = new Writer() {
@@ -136,7 +135,7 @@ public class IOInterface {
 	 * Sets the input readable.
 	 * @param in The input readable to set.
 	 */
-	public void setIn(Readable in) {
+	public final void setIn(Readable in) {
 		if (in != null) {
 			this.input = in;
 			this.scan = new Scanner(in);
@@ -148,7 +147,7 @@ public class IOInterface {
 	 * Note that this input stream is converted to a Readable with the default character encoding.
 	 * @param in The input stream.
 	 */
-	public void setIn(InputStream in) {
+	public final void setIn(InputStream in) {
 		if (in != null)
 			this.setIn(new InputStreamReader(in));
 	}
@@ -161,7 +160,7 @@ public class IOInterface {
 	 * @param out The OutputStream to use. If this is null, the Output is not
 	 *            changed.
 	 */
-	public void setInOut(InputStream in, OutputStream out) {
+	public final void setInOut(InputStream in, OutputStream out) {
 		this.setIn(in);
 		this.setOut(out);
 	}
@@ -174,7 +173,7 @@ public class IOInterface {
 	 * @param out The Writable (Character output) to use. If this is null, the
 	 *            Output is not changed.
 	 */
-	public void setInOut(Readable in, Writer out) {
+	public final void setInOut(Readable in, Writer out) {
 		this.setIn(in);
 		this.setOut(out);
 	}
@@ -183,7 +182,7 @@ public class IOInterface {
 	 * Creates and returns a new scanner over the basic InputStream.
 	 * @return a new scanner over the basic InputStream.
 	 */
-	public Scanner newInputScanner() {
+	public final Scanner newInputScanner() {
 		scan = new Scanner(input);
 		return scan;
 	}
@@ -195,7 +194,7 @@ public class IOInterface {
 	 * 
 	 * @return The next input sequence.
 	 */
-	public String nextInputSequence() {
+	public final String nextInputSequence() {
 		return scan.next();
 	}
 
@@ -203,7 +202,7 @@ public class IOInterface {
 	 * Reads and returns the next line from the input.
 	 * @return The next line from the input.
 	 */
-	public String nextInputLine() {
+	public final String nextInputLine() {
 		return scan.nextLine();
 	}
 
@@ -211,7 +210,7 @@ public class IOInterface {
 	 * Print the given string followed by a new line.
 	 * @param x The string to print.
 	 */
-	public void println(String x) {
+	public final void println(String x) {
 		print(x);
 		println();
 	}
@@ -219,7 +218,7 @@ public class IOInterface {
 	/**
 	 * Print a new line.
 	 */
-	public void println() {
+	public final void println() {
 		try {
 			output.write(System.lineSeparator());
 			output.flush();
@@ -233,7 +232,7 @@ public class IOInterface {
 	 * Print the given string.
 	 * @param s The string to print.
 	 */
-	public void print(String s) {
+	public final void print(String s) {
 		try {
 			output.write(s != null ? s : "null");
 		} catch (IOException e) {
@@ -248,7 +247,7 @@ public class IOInterface {
 	 * @param args The format arguments.
 	 * @see String#format(String, Object...)
 	 */
-	public void printf(String format, Object... args) {
+	public final void printf(String format, Object... args) {
 		String toprint = String.format(format, args);
 		this.print(toprint);
 	}
@@ -260,7 +259,7 @@ public class IOInterface {
 	 * @param l The locale to use for formatting.
 	 * @see String#format(String, Object...)
 	 */
-	public void printf(Locale l, String format, Object... args) {
+	public final void printf(Locale l, String format, Object... args) {
 		String toprint = String.format(l, format, args);
 		this.print(toprint);
 	}
@@ -271,7 +270,7 @@ public class IOInterface {
 	 * @param args The format arguments.
 	 * @see IOInterface#printf(String, Object...)
 	 */
-	public void printfln(String format, Object... args) {
+	public final void printfln(String format, Object... args) {
 		String toprint = String.format(format, args);
 		this.println(toprint);
 	}
@@ -283,7 +282,7 @@ public class IOInterface {
 	 * @param l The locale to use for formatting.
 	 * @see IOInterface#printf(Locale, String, Object...)
 	 */
-	public void printfln(Locale l, String format, Object... args) {
+	public final void printfln(Locale l, String format, Object... args) {
 		String toprint = String.format(l, format, args);
 		this.println(toprint);
 	}
@@ -294,7 +293,7 @@ public class IOInterface {
 	 * 
 	 * @param stack The stack to describe.
 	 */
-	public void describeStack(Stack stack) {
+	public final void describeStack(Stack stack) {
 		if (debug) {
 			println(R.getString("sof.debug.stack") + System.lineSeparator() + stack.toStringExtended());
 			println(R.getString("sof.debug.gnt") + System.lineSeparator()
@@ -307,7 +306,7 @@ public class IOInterface {
 	 * 
 	 * @param s The debug string to print.
 	 */
-	public void debug(String s) {
+	public final void debug(String s) {
 		if (debug)
 			println(s);
 	}
@@ -317,7 +316,7 @@ public class IOInterface {
 	 * Print the given boolean; print "true" or "false".
 	 * @param b The boolean to print.
 	 */
-	public void print(boolean b) {
+	public final void print(boolean b) {
 		print(Boolean.toString(b));
 	}
 
@@ -325,7 +324,7 @@ public class IOInterface {
 	 * Print the given character.
 	 * @param c The character to print.
 	 */
-	public void print(char c) {
+	public final void print(char c) {
 		print(Character.toString(c));
 	}
 
@@ -333,7 +332,7 @@ public class IOInterface {
 	 * Print the given integer in decimal.
 	 * @param i The integer to print.
 	 */
-	public void print(int i) {
+	public final void print(int i) {
 		print(Integer.toString(i));
 	}
 
@@ -341,7 +340,7 @@ public class IOInterface {
 	 * Print the given long in decimal.
 	 * @param l The long to print.
 	 */
-	public void print(long l) {
+	public final void print(long l) {
 		print(Long.toString(l));
 	}
 
@@ -349,7 +348,7 @@ public class IOInterface {
 	 * Print the given float in decimal.
 	 * @param f The float to print.
 	 */
-	public void print(float f) {
+	public final void print(float f) {
 		print(Float.toString(f));
 	}
 
@@ -357,7 +356,7 @@ public class IOInterface {
 	 * Print the given double in decimal.
 	 * @param d The decimal to print.
 	 */
-	public void print(double d) {
+	public final void print(double d) {
 		print(Double.toString(d));
 	}
 
@@ -365,7 +364,7 @@ public class IOInterface {
 	 * Print the given character array.
 	 * @param s The character array to print.
 	 */
-	public void print(char[] s) {
+	public final void print(char[] s) {
 		print(String.copyValueOf(s));
 	}
 
@@ -373,7 +372,7 @@ public class IOInterface {
 	 * Print the given object after converting it with {@link Object#toString()}, or "null" if it is null.
 	 * @param obj The object to print.
 	 */
-	public void print(Object obj) {
+	public final void print(Object obj) {
 		print(obj.toString());
 	}
 
@@ -382,7 +381,7 @@ public class IOInterface {
 	 * Print the given boolean; print "true" or "false" and then a new line.
 	 * @param x The boolean to print.
 	 */
-	public void println(boolean x) {
+	public final void println(boolean x) {
 		println(Boolean.toString(x));
 	}
 
@@ -390,7 +389,7 @@ public class IOInterface {
 	 * Print the given character and then a new line.
 	 * @param x The character to print.
 	 */
-	public void println(char x) {
+	public final void println(char x) {
 		println(Character.toString(x));
 	}
 
@@ -398,7 +397,7 @@ public class IOInterface {
 	 * Print the given integer in decimal and then a new line.
 	 * @param x The integer to print.
 	 */
-	public void println(int x) {
+	public final void println(int x) {
 		println(Integer.toString(x));
 	}
 
@@ -406,7 +405,7 @@ public class IOInterface {
 	 * Print the given long in decimal and then a new line.
 	 * @param x The long to print.
 	 */
-	public void println(long x) {
+	public final void println(long x) {
 		println(Long.toString(x));
 	}
 
@@ -414,7 +413,7 @@ public class IOInterface {
 	 * Print the given float in decimal and then a new line.
 	 * @param x The float to print.
 	 */
-	public void println(float x) {
+	public final void println(float x) {
 		println(Float.toString(x));
 	}
 
@@ -422,7 +421,7 @@ public class IOInterface {
 	 * Print the given double in decimal and then a new line.
 	 * @param x The decimal to print.
 	 */
-	public void println(double x) {
+	public final void println(double x) {
 		println(Double.toString(x));
 	}
 
@@ -430,7 +429,7 @@ public class IOInterface {
 	 * Print the given character array and then a new line.
 	 * @param x The character array to print.
 	 */
-	public void println(char[] x) {
+	public final void println(char[] x) {
 		println(String.copyValueOf(x));
 	}
 
@@ -438,7 +437,7 @@ public class IOInterface {
 	 * Print the given object after converting it with {@link Object#toString()}, or "null" if it is null. Then print a newline.
 	 * @param x The object to print.
 	 */
-	public void println(Object x) {
+	public final void println(Object x) {
 		println(x.toString());
 	}
 

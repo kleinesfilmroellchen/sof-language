@@ -9,7 +9,7 @@ import klfr.sof.lang.*;
  * @author klfr
  */
 @StackableName("Boolean")
-public class BoolPrimitive extends Primitive {
+public final class BoolPrimitive extends Primitive {
 	private static final long serialVersionUID = 1L;
 	/** The boolean that is represented by this primitive. */
 	private final Boolean value;
@@ -30,7 +30,7 @@ public class BoolPrimitive extends Primitive {
 	 * Returns the boolean value represented by this primitive.
 	 * @return The boolean value represented by this primitive.
 	 */
-	public Boolean value() {
+	public final Boolean value() {
 		return value;
 	}
 

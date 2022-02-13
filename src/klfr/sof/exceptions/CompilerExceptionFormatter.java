@@ -15,7 +15,7 @@ import klfr.sof.Tokenizer.TokenizerState;
  * 
  * @author klfr
  */
-public class CompilerExceptionFormatter {
+public final class CompilerExceptionFormatter {
 	private static final String EXCEPTION_FORMAT = "%s Error in file %s line %d at index %d:%n %s%n %s%n    %s";
 	
 	/**
@@ -122,7 +122,7 @@ public class CompilerExceptionFormatter {
 	 * @param locale The locale for the text message.
 	 * @return A nicely formatted multiline string.
 	 */
-	public String formatCLI(final Locale locale) {
+	public final String formatCLI(final Locale locale) {
 		final var filename = this.exception.getLocation();
 		final var code = filename.code();
 		final var index = this.exception.getIndex();

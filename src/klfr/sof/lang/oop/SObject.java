@@ -9,7 +9,7 @@ import klfr.sof.lang.*;
  * @author klfr
  */
 @StackableName("Object")
-public class SObject implements Stackable {
+public final class SObject implements Stackable {
 	private static final long serialVersionUID = 1L;
 
 	/**
@@ -22,7 +22,7 @@ public class SObject implements Stackable {
 	 * 
 	 * @return the attributes of the object.
 	 */
-	public Nametable getAttributes() {
+	public final Nametable getAttributes() {
 		return attributes;
 	}
 
@@ -38,7 +38,7 @@ public class SObject implements Stackable {
 		this.attributes = nt;
 	}
 
-	public String toDebugString(DebugStringExtensiveness e) {
+	public final String toDebugString(DebugStringExtensiveness e) {
 		return switch (e) {
 			case Full -> "Object" + System.lineSeparator() + this.attributes.toDebugString(e);
 			case Compact -> "Obj(" + this.attributes.toDebugString(e) + ")";

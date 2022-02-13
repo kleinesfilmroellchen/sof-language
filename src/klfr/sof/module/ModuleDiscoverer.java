@@ -19,7 +19,7 @@ import klfr.sof.exceptions.*;
  * store previously discovered modules. The ModuleDiscoverer uses the
  * {@link klfr.sof.Parser} system for parsing modules.
  */
-public class ModuleDiscoverer {
+public final class ModuleDiscoverer {
 	/** The default directory of the standard library, relative to the base install directory. */
 	private static final String DEFAULT_STDLIB_DIRECTORY = "lib";
 	/** Allowed file extensions, tried in the given order. */
@@ -140,7 +140,7 @@ public class ModuleDiscoverer {
 	 * @throws CompilerException If the preprocessing of a file fails.
 	 * @throws IncompleteCompilerException If another part of the module compilation, such as finding the module in the first place, fails.
 	 */
-	public Optional<SOFFile> getModule(final File requestingSourceFile, final String moduleSpecifier)
+	public final Optional<SOFFile> getModule(final File requestingSourceFile, final String moduleSpecifier)
 			throws CompilerException, IncompleteCompilerException {
 		File fullPath_ = null;
 		try {

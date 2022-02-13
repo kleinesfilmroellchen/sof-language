@@ -11,7 +11,7 @@ import klfr.sof.exceptions.IncompleteCompilerException;
  * A list of AST nodes that are to be executed in order. This may be the main
  * program itself, a code block literal or other callables.
  */
-public class TokenListNode extends Node {
+public final class TokenListNode extends Node {
 	private static final long serialVersionUID = 1L;
 
 	/** The list of nodes that are contained in this token list. */
@@ -81,7 +81,7 @@ public class TokenListNode extends Node {
 	 * Returns the number of nodes in this list. Does NOT recursively count the subnodes in the child nodes themselves.
 	 * @return the number of nodes in this list.
 	 */
-	public int count() {
+	public final int count() {
 		return subNodes.size();
 	}
 

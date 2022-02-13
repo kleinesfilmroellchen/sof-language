@@ -13,7 +13,7 @@ import klfr.sof.lang.Stackable;
  * 
  * @author klfr
  */
-public class ListPrimitive extends Primitive implements List<Stackable> {
+public final class ListPrimitive extends Primitive implements List<Stackable> {
 
 	private static final long serialVersionUID = 1L;
 
@@ -21,7 +21,7 @@ public class ListPrimitive extends Primitive implements List<Stackable> {
 	 * The internal list that stores the data. In general, an array list is used,
 	 * but this variable is kept abstract to enable future modification.
 	 */
-	private List<Stackable> list;
+	private final List<Stackable> list;
 
 	/**
 	 * Create a pre-populated list.

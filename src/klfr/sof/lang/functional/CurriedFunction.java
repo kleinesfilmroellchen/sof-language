@@ -25,7 +25,7 @@ public class CurriedFunction extends SOFunction {
 	 * Returns the curried arguments of this function, i.e. the arguments that are pre-stored for later.
 	 * @return The curried arguments of this function.
 	 */
-	public List<Stackable> getCurriedArguments() {
+	public final List<Stackable> getCurriedArguments() {
 		return curriedArguments;
 	}
 
@@ -33,7 +33,7 @@ public class CurriedFunction extends SOFunction {
 	 * Returns the regular function beneath this curried function.
 	 * @return The regular function beneath this curried function.
 	 */
-	public SOFunction getRegularFunction() {
+	public final SOFunction getRegularFunction() {
 		return new SOFunction(this.code, this.arguments + this.curriedArguments.size());
 	}
 

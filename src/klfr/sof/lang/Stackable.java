@@ -58,7 +58,7 @@ public interface Stackable extends Serializable, Cloneable, Comparable<Stackable
 		 * @param s The string to be trimmed.
 		 * @return A string that at maximum has maxlength characters.
 		 */
-		public String ensureLength(String s) {
+		public final String ensureLength(String s) {
 			return s.substring(0, Math.min(s.length(), maxlength));
 		}
 	}

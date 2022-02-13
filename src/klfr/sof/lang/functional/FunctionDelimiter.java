@@ -33,7 +33,7 @@ public class FunctionDelimiter extends Nametable {
 	 * @return Whether the stack was modified, i.e. whether there was a return
 	 *         value.
 	 */
-	public boolean pushReturnValue(Stack toPushTo) {
+	public final boolean pushReturnValue(Stack toPushTo) {
 		if (returnValue.isPresent()) {
 			toPushTo.push(returnValue.get());
 			return true;

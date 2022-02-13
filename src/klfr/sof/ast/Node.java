@@ -59,7 +59,7 @@ public abstract class Node implements Serializable, Cloneable, Iterable<Node> {
 	 * 
 	 * @return the index inside the source code where this node was located.
 	 */
-	public int getCodeIndex() {
+	public final int getCodeIndex() {
 		return index;
 	}
 
@@ -68,7 +68,7 @@ public abstract class Node implements Serializable, Cloneable, Iterable<Node> {
 	 * 
 	 * @return the source file that this node is contained in.
 	 */
-	public SOFFile getSource() {
+	public final SOFFile getSource() {
 		return source;
 	}
 

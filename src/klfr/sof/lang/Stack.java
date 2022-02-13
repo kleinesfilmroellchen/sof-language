@@ -8,7 +8,6 @@ import java.util.logging.Logger;
 import klfr.sof.*;
 import klfr.sof.exceptions.*;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
-import klfr.sof.lang.functional.*;
 
 /**
  * The main data structure of SOF internally where all data resides. This is a
@@ -31,7 +30,7 @@ import klfr.sof.lang.functional.*;
  * @author klfr
  * @version 0.1a1
  */
-public class Stack extends ConcurrentLinkedDeque<Stackable> {
+public final class Stack extends ConcurrentLinkedDeque<Stackable> {
 	private static final long serialVersionUID = 1L;
 
 	private static final Logger log = Logger.getLogger(Stack.class.getCanonicalName());
@@ -50,7 +49,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 * @return The tail of the deque, i.e. the lowest element on the stack.
 	 * @throws IncompleteCompilerException if there is no element on the stack.
 	 */
-	public Stackable getLastSafe() throws IncompleteCompilerException {
+	public final Stackable getLastSafe() throws IncompleteCompilerException {
 		try {
 			final Stackable elmt = super.getLast();
 			return elmt;
@@ -66,7 +65,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 * @return The topmost element on the stack (which will not be removed).
 	 * @throws IncompleteCompilerException if there is no element on the stack.
 	 */
-	public Stackable peekSafe() throws IncompleteCompilerException {
+	public final Stackable peekSafe() throws IncompleteCompilerException {
 		final Stackable elmt = super.peek();
 		if (elmt == null)
 			throw new IncompleteCompilerException("stack");
@@ -79,7 +78,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 * @param contentsToPush The collection whose contents to push to the stack.
 	 * @return This stack.
 	 */
-	public Stack pushAll(Collection<Stackable> contentsToPush) {
+	public final Stack pushAll(Collection<Stackable> contentsToPush) {
 		for (var arg : contentsToPush) {
 			this.push(arg);
 		}
@@ -97,7 +96,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 * @throws IncompleteCompilerException if there is no element on the stack.
 	 * 											   or if there was a stack access violation.
 	 */
-	public Stackable popSafe(final boolean ignoreTransparentData) throws IncompleteCompilerException {
+	public final Stackable popSafe(final boolean ignoreTransparentData) throws IncompleteCompilerException {
 		try {
 			final Stackable elmt = super.pop();
 			if (elmt instanceof Nametable) {
@@ -122,7 +121,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 * @throws IncompleteCompilerException if there is no element on the stack.
 	 * 											   or if there was a stack access violation.
 	 */
-	public Stackable popSafe() throws IncompleteCompilerException {
+	public final Stackable popSafe() throws IncompleteCompilerException {
 		return popSafe(true);
 	}
 
@@ -135,7 +134,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 *         first.
 	 * @throws IncompleteCompilerException If at least one pop operation fails.
 	 */
-	public List<Stackable> popSafe(int count) throws IncompleteCompilerException {
+	public final List<Stackable> popSafe(int count) throws IncompleteCompilerException {
 		// array for efficiency; it can be pre-allocated to specific size and then
 		// inserted into at any location
 		final var elts = new Stackable[count];
@@ -156,7 +155,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 * @return The popped element.
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends Stackable> T popTyped(final Class<T> t) throws IncompleteCompilerException {
+	public final <T extends Stackable> T popTyped(final Class<T> t) throws IncompleteCompilerException {
 		final Stackable val = popSafe();
 		if (t.isInstance(val)) {
 			return (T) val;
@@ -187,7 +186,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 * 
 	 * @return The popped value.
 	 */
-	public Stackable forcePop() {
+	public final Stackable forcePop() {
 		return super.pop();
 	}
 
@@ -199,7 +198,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 * @throws RuntimeException If you managed to delete or replace the global
 	 *                          nametable (ノಠ益ಠ)ノ彡 ┻━━┻
 	 */
-	public Nametable globalNametable() throws RuntimeException {
+	public final Nametable globalNametable() throws RuntimeException {
 		try {
 			final Stackable lowest = getLastSafe();
 			return (Nametable) lowest;
@@ -214,7 +213,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 * @return The local, topmost nametable.
 	 * @throws RuntimeException If the stack is empty or there are no nametables on the stack (an absolutely illegal state).
 	 */
-	public Nametable localScope() throws RuntimeException {
+	public final Nametable localScope() throws RuntimeException {
 		for (var elmt : this) {
 			if (elmt instanceof Nametable localNt)
 				return localNt;
@@ -232,7 +231,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 * @param id The identifier to search for.
 	 * @return The most local value that is associated with the identifier.
 	 */
-	public Stackable lookup(final Identifier id) {
+	public final Stackable lookup(final Identifier id) {
 		for (var elmt : this) {
 			if (elmt instanceof Nametable nt) {
 				if (nt.hasMapping(id))
@@ -256,7 +255,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 * @return The highest nametable that was found, or none if none was found.
 	 * @see Stack#forcePop()
 	 */
-	public Optional<Nametable> popFirstNametable() {
+	public final Optional<Nametable> popFirstNametable() {
 		var nt = this.forcePop();
 		while (!(nt instanceof Nametable))
 			nt = this.forcePop();
@@ -273,7 +272,7 @@ public class Stack extends ConcurrentLinkedDeque<Stackable> {
 	 * and its contents.
 	 * @return a visual multiline representation of the stack and its contents.
 	 */
-	public String toStringExtended() {
+	public final String toStringExtended() {
 		return "┌─" + Interpreter.line66.substring(0, 37) + "─┐" + System.lineSeparator()
 				+ this.stream().collect(() -> new StringBuilder(),
 						(str, elmt) -> str.append(String.format("│%38s │%n├─" + Interpreter.line66.substring(0, 37) + "─┤%n",

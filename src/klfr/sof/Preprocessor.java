@@ -12,7 +12,7 @@ import klfr.sof.exceptions.IncompleteCompilerException;
  * preprocessor does little to no logical work on the source code it is given
  * and only detects the most basic of syntax errors.
  */
-public class Preprocessor {
+public final class Preprocessor {
 
 	private static enum PreprocessorState {
 		CODE, STRING, COMMENT_STARTED, MULTILINE_COMMENT, LINE_COMMENT, EXPECTING_MLCOMMENT_END;

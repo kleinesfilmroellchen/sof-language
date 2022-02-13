@@ -35,7 +35,7 @@ public class ModuleInterpreter extends Interpreter {
 	 * 
 	 * @return A map, like an SOF nametable, containing the exported bindings.
 	 */
-	public Map<Identifier, Stackable> getExports() {
+	public final Map<Identifier, Stackable> getExports() {
 		return new TreeMap<>(exports);
 	}
 

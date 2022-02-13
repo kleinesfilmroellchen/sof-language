@@ -10,7 +10,7 @@ import klfr.sof.*;
  * 
  * @author klfr
  */
-public class CompilerException extends SOFException {
+public final class CompilerException extends SOFException {
 	private static final long serialVersionUID = 1L;
 
 	/**
@@ -152,7 +152,7 @@ public class CompilerException extends SOFException {
 	 * Returns the file where this error occurred.
 	 * @return the file where this error occurred.
 	 */
-	public SOFFile getLocation() {
+	public final SOFFile getLocation() {
 		return location;
 	}
 
@@ -160,7 +160,7 @@ public class CompilerException extends SOFException {
 	 * Returns the index inside the file where this error occurred.
 	 * @return the index inside the file where this error occurred.
 	 */
-	public int getIndex() {
+	public final int getIndex() {
 		return index;
 	}
 
@@ -168,7 +168,7 @@ public class CompilerException extends SOFException {
 	 * Returns the type name of this error, to be resolved by a localization package.
 	 * @return the type name of this error, to be resolved by a localization package.
 	 */
-	public String getNameKey() {
+	public final String getNameKey() {
 		return nameKey;
 	}
 
@@ -176,7 +176,7 @@ public class CompilerException extends SOFException {
 	 * Returns the reason of this error, to be resolved by a localization package.
 	 * @return the reason of this error, to be resolved by a localization package.
 	 */
-	public String getReasonKey() {
+	public final String getReasonKey() {
 		return reasonKey;
 	}
 
@@ -184,7 +184,7 @@ public class CompilerException extends SOFException {
 	 * Returns the formatting arguments that are used in the reason message.
 	 * @return the formatting arguments that are used in the reason message.
 	 */
-	public Object[] getFormatArguments() {
+	public final Object[] getFormatArguments() {
 		return formatArguments.clone();
 	}
 }

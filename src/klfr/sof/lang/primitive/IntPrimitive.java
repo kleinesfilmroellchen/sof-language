@@ -9,7 +9,7 @@ import klfr.sof.lang.*;
  * @author klfr
  */
 @StackableName("Integer")
-public class IntPrimitive extends Primitive {
+public final class IntPrimitive extends Primitive {
 
    private static final long serialVersionUID = 1L;
 
@@ -38,7 +38,7 @@ public class IntPrimitive extends Primitive {
     * Returns the value represented by this primitive.
     * @return the value represented by this primitive.
     */
-   public Long value() {
+   public final Long value() {
       return value;
    }
 
@@ -97,7 +97,7 @@ public class IntPrimitive extends Primitive {
 	 * @return The sum of this int and the other.
 	 * @see BuiltinOperations#add(Stackable, Stackable)
 	 */
-   public IntPrimitive add(IntPrimitive other) {
+   public final IntPrimitive add(IntPrimitive other) {
       if (this.value == 0)
          return other;
       if (other.value == 0)
@@ -111,7 +111,7 @@ public class IntPrimitive extends Primitive {
 	 * @return {@code this / other}
 	 * @see BuiltinOperations#divide(Stackable, Stackable)
 	 */
-   public IntPrimitive divide(IntPrimitive other) throws ArithmeticException {
+   public final IntPrimitive divide(IntPrimitive other) throws ArithmeticException {
       return createIntPrimitive(this.value / other.value);
    }
    
@@ -121,7 +121,7 @@ public class IntPrimitive extends Primitive {
 	 * @return {@code this % other}
 	 * @see BuiltinOperations#modulus(Stackable, Stackable)
 	 */
-	public IntPrimitive modulus(IntPrimitive other) throws ArithmeticException {
+	public final IntPrimitive modulus(IntPrimitive other) throws ArithmeticException {
 		if (other.value == 0) {
 			throw new ArithmeticException(String.format("Modulus by zero: %f mod %f", this.value, other.value));
 		}
@@ -134,7 +134,7 @@ public class IntPrimitive extends Primitive {
 	 * @return {@code this * other}
 	 * @see BuiltinOperations#multiply(Stackable, Stackable)
 	 */
-   public IntPrimitive multiply(IntPrimitive other) {
+   public final IntPrimitive multiply(IntPrimitive other) {
       return this.value == 1 ? other : (other.value == 1 ? this : createIntPrimitive(this.value * other.value));
    }
 
@@ -144,7 +144,7 @@ public class IntPrimitive extends Primitive {
 	 * @return {@code this - other}
 	 * @see BuiltinOperations#subtract(Stackable, Stackable)
 	 */
-   public IntPrimitive subtract(IntPrimitive other) {
+   public final IntPrimitive subtract(IntPrimitive other) {
       if (other.value == 0)
          return this;
       return createIntPrimitive(this.value - other.value);

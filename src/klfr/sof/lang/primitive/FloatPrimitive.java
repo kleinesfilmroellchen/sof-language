@@ -10,7 +10,7 @@ import klfr.sof.lang.*;
  * floating point decimal primitive type
  */
 @StackableName("Float")
-public class FloatPrimitive extends Primitive {
+public final class FloatPrimitive extends Primitive {
 	private static final long serialVersionUID = 1L;
 	private static final Logger log = Logger.getLogger(FloatPrimitive.class.getCanonicalName());
 	/**
@@ -40,7 +40,7 @@ public class FloatPrimitive extends Primitive {
 	 * Returns the value represented by this primitive.
 	 * @return the value represented by this primitive.
 	 */
-	public Double value() {
+	public final Double value() {
 		return v;
 	}
 
@@ -80,7 +80,7 @@ public class FloatPrimitive extends Primitive {
 	 * @return The sum of this float and the other.
 	 * @see BuiltinOperations#add(Stackable, Stackable)
 	 */
-	public FloatPrimitive add(FloatPrimitive other) {
+	public final FloatPrimitive add(FloatPrimitive other) {
 		if (this.v == 0)
 			return other;
 		if (other.v == 0)
@@ -94,7 +94,7 @@ public class FloatPrimitive extends Primitive {
 	 * @return {@code this / other}
 	 * @see BuiltinOperations#divide(Stackable, Stackable)
 	 */
-	public FloatPrimitive divide(FloatPrimitive other) throws ArithmeticException {
+	public final FloatPrimitive divide(FloatPrimitive other) throws ArithmeticException {
 		return other.v == 0 ? this : createFloatPrimitive(this.v / other.v);
 	}
 
@@ -104,7 +104,7 @@ public class FloatPrimitive extends Primitive {
 	 * @return {@code this % other}
 	 * @see BuiltinOperations#modulus(Stackable, Stackable)
 	 */
-	public FloatPrimitive modulus(FloatPrimitive other) throws ArithmeticException {
+	public final FloatPrimitive modulus(FloatPrimitive other) throws ArithmeticException {
 		if (other.v == 0) {
 			throw new ArithmeticException(String.format("Modulus by zero: %f mod %f", this.v, other.v));
 		}
@@ -117,7 +117,7 @@ public class FloatPrimitive extends Primitive {
 	 * @return {@code this * other}
 	 * @see BuiltinOperations#multiply(Stackable, Stackable)
 	 */
-	public FloatPrimitive multiply(FloatPrimitive other) {
+	public final FloatPrimitive multiply(FloatPrimitive other) {
 		return this.v == 1 ? other : (other.v == 1 ? this : createFloatPrimitive(this.v * other.v));
 	}
 
@@ -127,7 +127,7 @@ public class FloatPrimitive extends Primitive {
 	 * @return {@code this - other}
 	 * @see BuiltinOperations#subtract(Stackable, Stackable)
 	 */
-	public FloatPrimitive subtract(FloatPrimitive other) {
+	public final FloatPrimitive subtract(FloatPrimitive other) {
 		if (other.v == 0)
 			return this;
 		return createFloatPrimitive(this.v - other.v);
