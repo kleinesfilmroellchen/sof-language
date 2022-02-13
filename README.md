@@ -1,4 +1,4 @@
-[![CodeQL](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/codeql-analysis.yml)
+[![CodeQL](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/codeql-analysis.yml) [![Gradle CI & Tests](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/gradle.yml/badge.svg)](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/gradle.yml)
 
 # SOF - Stack with Objects and Functions
 
