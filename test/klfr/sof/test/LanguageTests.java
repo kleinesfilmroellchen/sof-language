@@ -1,7 +1,6 @@
 package klfr.sof.test;
 
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.junit.jupiter.api.DynamicContainer.dynamicContainer;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
 import java.io.*;
@@ -30,7 +29,6 @@ import klfr.sof.lib.*;
  * interpretation cycle is also a failure.
  */
 public class LanguageTests extends SofTestSuper {
-	public static final String ASSERT_PT = "assert";
 	/**
 	 * Directory or package where the SOF source files for the language tests
 	 * reside.
@@ -42,7 +40,7 @@ public class LanguageTests extends SofTestSuper {
 
 	@DisplayName("SOF language tests from test files")
 	@TestFactory
-	DynamicNode generateLanguageTests() throws SOFException {
+	Iterator<DynamicTest> generateLanguageTests() throws SOFException {
 		var nfRegistry = new NativeFunctionRegistry();
 		try {
 			nfRegistry.registerAllFromPackage("klfr.sof.lib");
@@ -57,51 +55,49 @@ public class LanguageTests extends SofTestSuper {
 		log.log(Level.INFO, () -> String.format("SOF source files for testing: %s", sofFiles));
 		final var sofFileIterator = sofFiles.iterator();
 
-		return dynamicContainer("SOF language tests from test files", new Iterable<DynamicTest>() {
-			public Iterator<DynamicTest> iterator() {
-				return new Iterator<DynamicTest>() {
-					@Override
-					public boolean hasNext() {
-						return sofFileIterator.hasNext();
-					}
-
-					@Override
-					public DynamicTest next() {
-						final var file = sofFileIterator.next();
-						try {
-							final var codeReader = new FileReader(new File(file), TEST_SOURCE_CHARSET);
-							// TODO: magic number 1KiB?
-							final var out = new StringWriter(1024);
-							codeReader.transferTo(out);
-							final var code = Preprocessor.preprocessCode(out.toString());
-							out.close(); codeReader.close();
-							return dynamicTest(String.format("Test source file: %s", file), () -> {
-								try {
-									log.info(String.format("Source test %s initializing...", file));
-									final IOInterface iface = new IOInterface(InputStream.nullInputStream(), System.out);
-									final var engine = new Interpreter(iface, nfRegistry);
-									final var codeUnit = Parser.parse(new File(file), code);
-									final var time = System.nanoTime();
-									CLI.runPreamble(engine);
-									engine.run(codeUnit);
-									final var finish = System.nanoTime();
-									log.info(String.format("Source test %-20s completed in %12.3f µs, %3d asserts total", file,
-											(finish - time) / 1_000d, engine.getAssertCount()));
-								} catch (CompilerException e) {
-									fail("Compiler exception while running language test '" + file + "'.", e);
-								}
-							});
-						} catch (IOException e) {
-							log.log(Level.SEVERE, String.format("Cannot test source file %s", file), e);
-							return dynamicTest(String.format("Test source file: %s FAILING with external exception.", file),
-									() -> {
-										throw new TestAbortedException("Cannot test source file.");
-									});
-						}
-					}
-				};
+		return new Iterator<DynamicTest>() {
+			@Override
+			public boolean hasNext() {
+				return sofFileIterator.hasNext();
 			}
-		});
+
+			@Override
+			public DynamicTest next() {
+				final var file = sofFileIterator.next();
+				try {
+					final var codeReader = new FileReader(new File(file), TEST_SOURCE_CHARSET);
+					// TODO: magic number 1KiB?
+					final var out = new StringWriter(1024);
+					codeReader.transferTo(out);
+					final var code = Preprocessor.preprocessCode(out.toString());
+					out.close();
+					codeReader.close();
+					return dynamicTest(String.format("Test source file: %s", file), () -> {
+						try {
+							log.info(String.format("Source test %s initializing...", file));
+							final IOInterface iface = new IOInterface(InputStream.nullInputStream(), System.out);
+							final var engine = new Interpreter(iface, nfRegistry);
+							final var codeUnit = Parser.parse(new File(file), code);
+							final var time = System.nanoTime();
+							CLI.runPreamble(engine);
+							engine.run(codeUnit);
+							final var finish = System.nanoTime();
+							log.info(String.format("Source test %-20s completed in %12.3f µs, %3d asserts total", file,
+									(finish - time) / 1_000d, engine.getAssertCount()));
+						} catch (CompilerException e) {
+							fail("Compiler exception while running language test '" + file + "'.", e);
+						}
+					});
+				} catch (IOException e) {
+					log.log(Level.SEVERE, String.format("Cannot test source file %s", file), e);
+					return dynamicTest(String.format("Test source file: %s FAILING with external exception.", file),
+							() -> {
+								throw new TestAbortedException("Cannot test source file.");
+							});
+				}
+			}
+		};
+
 	}
 }
 

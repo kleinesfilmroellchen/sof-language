@@ -20,6 +20,7 @@ true false swap assert
 
 "blahblah" true . assert
 
+describe describes
 
 # The SOF programming language interpreter.
 # Copyright (C) 2019-2020  kleinesfilmröllchen
