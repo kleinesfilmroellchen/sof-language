@@ -9,6 +9,7 @@
 plugins {
 	id 'java'
 	id 'application'
+	id 'jacoco'
 }
 
 repositories {
@@ -105,4 +106,22 @@ tasks.run {
 tasks.named('test') {
 	// Use junit platform for unit tests.
 	useJUnitPlatform()
+	
+	finalizedBy jacocoTestReport // report is always generated after tests run
+}
+jacoco {
+    toolVersion = "0.8.7"
+    reportsDirectory = layout.buildDirectory.dir('jcc-report')
+}
+jacocoTestReport {
+	dependsOn test
+	reports {
+		xml.required = false
+		csv.required = true
+	}
+}
+
+task coverage {
+	dependsOn jacocoTestReport
+	dependsOn test
 }
