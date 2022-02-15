@@ -203,3 +203,7 @@ Just to be pretentious; Antoine de Saint-Exupéry is famously quoted on
 > Perfection is achieved, not when there is nothing more to add, but when there is nothing left to take away.
 
 I think that SOF is an excellent example of this. I cannot currently think of anything that you can take away from SOF without making it inferior in capability (or, at least, severely less usable, like removing the function PT would do, for example). It is very surprising indeed that such a simple thing as a reverse-polish notation language with three token types and literally less than 30 lines of syntax definition could be as feature-rich and capable as any other modern programming language, even if with odd syntax and inferior speed. (The latter is down to me being simply not capable of writing an efficient interpreter or any sort of compiler. PostScript and Forth prove that postfix languages can be extremely performant.)
+
+## 5. Running on SerenityOS
+
+SOF kind of runs on [SerenityOS](https://serenityos.org). There's a helper script in the repo for the time being, and if you want to try and get it to run, please get in touch.
