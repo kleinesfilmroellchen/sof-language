@@ -37,6 +37,7 @@ final class Options implements Serializable {
 	/** Print performance info flag constant. */
 	public static final int PERFORMANCE = 0b1000;
 	public Options.ExecutionType executionType;
+	public Optional<String> overrideLibraryPath = Optional.empty();
 	public List<String> executionStrings;
 	/**
 	 * All flags binary OR-ed together (binary AND with a certain flag to check it).
@@ -84,6 +85,13 @@ final class Options implements Serializable {
 						throw new IllegalArgumentException("No parameter specified for option -c. See -h for help.");
 					}
 					opt.executionStrings.add(0, cmdLineArguments.get(idx++));
+					break;
+				case "-l":
+				case "--library":
+					if (idx - 1 >= cmdLineArguments.size() - 1) {
+						throw new IllegalArgumentException("No parameter specified for option -l. See -h for help.");
+					}
+					opt.overrideLibraryPath = Optional.ofNullable(cmdLineArguments.get(idx++));
 					break;
 				case "-d":
 					opt.flags |= Options.DEBUG;

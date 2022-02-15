@@ -81,6 +81,14 @@ public final class ModuleDiscoverer {
 	// #endregion Constructors
 
 	/**
+	 * Returns the standard library base directory that this module discoverer uses.
+	 * @return The standard library base directory that this module discoverer uses.
+	 */
+	public File getStdlibBaseDirectory() {
+		return stdlibBaseDirectory;
+	}
+
+	/**
 	 * Helper method to get the a default standard library directory.
 	 * This is complicated because it needs to be computed from the code location.
 	 * @return A file pointing to the root directory of the standard library.

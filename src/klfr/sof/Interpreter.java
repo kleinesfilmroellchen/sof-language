@@ -118,6 +118,14 @@ public class Interpreter implements Serializable {
 		return assertCount;
 	}
 
+	/**
+	 * Returns the module discovery system that this interpreter uses. 
+	 * @return The module discovery system that this interpreter uses.
+	 */
+	public ModuleDiscoverer getModuleDiscoverer() {
+		return moduleDiscoverer;
+	}
+
 	// #endregion
 
 	/**
@@ -135,7 +143,7 @@ public class Interpreter implements Serializable {
 	 * @param io The I/O interface of this interpreter.
 	 * @param registry The native function registry that is used to execute native functions.
 	 */
-	protected Interpreter(IOInterface io, ModuleDiscoverer md, NativeFunctionRegistry registry) {
+	public Interpreter(IOInterface io, ModuleDiscoverer md, NativeFunctionRegistry registry) {
 		this.io = io;
 		this.stack = new Stack();
 		this.moduleDiscoverer = md;

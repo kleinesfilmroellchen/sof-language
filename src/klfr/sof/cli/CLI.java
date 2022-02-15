@@ -15,7 +15,6 @@ import java.util.logging.*;
 
 import klfr.sof.*;
 import klfr.sof.exceptions.CompilerException;
-import klfr.sof.exceptions.SOFException;
 import klfr.sof.lib.*;
 import klfr.sof.module.ModuleDiscoverer;
 
@@ -168,6 +167,10 @@ public final class CLI {
 	public static void runSOF(Options clo, IOInterface io) throws CompilerException, IOException {
 		io.debug = (clo.flags & Options.DEBUG) > 0;
 		log.config(() -> String.format("FLAG :: DEBUG %5s", io.debug ? "on" : "off"));
+
+		final var moduleDiscoverer = clo.overrideLibraryPath.isPresent() ? new ModuleDiscoverer(new File(clo.overrideLibraryPath.get())) : new ModuleDiscoverer();
+		log.config(() -> String.format("Using standard library '%s'", moduleDiscoverer.getStdlibBaseDirectory()));
+
 		switch (clo.executionType) {
 			case File: {
 				//// File execution
@@ -184,7 +187,7 @@ public final class CLI {
 							CLI.runPreprocessor(new FileReader(file, Charset.forName("utf-8")), io);
 							io.println("^D");
 						} else
-							CLI.doFullExecution(file, new Interpreter(io, nativeFunctionRegistry), io, clo.flags);
+							CLI.doFullExecution(file, new Interpreter(io, moduleDiscoverer, nativeFunctionRegistry), io, clo.flags);
 						return null;
 					} catch (Throwable t) {
 						io.println(t.getMessage());
@@ -217,14 +220,14 @@ public final class CLI {
 			}
 			case Literal: {
 				//// Single literal to be executed
-				CLI.doFullExecution(new StringReader(clo.executionStrings.get(0)), new Interpreter(io,
+				CLI.doFullExecution(new StringReader(clo.executionStrings.get(0)), new Interpreter(io, moduleDiscoverer,
 						nativeFunctionRegistry), io, clo.flags);
 				break;
 			}
 			case Interactive: {
 				//// Interactive interpretation
 				io.println(CLI.INFO_STRING);
-				Interpreter engine = new Interpreter(io, nativeFunctionRegistry);
+				Interpreter engine = new Interpreter(io, moduleDiscoverer, nativeFunctionRegistry);
 				CLI.runPreamble(engine);
 				Scanner scanner = io.newInputScanner();
 				// scanner.useDelimiter("[[^\n]\\s+]");
@@ -372,7 +375,7 @@ public final class CLI {
 		if (preambleCode == null) {
 			try {
 				// get code
-				final var pStream = new FileInputStream(new File(ModuleDiscoverer.getDefaultStdlibDirectory(), "preamble.sof"));
+				final var pStream = new FileInputStream(new File(interpreter.getModuleDiscoverer().getStdlibBaseDirectory(), "preamble.sof"));
 				final var pReader = new InputStreamReader(pStream, Charset.forName("utf-8"));
 				final var pWriter = new StringWriter();
 				pReader.transferTo(pWriter);
@@ -384,7 +387,7 @@ public final class CLI {
 				preambleCode = Parser.parse(new File("<preamble>"), preambleCodeStr);
 			} catch (IOException | NullPointerException e) {
 				interpreter.getIO().println(R.getString("sof.cli.nopreamble"));
-				throw new RuntimeException(e);
+				System.exit(1);
 			}
 		}
 		interpreter.run(preambleCode);
