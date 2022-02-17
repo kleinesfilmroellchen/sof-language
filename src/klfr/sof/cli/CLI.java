@@ -92,44 +92,7 @@ public final class CLI {
 				ch = new ConsoleHandler();
 				ch.setLevel(Level.FINE);
 
-				ch.setFormatter(new java.util.logging.Formatter() {
-					@Override
-					public String format(LogRecord record) {
-						final var msg = record.getMessage();
-						try {
-							record.getResourceBundle().getString(record.getMessage());
-						} catch (MissingResourceException | NullPointerException e) {
-							// do nothing
-						}
-						final var time = DateTimeFormatter.ofLocalizedTime(FormatStyle.MEDIUM)
-								.format(record.getInstant().atZone(ZoneId.systemDefault()));
-						final var level = record.getLevel().getLocalizedName().substring(0,
-								Math.min(record.getLevel().getLocalizedName().length(), 6));
-						final var logName = record.getLoggerName().replace("klfr.sof", "~");
-
-						return String.format("[%s %-20s |%6s] %s%n", time, logName, level, msg) + (record.getThrown() == null ? ""
-									: formatException(record.getThrown()));
-					}
-					/** Helper to format an exception and its causality chain. */
-					private String formatException(final Throwable exc) {
-						final var sb = new StringBuilder(512);
-						sb.append(String.format("EXCEPTION: %s | Stack trace:%n", exc.toString()));
-
-						var currentExc = exc;
-						int level = 0;
-						while (currentExc != null) {
-							sb.append(Arrays.asList(currentExc.getStackTrace()).stream().map(x -> x.toString()).collect(
-									() -> new StringBuilder(),
-									(builder, str) -> builder.append(" in ").append(str).append(System.lineSeparator()),
-									(b1, b2) -> b1.append(b2))
-								.toString().indent(level*2));
-							
-							currentExc = currentExc.getCause(); ++level;
-							if (currentExc != null) sb.append("Caused by: ").append(currentExc.toString()).append("\n");
-						}
-						return sb.toString();
-					}
-				});
+				ch.setFormatter(new DebugFormatter());
 				rootLog.addHandler(ch);
 				final var handler = new FileHandler("sof-log.log");
 				handler.setFormatter(new SimpleFormatter());
