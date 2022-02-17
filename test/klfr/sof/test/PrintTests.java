@@ -1,6 +1,4 @@
-package klfr.sof.test.source;
-
-import klfr.sof.test.SofTestSuper;
+package klfr.sof.test;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
