@@ -4,20 +4,24 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 
 import klfr.sof.Tokenizer;
 import klfr.sof.Tokenizer.TokenizerState;
 
+@DisplayName("Test the SOF tokenizer")
 class TokenizerTest extends SofTestSuper {
 
+	@DisplayName("Create a Tokenizer from source code")
 	@Test
 	void testFromSourceCode() {
 		Tokenizer t = assertDoesNotThrow(() -> Tokenizer.fromSourceCode("hello code"));
 		assertEquals("hello code", t.getCode());
 	}
 
+	@DisplayName("Create a Tokenizer from a state")
 	@Test
 	void testFromState() {
 		TokenizerState s = assertDoesNotThrow(() -> new TokenizerState(0, 0, 3, 5, "abc def ghi jkl mno p"));
@@ -30,6 +34,7 @@ class TokenizerTest extends SofTestSuper {
 		assertEquals(5, t.getState().regionEnd);
 	}
 
+	@DisplayName("Tokenizer state")
 	@Test
 	@Order(Integer.MAX_VALUE - 1)
 	void testTokenizerState() {
@@ -49,6 +54,7 @@ class TokenizerTest extends SofTestSuper {
 		assertTrue(clone.equals(s));
 	}
 
+	@DisplayName("Tokenizer clone")
 	@Test
 	void testClone() {
 		Tokenizer t = assertDoesNotThrow(() -> Tokenizer.fromSourceCode("hello code"));
@@ -56,6 +62,7 @@ class TokenizerTest extends SofTestSuper {
 		assertTrue(t.getCode().equals(clone.getCode()));
 	}
 
+	@DisplayName("Tokenizer's state stack")
 	@Test
 	@SuppressWarnings("deprecation")
 	void testStateStack() {

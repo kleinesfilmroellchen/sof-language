@@ -1,16 +1,16 @@
 package klfr.sof.test;
 
 import static org.junit.jupiter.api.Assertions.*;
-import org.junit.jupiter.api.Test;
+
+import org.junit.jupiter.api.*;
 
 import klfr.sof.Preprocessor;
 import klfr.sof.exceptions.CompilerException;
 
-/**
- * Tests the interpreter and preprocessor basic functionality.
- */
+@DisplayName("Test interpreter and preprocessor basic functionality")
 class PreprocessorTest extends SofTestSuper {
 
+	@DisplayName("Test the preprocessor")
 	@Test
 	void testPreprocessor() throws CompilerException {
 		assertEquals("abc def ghi jkl", Preprocessor.preprocessCode("abc def ghi jkl"),
@@ -27,6 +27,7 @@ class PreprocessorTest extends SofTestSuper {
 				Preprocessor.preprocessCode("abc \" def # here is no comment\"\n#but here is one \" with strings.\n"));
 	}
 
+	@DisplayName("Test Preprocessor.indexOfMatching()")
 	@Test
 	void testIndexOfMatching() {
 		assertEquals(28, Preprocessor.indexOfMatching("( blah blah ( sjfjdk)    xx) )))", 0, "(", ")"));

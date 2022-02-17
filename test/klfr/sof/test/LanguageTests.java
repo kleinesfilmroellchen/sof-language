@@ -28,6 +28,7 @@ import klfr.sof.lib.*;
  * execute. Any (standard) CompilerException occurring at any point during the
  * interpretation cycle is also a failure.
  */
+@DisplayName("Run in-language tests")
 public class LanguageTests extends SofTestSuper {
 	/**
 	 * Directory or package where the SOF source files for the language tests

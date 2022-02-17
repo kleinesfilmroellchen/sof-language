@@ -10,6 +10,7 @@ import klfr.sof.exceptions.IncompleteCompilerException;
 import klfr.sof.lang.Identifier;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 
+@DisplayName("Test Identifier")
 class IdentifierTest extends SofTestSuper {
 
 	@DisplayName("Test Identifier.getValue() and Identifier::new")

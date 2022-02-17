@@ -10,6 +10,7 @@ import klfr.sof.IOInterface;
 import klfr.sof.lang.*;
 import klfr.sof.lang.primitive.*;
 
+@DisplayName("Test the I/O interface")
 class IOInterfaceTest extends SofTestSuper {
 
 	private IOInterface io;
@@ -21,6 +22,7 @@ class IOInterfaceTest extends SofTestSuper {
 		io = new IOInterface();
 	}
 
+	@DisplayName("Modifying streams in the interface")
 	@Test
 	void testModifyStreams() {
 		assertDoesNotThrow(() -> io.setOut(p), "Simple output writer");
@@ -35,6 +37,7 @@ class IOInterfaceTest extends SofTestSuper {
 		assertDoesNotThrow(() -> io.setInOut(InputStream.nullInputStream(), OutputStream.nullOutputStream()));
 	}
 
+	@DisplayName("Interface print methods")
 	@Test
 	void testPrintMethods() {
 		io.setOut(p);

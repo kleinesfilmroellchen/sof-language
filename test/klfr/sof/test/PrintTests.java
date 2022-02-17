@@ -22,6 +22,7 @@ import klfr.sof.lang.oop.*;
 import klfr.sof.lang.primitive.*;
 import klfr.sof.lib.*;
 
+@DisplayName("Test outputting and printing")
 public class PrintTests extends SofTestSuper {
 
 	@DisplayName("Printing and outputting of Stackable types")

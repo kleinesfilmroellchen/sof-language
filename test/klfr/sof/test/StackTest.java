@@ -3,6 +3,7 @@ package klfr.sof.test;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import klfr.sof.exceptions.CompilerException;
@@ -14,6 +15,7 @@ import klfr.sof.lang.Stackable;
 import klfr.sof.lang.StackableName;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 
+@DisplayName("Test the SOF stack")
 public class StackTest extends SofTestSuper {
 
 	private Stack stack;
@@ -38,9 +40,7 @@ public class StackTest extends SofTestSuper {
 		nt = new Nametable();
 	}
 
-	/**
-	 * Tests basic stacking functions, such as push and pop.
-	 */
+	@DisplayName("Basic stacking functions, such as push and pop")
 	@Test
 	void testStack() throws CompilerException, IncompleteCompilerException {
 		var a = new Sbl();
@@ -68,11 +68,7 @@ public class StackTest extends SofTestSuper {
 		assertThrows(IncompleteCompilerException.class, () -> stack.peekSafe(), "Stack emptiness with peek throws");
 	}
 
-	/**
-	 * Test the basic nametable functionality.
-	 * 
-	 * @throws CompilerException
-	 */
+	@DisplayName("Basic nametable functionality")
 	@Test
 	void testNametables() throws IncompleteCompilerException {
 		final var idA = new Identifier("a");

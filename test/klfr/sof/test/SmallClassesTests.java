@@ -2,6 +2,7 @@ package klfr.sof.test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import klfr.sof.exceptions.*;
@@ -10,17 +11,16 @@ import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 import klfr.sof.lang.functional.FunctionDelimiter;
 import klfr.sof.lang.primitive.IntPrimitive;
 
+@DisplayName("Test miscellaneous small classes")
 class SmallClassesTests extends SofTestSuper {
 
-	/**
-	 * Tests the stub classes in all packages. These are: ScopeDelimiter
-	 * FunctionDelimiter
-	 */
+	@DisplayName("Stub classes")
 	@Test
 	void testStubClasses() {
 		assertDoesNotThrow(() -> new FunctionDelimiter());
 	}
 
+	@DisplayName("Nametable")
 	@Test
 	void testNametable() throws IncompleteCompilerException {
 		// For the record:

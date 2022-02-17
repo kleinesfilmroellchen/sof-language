@@ -11,6 +11,7 @@ import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 import klfr.sof.lang.primitive.*;
 import klfr.sof.exceptions.*;
 
+@DisplayName("Test SOF primitives")
 class PrimitiveTest extends SofTestSuper {
 
 	static IntPrimitive i;
