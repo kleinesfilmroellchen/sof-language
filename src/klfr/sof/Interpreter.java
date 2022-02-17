@@ -681,10 +681,13 @@ public class Interpreter implements Serializable {
 			this.stack.push(toCall);
 			return true;
 		} else if (toCall instanceof ConstructorFunction constructor) {
+			final var arguments = this.stack.popSafe((int)constructor.arguments);
+
 			final var newObject = new SObject();
 			// push the object nametable as a delimiter, then the object itself as a "self" argument to the method
 			this.stack.push(newObject.getAttributes());
 			this.stack.push(newObject);
+			this.stack.pushAll(arguments);
 			
 			// run method and ignore state
 			constructor.code.forEach((Node.ForEachType) this::handle);

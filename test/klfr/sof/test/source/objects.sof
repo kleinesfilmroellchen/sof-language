@@ -1,6 +1,6 @@
 # SOF test file - object tests
 
-{ true value def } 1 constructor TestObject globaldef
+{ true value def } 0 constructor TestObject globaldef
 
 # should not throw
 TestObject :
