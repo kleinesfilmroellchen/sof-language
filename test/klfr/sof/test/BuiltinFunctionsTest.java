@@ -2,15 +2,20 @@ package klfr.sof.test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.ArrayList;
+import java.io.File;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.*;
 
 import static klfr.Utility.*;
 
+import klfr.sof.SOFFile;
+import klfr.sof.ast.TokenListNode;
 import klfr.sof.exceptions.*;
 import klfr.sof.lang.*;
+import klfr.sof.lang.functional.CodeBlock;
+import klfr.sof.lang.functional.SOFunction;
 import klfr.sof.lang.primitive.*;
 import klfr.sof.lib.*;
 
@@ -50,6 +55,14 @@ class BuiltinFunctionsTest extends SofTestSuper {
 						.parallelStream().map(entry -> entry.getValue().size())
 						.allMatch(count -> count > avgCountPerNum * 0.8d && count <= avgCountPerNum * 1.2d),
 				"All values are no more than 20% from the expected mean");
+	}
+
+	@Test
+	@DisplayName("Test SOF builtin function random:float")
+	void testRandomFloat() {
+		for (int i = 0; i < 10_000; ++i) {
+			assertDoesNotThrow(() -> Builtins.random(FloatPrimitive.createFloatPrimitive(-89.0d), FloatPrimitive.createFloatPrimitive(71.0d)));
+		}
 	}
 
 	@Test
@@ -148,6 +161,17 @@ class BuiltinFunctionsTest extends SofTestSuper {
 	@DisplayName("Test formatting functions - Newline")
 	void testFmtNewline() {
 		assertEquals(System.lineSeparator(), Formatting.handleFormatter("%n", 0, new Stackable[]{}).getRight(), "Newline format specifier");
+	}
+
+	@Test
+	@DisplayName("Test Callable conversion function")
+	void testConvertCallable() {
+		final var cb = new CodeBlock(new TokenListNode(List.of(), 0, new SOFFile(new File("."), "mock", null)));
+		final var function = SOFunction.fromCodeBlock(cb, 0);
+		final var cbAgain = assertDoesNotThrow(() -> Builtins.convertCallable(cb));
+		assertEquals(cb, cbAgain);
+		final var functionAgain = assertDoesNotThrow(() -> Builtins.convertCallable(function));
+		assertEquals(function, functionAgain);
 	}
 
 	@Test

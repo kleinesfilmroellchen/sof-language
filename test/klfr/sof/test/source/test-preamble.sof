@@ -1,24 +1,22 @@
-# SOF test file - miscellaneous additional tests
+# SOF test file - preamble tests
 
-23 writeln
-"lol" write
-"blah " "hehe" cat "blah hehe" = assert
+"32" convert:int : 32 = assert
+"0" convert:int : 0 = assert
+"-10" convert:int : -10 = assert
 
-# test that native calls are enacted
-# 0 argument
-random:01 :
-# 1 argument
-"34" convert:int : 34 = assert
-# 2 argument
-20 44 random:int :
-# 8 argument
-"%s%s%s%s%s%s%s%s" "1" "2" "3" "4" "5" "6" "7" "8" fmt'8 : describe
+"303.88" convert:float : 303.88 = assert
+"-898.2" convert:float : -898.2 = assert
+"+78.0e-10" convert:float : +78.0e-10 = assert
 
-true false swap assert
+"format%d" 89 fmt'1 :
+"format%s%s" "hehe" "not" fmt'2 :
+"format%s%s%s" "hehe" "not" "3" fmt'3 :
+"format%s%s%s%s" "hehe" "not" "3" "4" fmt'4 :
+"format%s%s%s%s%s" "hehe" "not" "3" "4" "5" fmt'5 :
+"format%s%s%s%s%s%s" "hehe" "not" "3" "4" "5" "6" fmt'6 :
+"format%s%s%s%s%s%s%s" "hehe" "not" "3" "4" "5" "6" "7" fmt'7 :
+"format%s%s%s%s%s%s%s%s" "hehe" "not" "3" "4" "5" "6" "7" "8" fmt'8 :
 
-"blahblah" true . assert
-
-describe describes
 
 # The SOF programming language interpreter.
 # Copyright (C) 2019-2020  kleinesfilmröllchen

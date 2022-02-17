@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.*;
 
+import klfr.sof.lang.BuiltinOperations;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 import klfr.sof.lang.primitive.*;
 import klfr.sof.exceptions.*;
@@ -136,6 +137,24 @@ class PrimitiveTest extends SofTestSuper {
 		assertDoesNotThrow(() -> l.clear());
 		assertEquals(0, l.size(), "Size after clearing");
 		assertThrows(IndexOutOfBoundsException.class, () -> l.get(3), "Index out of bounds");
+	}
+
+	@DisplayName("Test type-incompatible builtin operations")
+	@Test
+	void testIncompatiblePrimitives() {
+		final var floatPrimitive = FloatPrimitive.createFloatPrimitive(8.7d);
+		final var intPrimitive = IntPrimitive.createIntPrimitive(78l);
+		final var stringPrimitive = StringPrimitive.createStringPrimitive("test");
+		final var boolPrimitive = BoolPrimitive.createBoolPrimitive(true);
+		assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.add(floatPrimitive, stringPrimitive));
+		assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.divide(intPrimitive, stringPrimitive));
+		assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.subtract(boolPrimitive, stringPrimitive));
+		assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.multiply(intPrimitive, boolPrimitive));
+		assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.modulus(floatPrimitive, boolPrimitive));
+		assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.lessThan(floatPrimitive, stringPrimitive));
+		assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.lessEqualThan(intPrimitive, stringPrimitive));
+		assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.greaterThan(boolPrimitive, stringPrimitive));
+		assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.greaterEqualThan(intPrimitive, boolPrimitive));
 	}
 
 }
