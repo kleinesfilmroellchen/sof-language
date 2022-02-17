@@ -139,7 +139,10 @@ public class Nametable implements Stackable {
 		if (other == this) return true;
 		if (other instanceof Nametable otherNt) {
 			for (final var entry : this.entries.entrySet()) {
-				if (!otherNt.entries.get(entry.getValue()).equals(entry.getKey())) {
+				if (otherNt.entries.get(entry.getKey()) == null) {
+					return false;
+				}
+				if (!otherNt.entries.get(entry.getKey()).equals(entry.getValue())) {
 					return false;
 				}
 			}

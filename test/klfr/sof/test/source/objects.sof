@@ -28,6 +28,13 @@ three , 3 = assert
 false setValue ;
 value , not assert
 
+# object equality
+
+{ x def } 1 constructor Obj globaldef
+4 Obj : 4 Obj : describes = assert
+5 Obj : 3 Obj : /= assert
+
+
 # The SOF programming language interpreter.
 # Copyright (C) 2019-2020  kleinesfilmröllchen
 

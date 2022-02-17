@@ -52,11 +52,6 @@ public final class SObject implements Stackable {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		return obj instanceof SObject ? this.equals((Stackable)obj) : false;
-	}
-
-	@Override
 	public int hashCode() {
 		return attributes.hashCode() ^ 0x9f7193da;
 	}
