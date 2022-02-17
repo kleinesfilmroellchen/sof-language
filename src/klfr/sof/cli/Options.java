@@ -7,7 +7,7 @@ import java.util.logging.*;
 /**
  * Command-line options storage and parsing.
  */
-final class Options implements Serializable {
+public final class Options implements Serializable {
 	private static final long serialVersionUID = 1L;
 	private static Logger log = Logger.getLogger(Options.class.getCanonicalName());
 
@@ -15,7 +15,7 @@ final class Options implements Serializable {
 	 * Enum for general operation execution string (ES) treatment. An ES is any CL
 	 * argument without a '-'.
 	 */
-	static enum ExecutionType {
+	public static enum ExecutionType {
 		/** ES is treated as list of relative filenames. */
 		File,
 		/** ES index 0 is treated as code. */
@@ -36,14 +36,18 @@ final class Options implements Serializable {
 	public static final int NO_PREPROCESSOR = 0b100;
 	/** Print performance info flag constant. */
 	public static final int PERFORMANCE = 0b1000;
-	public Options.ExecutionType executionType;
+	/** The type of execution that should be done, e.g. whether to start a REPL or interpret a file. */
+	public Options.ExecutionType executionType = Options.ExecutionType.Interactive;
+	/** An alternative library path that specifies the location of the standard library. */
 	public Optional<String> overrideLibraryPath = Optional.empty();
-	public List<String> executionStrings;
+	/** Strings specified after the options. Their meaning depends on the execution type. */
+	public List<String> executionStrings = new LinkedList<>();
 	/**
 	 * All flags binary OR-ed together (binary AND with a certain flag to check it).
 	 */
 	public int flags;
 
+	@Override
 	public final String toString() {
 		return "Options:" + executionType + executionStrings.toString() + "f:" + Integer.toBinaryString(flags);
 	}
@@ -60,8 +64,6 @@ final class Options implements Serializable {
 		log.entering(CLI.class.getCanonicalName(), "parseOptions");
 
 		Options opt = new Options();
-		opt.executionType = Options.ExecutionType.Interactive;
-		opt.executionStrings = new LinkedList<String>();
 
 		List<String> cmdLineArguments = new ArrayList<String>(Arrays.asList(args));
 		log.config(() -> "Command line arguments: " + cmdLineArguments.toString());

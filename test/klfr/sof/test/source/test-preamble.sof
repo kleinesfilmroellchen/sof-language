@@ -1,12 +1,21 @@
 # SOF test file - preamble tests
 
 "32" convert:int : 32 = assert
-"0" convert:int : 0 = assert
-"-10" convert:int : -10 = assert
+0 convert:int : 0 = assert
+-10.0 convert:int : -10 = assert
 
 "303.88" convert:float : 303.88 = assert
-"-898.2" convert:float : -898.2 = assert
-"+78.0e-10" convert:float : +78.0e-10 = assert
+-898.2 convert:float : -898.2 = assert
+78 convert:float : 78.0 = assert
+
+{ } convert:callable :
+{ } 0 function convert:callable :
+76 convert:string : "76" = assert
+80.0 convert:string :
+
+random:01 :
+2 7 random:int : 8 < assert
+4.0 8.6 random:float : 8.6 <= assert
 
 "format%d" 89 fmt'1 :
 "format%s%s" "hehe" "not" fmt'2 :

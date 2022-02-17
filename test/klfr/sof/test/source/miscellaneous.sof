@@ -7,8 +7,6 @@
 # test that native calls are enacted
 # 0 argument
 random:01 :
-# 1 argument
-"34" convert:int : 34 = assert
 # 2 argument
 20 44 random:int :
 # 8 argument

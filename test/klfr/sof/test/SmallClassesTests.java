@@ -2,14 +2,20 @@ package klfr.sof.test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.io.File;
+import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import klfr.sof.SOFFile;
+import klfr.sof.cli.Options;
 import klfr.sof.exceptions.*;
 import klfr.sof.lang.*;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 import klfr.sof.lang.functional.FunctionDelimiter;
-import klfr.sof.lang.primitive.IntPrimitive;
+import klfr.sof.lang.oop.MethodDelimiter;
+import klfr.sof.lang.primitive.*;
 
 @DisplayName("Test miscellaneous small classes")
 class SmallClassesTests extends SofTestSuper {
@@ -18,6 +24,50 @@ class SmallClassesTests extends SofTestSuper {
 	@Test
 	void testStubClasses() {
 		assertDoesNotThrow(() -> new FunctionDelimiter());
+		assertDoesNotThrow(() -> new MethodDelimiter());
+	}
+
+	@DisplayName("toString()s")
+	@Test
+	void testToString() {
+		assertDoesNotThrow(() -> new Options().toString());
+	}
+
+	@DisplayName("List primitive")
+	@Test
+	void testList() throws IncompleteCompilerException {
+		final var list = new ListPrimitive(List.of(new Identifier("blah")));
+		assertDoesNotThrow(() -> list.set(0, StringPrimitive.createStringPrimitive("blah")));
+		assertDoesNotThrow(() -> list.add(0, new Identifier("value")));
+		assertDoesNotThrow(() -> list.add(new Identifier("value")));
+		assertDoesNotThrow(() -> list.addAll(0, List.of()));
+		assertDoesNotThrow(() -> list.addAll(List.of()));
+		assertDoesNotThrow(() -> list.subList(0,2));
+		assertDoesNotThrow(() -> list.forEach(value -> {}));
+		assertTrue(list.contains(new Identifier("value")));
+		assertTrue(list.containsAll(List.of()));
+		assertDoesNotThrow(() -> list.remove(new Identifier("value")));
+		assertDoesNotThrow(() -> list.retainAll(List.of()));
+		assertDoesNotThrow(() -> list.removeAll(List.of()));
+		assertDoesNotThrow(() -> list.replaceAll(elt -> elt));
+		assertDoesNotThrow(() -> list.indexOf(IntPrimitive.createIntPrimitive(0l)));
+		assertDoesNotThrow(() -> list.lastIndexOf(IntPrimitive.createIntPrimitive(0l)));
+		assertDoesNotThrow(() -> list.toArray(new Object[]{}));
+		assertDoesNotThrow(() -> list.toArray());
+		assertDoesNotThrow(() -> list.listIterator());
+		assertDoesNotThrow(() -> list.iterator());
+		assertDoesNotThrow(() -> list.stream());
+		assertDoesNotThrow(() -> list.isEmpty());
+		assertDoesNotThrow(() -> list.listIterator(0));
+	}
+
+	@DisplayName("Exception formatting")
+	@Test
+	void testExceptionFormatting() {
+		final var fakeFile = new SOFFile(new File("."), "source code source code this is a bunch of source code lol and it's so freaking long you can't actually believe it, like what the actual fricking lolz is even going on here", null);
+		assertDoesNotThrow(() -> CompilerException.from(fakeFile, 0, "generic", "generic").getMessage());
+		assertDoesNotThrow(() -> CompilerException.from(fakeFile, 171, "generic", "generic").getMessage());
+		assertDoesNotThrow(() -> CompilerException.from(fakeFile, 40, "generic", "generic").getLocalizedMessage());
 	}
 
 	@DisplayName("Nametable")

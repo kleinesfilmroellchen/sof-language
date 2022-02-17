@@ -8,11 +8,11 @@ An experimental fully stack-based reverse-polish-notation functional and object-
 
 **This is an experimental programming language.** If you cause a nuclear war and the inevitable destruction of mankind by using this software, I am not to blame.
 
-SOF is written in Java 16 and requires org.reflections and java.logging to run. It leverages the module system (you may use it in your project as well!) and uses JUnit Jupiter for testing (currently) about 65% of the codebase.
+SOF is written in Java 16 and requires org.reflections and java.logging to run. It leverages the module system (you may use it in your project as well!) and uses JUnit Jupiter for testing (currently) about 78% of the codebase.
 
 ### Installation and CLI Usage
 
-This is a Gradle 7 project using the Java Application plugin with the module system and JUnit Jupiter tests. The usual Gradle tasks for these situations exist and have not been renamed/added to. As a quick reference: Use `gradle build` to run the full build including tests. Run `gradle test` to run the tests, and `gradle coverage` for tests and coverage (reports are in ). Use `gradle javadoc` to build the javadoc. All building happens into the `build/` subfolders.
+This is a Gradle 7 project using the Java Application plugin with the module system and JUnit Jupiter tests. The usual Gradle tasks for these situations exist and have not been renamed/added to. As a quick reference: Use `gradle build` to run the full build including tests. Run `gradle test` to run the tests, and `gradle coverage` for tests and coverage (reports are in `build/jcc-report/test/html`). Use `gradle javadoc` to build the javadoc. All building happens into the `build/` subfolders.
 
 Use `gradle run` to execute the SOF CLI. However, Gradles obnoxious build output will obscure a bunch of the program output. Therefore, you should use `gradle install` and then run the binaries from `build/install/sof-language`. This works on Windows and Linux.
 
