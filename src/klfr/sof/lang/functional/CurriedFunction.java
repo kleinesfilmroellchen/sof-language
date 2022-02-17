@@ -14,8 +14,18 @@ import klfr.sof.lang.*;
 @StackableName("CurriedFunction")
 public class CurriedFunction extends SOFunction {
 
+	/**
+	 * The curried arguments. They are provided in the order that they are passed to the function,
+	 * so the first element is the lowest on the stack of arguments passed into the function.
+	 */
 	private final List<Stackable> curriedArguments;
 
+	/**
+	 * Create a new curried function.
+	 * @param base The function that is curried.
+	 * @param curriedArguments The arguments that are curried to the function,
+	 *                         in the order that they are supposed to be passed to the function.
+	 */
 	public CurriedFunction(SOFunction base, List<Stackable> curriedArguments) {
 		super(base.code, base.arguments-curriedArguments.size());
 		this.curriedArguments = curriedArguments;

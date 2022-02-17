@@ -18,9 +18,8 @@ public final class TransparentData implements Stackable {
 	/**
 	 * The underlying type of transparent object.
 	 * 
-	 * @implNote This cannot be the Stackable itself (although it should be) because
-	 *           the automatic Comparable implementation of enums clashes with the
-	 *           Comparable implementation of Stackable.
+	 * This cannot be the Stackable itself (although it should be) because the automatic
+	 * Comparable implementation of enums clashes with the Comparable implementation of Stackable.
 	 */
 	public static enum TransparentType {
 		/** Currently unused. */
@@ -37,10 +36,20 @@ public final class TransparentData implements Stackable {
 			this.symbol = symbol;
 		}
 
+		/**
+		 * Returns the code symbol used for this transparent symbol.
+		 * @return The code symbol used for this transparent symbol.
+		 */
 		public final String getSymbol() {
 			return symbol;
 		}
 
+		/**
+		 * Create a transparent symbol type from a code string.
+		 * @param symbol The SOF code representation of the symbol.
+		 * @return The transparent symbol type that is represented by the code symbol.
+		 * @throws IncompleteCompilerException If the string isn't a transparent symbol.
+		 */
 		public static final TransparentType fromSymbol(final String symbol) throws IncompleteCompilerException {
 			for (TransparentType td : TransparentType.values()) {
 				if (td.symbol.equals(symbol))
@@ -50,6 +59,9 @@ public final class TransparentData implements Stackable {
 		}
 	}
 
+	/**
+	 * The type of symbol that this transparent data represents.
+	 */
 	private final TransparentType type;
 
 	/**

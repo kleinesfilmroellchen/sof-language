@@ -22,6 +22,9 @@ public final class FloatPrimitive extends Primitive {
 	 * of comparisons.
 	 */
 	public static final int EQUALITY_PRECISION = 10;
+	/**
+	 * The Not A Number (NaN) constant for float primitives.
+	 */
 	public static final Stackable NaN = FloatPrimitive.createFloatPrimitive(Double.NaN);
 
 	/** The double that is represented by this primitive. */

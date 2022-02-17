@@ -83,9 +83,6 @@ public final class NativeFunctionRegistry {
 	 * <li>Its argument types and its return type must be
 	 * {@link klfr.sof.lang.Stackable} or a subclass thereof. It must not have a
 	 * void return type.</li>
-	 * <li>It must not have more than
-	 * {@link NativeFunctionRegistry#MAX_PARAMETER_COUNT} arguments. It must also
-	 * not have any vararg parameters.</li>
 	 * </ul>
 	 * Classes which are not accessible to this class due to visibility restrictions
 	 * will cause reflection errors to be thrown. Inacessible classes should not be
