@@ -54,8 +54,8 @@ public class Interpreter implements Serializable {
 
 	// #region Utility
 
-	static String f(final String s, final Object... args) {
-		return String.format(s, args);
+	static String f(final String s, final java.lang.Object... args) {
+		return String.format(s, (java.lang.Object) args);
 	}
 
 	/** Convenience constant for the 66-character line ─ */
