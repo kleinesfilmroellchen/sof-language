@@ -23,6 +23,15 @@ public class Function extends CodeBlock {
 	protected final Nametable	globalNametable;
 
 	/**
+	 * Returns the global nametable of this function's global scope.
+	 * 
+	 * @return The global nametable of this function's global scope.
+	 */
+	public final Nametable getGlobalNametable() {
+		return globalNametable;
+	}
+
+	/**
 	 * Create a function with this code, with given numbers of arguments.
 	 * 
 	 * @param code            code of the function

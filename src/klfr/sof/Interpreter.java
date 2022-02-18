@@ -678,6 +678,12 @@ public class Interpreter implements Serializable {
 			this.stack.push(toCall);
 			return true;
 		} else if (toCall instanceof ConstructorFunction constructor) {
+			var pushedGlobalNametable = false;
+			if (this.stack.globalNametable() != constructor.getGlobalNametable()) {
+				this.stack.pushGlobalNametable(constructor.getGlobalNametable());
+				pushedGlobalNametable = true;
+			}
+
 			final var arguments = this.stack.popSafe((int) constructor.arguments);
 
 			final var newObject = new Object();
@@ -694,11 +700,20 @@ public class Interpreter implements Serializable {
 
 			// re-push the object (was removed by above operation)
 			this.stack.push(newObject);
+
+			if (pushedGlobalNametable)
+				this.stack.popGlobalNametable();
 			return true;
 		} else if (toCall instanceof CurriedFunction function) {
 			this.stack.pushAll(function.getCurriedArguments());
 			return doCall(function.getRegularFunction(), scope);
 		} else if (toCall instanceof Function function) {
+			var pushedGlobalNametable = false;
+			if (this.stack.globalNametable() != function.getGlobalNametable()) {
+				this.stack.pushGlobalNametable(function.getGlobalNametable());
+				pushedGlobalNametable = true;
+			}
+
 			// HINT: handle the function before the codeblock because it inherits from it
 			final var subProgram = function.code;
 
@@ -733,12 +748,18 @@ public class Interpreter implements Serializable {
 				if (!(table instanceof FunctionDelimiter))
 					throw new RuntimeException("Unexpected nametable type " + table.getClass().toString());
 				((FunctionDelimiter) table).pushReturnValue(this.stack);
+
+				if (pushedGlobalNametable)
+					this.stack.popGlobalNametable();
 				return true;
 			}
 			// This function is curried; we create a proxy for it.
 			else {
 				final var curriedFunction = new CurriedFunction(function, args, this.stack.globalNametable());
 				this.stack.push(curriedFunction);
+
+				if (pushedGlobalNametable)
+					this.stack.popGlobalNametable();
 				return true;
 			}
 		} else if (toCall instanceof CodeBlock codeblock) {

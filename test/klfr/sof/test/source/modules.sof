@@ -10,6 +10,12 @@ add1 .
 teststr : "Test string" = assert
 2 add1 : 3 = assert
 
+300 nonExportedVariable def
+
+addToNonExported :
+# this asserts that the above function ran and incremented the non-exported correctly
+72 checkNonExported :
+
 # The SOF programming language interpreter.
 # Copyright (C) 2019-2020  kleinesfilmröllchen
 

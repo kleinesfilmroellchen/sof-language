@@ -12,7 +12,16 @@
 
 69 nonExportedVariable def
 
-add1 export teststr export
+{
+	nonExportedVariable . 3 + nonExportedVariable globaldef
+} 0 function addToNonExported globaldef
+
+# other file will check that the non-exported variable is modified and accessed correctly
+{
+	nonExportedVariable . = assert
+} 1 function checkNonExported globaldef
+
+add1 export teststr export addToNonExported export checkNonExported export
 
 # The SOF programming language interpreter.
 # Copyright (C) 2019-2020  kleinesfilmröllchen
