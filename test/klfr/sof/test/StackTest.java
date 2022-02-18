@@ -103,6 +103,29 @@ public class StackTest extends SofTestSuper {
 		assertDoesNotThrow(() -> nt.toDebugString(DebugStringExtensiveness.Type), "Debug string (Type)");
 		assertDoesNotThrow(() -> nt.toDebugString(DebugStringExtensiveness.Full), "Debug string (Full)");
 	}
+
+	@DisplayName("Nametable stacking")
+	@Test
+	void testNametableStacking() {
+		final var nt1 = new Nametable();
+		final var nt2 = new Nametable();
+		final var stack = new Stack();
+		stack.push(new Nametable());
+
+		stack.pushGlobalNametable(nt1);
+		// Due to how equality checks work, it's not possible to use assertEquals
+		assertTrue(stack.globalNametable() == nt1);
+		assertTrue(stack.popGlobalNametable() == nt1);
+		assertFalse(stack.globalNametable() == nt1);
+
+		stack.pushGlobalNametable(nt1);
+		stack.pushGlobalNametable(nt2);
+		assertTrue(stack.globalNametable() == nt2);
+		stack.popGlobalNametable();
+		assertTrue(stack.globalNametable() == nt1);
+		assertDoesNotThrow(() -> stack.popGlobalNametable());
+		assertThrows(RuntimeException.class, () -> stack.popGlobalNametable());
+	}
 }
 
 /*  

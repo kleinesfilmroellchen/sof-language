@@ -3,6 +3,7 @@ package klfr.sof.lang;
 import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.logging.Logger;
 
 import klfr.sof.*;
@@ -30,9 +31,17 @@ import klfr.sof.lang.Stackable.DebugStringExtensiveness;
  */
 public final class Stack extends ConcurrentLinkedDeque<Stackable> {
 
-	private static final long		serialVersionUID	= 1L;
+	private static final long			serialVersionUID		= 1L;
 
-	private static final Logger	log					= Logger.getLogger(Stack.class.getCanonicalName());
+	private static final Logger		log						= Logger.getLogger(Stack.class.getCanonicalName());
+
+	/**
+	 * The stack of global nametables that have been stored away, as there's currently a different "fake" name table active.
+	 * The stack that contains the other nametables is just for convenience. Technically, insertion of the new nametables
+	 * directly above the previous "global" nametables plus adjusted global nametable retrieval logic would suffice.
+	 * However, this is easier to implement.
+	 */
+	private final Deque<Nametable>	globalNametableStack	= new LinkedBlockingDeque<>();
 
 	/**
 	 * The stack starts out empty. The user of the stack is responsible for adding the global nametable.
@@ -191,7 +200,43 @@ public final class Stack extends ConcurrentLinkedDeque<Stackable> {
 			final Stackable lowest = getLastSafe();
 			return (Nametable) lowest;
 		} catch (ClassCastException | IncompleteCompilerException e) {
-			throw new RuntimeException("Interpreter Exception: Global Nametable missing. ┻━━┻ ミ ヽ(ಠ益ಠ)ノ 彡  ┻━━┻");
+			throw new RuntimeException("Interpreter Exception: Global Nametable missing. ┻━━┻ ミ ヽ(ಠ益ಠ)ノ 彡  ┻━━┻", e);
+		}
+	}
+
+	/**
+	 * Replaces the global nametable with the given temporary global nametable. The actual global nametable is stored in a
+	 * stack of temporarily removed global nametables. This is to facilitate the module system with different global
+	 * nametables for each module: This method is called before entering a module function.
+	 * 
+	 * @param newGlobalNametable The new global nametable that replaces the current global nametable for the time being.
+	 * 
+	 * @throws RuntimeException If you managed to delete or replace the global nametable (ノಠ益ಠ)ノ彡 ┻━━┻
+	 */
+	public final void pushGlobalNametable(final Nametable newGlobalNametable) throws RuntimeException {
+		try {
+			final var currentGlobalNametable = super.pollLast();
+			globalNametableStack.push((Nametable) currentGlobalNametable);
+			super.addLast(newGlobalNametable);
+		} catch (ClassCastException | NullPointerException e) {
+			throw new RuntimeException("Interpreter Exception: Global Nametable missing. ┻━━┻ ミ ヽ(ಠ益ಠ)ノ 彡  ┻━━┻", e);
+		}
+	}
+
+	/**
+	 * Removes and returns the current global nametable, and places the topmost nametable of the global nametable stack back
+	 * into the global nametable position. This is to facilitate the module system with different global nametables: This
+	 * method is called after exiting from a module function.
+	 * 
+	 * @return The current global nametable.
+	 */
+	public final Nametable popGlobalNametable() throws RuntimeException {
+		try {
+			final var currentGlobalNametable = super.pollLast();
+			super.addLast(globalNametableStack.pop());
+			return (Nametable) currentGlobalNametable;
+		} catch (NullPointerException | ClassCastException e) {
+			throw new RuntimeException("Interpreter Exception: Global Nametable missing. ┻━━┻ ミ ヽ(ಠ益ಠ)ノ 彡  ┻━━┻", e);
 		}
 	}
 
