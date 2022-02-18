@@ -11,7 +11,7 @@ import klfr.sof.lang.*;
  * @author klfr
  */
 @StackableName("CurriedFunction")
-public class CurriedFunction extends SOFunction {
+public class CurriedFunction extends Function {
 
 	/**
 	 * The curried arguments. They are provided in the order that they are passed to the function, so the first element is
@@ -26,7 +26,7 @@ public class CurriedFunction extends SOFunction {
 	 * @param curriedArguments The arguments that are curried to the function, in the order that they are supposed to be
 	 *                            passed to the function.
 	 */
-	public CurriedFunction(SOFunction base, List<Stackable> curriedArguments) {
+	public CurriedFunction(Function base, List<Stackable> curriedArguments) {
 		super(base.code, base.arguments - curriedArguments.size());
 		this.curriedArguments = curriedArguments;
 	}
@@ -45,8 +45,8 @@ public class CurriedFunction extends SOFunction {
 	 * 
 	 * @return The regular function beneath this curried function.
 	 */
-	public final SOFunction getRegularFunction() {
-		return new SOFunction(this.code, this.arguments + this.curriedArguments.size());
+	public final Function getRegularFunction() {
+		return new Function(this.code, this.arguments + this.curriedArguments.size());
 	}
 
 	@Override

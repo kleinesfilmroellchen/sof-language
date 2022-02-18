@@ -8,7 +8,7 @@ import klfr.sof.lang.*;
  * @author klfr
  */
 @StackableName("Object")
-public final class SObject implements Stackable {
+public final class Object implements Stackable {
 
 	private static final long			serialVersionUID	= 1L;
 
@@ -29,12 +29,12 @@ public final class SObject implements Stackable {
 	/**
 	 * Create a new SOF object.
 	 */
-	public SObject() {
+	public Object() {
 		this.attributes = new MethodDelimiter();
 	}
 
 	/** needed for copying */
-	private SObject(MethodDelimiter nt) {
+	private Object(MethodDelimiter nt) {
 		this.attributes = nt;
 	}
 
@@ -48,7 +48,7 @@ public final class SObject implements Stackable {
 
 	@Override
 	public Stackable copy() {
-		return new SObject(this.attributes);
+		return new Object(this.attributes);
 	}
 
 	@Override
@@ -65,7 +65,7 @@ public final class SObject implements Stackable {
 	 */
 	@Override
 	public boolean equals(Stackable other) {
-		if (other instanceof SObject otherObject) {
+		if (other instanceof Object otherObject) {
 			return attributes.equals(otherObject.attributes);
 		} else {
 			return false;

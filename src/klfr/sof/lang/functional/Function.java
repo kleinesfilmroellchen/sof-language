@@ -7,7 +7,7 @@ import klfr.sof.lang.*;
  * Function type, one of the most important callable types. Functions are the most primitive scoped callable.
  */
 @StackableName("Function")
-public class SOFunction extends CodeBlock {
+public class Function extends CodeBlock {
 
 	private static final long	serialVersionUID	= 1L;
 
@@ -22,7 +22,7 @@ public class SOFunction extends CodeBlock {
 	 * @param code      code of the function
 	 * @param arguments number of arguments the function recieves
 	 */
-	public SOFunction(TokenListNode code, long arguments) {
+	public Function(TokenListNode code, long arguments) {
 		super(code);
 		this.arguments = arguments;
 	}
@@ -45,8 +45,8 @@ public class SOFunction extends CodeBlock {
 	 * @param arguments The number of arguments to this function.
 	 * @return A new SOF function with the given code block tokens as the behavior and the given number of arguments.
 	 */
-	public static SOFunction fromCodeBlock(CodeBlock origin, int arguments) {
-		return new SOFunction(origin.code, arguments);
+	public static Function fromCodeBlock(CodeBlock origin, int arguments) {
+		return new Function(origin.code, arguments);
 	}
 
 	@Override
@@ -56,17 +56,17 @@ public class SOFunction extends CodeBlock {
 
 	@Override
 	public Stackable clone() {
-		return new SOFunction(this.code, this.arguments);
+		return new Function(this.code, this.arguments);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		return obj instanceof SOFunction ? this.equals((SOFunction) obj) : false;
+		return obj instanceof Function ? this.equals((Function) obj) : false;
 	}
 
 	@Override
 	public boolean equals(Stackable other) {
-		if (other instanceof SOFunction otherFunction) {
+		if (other instanceof Function otherFunction) {
 			return code.equals(otherFunction.code) && (arguments == otherFunction.arguments);
 		} else {
 			return false;

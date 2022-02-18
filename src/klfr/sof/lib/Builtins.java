@@ -164,7 +164,7 @@ public final class Builtins {
 	 * @throws IncompleteCompilerException If the value cannot be converted.
 	 */
 	public static Stackable convertCallable(Stackable toConvert) throws IncompleteCompilerException {
-		if (toConvert instanceof CodeBlock || toConvert instanceof SOFunction) {
+		if (toConvert instanceof CodeBlock || toConvert instanceof Function) {
 			return toConvert;
 		} else {
 			//TODO: Implement Church Numerals

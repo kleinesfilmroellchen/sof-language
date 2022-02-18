@@ -15,6 +15,7 @@ import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 import klfr.sof.lang.TransparentData.TransparentType;
 import klfr.sof.lang.functional.*;
 import klfr.sof.lang.oop.*;
+import klfr.sof.lang.oop.Object;
 import klfr.sof.lang.primitive.*;
 import klfr.sof.lib.*;
 import klfr.sof.module.*;
@@ -411,7 +412,7 @@ public class Interpreter implements Serializable {
 		}
 		case ObjectCall: {
 			final Stackable toCall = this.stack.popSafe();
-			final SObject object = this.stack.popTyped(SObject.class);
+			final Object object = this.stack.popTyped(Object.class);
 			this.stack.push(object.getAttributes());
 
 			// note that because we may execute a function, a normal function delimiter is used as the scope
@@ -437,11 +438,11 @@ public class Interpreter implements Serializable {
 			final var methodName = this.stack.popSafe();
 			// the name of the method to call is not resolved yet, resolve it first like with double calls
 			this.doCall(methodName);
-			final var method = this.stack.popTyped(SOFunction.class);
+			final var method = this.stack.popTyped(Function.class);
 
 			// Because the method is known, its arguments can be removed temporarily to recieve the target object underneath.
 			final var arguments = this.stack.popSafe((int) method.arguments);
-			final var object = this.stack.popTyped(SObject.class);
+			final var object = this.stack.popTyped(Object.class);
 
 			// for catching the return value of the method after doCall has finished
 			final var returnSafetyNT = new FunctionDelimiter();
@@ -491,7 +492,7 @@ public class Interpreter implements Serializable {
 		case Function: {
 			final var argcount = this.stack.popTyped(IntPrimitive.class);
 			final var code = this.stack.popTyped(CodeBlock.class).code;
-			this.stack.push(new SOFunction(code, argcount.value()));
+			this.stack.push(new Function(code, argcount.value()));
 			return true;
 		}
 		case Constructor: {
@@ -679,7 +680,7 @@ public class Interpreter implements Serializable {
 		} else if (toCall instanceof ConstructorFunction constructor) {
 			final var arguments = this.stack.popSafe((int) constructor.arguments);
 
-			final var newObject = new SObject();
+			final var newObject = new Object();
 			// push the object nametable as a delimiter, then the object itself as a "self" argument to the method
 			this.stack.push(newObject.getAttributes());
 			this.stack.push(newObject);
@@ -697,7 +698,7 @@ public class Interpreter implements Serializable {
 		} else if (toCall instanceof CurriedFunction function) {
 			this.stack.pushAll(function.getCurriedArguments());
 			return doCall(function.getRegularFunction(), scope);
-		} else if (toCall instanceof SOFunction function) {
+		} else if (toCall instanceof Function function) {
 			// HINT: handle the function before the codeblock because it inherits from it
 			final var subProgram = function.code;
 

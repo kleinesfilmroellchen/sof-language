@@ -15,7 +15,7 @@ import klfr.sof.ast.TokenListNode;
 import klfr.sof.exceptions.*;
 import klfr.sof.lang.*;
 import klfr.sof.lang.functional.CodeBlock;
-import klfr.sof.lang.functional.SOFunction;
+import klfr.sof.lang.functional.Function;
 import klfr.sof.lang.primitive.*;
 import klfr.sof.lib.*;
 
@@ -163,7 +163,7 @@ class BuiltinFunctionsTest extends SofTestSuper {
 	@DisplayName("Test Callable conversion function")
 	void testConvertCallable() {
 		final var cb = new CodeBlock(new TokenListNode(List.of(), 0, new SOFFile(new File("."), "mock", null)));
-		final var function = SOFunction.fromCodeBlock(cb, 0);
+		final var function = Function.fromCodeBlock(cb, 0);
 		final var cbAgain = assertDoesNotThrow(() -> Builtins.convertCallable(cb));
 		assertEquals(cb, cbAgain);
 		final var functionAgain = assertDoesNotThrow(() -> Builtins.convertCallable(function));
