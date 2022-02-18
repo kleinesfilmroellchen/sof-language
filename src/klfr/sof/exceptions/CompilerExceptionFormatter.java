@@ -10,19 +10,20 @@ import klfr.sof.Tokenizer;
 import klfr.sof.Tokenizer.TokenizerState;
 
 /**
- * A formatter for compiler exceptions.
- * This class is used by {@link CompilerException#getMessage()} and other users to create nicely formatted compiler exception infos.
+ * A formatter for compiler exceptions. This class is used by {@link CompilerException#getMessage()} and other users to
+ * create nicely formatted compiler exception infos.
  * 
  * @author klfr
  */
 public final class CompilerExceptionFormatter {
-	private static final String EXCEPTION_FORMAT = "%s Error in file %s line %d at index %d:%n %s%n %s%n    %s";
-	
+
+	private static final String	EXCEPTION_FORMAT			= "%s Error in file %s line %d at index %d:%n %s%n %s%n    %s";
+
 	/**
 	 * The maximum length of the outputted source code.
 	 */
-	public static final int EXPRESSION_OUTPUT_LEN = 70;
-	
+	public static final int			EXPRESSION_OUTPUT_LEN	= 70;
+
 	/**
 	 * Does the formatting for CLI messages.
 	 * 
@@ -32,12 +33,11 @@ public final class CompilerExceptionFormatter {
 	 * @param name            type of exception, e.g. Syntax, Value
 	 * @param reason          explanation why the exception occurred
 	 * @param locale          locale of the message strings
-	 * @param formatArguments 
+	 * @param formatArguments
 	 * @return nicely formatted multi-line string
 	 */
 	@SuppressWarnings("resource")
-	private static String formatCLIMessage(String filename, String expression, int index, int line, String name,
-			String reason, Locale locale, Object[] formatArguments) {
+	private static String formatCLIMessage(String filename, String expression, int index, int line, String name, String reason, Locale locale, Object[] formatArguments) {
 		// log.fine(() -> String.format(
 		// "index %d, exprlen %d, significant %d, error line <%s>", index,
 		// expression.length(),
@@ -53,19 +53,16 @@ public final class CompilerExceptionFormatter {
 				// erroneous code: trim the error line with the given index
 				trim(expression, index),
 				// error pointer character: appropriate padding
-				" ".repeat(significantAfterTrimmed(index, expression.length())) + "^", 
+				" ".repeat(significantAfterTrimmed(index, expression.length())) + "^",
 				// reason: format with localized type and arguments
-				new Formatter(locale)
-					  .format(R.getString("sof.error.message." + reason), formatArguments).toString());
+				new Formatter(locale).format(R.getString("sof.error.message." + reason), formatArguments).toString());
 	}
 
 	/**
-	 * Trims string to exact length EXPRESSION_OUTPUT_LEN while respecting the
-	 * significant index.
+	 * Trims string to exact length EXPRESSION_OUTPUT_LEN while respecting the significant index.
 	 */
 	private static String trim(String original, int significantIndex) {
-		int min = significantIndex - (EXPRESSION_OUTPUT_LEN / 2),
-				max = significantIndex + (EXPRESSION_OUTPUT_LEN / 2) + 1, length = original.length();
+		int min = significantIndex - (EXPRESSION_OUTPUT_LEN / 2), max = significantIndex + (EXPRESSION_OUTPUT_LEN / 2) + 1, length = original.length();
 
 		if (min < 0) {
 			// case 1: from start on EXPRESSION_OUTPUT_LEN characters
@@ -82,15 +79,13 @@ public final class CompilerExceptionFormatter {
 	/**
 	 * Calculates position in trimmed string where the significant index lies.
 	 * 
-	 * @param significantIndex The index where the character is in the actual
-	 *                         string.
+	 * @param significantIndex The index where the character is in the actual string.
 	 * @param length           The actual string's length.
-	 * @return An index (zero-based) that points to the position in the final
-	 *         trimmed string where the indexed character lies
+	 * @return An index (zero-based) that points to the position in the final trimmed string where the indexed character
+	 *         lies
 	 */
 	private static int significantAfterTrimmed(int significantIndex, int length) {
-		int min = significantIndex - (EXPRESSION_OUTPUT_LEN / 2),
-				max = significantIndex + (EXPRESSION_OUTPUT_LEN / 2) + 1;
+		int min = significantIndex - (EXPRESSION_OUTPUT_LEN / 2), max = significantIndex + (EXPRESSION_OUTPUT_LEN / 2) + 1;
 		if (min < 0)
 			// case 1: there is no trim from the start, index valid as-is
 			return significantIndex;
@@ -110,6 +105,7 @@ public final class CompilerExceptionFormatter {
 
 	/**
 	 * Creates a new formatter for the given exception.
+	 * 
 	 * @param exception The exception that this formatter will format.
 	 */
 	public CompilerExceptionFormatter(CompilerException exception) {
@@ -117,8 +113,9 @@ public final class CompilerExceptionFormatter {
 	}
 
 	/**
-	 * Format the compiler exception of this formatter in the format suited for CLI output.
-	 * This output is very detailed and includes the error location.
+	 * Format the compiler exception of this formatter in the format suited for CLI output. This output is very detailed and
+	 * includes the error location.
+	 * 
 	 * @param locale The locale for the text message.
 	 * @return A nicely formatted multiline string.
 	 */
@@ -134,8 +131,7 @@ public final class CompilerExceptionFormatter {
 		// left = line, right = index in line
 		final var codePosition = expressionTokenizer.getCurrentPosition();
 		// line number-1 because is human-readable "one-based"
-		var expressionLine = Pattern.compile("\\R")
-				.matcher(Pattern.compile("$", Pattern.MULTILINE).split(code)[codePosition.getLeft() - 1]).replaceAll("");
+		var expressionLine = Pattern.compile("\\R").matcher(Pattern.compile("$", Pattern.MULTILINE).split(code)[codePosition.getLeft() - 1]).replaceAll("");
 
 		return formatCLIMessage(filename.sourceFile().getPath(), expressionLine, codePosition.getRight(), codePosition.getLeft(), name, reason, locale, formatArguments);
 	}

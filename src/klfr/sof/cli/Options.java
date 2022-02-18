@@ -8,12 +8,12 @@ import java.util.logging.*;
  * Command-line options storage and parsing.
  */
 public final class Options implements Serializable {
-	private static final long serialVersionUID = 1L;
-	private static Logger log = Logger.getLogger(Options.class.getCanonicalName());
+
+	private static final long	serialVersionUID	= 1L;
+	private static Logger		log					= Logger.getLogger(Options.class.getCanonicalName());
 
 	/**
-	 * Enum for general operation execution string (ES) treatment. An ES is any CL
-	 * argument without a '-'.
+	 * Enum for general operation execution string (ES) treatment. An ES is any CL argument without a '-'.
 	 */
 	public static enum ExecutionType {
 		/** ES is treated as list of relative filenames. */
@@ -29,23 +29,23 @@ public final class Options implements Serializable {
 	}
 
 	/** Debug flag constant. */
-	public static final int DEBUG = 0b1;
+	public static final int			DEBUG						= 0b1;
 	/** Preprocessor flag constant. */
-	public static final int ONLY_PREPROCESSOR = 0b10;
+	public static final int			ONLY_PREPROCESSOR		= 0b10;
 	/** No preprocessor flag constant. */
-	public static final int NO_PREPROCESSOR = 0b100;
+	public static final int			NO_PREPROCESSOR		= 0b100;
 	/** Print performance info flag constant. */
-	public static final int PERFORMANCE = 0b1000;
+	public static final int			PERFORMANCE				= 0b1000;
 	/** The type of execution that should be done, e.g. whether to start a REPL or interpret a file. */
-	public Options.ExecutionType executionType = Options.ExecutionType.Interactive;
+	public Options.ExecutionType	executionType			= Options.ExecutionType.Interactive;
 	/** An alternative library path that specifies the location of the standard library. */
-	public Optional<String> overrideLibraryPath = Optional.empty();
+	public Optional<String>			overrideLibraryPath	= Optional.empty();
 	/** Strings specified after the options. Their meaning depends on the execution type. */
-	public List<String> executionStrings = new LinkedList<>();
+	public List<String>				executionStrings		= new LinkedList<>();
 	/**
 	 * All flags binary OR-ed together (binary AND with a certain flag to check it).
 	 */
-	public int flags;
+	public int							flags;
 
 	@Override
 	public final String toString() {
@@ -57,8 +57,7 @@ public final class Options implements Serializable {
 	 * 
 	 * @param args command line arguments.
 	 * @return an Options argument that represents the cla in a more abstract way.
-	 * @throws IllegalArgumentException if the arguments to the interpreter are
-	 *                                  malformed
+	 * @throws IllegalArgumentException if the arguments to the interpreter are malformed
 	 */
 	public static Options parseOptions(String[] args) throws IllegalArgumentException {
 		log.entering(CLI.class.getCanonicalName(), "parseOptions");
@@ -72,57 +71,56 @@ public final class Options implements Serializable {
 		while (idx < cmdLineArguments.size() && cmdLineArguments.get(idx).startsWith("-")) {
 			String s = cmdLineArguments.get(idx++);
 			switch (s) {
-				case "-v":
-				case "--version":
-					opt.executionType = ExecutionType.VersionInfo;
-					break;
-				case "-h":
-				case "--help":
-					opt.executionType = ExecutionType.HelpInfo;
-					break;
-				case "-c":
-				case "--command":
-					opt.executionType = Options.ExecutionType.Literal;
-					if (idx - 1 >= cmdLineArguments.size() - 1) {
-						throw new IllegalArgumentException("No parameter specified for option -c. See -h for help.");
-					}
-					opt.executionStrings.add(0, cmdLineArguments.get(idx++));
-					break;
-				case "-l":
-				case "--library":
-					if (idx - 1 >= cmdLineArguments.size() - 1) {
-						throw new IllegalArgumentException("No parameter specified for option -l. See -h for help.");
-					}
-					opt.overrideLibraryPath = Optional.ofNullable(cmdLineArguments.get(idx++));
-					break;
-				case "-d":
-					opt.flags |= Options.DEBUG;
-					break;
-				case "-p":
-					opt.flags |= Options.ONLY_PREPROCESSOR;
-					break;
-				case "-P":
-					opt.flags |= Options.NO_PREPROCESSOR;
-					break;
-				case "--performance":
-					opt.flags |= Options.PERFORMANCE;
-					break;
-				default:
-					// extract combined option flags into separate options
+			case "-v":
+			case "--version":
+				opt.executionType = ExecutionType.VersionInfo;
+				break;
+			case "-h":
+			case "--help":
+				opt.executionType = ExecutionType.HelpInfo;
+				break;
+			case "-c":
+			case "--command":
+				opt.executionType = Options.ExecutionType.Literal;
+				if (idx - 1 >= cmdLineArguments.size() - 1) {
+					throw new IllegalArgumentException("No parameter specified for option -c. See -h for help.");
+				}
+				opt.executionStrings.add(0, cmdLineArguments.get(idx++));
+				break;
+			case "-l":
+			case "--library":
+				if (idx - 1 >= cmdLineArguments.size() - 1) {
+					throw new IllegalArgumentException("No parameter specified for option -l. See -h for help.");
+				}
+				opt.overrideLibraryPath = Optional.ofNullable(cmdLineArguments.get(idx++));
+				break;
+			case "-d":
+				opt.flags |= Options.DEBUG;
+				break;
+			case "-p":
+				opt.flags |= Options.ONLY_PREPROCESSOR;
+				break;
+			case "-P":
+				opt.flags |= Options.NO_PREPROCESSOR;
+				break;
+			case "--performance":
+				opt.flags |= Options.PERFORMANCE;
+				break;
+			default:
+				// extract combined option flags into separate options
 
-					if (s.length() <= 2) {
-						throw new IllegalArgumentException(String.format("Unknown option \"%s\". Try -h for help.", s));
-					}
-					for (char c : s.substring(1).toCharArray()) {
-						cmdLineArguments.add(idx, "-" + c);
-					}
-					log.log(Level.FINE, () -> cmdLineArguments.toString());
+				if (s.length() <= 2) {
+					throw new IllegalArgumentException(String.format("Unknown option \"%s\". Try -h for help.", s));
+				}
+				for (char c : s.substring(1).toCharArray()) {
+					cmdLineArguments.add(idx, "-" + c);
+				}
+				log.log(Level.FINE, () -> cmdLineArguments.toString());
 			}
 		}
 		// decide over execution type depending on argument count
 		if (opt.executionType == Options.ExecutionType.Interactive)
-			opt.executionType = idx < cmdLineArguments.size() ? Options.ExecutionType.File
-					: Options.ExecutionType.Interactive;
+			opt.executionType = idx < cmdLineArguments.size() ? Options.ExecutionType.File : Options.ExecutionType.Interactive;
 		if (opt.executionType == Options.ExecutionType.File)
 			while (idx < cmdLineArguments.size()) {
 				opt.executionStrings.add(cmdLineArguments.get(idx++));

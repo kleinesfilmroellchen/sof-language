@@ -13,8 +13,8 @@ import klfr.sof.lang.primitive.*;
 @DisplayName("Test the I/O interface")
 class IOInterfaceTest extends SofTestSuper {
 
-	private IOInterface io;
-	private StringWriter p;
+	private IOInterface	io;
+	private StringWriter	p;
 
 	@BeforeEach
 	void setUp() throws Exception {

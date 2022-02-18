@@ -15,11 +15,13 @@ import klfr.sof.lang.primitive.*;
  * Parses preprocessed SOF code into an AST.
  */
 public final class Parser {
+
 	private static final Logger log = Logger.getLogger(Parser.class.getCanonicalName());
 
 	/**
 	 * Parses preprocessed SOF code into an abstract syntax tree (AST).
-	 * @param f The file where the source code comes from. Is never read so can be invalid.
+	 * 
+	 * @param f    The file where the source code comes from. Is never read so can be invalid.
 	 * @param code The code to parse, already preprocessed.
 	 * @return An abstract syntax tree representing the code.
 	 * @throws CompilerException If a syntax error is encountered.
@@ -35,12 +37,12 @@ public final class Parser {
 	}
 
 	/**
-	 * Parse the SOF source code from the start index to the end index.
-	 * This means that the SOF source code is read, syntax is checked, and an AST is created.
-	 * The code must already be preprocessed.
+	 * Parse the SOF source code from the start index to the end index. This means that the SOF source code is read, syntax
+	 * is checked, and an AST is created. The code must already be preprocessed.
+	 * 
 	 * @param source The source code to be parsed.
-	 * @param start The start index, inclusive, that determines the substring to parse.
-	 * @param end The end index, exclusive, that determines the substring to parse.
+	 * @param start  The start index, inclusive, that determines the substring to parse.
+	 * @param end    The end index, exclusive, that determines the substring to parse.
 	 * @return The parsed AST. The root node will always be a {@link klfr.sof.ast.TokenListNode}.
 	 * @throws CompilerException If a syntax error is encountered.
 	 * @see Preprocessor#preprocessCode(String)
@@ -68,8 +70,7 @@ public final class Parser {
 				// code block
 				if (Patterns.codeBlockStartPattern.matcher(token).matches()) {
 					log.finest(() -> String.format("Code block start token @ %4d", tokenizer.start()));
-					final var endPos = Preprocessor.indexOfMatching(tokenizer.getCode(), tokenizer.start(),
-							Patterns.codeBlockStartPattern, Patterns.codeBlockEndPattern) - 1;
+					final var endPos = Preprocessor.indexOfMatching(tokenizer.getCode(), tokenizer.start(), Patterns.codeBlockStartPattern, Patterns.codeBlockEndPattern) - 1;
 					if (endPos < 0) {
 						throw CompilerException.from(source.sourceFile().getPath(), tokenizer, "syntax", "syntax.codeblock");
 					}

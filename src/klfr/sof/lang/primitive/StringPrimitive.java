@@ -10,14 +10,15 @@ import klfr.sof.lang.*;
  */
 @StackableName("String")
 public final class StringPrimitive extends Primitive {
+
    private static final long serialVersionUID = 1L;
 
    /** The string that is represented by this primitive. */
-   private final String s;
+   private final String      s;
    /**
     * The length of the string primitive.
     */
-   public final long length;
+   public final long         length;
 
    private StringPrimitive(String s) {
       this.s = s;
@@ -31,6 +32,7 @@ public final class StringPrimitive extends Primitive {
 
    /**
     * Returns the string that this primitive represents.
+    * 
     * @return The string that this primitive represents.
     */
    public final String value() {
@@ -39,6 +41,7 @@ public final class StringPrimitive extends Primitive {
 
    /**
     * Create a new string primitive from the given string.
+    * 
     * @param s The string that the primitive represents.
     * @return A new string primitive representing the given string.
     */
@@ -49,9 +52,9 @@ public final class StringPrimitive extends Primitive {
    @Override
    public String toDebugString(DebugStringExtensiveness e) {
       return switch (e) {
-         case Full -> String.format("s\"%s\"(%2d)", this.s.replace("\n", "\\n").replace("\t", "\\t").replace("\f", "\\f").replace("\r", "\\r"), this.length);
-         case Compact -> '"' + s + '"';
-         default -> super.toDebugString(e);
+      case Full -> String.format("s\"%s\"(%2d)", this.s.replace("\n", "\\n").replace("\t", "\\t").replace("\f", "\\f").replace("\r", "\\r"), this.length);
+      case Compact -> '"' + s + '"';
+      default -> super.toDebugString(e);
       };
    }
 

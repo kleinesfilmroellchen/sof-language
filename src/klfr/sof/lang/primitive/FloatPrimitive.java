@@ -11,24 +11,23 @@ import klfr.sof.lang.*;
  */
 @StackableName("Float")
 public final class FloatPrimitive extends Primitive {
-	private static final long serialVersionUID = 1L;
-	private static final Logger log = Logger.getLogger(FloatPrimitive.class.getCanonicalName());
+
+	private static final long		serialVersionUID		= 1L;
+	private static final Logger	log						= Logger.getLogger(FloatPrimitive.class.getCanonicalName());
 	/**
-	 * Because this float implementation uses double as its basis, equality
-	 * comparisons for many common ratios will be imprecise. For this reason,
-	 * equality testing between two sof floats is done after rounding to this
-	 * specified number of decimal places. As doubles have about 12 significant
-	 * decimal places, a number closely below this may be ideal to preserve accuracy
-	 * of comparisons.
+	 * Because this float implementation uses double as its basis, equality comparisons for many common ratios will be
+	 * imprecise. For this reason, equality testing between two sof floats is done after rounding to this specified number
+	 * of decimal places. As doubles have about 12 significant decimal places, a number closely below this may be ideal to
+	 * preserve accuracy of comparisons.
 	 */
-	public static final int EQUALITY_PRECISION = 10;
+	public static final int			EQUALITY_PRECISION	= 10;
 	/**
 	 * The Not A Number (NaN) constant for float primitives.
 	 */
-	public static final Stackable NaN = FloatPrimitive.createFloatPrimitive(Double.NaN);
+	public static final Stackable	NaN						= FloatPrimitive.createFloatPrimitive(Double.NaN);
 
 	/** The double that is represented by this primitive. */
-	private final Double v;
+	private final Double				v;
 
 	private FloatPrimitive(double d) {
 		this.v = d;
@@ -41,6 +40,7 @@ public final class FloatPrimitive extends Primitive {
 
 	/**
 	 * Returns the value represented by this primitive.
+	 * 
 	 * @return the value represented by this primitive.
 	 */
 	public final Double value() {
@@ -49,6 +49,7 @@ public final class FloatPrimitive extends Primitive {
 
 	/**
 	 * Creates a new float primitive from the given double.
+	 * 
 	 * @param d The double to create a primitive from.
 	 * @return A new float primitive with the value of the given double.
 	 */
@@ -64,6 +65,7 @@ public final class FloatPrimitive extends Primitive {
 	 * <li>If the stackable is any other data type, a runtime error is thrown.</li>
 	 * </ul>
 	 * This method is intended to only be used if the caller knows that the data is of a number type.
+	 * 
 	 * @param s The stackable to be converted.
 	 * @return The converted stackable.
 	 */
@@ -79,6 +81,7 @@ public final class FloatPrimitive extends Primitive {
 
 	/**
 	 * Execute optimized arithmetic add.
+	 * 
 	 * @param other The float to add.
 	 * @return The sum of this float and the other.
 	 * @see BuiltinOperations#add(Stackable, Stackable)
@@ -93,6 +96,7 @@ public final class FloatPrimitive extends Primitive {
 
 	/**
 	 * Execute optimized arithmetic divide.
+	 * 
 	 * @param other The float to divide.
 	 * @return {@code this / other}
 	 * @see BuiltinOperations#divide(Stackable, Stackable)
@@ -103,6 +107,7 @@ public final class FloatPrimitive extends Primitive {
 
 	/**
 	 * Execute optimized arithmetic modulus.
+	 * 
 	 * @param other The float to modulus with.
 	 * @return {@code this % other}
 	 * @see BuiltinOperations#modulus(Stackable, Stackable)
@@ -116,6 +121,7 @@ public final class FloatPrimitive extends Primitive {
 
 	/**
 	 * Execute optimized arithmetic multiply.
+	 * 
 	 * @param other The float to multiply.
 	 * @return {@code this * other}
 	 * @see BuiltinOperations#multiply(Stackable, Stackable)
@@ -126,6 +132,7 @@ public final class FloatPrimitive extends Primitive {
 
 	/**
 	 * Execute optimized arithmetic subtract.
+	 * 
 	 * @param other The float to subtract.
 	 * @return {@code this - other}
 	 * @see BuiltinOperations#subtract(Stackable, Stackable)
@@ -138,7 +145,9 @@ public final class FloatPrimitive extends Primitive {
 
 	/**
 	 * Parses an SOF-syntax float in a string into an actual SOF float.
-	 * @param doubleString The string that is contains a single SOF float according to SOF float syntax. There may be leading or trailing whitespace.
+	 * 
+	 * @param doubleString The string that is contains a single SOF float according to SOF float syntax. There may be
+	 *                        leading or trailing whitespace.
 	 * @return An SOF float primitive that represents the value of the float contained in the string.
 	 * @throws IncompleteCompilerException If the string does not conform to SOF float syntax.
 	 */
@@ -174,8 +183,7 @@ public final class FloatPrimitive extends Primitive {
 	 * Round to specified number of decimal points.
 	 * 
 	 * @param d        number to round.
-	 * @param decimals number of decimals to round to. 0 = round to integer,
-	 *                 negative = round to tens, 100's etc.
+	 * @param decimals number of decimals to round to. 0 = round to integer, negative = round to tens, 100's etc.
 	 * @return rounded number.
 	 */
 	public static strictfp double round(double d, int decimals) {

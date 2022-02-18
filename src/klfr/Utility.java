@@ -12,8 +12,9 @@ public final class Utility {
 
 	/**
 	 * Ensure the given string's minimum length of len by padding it with padding characters on the left.
-	 * @param s The string to be padded.
-	 * @param len The minimum length of the string. Longer strings are returned as-is.
+	 * 
+	 * @param s       The string to be padded.
+	 * @param len     The minimum length of the string. Longer strings are returned as-is.
 	 * @param padding The padding character for extending the string's length.
 	 * @return A string of minimum length len.
 	 */
@@ -23,10 +24,12 @@ public final class Utility {
 			return s;
 		return Character.toString(padding).repeat(charsToAdd) + s;
 	}
+
 	/**
-	 * Ensure the given string's minimum length of len by padding it with padding characters on the left.
-	 * Uses space padding.
-	 * @param s The string to be padded.
+	 * Ensure the given string's minimum length of len by padding it with padding characters on the left. Uses space
+	 * padding.
+	 * 
+	 * @param s   The string to be padded.
 	 * @param len The minimum length of the string. Longer strings are returned as-is.
 	 * @return A string of minimum length len.
 	 */
@@ -36,8 +39,9 @@ public final class Utility {
 
 	/**
 	 * Ensure the given string's minimum length of len by padding it with padding characters on the right.
-	 * @param s The string to be padded.
-	 * @param len The minimum length of the string. Longer strings are returned as-is.
+	 * 
+	 * @param s       The string to be padded.
+	 * @param len     The minimum length of the string. Longer strings are returned as-is.
 	 * @param padding The padding character for extending the string's length.
 	 * @return A string of minimum length len.
 	 */
@@ -47,10 +51,12 @@ public final class Utility {
 			return s;
 		return s + Character.toString(padding).repeat(charsToAdd);
 	}
+
 	/**
-	 * Ensure the given string's minimum length of len by padding it with padding characters on the right.
-	 * Uses space padding.
-	 * @param s The string to be padded.
+	 * Ensure the given string's minimum length of len by padding it with padding characters on the right. Uses space
+	 * padding.
+	 * 
+	 * @param s   The string to be padded.
 	 * @param len The minimum length of the string. Longer strings are returned as-is.
 	 * @return A string of minimum length len.
 	 */
@@ -59,10 +65,11 @@ public final class Utility {
 	}
 
 	/**
-	 * Ensure the given string's minimum length of len by padding it with padding characters on both sides,
-	 * so that the original string is centered.
-	 * @param s The string to be padded.
-	 * @param len The minimum length of the string. Longer strings are returned as-is.
+	 * Ensure the given string's minimum length of len by padding it with padding characters on both sides, so that the
+	 * original string is centered.
+	 * 
+	 * @param s       The string to be padded.
+	 * @param len     The minimum length of the string. Longer strings are returned as-is.
 	 * @param padding The padding character for extending the string's length.
 	 * @return A string of minimum length len.
 	 */
@@ -74,10 +81,12 @@ public final class Utility {
 		final int oneMoreLeft = (charsToAdd % 2) == 0 ? 0 : 1;
 		return Character.toString(padding).repeat(charsToAdd / 2 + oneMoreLeft) + s + Character.toString(padding).repeat(charsToAdd / 2);
 	}
+
 	/**
-	 * Ensure the given string's minimum length of len by padding it with padding characters on both sides,
-	 * so that the original string is centered. Uses space padding.
-	 * @param s The string to be padded.
+	 * Ensure the given string's minimum length of len by padding it with padding characters on both sides, so that the
+	 * original string is centered. Uses space padding.
+	 * 
+	 * @param s   The string to be padded.
 	 * @param len The minimum length of the string. Longer strings are returned as-is.
 	 * @return A string of minimum length len.
 	 */
@@ -86,8 +95,9 @@ public final class Utility {
 	}
 
 	/**
-	 * Convert the given double to a full string representation, i.e. no scientific notation
-	 * and always twelve digits after the decimal point.
+	 * Convert the given double to a full string representation, i.e. no scientific notation and always twelve digits after
+	 * the decimal point.
+	 * 
 	 * @param d The double to be converted
 	 * @return A full string representation
 	 */
@@ -112,7 +122,7 @@ public final class Utility {
 		double dabs = Math.abs(d);
 		while (digitIndex > 0) {
 			// Recieves digit at current power of ten (= place in decimal number)
-			long digit = (long)Math.floor(dabs / Math.pow(10, digitIndex-1)) % 10;
+			long digit = (long) Math.floor(dabs / Math.pow(10, digitIndex - 1)) % 10;
 			repr.append(digit);
 			--digitIndex;
 		}
@@ -124,13 +134,13 @@ public final class Utility {
 
 		// remove any parts above the decimal point, they create accuracy problems
 		long digit = 0;
-		dabs -= (long)Math.floor(dabs);
+		dabs -= (long) Math.floor(dabs);
 		// Because of inaccuracy, move to entirely new system of computing digits after decimal place.
 		while (digitIndex > -12) {
 			// Shift decimal point one step to the right
 			dabs *= 10d;
 			// final var oldDigit = digit;
-			digit = (long)Math.floor(dabs) % 10;
+			digit = (long) Math.floor(dabs) % 10;
 			repr.append(digit);
 
 			// This may avoid float inaccuracy at the very last decimal places.
@@ -139,6 +149,6 @@ public final class Utility {
 			--digitIndex;
 		}
 
-		return repr.insert(0, d < 0 ? "-" : "").toString();	
+		return repr.insert(0, d < 0 ? "-" : "").toString();
 	}
 }

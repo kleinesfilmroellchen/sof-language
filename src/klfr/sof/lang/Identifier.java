@@ -4,20 +4,20 @@ import klfr.sof.*;
 import klfr.sof.exceptions.IncompleteCompilerException;
 
 /**
- * Identifiers are a type of stackable (i.e. basic SOF value) that are used to
- * identify functions, values, namespaces etc.<br>
- * The most common use of an identifier is as nametable keys, i.e. identifier
- * are the method of referring to the contents of nametables.
+ * Identifiers are a type of stackable (i.e. basic SOF value) that are used to identify functions, values, namespaces
+ * etc.<br>
+ * The most common use of an identifier is as nametable keys, i.e. identifier are the method of referring to the
+ * contents of nametables.
  * 
  * @author klfr
  */
 @StackableName("Identifier")
 public final class Identifier implements Stackable {
 
-	private static final long serialVersionUID = 1L;
+	private static final long	serialVersionUID	= 1L;
 
 	/** The identifier text symbol. */
-	private final String value;
+	private final String			value;
 
 	/**
 	 * Returns the value string represented by this identifier.
@@ -32,8 +32,7 @@ public final class Identifier implements Stackable {
 	 * Constructs an identifier with the string value.
 	 * 
 	 * @param value The string to be used for the identifier.
-	 * @throws IncompleteCompilerException If the given string value is not a valid SOF
-	 *                                      identifier.
+	 * @throws IncompleteCompilerException If the given string value is not a valid SOF identifier.
 	 */
 	public Identifier(String value) throws IncompleteCompilerException {
 		value = value.trim();
@@ -45,9 +44,9 @@ public final class Identifier implements Stackable {
 	@Override
 	public String toDebugString(DebugStringExtensiveness e) {
 		return switch (e) {
-			case Full -> "Identifier(" + value + ")";
-			case Compact -> value;
-			case Type -> Stackable.toDebugString(this, e);
+		case Full -> "Identifier(" + value + ")";
+		case Compact -> value;
+		case Type -> Stackable.toDebugString(this, e);
 		};
 	}
 
@@ -71,7 +70,9 @@ public final class Identifier implements Stackable {
 		// this cannot throw b/c otherwise this identifer couldn't have been created
 		try {
 			return new Identifier(this.value);
-		} catch (IncompleteCompilerException e) { throw new RuntimeException(); }
+		} catch (IncompleteCompilerException e) {
+			throw new RuntimeException();
+		}
 	}
 
 	public final int hashCode() {
@@ -81,9 +82,10 @@ public final class Identifier implements Stackable {
 	}
 
 	/**
-	 * Checks whether the given string would be a valid SOF identifier character sequence.
-	 * <br/><br/>
+	 * Checks whether the given string would be a valid SOF identifier character sequence. <br/>
+	 * <br/>
 	 * The actual check is done with the identifier pattern.
+	 * 
 	 * @param id The string to check.
 	 * @return Whether the given string would be a valid SOF identifier character sequence.
 	 * @see klfr.sof.Patterns#identifierPattern
@@ -96,8 +98,7 @@ public final class Identifier implements Stackable {
 	public int compareTo(Stackable other) {
 		if (other instanceof Identifier otherId)
 			return this.getValue().compareTo(otherId.getValue());
-		throw new ClassCastException(
-				"Cannot compare Identifier " + this.toString() + " to " + other.getClass().toString());
+		throw new ClassCastException("Cannot compare Identifier " + this.toString() + " to " + other.getClass().toString());
 	}
 }
 

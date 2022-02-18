@@ -7,10 +7,9 @@ import java.util.regex.Pattern;
 import klfr.sof.exceptions.IncompleteCompilerException;
 
 /**
- * The SOF preprocessor is a collection of static methods that normalize and
- * clean code before it can be executed. Unlike normal preprocessors, this
- * preprocessor does little to no logical work on the source code it is given
- * and only detects the most basic of syntax errors.
+ * The SOF preprocessor is a collection of static methods that normalize and clean code before it can be executed.
+ * Unlike normal preprocessors, this preprocessor does little to no logical work on the source code it is given and only
+ * detects the most basic of syntax errors.
  */
 public final class Preprocessor {
 
@@ -22,14 +21,12 @@ public final class Preprocessor {
 
 	/**
 	 * Preprocesses an SOF literal string token that has already been processed by
-	 * {@link Preprocessor#preprocessCode(String)}. The given token must still
-	 * contain the leading and trailing double quote, and the
-	 * {@link klfr.sof.Patterns#stringPattern} is used to match the string
-	 * contents and replace the escape sequences.
+	 * {@link Preprocessor#preprocessCode(String)}. The given token must still contain the leading and trailing double
+	 * quote, and the {@link klfr.sof.Patterns#stringPattern} is used to match the string contents and replace the escape
+	 * sequences.
 	 * 
 	 * @param sofString The SOF literal string token to be processed.
-	 * @return A string that can be used directly to construct a
-	 *         {@link klfr.sof.lang.primitive.StringPrimitive}.
+	 * @return A string that can be used directly to construct a {@link klfr.sof.lang.primitive.StringPrimitive}.
 	 * @throws IncompleteCompilerException If the string is malformed.
 	 */
 	public static String preprocessSofString(final String sofString) throws IncompleteCompilerException {
@@ -45,20 +42,21 @@ public final class Preprocessor {
 				return String.valueOf(Character.toChars(codepoint));
 			}
 			switch (escape.group(1)) {
-				case "n":
-					return "\n";
-				case "t":
-					return "\t";
-				case "f":
-					return "\f";
-				default:
-					return "\\" + escape.group(1);
+			case "n":
+				return "\n";
+			case "t":
+				return "\t";
+			case "f":
+				return "\f";
+			default:
+				return "\\" + escape.group(1);
 			}
 		}).replace("\\\"", "\"");
 	}
 
 	/**
 	 * Preprocesses the given code by removing comments and replacing some string escapes.
+	 * 
 	 * @param dirtyCode The unpreprocessed code.
 	 * @return Code that is preprocessed but whose indices still match up with the unpreprocessed code.
 	 */
@@ -74,98 +72,90 @@ public final class Preprocessor {
 				continue;
 			}
 			switch (state) {
-				// normal code, check for transition into comment or string
-				case CODE:
-					if (c == '#') {
-						state = PreprocessorState.COMMENT_STARTED;
-						clean.append(" ");
-					} else {
-						if (c == '"')
-							state = PreprocessorState.STRING;
-						clean.append(c);
-					}
-					break;
-				// a # was found last time, either single line or multiline comment
-				case COMMENT_STARTED:
-					if (c == '*') {
-						state = PreprocessorState.MULTILINE_COMMENT;
-						clean.append(" ");
-					} else {
-						state = PreprocessorState.LINE_COMMENT;
-						clean.append(" ");
-					}
-					break;
-				// inside a line comment, append a space if no line break occurs
-				case LINE_COMMENT:
-					if (c == '\n') {
-						state = PreprocessorState.CODE;
-						clean.append(c);
-					} else
-						clean.append(" ");
-					break;
-				// inside a multiline comment, check if end of comment may occur
-				case MULTILINE_COMMENT:
-					if (c == '*')
-						state = PreprocessorState.EXPECTING_MLCOMMENT_END;
-					else if (c == '\n')
-						clean.append("\n");
-					else
-						clean.append(" ");
-					break;
-				// a * last time inside a multiline comment, expecting the mlcomment to end
-				case EXPECTING_MLCOMMENT_END:
-					if (c == '#') {
-						state = PreprocessorState.CODE;
-						// append two spaces b/c when finding the * nothing was appended
-						clean.append("  ");
-					} else {
-						state = PreprocessorState.MULTILINE_COMMENT;
-						// the mlcomment did not end, append the "ignored" *
-						clean.append('*').append(c);
-					}
-					break;
-				// inside a string
-				case STRING:
-					// ignore escaped chars, they are processed when the string is created
-					if (c == '\\') {
-						acceptNextChar = true;
-						clean.append(c);
-					} else // transition back to code
-					if (c == '"') {
-						state = PreprocessorState.CODE;
-						clean.append(c);
-					} else
-						clean.append(c);
-					break;
+			// normal code, check for transition into comment or string
+			case CODE:
+				if (c == '#') {
+					state = PreprocessorState.COMMENT_STARTED;
+					clean.append(" ");
+				} else {
+					if (c == '"')
+						state = PreprocessorState.STRING;
+					clean.append(c);
+				}
+				break;
+			// a # was found last time, either single line or multiline comment
+			case COMMENT_STARTED:
+				if (c == '*') {
+					state = PreprocessorState.MULTILINE_COMMENT;
+					clean.append(" ");
+				} else {
+					state = PreprocessorState.LINE_COMMENT;
+					clean.append(" ");
+				}
+				break;
+			// inside a line comment, append a space if no line break occurs
+			case LINE_COMMENT:
+				if (c == '\n') {
+					state = PreprocessorState.CODE;
+					clean.append(c);
+				} else
+					clean.append(" ");
+				break;
+			// inside a multiline comment, check if end of comment may occur
+			case MULTILINE_COMMENT:
+				if (c == '*')
+					state = PreprocessorState.EXPECTING_MLCOMMENT_END;
+				else if (c == '\n')
+					clean.append("\n");
+				else
+					clean.append(" ");
+				break;
+			// a * last time inside a multiline comment, expecting the mlcomment to end
+			case EXPECTING_MLCOMMENT_END:
+				if (c == '#') {
+					state = PreprocessorState.CODE;
+					// append two spaces b/c when finding the * nothing was appended
+					clean.append("  ");
+				} else {
+					state = PreprocessorState.MULTILINE_COMMENT;
+					// the mlcomment did not end, append the "ignored" *
+					clean.append('*').append(c);
+				}
+				break;
+			// inside a string
+			case STRING:
+				// ignore escaped chars, they are processed when the string is created
+				if (c == '\\') {
+					acceptNextChar = true;
+					clean.append(c);
+				} else // transition back to code
+				if (c == '"') {
+					state = PreprocessorState.CODE;
+					clean.append(c);
+				} else
+					clean.append(c);
+				break;
 			}
 		}
 		return clean.toString();
 	}
 
 	/**
-	 * Searches the String for two matching (open&amp;close, like parenthesis) patterns
-	 * and returns the index after the closing character. Also keeps track of
-	 * nesting levels.
+	 * Searches the String for two matching (open&amp;close, like parenthesis) patterns and returns the index after the
+	 * closing character. Also keeps track of nesting levels.
 	 * 
 	 * @param toSearch     The String through which is searched.
-	 * @param indexOfFirst The index where the opening pattern starts. The method
-	 *                     will search for the closing character combination that
-	 *                     matches with this combination.
-	 * @param toMatchOpen  The pattern that denotes the opening or introduction of a
-	 *                     new nesting level.
-	 * @param toMatchClose The pattern that denotes the closing or finalization of a
-	 *                     nesting level.
-	 * @return The index directly after the closing pattern that matches the given
-	 *         opening pattern at the given index. If an error occurs, such as not
-	 *         finding matching characters or nesting level errors, the index
-	 *         returned is -1.
+	 * @param indexOfFirst The index where the opening pattern starts. The method will search for the closing character
+	 *                        combination that matches with this combination.
+	 * @param toMatchOpen  The pattern that denotes the opening or introduction of a new nesting level.
+	 * @param toMatchClose The pattern that denotes the closing or finalization of a nesting level.
+	 * @return The index directly after the closing pattern that matches the given opening pattern at the given index. If an
+	 *         error occurs, such as not finding matching characters or nesting level errors, the index returned is -1.
 	 */
-	public static int indexOfMatching(final String toSearch, final int indexOfFirst, final Pattern toMatchOpen,
-			final Pattern toMatchClose) {
+	public static int indexOfMatching(final String toSearch, final int indexOfFirst, final Pattern toMatchOpen, final Pattern toMatchClose) {
 		final Matcher openingMatcher = toMatchOpen.matcher(toSearch);
 		final Matcher closingMatcher = toMatchClose.matcher(toSearch);
-		boolean openingAvailable = openingMatcher.find(indexOfFirst),
-				closingAvailable = closingMatcher.find(indexOfFirst);
+		boolean openingAvailable = openingMatcher.find(indexOfFirst), closingAvailable = closingMatcher.find(indexOfFirst);
 		if (!openingAvailable || !closingAvailable)
 			return -1;
 		int openingStart = openingMatcher.start(), closingStart = closingMatcher.start();
@@ -207,26 +197,20 @@ public final class Preprocessor {
 	}
 
 	/**
-	 * Searches the String for two matching (open&amp;close, like parenthesis) character
-	 * pairs and returns the index after the closing character. Also keeps track of
-	 * nesting levels.
+	 * Searches the String for two matching (open&amp;close, like parenthesis) character pairs and returns the index after
+	 * the closing character. Also keeps track of nesting levels.
 	 * 
 	 * @param toSearch     The String through which is searched.
-	 * @param indexOfFirst The index where the opening character combination starts.
-	 *                     The method will search for the closing character
-	 *                     combination that matches with this combination.
-	 * @param toMatchOpen  The character combination that denotes the opening or
-	 *                     introduction of a new nesting level.
-	 * @param toMatchClose The character combination that denotes the closing or
-	 *                     finalization of a nesting level.
-	 * @return The index directly after the closing character combination that
-	 *         matches the given opening character combination at the given index.
-	 *         If an error occurs, such as not finding matching characters or
-	 *         nesting level errors, the index returned is -1.
+	 * @param indexOfFirst The index where the opening character combination starts. The method will search for the closing
+	 *                        character combination that matches with this combination.
+	 * @param toMatchOpen  The character combination that denotes the opening or introduction of a new nesting level.
+	 * @param toMatchClose The character combination that denotes the closing or finalization of a nesting level.
+	 * @return The index directly after the closing character combination that matches the given opening character
+	 *         combination at the given index. If an error occurs, such as not finding matching characters or nesting level
+	 *         errors, the index returned is -1.
 	 */
 	public static Integer indexOfMatching(String toSearch, int indexOfFirst, String toMatchOpen, String toMatchClose) {
-		return indexOfMatching(toSearch, indexOfFirst, Pattern.compile(Pattern.quote(toMatchOpen)),
-				Pattern.compile(Pattern.quote(toMatchClose)));
+		return indexOfMatching(toSearch, indexOfFirst, Pattern.compile(Pattern.quote(toMatchOpen)), Pattern.compile(Pattern.quote(toMatchClose)));
 	}
 }
 

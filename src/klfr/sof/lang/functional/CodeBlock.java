@@ -4,9 +4,10 @@ import klfr.sof.ast.TokenListNode;
 import klfr.sof.lang.*;
 
 /**
- * The most basic form of callable data in SOF.
- * A code block is a collection of SOF tokens (statements) enclosed by <code>{ }</code> in SOF source code.
- * Its execution is delayed and manually triggered by the user via some call instruction, such as {@code .} .<br/><br/>
+ * The most basic form of callable data in SOF. A code block is a collection of SOF tokens (statements) enclosed by
+ * <code>{ }</code> in SOF source code. Its execution is delayed and manually triggered by the user via some call
+ * instruction, such as {@code .} .<br/>
+ * <br/>
  * 
  * Internally, a code block is just holds a reference to a list of tokens, i.e. a part of the AST.
  * 
@@ -14,16 +15,18 @@ import klfr.sof.lang.*;
  */
 @StackableName("Codeblock")
 public class CodeBlock implements Stackable {
-	private static final long serialVersionUID = 1L;
+
+	private static final long	serialVersionUID	= 1L;
 
 	/**
 	 * The code of this code block, as an AST node that contains a list of other nodes (tokens).
 	 */
-	public final TokenListNode code;
+	public final TokenListNode	code;
 
 	/**
 	 * Create a new code block based on the given AST.
-	 * @param code The AST list of nodes that this code block 
+	 * 
+	 * @param code The AST list of nodes that this code block
 	 */
 	public CodeBlock(TokenListNode code) {
 		this.code = code;
@@ -34,9 +37,9 @@ public class CodeBlock implements Stackable {
 		String code = this.code.toString();
 		// Java Switch Expression FTW!
 		return switch (e) {
-			case Full -> String.format("[CodeBlock { %s } %h]", code, hashCode());
-			case Compact -> "[CodeBlk " + this.code.count() + "n ]";
-			default -> Stackable.toDebugString(this, e);
+		case Full -> String.format("[CodeBlock { %s } %h]", code, hashCode());
+		case Compact -> "[CodeBlk " + this.code.count() + "n ]";
+		default -> Stackable.toDebugString(this, e);
 		};
 	}
 
@@ -52,7 +55,7 @@ public class CodeBlock implements Stackable {
 
 	@Override
 	public boolean equals(Object obj) {
-		return obj instanceof CodeBlock ? this.equals((CodeBlock)obj) : false;
+		return obj instanceof CodeBlock ? this.equals((CodeBlock) obj) : false;
 	}
 
 	@Override

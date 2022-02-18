@@ -42,8 +42,9 @@ class SmallClassesTests extends SofTestSuper {
 		assertDoesNotThrow(() -> list.add(new Identifier("value")));
 		assertDoesNotThrow(() -> list.addAll(0, List.of()));
 		assertDoesNotThrow(() -> list.addAll(List.of()));
-		assertDoesNotThrow(() -> list.subList(0,2));
-		assertDoesNotThrow(() -> list.forEach(value -> {}));
+		assertDoesNotThrow(() -> list.subList(0, 2));
+		assertDoesNotThrow(() -> list.forEach(value -> {
+		}));
 		assertTrue(list.contains(new Identifier("value")));
 		assertTrue(list.containsAll(List.of()));
 		assertDoesNotThrow(() -> list.remove(new Identifier("value")));
@@ -52,7 +53,7 @@ class SmallClassesTests extends SofTestSuper {
 		assertDoesNotThrow(() -> list.replaceAll(elt -> elt));
 		assertDoesNotThrow(() -> list.indexOf(IntPrimitive.createIntPrimitive(0l)));
 		assertDoesNotThrow(() -> list.lastIndexOf(IntPrimitive.createIntPrimitive(0l)));
-		assertDoesNotThrow(() -> list.toArray(new Object[]{}));
+		assertDoesNotThrow(() -> list.toArray(new Object[] {}));
 		assertDoesNotThrow(() -> list.toArray());
 		assertDoesNotThrow(() -> list.listIterator());
 		assertDoesNotThrow(() -> list.iterator());

@@ -8,20 +8,19 @@ import java.util.stream.Stream;
 import klfr.sof.lang.Stackable;
 
 /**
- * SOF's standard list datatype. This is SOF's most basic and primary
- * composition datatype with first-class support.
+ * SOF's standard list datatype. This is SOF's most basic and primary composition datatype with first-class support.
  * 
  * @author klfr
  */
 public final class ListPrimitive extends Primitive implements List<Stackable> {
 
-	private static final long serialVersionUID = 1L;
+	private static final long		serialVersionUID	= 1L;
 
 	/**
-	 * The internal list that stores the data. In general, an array list is used,
-	 * but this variable is kept abstract to enable future modification.
+	 * The internal list that stores the data. In general, an array list is used, but this variable is kept abstract to
+	 * enable future modification.
 	 */
-	private final List<Stackable> list;
+	private final List<Stackable>	list;
 
 	/**
 	 * Create a pre-populated list.
@@ -52,22 +51,17 @@ public final class ListPrimitive extends Primitive implements List<Stackable> {
 	@Override
 	public String print() {
 		StringBuilder builder = new StringBuilder("[ ");
-		builder.append(this.list.stream().map(element -> element.print())
-			.collect(() -> new StringBuilder(),
-						(sb, a) -> (sb.isEmpty() ? sb : sb.append(" ")).append(a),
-						(a, b) -> (a.isEmpty() || b.isEmpty() ? a : a.append(" ")).append(b)));
+		builder.append(this.list.stream().map(element -> element.print()).collect(() -> new StringBuilder(), (sb, a) -> (sb.isEmpty() ? sb : sb.append(" ")).append(a), (a, b) -> (a.isEmpty() || b.isEmpty() ? a : a.append(" ")).append(b)));
 		return builder.append(" ]").toString();
 	}
 
 	@Override
 	public String toDebugString(DebugStringExtensiveness e) {
-		return switch(e) {
-			case Full -> "List:[" + this.list.stream().map(element -> element.print())
-				.collect(() -> new StringBuilder(),
-							(sb, a) -> (sb.isEmpty() ? sb : sb.append(", ")).append(a),
-							(a, b) -> (a.isEmpty() || b.isEmpty() ? a : a.append(", ")).append(b)) + "]";
-			case Compact -> "List(" + this.list.size() + ")";
-			case Type -> "List";
+		return switch (e) {
+		case Full -> "List:["
+				+ this.list.stream().map(element -> element.print()).collect(() -> new StringBuilder(), (sb, a) -> (sb.isEmpty() ? sb : sb.append(", ")).append(a), (a, b) -> (a.isEmpty() || b.isEmpty() ? a : a.append(", ")).append(b)) + "]";
+		case Compact -> "List(" + this.list.size() + ")";
+		case Type -> "List";
 		};
 	}
 

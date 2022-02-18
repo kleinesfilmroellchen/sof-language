@@ -8,19 +8,17 @@ import java.util.logging.Logger;
 import org.junit.jupiter.api.*;
 
 /**
- * Basic superclass of all tests. Sets a logger up that logs messages from this
- * module to the console.
+ * Basic superclass of all tests. Sets a logger up that logs messages from this module to the console.
  */
 public class SofTestSuper {
 
    /**
-    * Handler that logs messages from the packages klfr.sof and below into the
-    * console. By reusing the exact same handler each time, it cannot be added
-    * twice to the handlers of the klfr.sof logger hierarchy.
+    * Handler that logs messages from the packages klfr.sof and below into the console. By reusing the exact same handler
+    * each time, it cannot be added twice to the handlers of the klfr.sof logger hierarchy.
     */
-   private static final Handler ch = new TestLogHandler();
+   private static final Handler ch         = new TestLogHandler();
 
-   private static boolean hasRunInit = false;
+   private static boolean       hasRunInit = false;
 
    @BeforeAll
    public static void hyperSetup() throws Exception {

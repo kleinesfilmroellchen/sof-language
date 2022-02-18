@@ -14,8 +14,8 @@ import klfr.sof.exceptions.*;
 @DisplayName("Test SOF primitives")
 class PrimitiveTest extends SofTestSuper {
 
-	static IntPrimitive i;
-	static FloatPrimitive d;
+	static IntPrimitive		i;
+	static FloatPrimitive	d;
 
 	@BeforeEach
 	void setUp() {
@@ -46,7 +46,7 @@ class PrimitiveTest extends SofTestSuper {
 		FloatPrimitive clone = (FloatPrimitive) assertDoesNotThrow(() -> d.copy());
 		assertTrue(d.equals(clone));
 		assertFalse(d.equals(FloatPrimitive.createFloatPrimitive(107.44d)));
-		
+
 		// all debug string extensivenesses should not throw
 		assertDoesNotThrow(() -> {
 			d.toDebugString(DebugStringExtensiveness.Type);

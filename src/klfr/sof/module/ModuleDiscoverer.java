@@ -14,32 +14,29 @@ import klfr.sof.cli.CLI;
 import klfr.sof.exceptions.*;
 
 /**
- * The system for discovering modules and providing them to the interpreter.
- * Each ModuleDiscoverer has a {@link klfr.sof.module.ModuleRegistry} used to
- * store previously discovered modules. The ModuleDiscoverer uses the
+ * The system for discovering modules and providing them to the interpreter. Each ModuleDiscoverer has a
+ * {@link klfr.sof.module.ModuleRegistry} used to store previously discovered modules. The ModuleDiscoverer uses the
  * {@link klfr.sof.Parser} system for parsing modules.
  */
 public final class ModuleDiscoverer {
-	/** The default directory of the standard library, relative to the base install directory. */
-	private static final String DEFAULT_STDLIB_DIRECTORY = "lib";
-	/** Allowed file extensions, tried in the given order. */
-	public static final List<String> EXTENSIONS = List.of("sof", "stackof");
-	private static final Logger log = Logger.getLogger(ModuleDiscoverer.class.getCanonicalName());
 
-	private final ModuleRegistry registry;
-	private final File stdlibBaseDirectory;
+	/** The default directory of the standard library, relative to the base install directory. */
+	private static final String		DEFAULT_STDLIB_DIRECTORY	= "lib";
+	/** Allowed file extensions, tried in the given order. */
+	public static final List<String>	EXTENSIONS						= List.of("sof", "stackof");
+	private static final Logger		log								= Logger.getLogger(ModuleDiscoverer.class.getCanonicalName());
+
+	private final ModuleRegistry		registry;
+	private final File					stdlibBaseDirectory;
 
 	// #region Constructors
 	// This would be so much easier with default method arguments...
 
 	/**
-	 * Full constructor that uses the given module registry and standard library
-	 * directory.
+	 * Full constructor that uses the given module registry and standard library directory.
 	 * 
-	 * @param registry            A module registry that is to be used by this
-	 *                            discoverer internally.
-	 * @param stdlibBaseDirectory The base directory of the standard library to be
-	 *                            used by this discoverer.
+	 * @param registry            A module registry that is to be used by this discoverer internally.
+	 * @param stdlibBaseDirectory The base directory of the standard library to be used by this discoverer.
 	 */
 	public ModuleDiscoverer(final ModuleRegistry registry, final File stdlibBaseDirectory) {
 		this.registry = registry;
@@ -47,11 +44,9 @@ public final class ModuleDiscoverer {
 	}
 
 	/**
-	 * Uses the provided module registry and the default (relative) standard library
-	 * directory.
+	 * Uses the provided module registry and the default (relative) standard library directory.
 	 * 
-	 * @param registry A module registry that is to be used by this discoverer
-	 *                 internally.
+	 * @param registry A module registry that is to be used by this discoverer internally.
 	 */
 	public ModuleDiscoverer(final ModuleRegistry registry) {
 		this.registry = registry;
@@ -61,8 +56,7 @@ public final class ModuleDiscoverer {
 	/**
 	 * Ûses the provided standard library directory and an empty module registry.
 	 * 
-	 * @param stdlibBaseDirectory The base directory of the standard library to be
-	 *                            used by this discoverer.
+	 * @param stdlibBaseDirectory The base directory of the standard library to be used by this discoverer.
 	 */
 	public ModuleDiscoverer(final File stdlibBaseDirectory) {
 		this.stdlibBaseDirectory = stdlibBaseDirectory;
@@ -70,8 +64,7 @@ public final class ModuleDiscoverer {
 	}
 
 	/**
-	 * Uses the default (relative) standard library directory and an empty module
-	 * registry.
+	 * Uses the default (relative) standard library directory and an empty module registry.
 	 */
 	public ModuleDiscoverer() {
 		this.registry = new ModuleRegistry();
@@ -82,6 +75,7 @@ public final class ModuleDiscoverer {
 
 	/**
 	 * Returns the standard library base directory that this module discoverer uses.
+	 * 
 	 * @return The standard library base directory that this module discoverer uses.
 	 */
 	public File getStdlibBaseDirectory() {
@@ -89,8 +83,9 @@ public final class ModuleDiscoverer {
 	}
 
 	/**
-	 * Helper method to get the a default standard library directory.
-	 * This is complicated because it needs to be computed from the code location.
+	 * Helper method to get the a default standard library directory. This is complicated because it needs to be computed
+	 * from the code location.
+	 * 
 	 * @return A file pointing to the root directory of the standard library.
 	 */
 	public static File getDefaultStdlibDirectory() {
@@ -128,28 +123,20 @@ public final class ModuleDiscoverer {
 	/**
 	 * Retrieves the specified module for the specified requesting source file
 	 * 
-	 * @param requestingSourceFile The source file that requested the module
-	 *                             specified by the module specifier. This is very
-	 *                             important for relative module requests. Of
-	 *                             course, this file may be a nonexistent file or a
-	 *                             directory, its contents are never read by this
-	 *                             method.
-	 * @param moduleSpecifier      The string given in SOF source code that
-	 *                             specifies the module. Note that this is
-	 *                             <strong>not</strong> the same as a module
-	 *                             identifier. This module specifier may be relative
-	 *                             to the requesting module, which means that
-	 *                             depending on the source file which requests the
-	 *                             module, different modules may be found by the
-	 *                             same specifier string.
-	 * @return The AST of the found module, if it exists or was previously
-	 *         registered in the registry. If the module was not found, an empty
-	 *         Optional is returned.
-	 * @throws CompilerException If the preprocessing of a file fails.
-	 * @throws IncompleteCompilerException If another part of the module compilation, such as finding the module in the first place, fails.
+	 * @param requestingSourceFile The source file that requested the module specified by the module specifier. This is very
+	 *                                important for relative module requests. Of course, this file may be a nonexistent file
+	 *                                or a directory, its contents are never read by this method.
+	 * @param moduleSpecifier      The string given in SOF source code that specifies the module. Note that this is
+	 *                                <strong>not</strong> the same as a module identifier. This module specifier may be
+	 *                                relative to the requesting module, which means that depending on the source file which
+	 *                                requests the module, different modules may be found by the same specifier string.
+	 * @return The AST of the found module, if it exists or was previously registered in the registry. If the module was not
+	 *         found, an empty Optional is returned.
+	 * @throws CompilerException           If the preprocessing of a file fails.
+	 * @throws IncompleteCompilerException If another part of the module compilation, such as finding the module in the
+	 *                                        first place, fails.
 	 */
-	public final Optional<SOFFile> getModule(final File requestingSourceFile, final String moduleSpecifier)
-			throws CompilerException, IncompleteCompilerException {
+	public final Optional<SOFFile> getModule(final File requestingSourceFile, final String moduleSpecifier) throws CompilerException, IncompleteCompilerException {
 		File fullPath_ = null;
 		try {
 			// Check whether the module is absolute or relative
@@ -160,8 +147,7 @@ public final class ModuleDiscoverer {
 				// parent file is the containing source directory, which is the level in which the module is contained
 				parentDirectory = requestingSourceFile.getParentFile() == null ? new File(".") : requestingSourceFile.getParentFile();
 				final var _pd = parentDirectory;
-				log.info(() -> String.format("Requesting relative module '%s' from source file '%s' parent dir '%s'", moduleSpecifier,
-					requestingSourceFile.getAbsolutePath(), _pd.getAbsolutePath()));
+				log.info(() -> String.format("Requesting relative module '%s' from source file '%s' parent dir '%s'", moduleSpecifier, requestingSourceFile.getAbsolutePath(), _pd.getAbsolutePath()));
 			} else {
 				parentDirectory = stdlibBaseDirectory;
 				log.info(() -> String.format("Requesting absolute system module '%s'", moduleSpecifier));
@@ -171,13 +157,15 @@ public final class ModuleDiscoverer {
 			// check all file extensions, even the empty one
 			for (var extension : EXTENSIONS) {
 				var sourceFile = new File(parentDirectory, filename + (!extension.isEmpty() ? ("." + extension) : ""));
-				if (sourceFile.exists()) fullFile = sourceFile;
+				if (sourceFile.exists())
+					fullFile = sourceFile;
 			}
 			if (fullFile == null) {
 				throw new IncompleteCompilerException("module", "module", moduleSpecifier);
 			}
 
-			var fullPath = fullFile.getCanonicalFile(); /*needed for error handling*/ fullPath_ = fullPath;
+			var fullPath = fullFile.getCanonicalFile();
+			/*needed for error handling*/ fullPath_ = fullPath;
 
 			// retrieve or compile module
 			if (registry.hasModule(fullPath)) {
@@ -187,18 +175,18 @@ public final class ModuleDiscoverer {
 			} else {
 				// compile the module from source file
 				log.fine(() -> String.format("Compiling module %s.", fullPath));
-					final var modReader = new FileReader(fullPath, Charset.forName("utf-8"));
-					final var modWriter = new StringWriter();
-					modReader.transferTo(modWriter);
-					modReader.close();
-					var modCode = modWriter.toString();
+				final var modReader = new FileReader(fullPath, Charset.forName("utf-8"));
+				final var modWriter = new StringWriter();
+				modReader.transferTo(modWriter);
+				modReader.close();
+				var modCode = modWriter.toString();
 
-					modCode = Preprocessor.preprocessCode(modCode);
-					final var module = Parser.parse(fullPath, modCode);
+				modCode = Preprocessor.preprocessCode(modCode);
+				final var module = Parser.parse(fullPath, modCode);
 
-					registry.storeModule(fullPath, module);
-					return Optional.of(module);
-			}	
+				registry.storeModule(fullPath, module);
+				return Optional.of(module);
+			}
 		} catch (IOException e) {
 			log.log(Level.SEVERE, String.format("Module not found: %s", fullPath_), e);
 			return Optional.empty();

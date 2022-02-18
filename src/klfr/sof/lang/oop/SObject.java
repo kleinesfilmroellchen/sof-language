@@ -3,19 +3,19 @@ package klfr.sof.lang.oop;
 import klfr.sof.lang.*;
 
 /**
- * An SOF object. This most importantly holds the nametable representing the
- * object's attributes.
+ * An SOF object. This most importantly holds the nametable representing the object's attributes.
  * 
  * @author klfr
  */
 @StackableName("Object")
 public final class SObject implements Stackable {
-	private static final long serialVersionUID = 1L;
+
+	private static final long			serialVersionUID	= 1L;
 
 	/**
 	 * The attributes of the object.
 	 */
-	protected final MethodDelimiter attributes;
+	protected final MethodDelimiter	attributes;
 
 	/**
 	 * Return the attributes of the object.
@@ -40,9 +40,9 @@ public final class SObject implements Stackable {
 
 	public final String toDebugString(DebugStringExtensiveness e) {
 		return switch (e) {
-			case Full -> "Object" + System.lineSeparator() + this.attributes.toDebugString(e);
-			case Compact -> "Obj(" + this.attributes.toDebugString(e) + ")";
-			default -> this.attributes.toDebugString(e);
+		case Full -> "Object" + System.lineSeparator() + this.attributes.toDebugString(e);
+		case Compact -> "Obj(" + this.attributes.toDebugString(e) + ")";
+		default -> this.attributes.toDebugString(e);
 		};
 	}
 
@@ -57,7 +57,9 @@ public final class SObject implements Stackable {
 	}
 
 	/**
-	 * SOF object equality is structural equality. This means that objects with the same attributes and their values are considered equal.
+	 * SOF object equality is structural equality. This means that objects with the same attributes and their values are
+	 * considered equal.
+	 * 
 	 * @param other The other stackable that this one is compared against.
 	 * @return Whether the objects are equal according to structural equality.
 	 */

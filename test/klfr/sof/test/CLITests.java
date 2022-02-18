@@ -11,38 +11,38 @@ class CLITests extends SofTestSuper {
 	@DisplayName("Test CLI options flags")
 	@Test
 	void testOptionFlags() {
-		assertTrue((Options.parseOptions(new String[]{"-d"}).flags & Options.DEBUG) != 0);
-		assertTrue((Options.parseOptions(new String[]{"-p"}).flags & Options.ONLY_PREPROCESSOR) != 0);
-		assertTrue((Options.parseOptions(new String[]{"-P"}).flags & Options.NO_PREPROCESSOR) != 0);
-		assertTrue((Options.parseOptions(new String[]{"--performance"}).flags & Options.PERFORMANCE) != 0);
+		assertTrue((Options.parseOptions(new String[] { "-d" }).flags & Options.DEBUG) != 0);
+		assertTrue((Options.parseOptions(new String[] { "-p" }).flags & Options.ONLY_PREPROCESSOR) != 0);
+		assertTrue((Options.parseOptions(new String[] { "-P" }).flags & Options.NO_PREPROCESSOR) != 0);
+		assertTrue((Options.parseOptions(new String[] { "--performance" }).flags & Options.PERFORMANCE) != 0);
 
-		assertTrue((Options.parseOptions(new String[]{"-pd"}).flags & (Options.ONLY_PREPROCESSOR | Options.DEBUG)) != 0);
+		assertTrue((Options.parseOptions(new String[] { "-pd" }).flags & (Options.ONLY_PREPROCESSOR | Options.DEBUG)) != 0);
 	}
 
 	@DisplayName("Test CLI options execution type")
 	@Test
 	void testOptionExecutionType() {
-		assertEquals(Options.ExecutionType.Interactive, Options.parseOptions(new String[]{}).executionType);
-		assertEquals(Options.ExecutionType.Literal, Options.parseOptions(new String[]{"-c", "no code"}).executionType);
-		assertEquals(Options.ExecutionType.File, Options.parseOptions(new String[]{"./a/path.sof"}).executionType);
-		assertEquals(Options.ExecutionType.HelpInfo, Options.parseOptions(new String[]{"--help"}).executionType);
-		assertEquals(Options.ExecutionType.VersionInfo, Options.parseOptions(new String[]{"-v"}).executionType);
+		assertEquals(Options.ExecutionType.Interactive, Options.parseOptions(new String[] {}).executionType);
+		assertEquals(Options.ExecutionType.Literal, Options.parseOptions(new String[] { "-c", "no code" }).executionType);
+		assertEquals(Options.ExecutionType.File, Options.parseOptions(new String[] { "./a/path.sof" }).executionType);
+		assertEquals(Options.ExecutionType.HelpInfo, Options.parseOptions(new String[] { "--help" }).executionType);
+		assertEquals(Options.ExecutionType.VersionInfo, Options.parseOptions(new String[] { "-v" }).executionType);
 	}
 
 	@DisplayName("Test CLI options execution strings")
 	@Test
 	void testExecutionStrings() {
-		assertEquals("no code", Options.parseOptions(new String[]{"-c", "no code"}).executionStrings.get(0));
-		assertEquals("./a/path.sof", Options.parseOptions(new String[]{"./a/path.sof"}).executionStrings.get(0));
-		assertTrue(Options.parseOptions(new String[]{"--help"}).executionStrings.isEmpty());
+		assertEquals("no code", Options.parseOptions(new String[] { "-c", "no code" }).executionStrings.get(0));
+		assertEquals("./a/path.sof", Options.parseOptions(new String[] { "./a/path.sof" }).executionStrings.get(0));
+		assertTrue(Options.parseOptions(new String[] { "--help" }).executionStrings.isEmpty());
 	}
 
 	@DisplayName("Test CLI library option")
 	@Test
 	void testLibraryOption() {
-		assertTrue(Options.parseOptions(new String[]{"--library", "library"}).overrideLibraryPath.isPresent());
-		assertFalse(Options.parseOptions(new String[]{"--help"}).overrideLibraryPath.isPresent());
-		assertEquals("library", Options.parseOptions(new String[]{"--library", "library"}).overrideLibraryPath.get());
+		assertTrue(Options.parseOptions(new String[] { "--library", "library" }).overrideLibraryPath.isPresent());
+		assertFalse(Options.parseOptions(new String[] { "--help" }).overrideLibraryPath.isPresent());
+		assertEquals("library", Options.parseOptions(new String[] { "--library", "library" }).overrideLibraryPath.get());
 	}
 }
 

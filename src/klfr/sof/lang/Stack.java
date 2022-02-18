@@ -10,9 +10,8 @@ import klfr.sof.exceptions.*;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 
 /**
- * The main data structure of SOF internally where all data resides. This is a
- * thin wrapper around {@code ConcurrentLinkedDeque} which is de-generified to
- * Stackables. The stack has the following special structure:
+ * The main data structure of SOF internally where all data resides. This is a thin wrapper around
+ * {@code ConcurrentLinkedDeque} which is de-generified to Stackables. The stack has the following special structure:
  * 
  * <pre>
  *   |-------------------|
@@ -24,27 +23,26 @@ import klfr.sof.lang.Stackable.DebugStringExtensiveness;
  *   |                   |
  * </pre>
  * 
- * This means that it is very easy to access the file's namespace Nametable and
- * the global Nametable.
+ * This means that it is very easy to access the file's namespace Nametable and the global Nametable.
  * 
  * @author klfr
  * @version 0.1a1
  */
 public final class Stack extends ConcurrentLinkedDeque<Stackable> {
-	private static final long serialVersionUID = 1L;
 
-	private static final Logger log = Logger.getLogger(Stack.class.getCanonicalName());
+	private static final long		serialVersionUID	= 1L;
+
+	private static final Logger	log					= Logger.getLogger(Stack.class.getCanonicalName());
 
 	/**
-	 * The stack starts out empty. The user of the stack is responsible for adding
-	 * the global nametable.
+	 * The stack starts out empty. The user of the stack is responsible for adding the global nametable.
 	 */
 	public Stack() {
 	}
 
 	/**
-	 * Safe version of the {@link ConcurrentLinkedDeque#getLast()} method.
-	 * This variant will throw IncompleteCompilerExceptions on all errors.
+	 * Safe version of the {@link ConcurrentLinkedDeque#getLast()} method. This variant will throw
+	 * IncompleteCompilerExceptions on all errors.
 	 * 
 	 * @return The tail of the deque, i.e. the lowest element on the stack.
 	 * @throws IncompleteCompilerException if there is no element on the stack.
@@ -59,8 +57,8 @@ public final class Stack extends ConcurrentLinkedDeque<Stackable> {
 	}
 
 	/**
-	 * Safe version of the {@link ConcurrentLinkedDeque#peek()} method.
-	 * This variant will throw IncompleteCompilerExceptions on all errors.
+	 * Safe version of the {@link ConcurrentLinkedDeque#peek()} method. This variant will throw IncompleteCompilerExceptions
+	 * on all errors.
 	 * 
 	 * @return The topmost element on the stack (which will not be removed).
 	 * @throws IncompleteCompilerException if there is no element on the stack.
@@ -73,8 +71,8 @@ public final class Stack extends ConcurrentLinkedDeque<Stackable> {
 	}
 
 	/**
-	 * Pushes all values in the given collection to the stack, in the order that the
-	 * iterator returns them.
+	 * Pushes all values in the given collection to the stack, in the order that the iterator returns them.
+	 * 
 	 * @param contentsToPush The collection whose contents to push to the stack.
 	 * @return This stack.
 	 */
@@ -86,15 +84,13 @@ public final class Stack extends ConcurrentLinkedDeque<Stackable> {
 	}
 
 	/**
-	 * Safe version of the {@link ConcurrentLinkedDeque#pop()} method.
-	 * This variant will throw IncompleteCompilerExceptions on all errors.
+	 * Safe version of the {@link ConcurrentLinkedDeque#pop()} method. This variant will throw IncompleteCompilerExceptions
+	 * on all errors.
 	 * 
-	 * @param ignoreTransparentData Whether to ignore transparent data. If this value is true,
-	 *                              all {@link TransparentData} on the stack is discarded and
-	 *                              never returned by this function.
+	 * @param ignoreTransparentData Whether to ignore transparent data. If this value is true, all {@link TransparentData}
+	 *                                 on the stack is discarded and never returned by this function.
 	 * @return The topmost non-transparent element on the stack, which is removed.
-	 * @throws IncompleteCompilerException if there is no element on the stack.
-	 * 											   or if there was a stack access violation.
+	 * @throws IncompleteCompilerException if there is no element on the stack. or if there was a stack access violation.
 	 */
 	public final Stackable popSafe(final boolean ignoreTransparentData) throws IncompleteCompilerException {
 		try {
@@ -113,25 +109,21 @@ public final class Stack extends ConcurrentLinkedDeque<Stackable> {
 	}
 
 	/**
-	 * Safe version of the {@link ConcurrentLinkedDeque#pop()} method.
-	 * This variant will throw IncompleteCompilerExceptions on all errors.
-	 * This function discards all transparent data.
+	 * Safe version of the {@link ConcurrentLinkedDeque#pop()} method. This variant will throw IncompleteCompilerExceptions
+	 * on all errors. This function discards all transparent data.
 	 * 
 	 * @return The topmost non-transparent element on the stack, which is removed.
-	 * @throws IncompleteCompilerException if there is no element on the stack.
-	 * 											   or if there was a stack access violation.
+	 * @throws IncompleteCompilerException if there is no element on the stack. or if there was a stack access violation.
 	 */
 	public final Stackable popSafe() throws IncompleteCompilerException {
 		return popSafe(true);
 	}
 
 	/**
-	 * Pop count elements from the stack and return them in the
-	 * <strong>inverse</strong> order that they were popped.
+	 * Pop count elements from the stack and return them in the <strong>inverse</strong> order that they were popped.
 	 * 
 	 * @param count how many elements to pop.
-	 * @return a list containing the elements popped, with the last popped element
-	 *         first.
+	 * @return a list containing the elements popped, with the last popped element first.
 	 * @throws IncompleteCompilerException If at least one pop operation fails.
 	 */
 	public final List<Stackable> popSafe(int count) throws IncompleteCompilerException {
@@ -145,13 +137,11 @@ public final class Stack extends ConcurrentLinkedDeque<Stackable> {
 	}
 
 	/**
-	 * Pops a value with given type from the stack, or fails if the type does not
-	 * match.
+	 * Pops a value with given type from the stack, or fails if the type does not match.
 	 * 
 	 * @param <T> The Stackable subtype expected.
 	 * @param t   The class of the type, to allow for runtime type checking.
-	 * @throws IncompleteCompilerException if the popped element is not of type T, or if pop()
-	 *                                     itself failed.
+	 * @throws IncompleteCompilerException if the popped element is not of type T, or if pop() itself failed.
 	 * @return The popped element.
 	 */
 	@SuppressWarnings("unchecked")
@@ -161,28 +151,28 @@ public final class Stack extends ConcurrentLinkedDeque<Stackable> {
 			return (T) val;
 		}
 		super.push(val);
-		throw new IncompleteCompilerException("type", "type.checkfail", val,
-				Optional.ofNullable(t.getAnnotation(StackableName.class)).orElse(new StackableName(){
-					@Override
-					public Class<? extends Annotation> annotationType() {
-						return StackableName.class;
-					}
-					@Override
-					public String value() {
-						return "<Anonymous>";
-					}
-				}).value());
+		throw new IncompleteCompilerException("type", "type.checkfail", val, Optional.ofNullable(t.getAnnotation(StackableName.class)).orElse(new StackableName() {
+
+			@Override
+			public Class<? extends Annotation> annotationType() {
+				return StackableName.class;
+			}
+
+			@Override
+			public String value() {
+				return "<Anonymous>";
+			}
+		}).value());
 	}
 
 	/**
-	 * Forces the stack to pop its topmost element, regardless of stack access
-	 * restrictions.<br/><br/>
-	 * <strong>Users should use this method with great caution.
-	 * It is not advised to use this in any circumstance where the SOF programmer controls the stack.
-	 * This means that this method is only to be used when the element to be removed is known with great certanity
-	 * to not cause any issues once it is removed.</strong>
-	 * For example, this may be used to remove a nametable from the stack that is no longer needed.
-	 * But first, the user should check that the topmost element <em>is</em> the nametable before removing it with {@code forcePop}.
+	 * Forces the stack to pop its topmost element, regardless of stack access restrictions.<br/>
+	 * <br/>
+	 * <strong>Users should use this method with great caution. It is not advised to use this in any circumstance where the
+	 * SOF programmer controls the stack. This means that this method is only to be used when the element to be removed is
+	 * known with great certanity to not cause any issues once it is removed.</strong> For example, this may be used to
+	 * remove a nametable from the stack that is no longer needed. But first, the user should check that the topmost element
+	 * <em>is</em> the nametable before removing it with {@code forcePop}.
 	 * 
 	 * @return The popped value.
 	 */
@@ -191,12 +181,10 @@ public final class Stack extends ConcurrentLinkedDeque<Stackable> {
 	}
 
 	/**
-	 * Returns the global nametable, which is always the lowest element of the
-	 * stack.
+	 * Returns the global nametable, which is always the lowest element of the stack.
 	 * 
 	 * @return The global nametable.
-	 * @throws RuntimeException If you managed to delete or replace the global
-	 *                          nametable (ノಠ益ಠ)ノ彡 ┻━━┻
+	 * @throws RuntimeException If you managed to delete or replace the global nametable (ノಠ益ಠ)ノ彡 ┻━━┻
 	 */
 	public final Nametable globalNametable() throws RuntimeException {
 		try {
@@ -224,9 +212,8 @@ public final class Stack extends ConcurrentLinkedDeque<Stackable> {
 	}
 
 	/**
-	 * Performs fallback-enabled lookup of the identifier. This means that when the
-	 * identifier is not found in one nametable, the next lower one is searched and
-	 * so on. May return null when the identifier is not found at all.
+	 * Performs fallback-enabled lookup of the identifier. This means that when the identifier is not found in one
+	 * nametable, the next lower one is searched and so on. May return null when the identifier is not found at all.
 	 * 
 	 * @param id The identifier to search for.
 	 * @return The most local value that is associated with the identifier.
@@ -242,15 +229,13 @@ public final class Stack extends ConcurrentLinkedDeque<Stackable> {
 	}
 
 	/**
-	 * Traverses the stack and returns the first nametable that is found on it. All
-	 * elements above and including the nametable are discarded.
-	 * <br/><br/>
-	 * This method is
-	 * intended to be used for destroying local scopes when exiting them. This
-	 * method will not remove the global nametable and return Optional.empty()
-	 * instead. It will, however, still remove all elements above it. Therefore,
-	 * callers of this method should cautiously push nametables to the stack which
-	 * are then to be found by this method.
+	 * Traverses the stack and returns the first nametable that is found on it. All elements above and including the
+	 * nametable are discarded. <br/>
+	 * <br/>
+	 * This method is intended to be used for destroying local scopes when exiting them. This method will not remove the
+	 * global nametable and return Optional.empty() instead. It will, however, still remove all elements above it.
+	 * Therefore, callers of this method should cautiously push nametables to the stack which are then to be found by this
+	 * method.
 	 * 
 	 * @return The highest nametable that was found, or none if none was found.
 	 * @see Stack#forcePop()
@@ -268,16 +253,14 @@ public final class Stack extends ConcurrentLinkedDeque<Stackable> {
 	}
 
 	/**
-	 * ToString method that creates a visual multiline representation of the stack
-	 * and its contents.
+	 * ToString method that creates a visual multiline representation of the stack and its contents.
+	 * 
 	 * @return a visual multiline representation of the stack and its contents.
 	 */
 	public final String toStringExtended() {
-		return "┌─" + Interpreter.line66.substring(0, 37) + "─┐" + System.lineSeparator()
-				+ this.stream().collect(() -> new StringBuilder(),
-						(str, elmt) -> str.append(String.format("│%38s │%n├─" + Interpreter.line66.substring(0, 37) + "─┤%n",
-								elmt.toDebugString(DebugStringExtensiveness.Compact), " ")),
-						(e1, e2) -> e1.append(e2)).toString();
+		return "┌─" + Interpreter.line66.substring(0, 37) + "─┐" + System.lineSeparator() + this.stream()
+				.collect(() -> new StringBuilder(), (str, elmt) -> str.append(String.format("│%38s │%n├─" + Interpreter.line66.substring(0, 37) + "─┤%n", elmt.toDebugString(DebugStringExtensiveness.Compact), " ")), (e1, e2) -> e1.append(e2))
+				.toString();
 	}
 
 }

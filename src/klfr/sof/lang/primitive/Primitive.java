@@ -7,24 +7,22 @@ import java.util.logging.Logger;
 import klfr.sof.lang.Stackable;
 
 /**
- * Primitive values in SOF are represented through this interface and its
- * subtypes.<br>
+ * Primitive values in SOF are represented through this interface and its subtypes.<br>
  * <br>
- * Subclasses shall provide a method of the form
- * {@code static PSC createXXXPrimitive(T value)}, where T is the Java type
- * underlying the primitive, PSC is the subclass itself and XXX is the standard
- * name of the SOF primitive type.
+ * Subclasses shall provide a method of the form {@code static PSC createXXXPrimitive(T value)}, where T is the Java
+ * type underlying the primitive, PSC is the subclass itself and XXX is the standard name of the SOF primitive type.
  * 
  * @author klfr
  */
 public abstract class Primitive implements Stackable {
-	private static final long serialVersionUID = 1L;
-	private static final Logger log = Logger.getLogger(Primitive.class.getCanonicalName());
+
+	private static final long							serialVersionUID	= 1L;
+	private static final Logger						log					= Logger.getLogger(Primitive.class.getCanonicalName());
 
 	/**
 	 * Áll chars that can make up integers base 16 and lower, in ascending value.
 	 */
-	public static final Map<Character, Integer> numberChars = new Hashtable<>();
+	public static final Map<Character, Integer>	numberChars			= new Hashtable<>();
 	static {
 		numberChars.put('0', 0);
 		numberChars.put('1', 1);
@@ -77,12 +75,12 @@ public abstract class Primitive implements Stackable {
 	public String toDebugString(DebugStringExtensiveness e) {
 		// Yes, Java. You can do it.
 		return switch (e) {
-			case Full, Compact -> {
-				if (v() instanceof String)
-					yield this.typename() + ":\"" + v().toString() + '"';
-				yield this.typename() + ':' + v().toString();
-			}
-			default -> Stackable.toDebugString(this, e);
+		case Full, Compact -> {
+			if (v() instanceof String)
+				yield this.typename() + ":\"" + v().toString() + '"';
+			yield this.typename() + ':' + v().toString();
+		}
+		default -> Stackable.toDebugString(this, e);
 		};
 	}
 
@@ -98,7 +96,7 @@ public abstract class Primitive implements Stackable {
 
 	@Override
 	public boolean equals(Object obj) {
-		return this.getClass().isInstance(obj) ? this.equals((Stackable)obj) : false;
+		return this.getClass().isInstance(obj) ? this.equals((Stackable) obj) : false;
 	}
 
 	@Override

@@ -1,13 +1,16 @@
 /**
- * The SOF interpreter system.<br/><br/>
+ * The SOF interpreter system.<br/>
+ * <br/>
  * 
- * This module contains all parts necessary for the SOF interpreter system.
- * This includes the standard library, the module system and the standard command line interface.
+ * This module contains all parts necessary for the SOF interpreter system. This includes the standard library, the
+ * module system and the standard command line interface.
  */
 open module sof {
+
 	requires java.base;
 	requires java.logging;
 	requires org.reflections;
+
 	exports klfr.sof;
 	exports klfr.sof.lib;
 }

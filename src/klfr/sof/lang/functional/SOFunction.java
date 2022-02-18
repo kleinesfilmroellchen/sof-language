@@ -4,18 +4,17 @@ import klfr.sof.ast.TokenListNode;
 import klfr.sof.lang.*;
 
 /**
- * Function type, one of the most important callable types. Functions are the
- * most primitive scoped callable.
+ * Function type, one of the most important callable types. Functions are the most primitive scoped callable.
  */
 @StackableName("Function")
 public class SOFunction extends CodeBlock {
 
-	private static final long serialVersionUID = 1L;
+	private static final long	serialVersionUID	= 1L;
 
 	/**
 	 * The number of arguments that this function has.
 	 */
-	public final long arguments;
+	public final long				arguments;
 
 	/**
 	 * Create a function with this code, with given numbers of arguments.
@@ -31,17 +30,18 @@ public class SOFunction extends CodeBlock {
 	@Override
 	public String toDebugString(DebugStringExtensiveness e) {
 		return switch (e) {
-			case Compact -> String.format("[Function/%d %dn ]", this.arguments, this.code.count());
-			case Full -> String.format("[Function/%d { %s } %h]", this.arguments, this.code, this.hashCode());
-			case Type -> "Function";
-			default -> Stackable.toDebugString(this, e);
+		case Compact -> String.format("[Function/%d %dn ]", this.arguments, this.code.count());
+		case Full -> String.format("[Function/%d { %s } %h]", this.arguments, this.code, this.hashCode());
+		case Type -> "Function";
+		default -> Stackable.toDebugString(this, e);
 		};
 	}
 
 	/**
-	 * Create a new SOF function based on the given code block.
-	 * This is a utility for the interpreter because functions in SOF programming are created from code blocks.
-	 * @param origin The code block whose code is to be copied as this function's behavior.
+	 * Create a new SOF function based on the given code block. This is a utility for the interpreter because functions in
+	 * SOF programming are created from code blocks.
+	 * 
+	 * @param origin    The code block whose code is to be copied as this function's behavior.
 	 * @param arguments The number of arguments to this function.
 	 * @return A new SOF function with the given code block tokens as the behavior and the given number of arguments.
 	 */
@@ -61,7 +61,7 @@ public class SOFunction extends CodeBlock {
 
 	@Override
 	public boolean equals(Object obj) {
-		return obj instanceof SOFunction ? this.equals((SOFunction)obj): false;
+		return obj instanceof SOFunction ? this.equals((SOFunction) obj) : false;
 	}
 
 	@Override

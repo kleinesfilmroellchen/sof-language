@@ -8,6 +8,7 @@ import java.util.logging.*;
 
 /**
  * The formatter that SOF uses for outputting logging information to the user and log files.
+ * 
  * @author klfr
  */
 public class DebugFormatter extends Formatter {
@@ -20,14 +21,11 @@ public class DebugFormatter extends Formatter {
 		} catch (MissingResourceException | NullPointerException e) {
 			// do nothing
 		}
-		final var time = DateTimeFormatter.ofLocalizedTime(FormatStyle.MEDIUM)
-				.format(record.getInstant().atZone(ZoneId.systemDefault()));
-		final var level = record.getLevel().getLocalizedName().substring(0,
-				Math.min(record.getLevel().getLocalizedName().length(), 6));
+		final var time = DateTimeFormatter.ofLocalizedTime(FormatStyle.MEDIUM).format(record.getInstant().atZone(ZoneId.systemDefault()));
+		final var level = record.getLevel().getLocalizedName().substring(0, Math.min(record.getLevel().getLocalizedName().length(), 6));
 		final var logName = record.getLoggerName().replace("klfr.sof", "~");
 
-		return String.format("[%s %-20s |%6s] %s%n", time, logName, level, msg) + (record.getThrown() == null ? ""
-				: formatException(record.getThrown()));
+		return String.format("[%s %-20s |%6s] %s%n", time, logName, level, msg) + (record.getThrown() == null ? "" : formatException(record.getThrown()));
 	}
 
 	/** Helper to format an exception and its causality chain. */
@@ -38,10 +36,7 @@ public class DebugFormatter extends Formatter {
 		var currentExc = exc;
 		int level = 0;
 		while (currentExc != null) {
-			sb.append(Arrays.asList(currentExc.getStackTrace()).stream().map(x -> x.toString()).collect(
-					() -> new StringBuilder(),
-					(builder, str) -> builder.append(" in ").append(str).append(System.lineSeparator()),
-					(b1, b2) -> b1.append(b2))
+			sb.append(Arrays.asList(currentExc.getStackTrace()).stream().map(x -> x.toString()).collect(() -> new StringBuilder(), (builder, str) -> builder.append(" in ").append(str).append(System.lineSeparator()), (b1, b2) -> b1.append(b2))
 					.toString().indent(level * 2));
 
 			currentExc = currentExc.getCause();

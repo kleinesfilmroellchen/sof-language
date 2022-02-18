@@ -9,44 +9,47 @@ import klfr.sof.*;
 import klfr.sof.exceptions.*;
 
 /**
- * A node is an element in the abstract syntax tree (AST) that may contain other
- * nodes. The implementations are responsible for properly traversing their
- * subnodes as well as providing relevant data to the actions.
+ * A node is an element in the abstract syntax tree (AST) that may contain other nodes. The implementations are
+ * responsible for properly traversing their subnodes as well as providing relevant data to the actions.
  */
 public abstract class Node implements Serializable, Cloneable, Iterable<Node> {
-	private static final long serialVersionUID = 1L;
 
-	private static final Logger log = Logger.getLogger(Node.class.getCanonicalName());
+	private static final long		serialVersionUID	= 1L;
+
+	private static final Logger	log					= Logger.getLogger(Node.class.getCanonicalName());
 
 	/**
-	 * The function type used by the interpreter for looping through nodes. <br/><br/>
+	 * The function type used by the interpreter for looping through nodes. <br/>
+	 * <br/>
 	 * 
 	 * This is a functional interface.
 	 */
 	@FunctionalInterface
 	public interface ForEachType {
+
 		/**
 		 * Executes this function on the given node.
 		 * 
 		 * @param operand The node to be acted upon.
-		 * @return The "return flag": Whether this node wants execution in the current context to continue.
-		 *         When the return value is {@code true}, the traversor is instructed to continue executing the next node.
-		 *         When the return value is {@code false}, the traversor is instructed to break from the current code block.
-		 *         Traversors that do not emulate code blocks should pass on the "return flag" to the higher context.
-		 * @throws CompilerException If an exception occurs that can be specifically located.
+		 * @return The "return flag": Whether this node wants execution in the current context to continue. When the return
+		 *         value is {@code true}, the traversor is instructed to continue executing the next node. When the return value
+		 *         is {@code false}, the traversor is instructed to break from the current code block. Traversors that do not
+		 *         emulate code blocks should pass on the "return flag" to the higher context.
+		 * @throws CompilerException           If an exception occurs that can be specifically located.
 		 * @throws IncompleteCompilerException If an exception occurs that cannot be located to a point of failure.
 		 */
 		public Boolean exec(Node operand) throws CompilerException, IncompleteCompilerException;
 	}
 
 	/** The index inside the source file where this node is located. */
-	private final int index;
+	private final int			index;
 	/** The source file where this node is located. */
-	private final SOFFile source;
+	private final SOFFile	source;
 
 	/**
 	 * Create a new node that is situated at the given index in the given source file.
-	 * @param index The index inside the source code where this node is located.
+	 * 
+	 * @param index  The index inside the source code where this node is located.
 	 * @param source The SOF source file unit where this node comes from.
 	 */
 	protected Node(int index, SOFFile source) {
@@ -73,8 +76,8 @@ public abstract class Node implements Serializable, Cloneable, Iterable<Node> {
 	}
 
 	/**
-	 * The primary method of the node. Traverses the node and all of its children in
-	 * proper order and hands them off to the action for processing.
+	 * The primary method of the node. Traverses the node and all of its children in proper order and hands them off to the
+	 * action for processing.
 	 */
 	@Override
 	public void forEach(Consumer<? super Node> action) {
@@ -89,18 +92,16 @@ public abstract class Node implements Serializable, Cloneable, Iterable<Node> {
 	}
 
 	/**
-	 * The primary method of the node. Traverses the node and all of its children in
-	 * proper order and hands them off to the action for processing. If the action
-	 * ever returns false, any iterative application should stop.<br/>
+	 * The primary method of the node. Traverses the node and all of its children in proper order and hands them off to the
+	 * action for processing. If the action ever returns false, any iterative application should stop.<br/>
 	 * <br/>
-	 * The default method applies the function to this node directly, which is
-	 * useful for most "primitive" nodes.
+	 * The default method applies the function to this node directly, which is useful for most "primitive" nodes.
 	 * 
 	 * @param action The function to execute on this node and its children.
-	 * @return Whether the action ever returned false.
-	 *         This means that the return value of the last executed action is propagated to the caller.
+	 * @return Whether the action ever returned false. This means that the return value of the last executed action is
+	 *         propagated to the caller.
 	 * @throws IncompleteCompilerException If something goes wrong and cannot be located in the source code.
-	 * @throws CompilerException If something goes wrong and can be located to a specific location in the code.
+	 * @throws CompilerException           If something goes wrong and can be located to a specific location in the code.
 	 * @see klfr.sof.ast.Node.ForEachType#exec(Node)
 	 */
 	public boolean forEach(ForEachType action) throws IncompleteCompilerException, CompilerException {
@@ -108,8 +109,7 @@ public abstract class Node implements Serializable, Cloneable, Iterable<Node> {
 	}
 
 	/**
-	 * Returns an iterator over this node's children, or an iterator with only this
-	 * node if this node has no children.
+	 * Returns an iterator over this node's children, or an iterator with only this node if this node has no children.
 	 */
 	@Override
 	public Iterator<Node> iterator() {
@@ -118,6 +118,7 @@ public abstract class Node implements Serializable, Cloneable, Iterable<Node> {
 
 	/**
 	 * Clone this node, i.e. do a deep copy.
+	 * 
 	 * @return The newly copied but equal node. This clone must be equal as determined by {@link Object#equals(Object)}
 	 * @throws CloneNotSupportedException If this node fails to clone itself or some of its data.
 	 */
@@ -133,11 +134,14 @@ public abstract class Node implements Serializable, Cloneable, Iterable<Node> {
 	public abstract String toString();
 
 	/**
-	 * Count the subnodes of this node, including this node itself. The default returns 1.
-	 * The count should be recursive, i.e. the child nodes should be counted as well.
+	 * Count the subnodes of this node, including this node itself. The default returns 1. The count should be recursive,
+	 * i.e. the child nodes should be counted as well.
+	 * 
 	 * @return The number of subnodes in this node.
 	 */
-	public int nodeCount() { return 1; }
+	public int nodeCount() {
+		return 1;
+	}
 
 }
 

@@ -5,28 +5,28 @@ import java.util.logging.Logger;
 import klfr.sof.exceptions.IncompleteCompilerException;
 
 /**
- * Marker objects on the stack that are "transparent" to most operations.
- * This means that they just get discarded under most circumstances, but are used for
- * very specific operations, like currying behavior or list comprehension.
+ * Marker objects on the stack that are "transparent" to most operations. This means that they just get discarded under
+ * most circumstances, but are used for very specific operations, like currying behavior or list comprehension.
  * 
  * @author klfr
  */
 @StackableName("Marker")
 public final class TransparentData implements Stackable {
+
 	private static final Logger log = Logger.getLogger(TransparentData.class.getCanonicalName());
 
 	/**
 	 * The underlying type of transparent object.
 	 * 
-	 * This cannot be the Stackable itself (although it should be) because the automatic
-	 * Comparable implementation of enums clashes with the Comparable implementation of Stackable.
+	 * This cannot be the Stackable itself (although it should be) because the automatic Comparable implementation of enums
+	 * clashes with the Comparable implementation of Stackable.
 	 */
 	public static enum TransparentType {
+
 		/** Currently unused. */
 		ListStart("["),
 		/**
-		 * Function currying marker. A function cannot consume arguments past this
-		 * marker on the stack.
+		 * Function currying marker. A function cannot consume arguments past this marker on the stack.
 		 */
 		CurryPipe("|");
 
@@ -38,6 +38,7 @@ public final class TransparentData implements Stackable {
 
 		/**
 		 * Returns the code symbol used for this transparent symbol.
+		 * 
 		 * @return The code symbol used for this transparent symbol.
 		 */
 		public final String getSymbol() {
@@ -46,6 +47,7 @@ public final class TransparentData implements Stackable {
 
 		/**
 		 * Create a transparent symbol type from a code string.
+		 * 
 		 * @param symbol The SOF code representation of the symbol.
 		 * @return The transparent symbol type that is represented by the code symbol.
 		 * @throws IncompleteCompilerException If the string isn't a transparent symbol.
@@ -66,6 +68,7 @@ public final class TransparentData implements Stackable {
 
 	/**
 	 * Returns the proper internal type of the transparent object.
+	 * 
 	 * @return the proper internal type of the transparent object.
 	 */
 	public final TransparentType getType() {
@@ -74,6 +77,7 @@ public final class TransparentData implements Stackable {
 
 	/**
 	 * Creates a new transparent object.
+	 * 
 	 * @param type The type of transparent marker data this object is.
 	 */
 	public TransparentData(final TransparentType type) {
@@ -83,9 +87,9 @@ public final class TransparentData implements Stackable {
 	@Override
 	public String toDebugString(DebugStringExtensiveness e) {
 		// TODO Auto-generated method stub
-		return switch(e) {
-			case Full, Compact -> type.getSymbol();
-			case Type -> "Marker";
+		return switch (e) {
+		case Full, Compact -> type.getSymbol();
+		case Type -> "Marker";
 		};
 	}
 
@@ -117,4 +121,3 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-

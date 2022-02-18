@@ -7,28 +7,29 @@ import java.util.*;
 import klfr.sof.SOFFile;
 
 /**
- * The module registry stores all discovered modules and their AST.
- * Any module is identified by its file path, which tells the module discovery system where to search for the module.
+ * The module registry stores all discovered modules and their AST. Any module is identified by its file path, which
+ * tells the module discovery system where to search for the module.
  */
 public final class ModuleRegistry implements Serializable {
-	private static final long serialVersionUID = 1L;
+
+	private static final long			serialVersionUID	= 1L;
 
 	/** The SOF modules cached by this registry. */
-	private final Map<File, SOFFile> modules = new TreeMap<>();
+	private final Map<File, SOFFile>	modules				= new TreeMap<>();
 
 	/**
 	 * Create a new module registry.
 	 */
-	public ModuleRegistry() {}
+	public ModuleRegistry() {
+	}
 
 	/**
 	 * Adds a new Module to this module registry.
 	 * 
 	 * @param moduleName The identifier of the module.
 	 * @param module     The module to be stored.
-	 * @return Whether the module did already exist. If this method returns true,
-	 *         another module with the same identifier was already registered
-	 *         and replaced by this module.
+	 * @return Whether the module did already exist. If this method returns true, another module with the same identifier
+	 *         was already registered and replaced by this module.
 	 */
 	public final boolean storeModule(File moduleName, SOFFile module) {
 		final var prev = this.modules.put(moduleName, module);
@@ -37,6 +38,7 @@ public final class ModuleRegistry implements Serializable {
 
 	/**
 	 * Returns whether this module registry has the specified module identifier registered.
+	 * 
 	 * @param moduleName The module identifier to be checked.
 	 * @return whether this module registry has the specified module identifier registered.
 	 */
@@ -46,13 +48,14 @@ public final class ModuleRegistry implements Serializable {
 
 	/**
 	 * Returns the module associated with the specified module identifier.
+	 * 
 	 * @param moduleName The identifier of the module to be retrieved.
 	 * @return the module associated with the specified module identifier.
 	 */
 	public final SOFFile getModule(File moduleName) {
 		return this.modules.get(moduleName);
 	}
-	
+
 }
 
 /*  

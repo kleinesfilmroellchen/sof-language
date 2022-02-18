@@ -18,16 +18,19 @@ import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 @DisplayName("Test the SOF stack")
 public class StackTest extends SofTestSuper {
 
-	private Stack stack;
-	private Nametable nt;
+	private Stack		stack;
+	private Nametable	nt;
 
 	@StackableName("StubType")
 	private static class Sbl implements Stackable {
+
 		private static final long serialVersionUID = 1L;
+
 		@Override
 		public Stackable copy() {
 			return new Sbl();
 		}
+
 		@Override
 		public boolean equals(Stackable other) {
 			return false;
@@ -53,7 +56,8 @@ public class StackTest extends SofTestSuper {
 		assertEquals(a, assertDoesNotThrow(() -> stack.popSafe(), "Pop works"), "Pop equivalence check");
 		assertEquals(0, stack.size(), "Stack size with zero elements");
 
-		stack.push(a); stack.push(b);
+		stack.push(a);
+		stack.push(b);
 		assertEquals(2, stack.size(), "Stack size with two elements");
 		assertEquals(b, stack.peekSafe(), "Stack push order");
 		assertEquals(a, assertDoesNotThrow(() -> stack.getLastSafe(), "getLast works"), "Stack lowest element correctness");
@@ -75,7 +79,7 @@ public class StackTest extends SofTestSuper {
 		final var idB = new Identifier("Beta");
 
 		assertEquals(0, nt.size(), "Empty nametable");
-		assertDoesNotThrow(()-> nt.put(new Identifier("a"), new Sbl()), "Nametable put");
+		assertDoesNotThrow(() -> nt.put(new Identifier("a"), new Sbl()), "Nametable put");
 
 		assertTrue(nt.hasMapping(idA), "Nametable mapping exists for 'a'");
 		assertFalse(nt.hasMapping(idB), "Nametable mapping for random identifier does not exist");
@@ -90,7 +94,7 @@ public class StackTest extends SofTestSuper {
 		assertEquals(value, nt.get(idA), "New mapping doesn't change existing mapping");
 		assertEquals(idB, nt.get(idB), "Sanity check new mapping");
 		assertEquals(2, nt.size(), "Nametable with 2 elements");
-		
+
 		final var ids = assertDoesNotThrow(() -> nt.identifiers());
 		assertTrue(ids.contains(idA), "Mapping contains first identifier");
 		assertTrue(ids.contains(idB), "Mapping contains second identifier");

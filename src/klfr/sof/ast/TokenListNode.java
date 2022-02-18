@@ -8,20 +8,22 @@ import klfr.sof.exceptions.CompilerException;
 import klfr.sof.exceptions.IncompleteCompilerException;
 
 /**
- * A list of AST nodes that are to be executed in order. This may be the main
- * program itself, a code block literal or other callables.
+ * A list of AST nodes that are to be executed in order. This may be the main program itself, a code block literal or
+ * other callables.
  */
 public final class TokenListNode extends Node {
-	private static final long serialVersionUID = 1L;
+
+	private static final long	serialVersionUID	= 1L;
 
 	/** The list of nodes that are contained in this token list. */
-	private final List<Node> subNodes;
+	private final List<Node>	subNodes;
 
 	/**
 	 * Create a new list of SOF tokens.
+	 * 
 	 * @param subNodes The list of AST nodes to be contained in this list of nodes.
-	 * @param index The index inside the source code where this token list is located.
-	 * @param source The SOF source file unit where this token list comes from.
+	 * @param index    The index inside the source code where this token list is located.
+	 * @param source   The SOF source file unit where this token list comes from.
 	 */
 	public TokenListNode(final List<Node> subNodes, final int index, final SOFFile source) {
 		super(index, source);
@@ -56,10 +58,7 @@ public final class TokenListNode extends Node {
 
 	@Override
 	public String toString() {
-		return "Tokens: {"
-				+ subNodes.stream().map(elt -> elt.toString()).reduce("",
-						(a, b) -> a + System.lineSeparator() + "\t" + b.replaceAll("\n", "\n\t"))
-				+ System.lineSeparator() + "} @ " + this.getCodeIndex();
+		return "Tokens: {" + subNodes.stream().map(elt -> elt.toString()).reduce("", (a, b) -> a + System.lineSeparator() + "\t" + b.replaceAll("\n", "\n\t")) + System.lineSeparator() + "} @ " + this.getCodeIndex();
 	}
 
 	@Override
@@ -79,6 +78,7 @@ public final class TokenListNode extends Node {
 
 	/**
 	 * Returns the number of nodes in this list. Does NOT recursively count the subnodes in the child nodes themselves.
+	 * 
 	 * @return the number of nodes in this list.
 	 */
 	public final int count() {

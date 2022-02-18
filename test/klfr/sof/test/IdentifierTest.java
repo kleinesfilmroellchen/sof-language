@@ -37,13 +37,11 @@ class IdentifierTest extends SofTestSuper {
 	@Test
 	void testIsValidIdentifier() {
 		assertThrows(IncompleteCompilerException.class, () -> new Identifier("-abc-def"), "Invalid Identifier test");
-		assertThrows(IncompleteCompilerException.class, () -> new Identifier("abc-def  kl"),
-				"Invalid Identifier test spaces");
+		assertThrows(IncompleteCompilerException.class, () -> new Identifier("abc-def  kl"), "Invalid Identifier test spaces");
 		assertDoesNotThrow(() -> new Identifier("abcdefgはるこ"), "Valid Identifier test");
 		assertDoesNotThrow(() -> new Identifier("   abcdefgはるこ     "), "Valid Identifier test with trim");
 		assertDoesNotThrow(() -> new Identifier("   abc__d9090efg''はるこ     "), "Valid Identifier test with non-alnum");
-		assertThrows(IncompleteCompilerException.class, () -> new Identifier("90abc__d9090efg"),
-				"Invalid Identifier test with starting numeric");
+		assertThrows(IncompleteCompilerException.class, () -> new Identifier("90abc__d9090efg"), "Invalid Identifier test with starting numeric");
 	}
 
 	/**

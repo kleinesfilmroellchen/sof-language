@@ -1,38 +1,34 @@
 package klfr.sof.exceptions;
 
 /**
- * A pseudo- compiler exception that does not have information about its
- * occurance in SOF source code, because it was thrown from some subclass
- * without interpreter access.
+ * A pseudo- compiler exception that does not have information about its occurance in SOF source code, because it was
+ * thrown from some subclass without interpreter access.
  * 
  * This class is immutable.
  */
 public final class IncompleteCompilerException extends SOFException {
-	private static final long serialVersionUID = 1L;
+
+	private static final long	serialVersionUID	= 1L;
 	/**
-	 * String that is used as a name for the 'sof.error.type.*' resource messages.
-	 * This allows for localized error names.
+	 * String that is used as a name for the 'sof.error.type.*' resource messages. This allows for localized error names.
 	 */
-	public final String nameKey;
+	public final String			nameKey;
 	/**
-	 * String that is used as a name for the 'sof.error.message.*' resource
-	 * messages. This allows for localized error explanations.
+	 * String that is used as a name for the 'sof.error.message.*' resource messages. This allows for localized error
+	 * explanations.
 	 */
-	public final String explanationKey;
+	public final String			explanationKey;
 
 	/**
 	 * The formatting arguments used in the error message.
 	 */
-	public final Object[] formatArguments;
+	public final Object[]		formatArguments;
 
 	/**
-	 * Constructs a compiler exception that does not have all information for nice
-	 * formatting.
+	 * Constructs a compiler exception that does not have all information for nice formatting.
 	 * 
-	 * @param nameKey         Name of the exception, as an accessor into the message
-	 *                        resources 'sof.error.type'
-	 * @param explanationKey  Why the exception occurred, as an accessor into the
-	 *                        message resources 'sof.error.message'
+	 * @param nameKey         Name of the exception, as an accessor into the message resources 'sof.error.type'
+	 * @param explanationKey  Why the exception occurred, as an accessor into the message resources 'sof.error.message'
 	 * @param formatArguments Arguments for formatting the explanation message with.
 	 */
 	public IncompleteCompilerException(String nameKey, String explanationKey, Object... formatArguments) {
@@ -46,11 +42,10 @@ public final class IncompleteCompilerException extends SOFException {
 	}
 
 	/**
-	 * Constructs a compiler exception that does not have all information for nice
-	 * formatting.
+	 * Constructs a compiler exception that does not have all information for nice formatting.
 	 * 
-	 * @param nameKey         Name and explanation of the exception, as an accessor
-	 *                        into the message resources 'sof.error.type'
+	 * @param nameKey         Name and explanation of the exception, as an accessor into the message resources
+	 *                           'sof.error.type'
 	 * @param formatArguments Arguments for formatting the explanation string.
 	 */
 	public IncompleteCompilerException(String nameKey, Object... formatArguments) {

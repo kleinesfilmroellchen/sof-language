@@ -10,13 +10,15 @@ import klfr.sof.lang.Stackable.DebugStringExtensiveness;
  * A node that holds a simple Stackable to be placed on the stack.
  */
 public final class LiteralNode extends Node {
-	private static final long serialVersionUID = 1L;
+
+	private static final long	serialVersionUID	= 1L;
 
 	/** The value that this literal node represents and places on the stack. */
-	private final Stackable value;
+	private final Stackable		value;
 
 	/**
 	 * Return the SOF data that this literal represents.
+	 * 
 	 * @return the SOF data that this literal represents.
 	 */
 	public final Stackable getValue() {
@@ -25,9 +27,10 @@ public final class LiteralNode extends Node {
 
 	/**
 	 * Create a new literal node.
-	 * @param data The SOF data that this literal represents.
+	 * 
+	 * @param data      The SOF data that this literal represents.
 	 * @param codeIndex The index in the code where this literal was parsed from.
-	 * @param source The source code unit where this literal resides.
+	 * @param source    The source code unit where this literal resides.
 	 */
 	public LiteralNode(final Stackable data, final int codeIndex, final SOFFile source) {
 		super(codeIndex, source);

@@ -5,16 +5,18 @@ import java.util.*;
 import klfr.sof.SOFFile;
 
 /**
- * A node representing primitive tokens. It uses the inner enum type
- * {@link PrimitiveToken} to represent all possible primitive tokens.
+ * A node representing primitive tokens. It uses the inner enum type {@link PrimitiveToken} to represent all possible
+ * primitive tokens.
  */
 public final class PrimitiveTokenNode extends Node {
+
 	private static final long serialVersionUID = 1L;
 
 	/**
 	 * The enumeration of all primitive tokens in SOF.
 	 */
 	public static enum PrimitiveToken {
+
 		/** The <code>+</code> primitive token. */
 		Add("+"),
 		/** The <code>-</code> primitive token. */
@@ -135,6 +137,7 @@ public final class PrimitiveTokenNode extends Node {
 
 	/**
 	 * Returns the primitive token itself represented by this AST node.
+	 * 
 	 * @return The primitive token represented by this AST node.
 	 */
 	public final PrimitiveToken symbol() {
@@ -143,8 +146,9 @@ public final class PrimitiveTokenNode extends Node {
 
 	/**
 	 * Create a new primitive token.
+	 * 
 	 * @param symbol The primitive token itself represented by this AST node.
-	 * @param index The index inside the source code where this primitive token is located.
+	 * @param index  The index inside the source code where this primitive token is located.
 	 * @param source The SOF source file unit where this primitive token comes from.
 	 */
 	public PrimitiveTokenNode(PrimitiveToken symbol, int index, SOFFile source) {
@@ -154,11 +158,12 @@ public final class PrimitiveTokenNode extends Node {
 
 	/**
 	 * Returns the primitive token associated with the string symbol, if it exists.
+	 * 
 	 * @param symbol The primitive token that should be represented, as a string.
-	 * @param index The index inside the source code where the new primitive token is located.
+	 * @param index  The index inside the source code where the new primitive token is located.
 	 * @param source The SOF source file unit where the new primitive token comes from.
-	 * @return An Optional containing a primitive token if one exists for the given symbol,
-	 *         or an empty Optional if the string symbol does not represent a primitive token.
+	 * @return An Optional containing a primitive token if one exists for the given symbol, or an empty Optional if the
+	 *         string symbol does not represent a primitive token.
 	 */
 	public static Optional<PrimitiveTokenNode> make(final String symbol, final int index, SOFFile source) {
 		for (PrimitiveToken pt : PrimitiveToken.values()) {
@@ -180,7 +185,7 @@ public final class PrimitiveTokenNode extends Node {
 
 	@Override
 	public boolean equals(Object obj) {
-		return obj instanceof PrimitiveTokenNode ? ((PrimitiveTokenNode)obj).symbol.equals(this.symbol) : false;
+		return obj instanceof PrimitiveTokenNode ? ((PrimitiveTokenNode) obj).symbol.equals(this.symbol) : false;
 	}
 
 	@Override

@@ -4,25 +4,30 @@ import klfr.sof.exceptions.IncompleteCompilerException;
 import klfr.sof.lang.primitive.*;
 
 /**
- * Built-in Operations is a collection for most PTs that implement operations, like arithmetic
- * operations, comparisons, stack operations.
+ * Built-in Operations is a collection for most PTs that implement operations, like arithmetic operations, comparisons,
+ * stack operations.
  * 
  * @author klfr
  */
 public final class BuiltinOperations {
 
 	/**
-	 * A simple functional interface that defines the structure of all multi-type capable binary operations.<br/><br/>
-	 * Multi-Type-Capable means that the operation must expect to recieve any SOF type (i.e. a generic Stackable for both parameters) and can return any SOF type,
-	 * but it does not mean that the operation must be successful for any input type.
-	 * The operation may always throw an {@link klfr.sof.exceptions.IncompleteCompilerException} if the types do not match up.
+	 * A simple functional interface that defines the structure of all multi-type capable binary operations.<br/>
+	 * <br/>
+	 * Multi-Type-Capable means that the operation must expect to recieve any SOF type (i.e. a generic Stackable for both
+	 * parameters) and can return any SOF type, but it does not mean that the operation must be successful for any input
+	 * type. The operation may always throw an {@link klfr.sof.exceptions.IncompleteCompilerException} if the types do not
+	 * match up.
+	 * 
 	 * @see Stackable
 	 * @see IncompleteCompilerException
 	 */
 	@FunctionalInterface
 	public static interface BinaryOperation {
+
 		/**
 		 * Apply the binary operation to the given arguments.
+		 * 
 		 * @param a The left argument, lower on the stack.
 		 * @param b The right argument, higher on the stack.
 		 * @return The result of the binary operation with the arguments.
@@ -32,9 +37,9 @@ public final class BuiltinOperations {
 	}
 
 	/**
-	 * Arbitrary-type arithmetic division in SOF.
-	 * If at least one of the types is {@link FloatPrimitive}, the division is a floating-point division,
-	 * if both are {@link IntPrimitive}, the division is an integer division.
+	 * Arbitrary-type arithmetic division in SOF. If at least one of the types is {@link FloatPrimitive}, the division is a
+	 * floating-point division, if both are {@link IntPrimitive}, the division is an integer division.
+	 * 
 	 * @param a The dividend.
 	 * @param b The divisor.
 	 * @return {@code a / b}
@@ -59,12 +64,15 @@ public final class BuiltinOperations {
 			throw new IncompleteCompilerException("arithmetic", "div-by-zero");
 		}
 	}
-	
+
 	/**
-	 * Arbitrary-type arithmetic modulus in SOF.<br/><br/>
+	 * Arbitrary-type arithmetic modulus in SOF.<br/>
+	 * <br/>
 	 * The modulus is the remainder of the integer division between the arguments.<br/>
-	 * For floating-point operands, the modulus is the remainder when determining how often the divisor exactly fits into the dividend.
-	 * Or: The difference between the largest integer multiple of the divisor smaller than the dividend and the dividend itself.
+	 * For floating-point operands, the modulus is the remainder when determining how often the divisor exactly fits into
+	 * the dividend. Or: The difference between the largest integer multiple of the divisor smaller than the dividend and
+	 * the dividend itself.
+	 * 
 	 * @param a The dividend.
 	 * @param b The divisor.
 	 * @return {@code a mod b}, written in SOF with the {@code %} primitive token.
@@ -92,6 +100,7 @@ public final class BuiltinOperations {
 
 	/**
 	 * Arbitrary-type addition in SOF. If at least one operand is floating point, the result is promoted to floating point.
+	 * 
 	 * @param a The first summand.
 	 * @param b The second summand.
 	 * @return {@code a + b}
@@ -114,7 +123,9 @@ public final class BuiltinOperations {
 	}
 
 	/**
-	 * Arbitrary-type multiplication in SOF. If at least one operand is floating point, the result is promoted to floating point.
+	 * Arbitrary-type multiplication in SOF. If at least one operand is floating point, the result is promoted to floating
+	 * point.
+	 * 
 	 * @param a The first factor.
 	 * @param b The second factor.
 	 * @return {@code a * b}
@@ -137,7 +148,9 @@ public final class BuiltinOperations {
 	}
 
 	/**
-	 * Arbitrary-type subtraction in SOF. If at least one operand is floating point, the result is promoted to floating point.
+	 * Arbitrary-type subtraction in SOF. If at least one operand is floating point, the result is promoted to floating
+	 * point.
+	 * 
 	 * @param a The minuend.
 	 * @param b The subtrahend.
 	 * @return {@code a - b}
@@ -161,6 +174,7 @@ public final class BuiltinOperations {
 
 	/**
 	 * Arbitrary-type logical AND (∧) in SOF.
+	 * 
 	 * @param a The first argument to the and.
 	 * @param b The second argument to the and.
 	 * @return The first argument, if both are truthy according to SOF logic, otherwise (SOF-) false.
@@ -173,6 +187,7 @@ public final class BuiltinOperations {
 
 	/**
 	 * Arbitrary-type logical OR (∨) in SOF.
+	 * 
 	 * @param a The first argument to the or.
 	 * @param b The second argument to the or.
 	 * @return The first argument, if it is truthy according to SOF logic, otherwise the second argument.
@@ -186,6 +201,7 @@ public final class BuiltinOperations {
 
 	/**
 	 * Arbitrary-type logical exclusive OR (⨁) in SOF.
+	 * 
 	 * @param a The first argument to the xor.
 	 * @param b The second argument to the xor.
 	 * @return Whether the two arguments have a different truthiness.
@@ -196,7 +212,9 @@ public final class BuiltinOperations {
 	}
 
 	/**
-	 * Compares the two arguments according to SOF logic and determines whether the left argument is strictly less than the right.
+	 * Compares the two arguments according to SOF logic and determines whether the left argument is strictly less than the
+	 * right.
+	 * 
 	 * @param a The left argument.
 	 * @param b The right argument.
 	 * @return Whether the first, left argument is strictly less than the second, right.
@@ -214,7 +232,9 @@ public final class BuiltinOperations {
 	}
 
 	/**
-	 * Compares the two arguments according to SOF logic and determines whether the left argument is strictly greater than the right.
+	 * Compares the two arguments according to SOF logic and determines whether the left argument is strictly greater than
+	 * the right.
+	 * 
 	 * @param a The left argument.
 	 * @param b The right argument.
 	 * @return Whether the first, left argument is strictly greater than the second, right.
@@ -232,7 +252,9 @@ public final class BuiltinOperations {
 	}
 
 	/**
-	 * Compares the two arguments according to SOF logic and determines whether the left argument is greater or equal than the right.
+	 * Compares the two arguments according to SOF logic and determines whether the left argument is greater or equal than
+	 * the right.
+	 * 
 	 * @param a The left argument.
 	 * @param b The right argument.
 	 * @return Whether the first, left argument is greater or equal than the second, right.
@@ -250,7 +272,9 @@ public final class BuiltinOperations {
 	}
 
 	/**
-	 * Compares the two arguments according to SOF logic and determines whether the left argument is less or equal than the right.
+	 * Compares the two arguments according to SOF logic and determines whether the left argument is less or equal than the
+	 * right.
+	 * 
 	 * @param a The left argument.
 	 * @param b The right argument.
 	 * @return Whether the first, left argument is less or equal than the second, right.
@@ -269,6 +293,7 @@ public final class BuiltinOperations {
 
 	/**
 	 * Determines whether the two arguments are equal according to SOF logic.
+	 * 
 	 * @param a The first argument.
 	 * @param b The second argument.
 	 * @return (SOF) {@code true} if the two arguments are equal as determined by SOF logic, otherwise (SOF) {@code false}.
@@ -279,6 +304,7 @@ public final class BuiltinOperations {
 
 	/**
 	 * Determines whether the two arguments are not equal according to SOF logic.
+	 * 
 	 * @param a The first argument.
 	 * @param b The second argument.
 	 * @return (SOF) {@code false} if the two arguments are equal as determined by SOF logic, otherwise (SOF) {@code true}.

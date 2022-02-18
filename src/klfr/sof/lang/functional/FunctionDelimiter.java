@@ -13,11 +13,12 @@ import klfr.sof.lang.*;
  */
 @StackableName("Function Nametable")
 public class FunctionDelimiter extends Nametable {
-	private static final long serialVersionUID = 1L;
+
+	private static final long	serialVersionUID	= 1L;
 	/**
 	 * The return value of the function that this function delimiter is the nametable of.
 	 */
-	public Optional<Stackable> returnValue = Optional.empty();
+	public Optional<Stackable>	returnValue			= Optional.empty();
 
 	@Override
 	public Nametable setReturn(Stackable value) {
@@ -26,12 +27,11 @@ public class FunctionDelimiter extends Nametable {
 	}
 
 	/**
-	 * Pushes the return value of this function delimiter to the given stack. If
-	 * this function delimiter never recieved a return value, don't push anything.
+	 * Pushes the return value of this function delimiter to the given stack. If this function delimiter never recieved a
+	 * return value, don't push anything.
 	 * 
 	 * @param toPushTo The stack to modify.
-	 * @return Whether the stack was modified, i.e. whether there was a return
-	 *         value.
+	 * @return Whether the stack was modified, i.e. whether there was a return value.
 	 */
 	public final boolean pushReturnValue(Stack toPushTo) {
 		if (returnValue.isPresent()) {
@@ -43,7 +43,7 @@ public class FunctionDelimiter extends Nametable {
 
 	@Override
 	public boolean equals(Object obj) {
-		return obj instanceof FunctionDelimiter ? this.equals((FunctionDelimiter)obj) : false;
+		return obj instanceof FunctionDelimiter ? this.equals((FunctionDelimiter) obj) : false;
 	}
 
 	@Override
@@ -62,10 +62,10 @@ public class FunctionDelimiter extends Nametable {
 
 	@Override
 	public String toDebugString(DebugStringExtensiveness e) {
-		return switch(e) {
-			case Full -> "Function Nametable: return " + returnValue.toString() + System.lineSeparator() + super.toDebugString(e);
-			case Compact -> "FNT[" + this.size() + "](" + returnValue.toString() + ")";
-			default -> Stackable.toDebugString(this, e);
+		return switch (e) {
+		case Full -> "Function Nametable: return " + returnValue.toString() + System.lineSeparator() + super.toDebugString(e);
+		case Compact -> "FNT[" + this.size() + "](" + returnValue.toString() + ")";
+		default -> Stackable.toDebugString(this, e);
 		};
 	}
 }

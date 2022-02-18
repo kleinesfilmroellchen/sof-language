@@ -5,9 +5,8 @@ import java.util.List;
 import klfr.sof.lang.*;
 
 /**
- * A proxy function that can be executed like any other. In addition to holding
- * the code, it also contains a list of curried arguments. When executed, these
- * arguments are added to the stack before any others.
+ * A proxy function that can be executed like any other. In addition to holding the code, it also contains a list of
+ * curried arguments. When executed, these arguments are added to the stack before any others.
  * 
  * @author klfr
  */
@@ -15,24 +14,26 @@ import klfr.sof.lang.*;
 public class CurriedFunction extends SOFunction {
 
 	/**
-	 * The curried arguments. They are provided in the order that they are passed to the function,
-	 * so the first element is the lowest on the stack of arguments passed into the function.
+	 * The curried arguments. They are provided in the order that they are passed to the function, so the first element is
+	 * the lowest on the stack of arguments passed into the function.
 	 */
 	private final List<Stackable> curriedArguments;
 
 	/**
 	 * Create a new curried function.
-	 * @param base The function that is curried.
-	 * @param curriedArguments The arguments that are curried to the function,
-	 *                         in the order that they are supposed to be passed to the function.
+	 * 
+	 * @param base             The function that is curried.
+	 * @param curriedArguments The arguments that are curried to the function, in the order that they are supposed to be
+	 *                            passed to the function.
 	 */
 	public CurriedFunction(SOFunction base, List<Stackable> curriedArguments) {
-		super(base.code, base.arguments-curriedArguments.size());
+		super(base.code, base.arguments - curriedArguments.size());
 		this.curriedArguments = curriedArguments;
 	}
 
 	/**
 	 * Returns the curried arguments of this function, i.e. the arguments that are pre-stored for later.
+	 * 
 	 * @return The curried arguments of this function.
 	 */
 	public final List<Stackable> getCurriedArguments() {
@@ -41,6 +42,7 @@ public class CurriedFunction extends SOFunction {
 
 	/**
 	 * Returns the regular function beneath this curried function.
+	 * 
 	 * @return The regular function beneath this curried function.
 	 */
 	public final SOFunction getRegularFunction() {
@@ -50,13 +52,13 @@ public class CurriedFunction extends SOFunction {
 	@Override
 	public String toDebugString(DebugStringExtensiveness e) {
 		return switch (e) {
-			case Compact -> String.format("[CurriedFunction/%d-%d %dn ]", this.curriedArguments.size(), this.arguments, this.code.count());
-			case Full -> String.format("[CurriedFunction/%d - %s { %s } %h]", this.arguments, this.curriedArguments.toString(), this.code, this.hashCode());
-			case Type -> "CurriedFunction";
-			default -> Stackable.toDebugString(this, e);
+		case Compact -> String.format("[CurriedFunction/%d-%d %dn ]", this.curriedArguments.size(), this.arguments, this.code.count());
+		case Full -> String.format("[CurriedFunction/%d - %s { %s } %h]", this.arguments, this.curriedArguments.toString(), this.code, this.hashCode());
+		case Type -> "CurriedFunction";
+		default -> Stackable.toDebugString(this, e);
 		};
 	}
-	
+
 	@Override
 	public String print() {
 		return String.format("{ %d argument Function curried @ %d }", this.arguments, this.curriedArguments.size());
@@ -69,15 +71,13 @@ public class CurriedFunction extends SOFunction {
 
 	@Override
 	public boolean equals(Object obj) {
-		return obj instanceof CurriedFunction ? this.equals((CurriedFunction)obj): false;
+		return obj instanceof CurriedFunction ? this.equals((CurriedFunction) obj) : false;
 	}
 
 	@Override
 	public boolean equals(Stackable other) {
 		if (other instanceof CurriedFunction otherFunction) {
-			return code.equals(otherFunction.code)
-				&& (arguments == otherFunction.arguments)
-				&& curriedArguments.equals(otherFunction.curriedArguments);
+			return code.equals(otherFunction.code) && (arguments == otherFunction.arguments) && curriedArguments.equals(otherFunction.curriedArguments);
 		} else {
 			return false;
 		}

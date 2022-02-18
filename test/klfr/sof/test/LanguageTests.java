@@ -18,26 +18,24 @@ import klfr.sof.exceptions.*;
 import klfr.sof.lib.*;
 
 /**
- * The language test class is responsible for running the tests on the SOF
- * source code test files that check many parts of SOF execution. <br>
+ * The language test class is responsible for running the tests on the SOF source code test files that check many parts
+ * of SOF execution. <br>
  * <br>
- * For these purposes, the test system uses the {@code assert} primitive token
- * that will check the topmost element of the stack for being true. If it is
- * not, the interpreter throws a custom subclass of CompilerException and the
- * test of the current SOF file will fail, otherwise, it will continue to
- * execute. Any (standard) CompilerException occurring at any point during the
- * interpretation cycle is also a failure.
+ * For these purposes, the test system uses the {@code assert} primitive token that will check the topmost element of
+ * the stack for being true. If it is not, the interpreter throws a custom subclass of CompilerException and the test of
+ * the current SOF file will fail, otherwise, it will continue to execute. Any (standard) CompilerException occurring at
+ * any point during the interpretation cycle is also a failure.
  */
 @DisplayName("Run in-language tests")
 public class LanguageTests extends SofTestSuper {
-	/**
-	 * Directory or package where the SOF source files for the language tests
-	 * reside.
-	 */
-	public static final String SOURCE_FOLDER = "build/out/testbins/klfr/sof/test/source/";
-	public static final Charset TEST_SOURCE_CHARSET = Charset.forName("utf-8");
 
-	public static final Logger log = Logger.getLogger(LanguageTests.class.getCanonicalName());
+	/**
+	 * Directory or package where the SOF source files for the language tests reside.
+	 */
+	public static final String		SOURCE_FOLDER			= "build/out/testbins/klfr/sof/test/source/";
+	public static final Charset	TEST_SOURCE_CHARSET	= Charset.forName("utf-8");
+
+	public static final Logger		log						= Logger.getLogger(LanguageTests.class.getCanonicalName());
 
 	@DisplayName("SOF language tests from test files")
 	@TestFactory
@@ -51,12 +49,12 @@ public class LanguageTests extends SofTestSuper {
 
 		final var files = Arrays.asList(new File(SOURCE_FOLDER).listFiles());
 		log.log(Level.INFO, () -> String.format("Test source directory contents: %s", files));
-		final var sofFiles = files.stream().map(cs -> cs.toString()).filter(f -> f.toString().endsWith(".sof"))
-				.collect(Collectors.toSet());
+		final var sofFiles = files.stream().map(cs -> cs.toString()).filter(f -> f.toString().endsWith(".sof")).collect(Collectors.toSet());
 		log.log(Level.INFO, () -> String.format("SOF source files for testing: %s", sofFiles));
 		final var sofFileIterator = sofFiles.iterator();
 
 		return new Iterator<DynamicTest>() {
+
 			@Override
 			public boolean hasNext() {
 				return sofFileIterator.hasNext();
@@ -83,18 +81,16 @@ public class LanguageTests extends SofTestSuper {
 							CLI.runPreamble(engine);
 							engine.run(codeUnit);
 							final var finish = System.nanoTime();
-							log.info(String.format("Source test %-20s completed in %12.3f µs, %3d asserts total", file,
-									(finish - time) / 1_000d, engine.getAssertCount()));
+							log.info(String.format("Source test %-20s completed in %12.3f µs, %3d asserts total", file, (finish - time) / 1_000d, engine.getAssertCount()));
 						} catch (CompilerException e) {
 							fail("Compiler exception while running language test '" + file + "'.", e);
 						}
 					});
 				} catch (IOException e) {
 					log.log(Level.SEVERE, String.format("Cannot test source file %s", file), e);
-					return dynamicTest(String.format("Test source file: %s FAILING with external exception.", file),
-							() -> {
-								throw new TestAbortedException("Cannot test source file.");
-							});
+					return dynamicTest(String.format("Test source file: %s FAILING with external exception.", file), () -> {
+						throw new TestAbortedException("Cannot test source file.");
+					});
 				}
 			}
 		};

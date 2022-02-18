@@ -7,17 +7,18 @@ import java.util.Objects;
 /**
  * Simple tuple type, nothing fancy.
  */
-public final class Tuple<A, B>
-      implements Serializable, Iterable<Object>, Cloneable {
+public final class Tuple<A, B> implements Serializable, Iterable<Object>, Cloneable {
+
    private static final long serialVersionUID = 1L;
 
    /** The left element of the Tuple. */
-   private final A left;
+   private final A           left;
    /** The right element of the Tuple. */
-   private final B right;
+   private final B           right;
 
    /**
     * Create a new tuple.
+    * 
     * @param l The left part of the tuple.
     * @param r The right part of the tuple.
     */
@@ -28,8 +29,9 @@ public final class Tuple<A, B>
 
    /**
     * Create a new tuple.
-    * @param l The left part of the tuple.
-    * @param r The right part of the tuple.
+    * 
+    * @param l   The left part of the tuple.
+    * @param r   The right part of the tuple.
     * @param <D> The right type of the tuple.
     * @param <C> The left type of the tuple.
     * @return A new tuple.
@@ -54,8 +56,9 @@ public final class Tuple<A, B>
    @Override
    public Iterator<Object> iterator() {
       return new Iterator<Object>() {
+
          final Object[] vals = new Object[] { left, right };
-         byte idx = 0;
+         byte           idx  = 0;
 
          @Override
          public boolean hasNext() {
@@ -80,8 +83,9 @@ public final class Tuple<A, B>
    }
 
    /**
-    * Compare this tuple to another tuple for equality.
-    * Two tuples are considered equal if the left elements are equal and the right elements are equal.
+    * Compare this tuple to another tuple for equality. Two tuples are considered equal if the left elements are equal and
+    * the right elements are equal.
+    * 
     * @param other The other tuple to compare to.
     * @return Whether the two tuples are equal.
     */
@@ -99,9 +103,7 @@ public final class Tuple<A, B>
       try {
          return new Tuple<A, B>((A) (left), (B) (right));
       } catch (ClassCastException e) {
-         throw new CloneNotSupportedException(
-               String.format("Tuple parts %s <%s> and %s <%s> do not clone into their own type", left, right,
-                     left.getClass(), right.getClass()));
+         throw new CloneNotSupportedException(String.format("Tuple parts %s <%s> and %s <%s> do not clone into their own type", left, right, left.getClass(), right.getClass()));
       }
    }
 
@@ -112,6 +114,7 @@ public final class Tuple<A, B>
 
    /**
     * Returns the left, or first element of the tuple.
+    * 
     * @return the left, or first element of the tuple.
     */
    public final A getLeft() {
@@ -120,6 +123,7 @@ public final class Tuple<A, B>
 
    /**
     * Returns the right, or second element of the tuple.
+    * 
     * @return the right, or second element of the tuple.
     */
    public final B getRight() {

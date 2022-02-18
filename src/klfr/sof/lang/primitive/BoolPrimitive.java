@@ -10,12 +10,13 @@ import klfr.sof.lang.*;
  */
 @StackableName("Boolean")
 public final class BoolPrimitive extends Primitive {
-	private static final long serialVersionUID = 1L;
-	/** The boolean that is represented by this primitive. */
-	private final Boolean value;
 
-	private static final BoolPrimitive FALSE = new BoolPrimitive(false);
-	private static final BoolPrimitive TRUE = new BoolPrimitive(true);
+	private static final long				serialVersionUID	= 1L;
+	/** The boolean that is represented by this primitive. */
+	private final Boolean					value;
+
+	private static final BoolPrimitive	FALSE					= new BoolPrimitive(false);
+	private static final BoolPrimitive	TRUE					= new BoolPrimitive(true);
 
 	private BoolPrimitive(Boolean value) {
 		this.value = value;
@@ -28,6 +29,7 @@ public final class BoolPrimitive extends Primitive {
 
 	/**
 	 * Returns the boolean value represented by this primitive.
+	 * 
 	 * @return The boolean value represented by this primitive.
 	 */
 	public final Boolean value() {
@@ -36,6 +38,7 @@ public final class BoolPrimitive extends Primitive {
 
 	/**
 	 * Create a new boolean primitive from the given boolean.
+	 * 
 	 * @param value the boolean value to wrap in a primitive.
 	 * @return a new boolean primitive with the value of the given boolean.
 	 */

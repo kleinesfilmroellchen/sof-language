@@ -18,26 +18,32 @@ import klfr.sof.lib.NativeFunctionRegistry.*;
 import static klfr.sof.lib.NativeFunctionRegistry.generateDescriptor;
 
 /**
- * This test suite tests several parts of the library system. It needs to be public because some of its public static methods are used as test methods for native function registration and execution.
+ * This test suite tests several parts of the library system. It needs to be public because some of its public static
+ * methods are used as test methods for native function registration and execution.
  */
 @SuppressWarnings("unused")
 @DisplayName("Test the SOF native function system")
 public class LibrarySystemTest extends SofTestSuper {
 
-	public static final String ntm1Name = "klfr.sof.test.LibrarySystemTest#namingTestMethod1()";
-	public static final String ntm2Name = "klfr.sof.test.LibrarySystemTest#namingTestMethod2(StringPrimitive)";
-	public static final String ntm3Name = "klfr.sof.test.LibrarySystemTest#namingTestMethod3(FloatPrimitive,Stackable)";
+	public static final String	ntm1Name	= "klfr.sof.test.LibrarySystemTest#namingTestMethod1()";
+	public static final String	ntm2Name	= "klfr.sof.test.LibrarySystemTest#namingTestMethod2(StringPrimitive)";
+	public static final String	ntm3Name	= "klfr.sof.test.LibrarySystemTest#namingTestMethod3(FloatPrimitive,Stackable)";
 
-	public static IntPrimitive namingTestMethod1() { return IntPrimitive.createIntPrimitive(42l); }
-	public static void namingTestMethod2(StringPrimitive dummyArgument) {}
-	public static void namingTestMethod3(FloatPrimitive dummyArgument1, Stackable dummyArgument2) {}
+	public static IntPrimitive namingTestMethod1() {
+		return IntPrimitive.createIntPrimitive(42l);
+	}
+
+	public static void namingTestMethod2(StringPrimitive dummyArgument) {
+	}
+
+	public static void namingTestMethod3(FloatPrimitive dummyArgument1, Stackable dummyArgument2) {
+	}
 
 	@DisplayName("Test native function naming")
 	@Test
 	void testNFName() {
 		try {
-			Method m1 = LibrarySystemTest.class.getMethod("namingTestMethod1"),
-					m2 = LibrarySystemTest.class.getMethod("namingTestMethod2", StringPrimitive.class),
+			Method m1 = LibrarySystemTest.class.getMethod("namingTestMethod1"), m2 = LibrarySystemTest.class.getMethod("namingTestMethod2", StringPrimitive.class),
 					m3 = LibrarySystemTest.class.getMethod("namingTestMethod3", FloatPrimitive.class, Stackable.class);
 			assertEquals(ntm1Name, generateDescriptor(m1));
 			assertEquals(ntm2Name, generateDescriptor(m2));

@@ -18,19 +18,20 @@ public final class IOInterface {
 	/**
 	 * Number of milliseconds to wait between short prints until flushing anyways.
 	 */
-	public static final long FLUSH_MILLIS = 100;
+	public static final long	FLUSH_MILLIS	= 100;
 
-	private Readable input;
-	private Writer output;
+	private Readable				input;
+	private Writer					output;
 
-	private Scanner scan;
+	private Scanner				scan;
 
 	/**
-	 * Whether the debug mode on this I/O interface is enabled.
-	 * If debug is on, the debug(String) operation can print to the output.
+	 * Whether the debug mode on this I/O interface is enabled. If debug is on, the debug(String) operation can print to the
+	 * output.
+	 * 
 	 * @see IOInterface#debug(String)
 	 */
-	public boolean debug;
+	public boolean					debug;
 
 	/**
 	 * Creates an uninitialized I/O interface.
@@ -41,7 +42,7 @@ public final class IOInterface {
 	/**
 	 * Initializes the interface with basic I/O.
 	 * 
-	 * @param in The input readable.
+	 * @param in  The input readable.
 	 * @param out The output writer.
 	 */
 	public IOInterface(Readable in, Writer out) {
@@ -50,10 +51,9 @@ public final class IOInterface {
 	}
 
 	/**
-	 * Initializes the interface with basic I/O streams which are wrapped in
-	 * character encoding streams.
+	 * Initializes the interface with basic I/O streams which are wrapped in character encoding streams.
 	 * 
-	 * @param in The input stream which is used with the default character encoding.
+	 * @param in  The input stream which is used with the default character encoding.
 	 * @param out The output stream which is used with the default character encoding.
 	 */
 	public IOInterface(InputStream in, OutputStream out) {
@@ -63,6 +63,7 @@ public final class IOInterface {
 
 	/**
 	 * Returns the output writer of this I/O interface.
+	 * 
 	 * @return the output writer of this I/O interface.
 	 */
 	public final Writer getOutput() {
@@ -71,6 +72,7 @@ public final class IOInterface {
 
 	/**
 	 * Returns the input reader of this I/O interface.
+	 * 
 	 * @return The input reader of this I/O interface.
 	 */
 	public final Readable getInput() {
@@ -78,8 +80,8 @@ public final class IOInterface {
 	}
 
 	/**
-	 * Sets the output of this I/O interface. Note that this method sets a raw byte
-	 * stream which is converted to an encoded character stream with the default encoding before use.
+	 * Sets the output of this I/O interface. Note that this method sets a raw byte stream which is converted to an encoded
+	 * character stream with the default encoding before use.
 	 * 
 	 * @param out The output stream to be set.
 	 */
@@ -133,6 +135,7 @@ public final class IOInterface {
 
 	/**
 	 * Sets the input readable.
+	 * 
 	 * @param in The input readable to set.
 	 */
 	public final void setIn(Readable in) {
@@ -143,8 +146,8 @@ public final class IOInterface {
 	}
 
 	/**
-	 * Sets the input stream.
-	 * Note that this input stream is converted to a Readable with the default character encoding.
+	 * Sets the input stream. Note that this input stream is converted to a Readable with the default character encoding.
+	 * 
 	 * @param in The input stream.
 	 */
 	public final void setIn(InputStream in) {
@@ -153,12 +156,11 @@ public final class IOInterface {
 	}
 
 	/**
-	 * Utility method for setting both basic I/O streams. Note that this method sets
-	 * raw byte streams which are converted to encoded character streams before use.
+	 * Utility method for setting both basic I/O streams. Note that this method sets raw byte streams which are converted to
+	 * encoded character streams before use.
 	 * 
 	 * @param in  The InputStream to use. If this is null, the Input is not changed.
-	 * @param out The OutputStream to use. If this is null, the Output is not
-	 *            changed.
+	 * @param out The OutputStream to use. If this is null, the Output is not changed.
 	 */
 	public final void setInOut(InputStream in, OutputStream out) {
 		this.setIn(in);
@@ -168,10 +170,8 @@ public final class IOInterface {
 	/**
 	 * Directly sets reader and writer of the I/O interface.
 	 * 
-	 * @param in  The Readable (Character input) to use. If this is null, the Input
-	 *            is not changed.
-	 * @param out The Writable (Character output) to use. If this is null, the
-	 *            Output is not changed.
+	 * @param in  The Readable (Character input) to use. If this is null, the Input is not changed.
+	 * @param out The Writable (Character output) to use. If this is null, the Output is not changed.
 	 */
 	public final void setInOut(Readable in, Writer out) {
 		this.setIn(in);
@@ -180,6 +180,7 @@ public final class IOInterface {
 
 	/**
 	 * Creates and returns a new scanner over the basic InputStream.
+	 * 
 	 * @return a new scanner over the basic InputStream.
 	 */
 	public final Scanner newInputScanner() {
@@ -188,9 +189,8 @@ public final class IOInterface {
 	}
 
 	/**
-	 * Returns the next input sequence, as defined by the input sequence terminology
-	 * of SOF's input builtin. An input sequence is any sequence of non-whitespace
-	 * characters.
+	 * Returns the next input sequence, as defined by the input sequence terminology of SOF's input builtin. An input
+	 * sequence is any sequence of non-whitespace characters.
 	 * 
 	 * @return The next input sequence.
 	 */
@@ -200,6 +200,7 @@ public final class IOInterface {
 
 	/**
 	 * Reads and returns the next line from the input.
+	 * 
 	 * @return The next line from the input.
 	 */
 	public final String nextInputLine() {
@@ -208,6 +209,7 @@ public final class IOInterface {
 
 	/**
 	 * Print the given string followed by a new line.
+	 * 
 	 * @param x The string to print.
 	 */
 	public final void println(String x) {
@@ -230,6 +232,7 @@ public final class IOInterface {
 
 	/**
 	 * Print the given string.
+	 * 
 	 * @param s The string to print.
 	 */
 	public final void print(String s) {
@@ -243,8 +246,9 @@ public final class IOInterface {
 
 	/**
 	 * Print the string formatted with the format arguments.
+	 * 
 	 * @param format The string to format.
-	 * @param args The format arguments.
+	 * @param args   The format arguments.
 	 * @see String#format(String, Object...)
 	 */
 	public final void printf(String format, Object... args) {
@@ -254,9 +258,10 @@ public final class IOInterface {
 
 	/**
 	 * Print the string formatted with the format arguments given the locale.
+	 * 
 	 * @param format The string to format.
-	 * @param args The format arguments.
-	 * @param l The locale to use for formatting.
+	 * @param args   The format arguments.
+	 * @param l      The locale to use for formatting.
 	 * @see String#format(String, Object...)
 	 */
 	public final void printf(Locale l, String format, Object... args) {
@@ -266,8 +271,9 @@ public final class IOInterface {
 
 	/**
 	 * Prints formatted (just as {@code printf} does) and terminates the line.
+	 * 
 	 * @param format The string to format.
-	 * @param args The format arguments.
+	 * @param args   The format arguments.
 	 * @see IOInterface#printf(String, Object...)
 	 */
 	public final void printfln(String format, Object... args) {
@@ -277,9 +283,10 @@ public final class IOInterface {
 
 	/**
 	 * Prints formatted (just as {@code printf} does) and terminates the line.
+	 * 
 	 * @param format The string to format.
-	 * @param args The format arguments.
-	 * @param l The locale to use for formatting.
+	 * @param args   The format arguments.
+	 * @param l      The locale to use for formatting.
 	 * @see IOInterface#printf(Locale, String, Object...)
 	 */
 	public final void printfln(Locale l, String format, Object... args) {
@@ -288,16 +295,14 @@ public final class IOInterface {
 	}
 
 	/**
-	 * Print the stack description if debug is enabled.
-	 * This will print the stack and the global nametable.
+	 * Print the stack description if debug is enabled. This will print the stack and the global nametable.
 	 * 
 	 * @param stack The stack to describe.
 	 */
 	public final void describeStack(Stack stack) {
 		if (debug) {
 			println(R.getString("sof.debug.stack") + System.lineSeparator() + stack.toStringExtended());
-			println(R.getString("sof.debug.gnt") + System.lineSeparator()
-					+ stack.globalNametable().toDebugString(DebugStringExtensiveness.Full));
+			println(R.getString("sof.debug.gnt") + System.lineSeparator() + stack.globalNametable().toDebugString(DebugStringExtensiveness.Full));
 		}
 	}
 
@@ -314,6 +319,7 @@ public final class IOInterface {
 	//#region print overloads
 	/**
 	 * Print the given boolean; print "true" or "false".
+	 * 
 	 * @param b The boolean to print.
 	 */
 	public final void print(boolean b) {
@@ -322,6 +328,7 @@ public final class IOInterface {
 
 	/**
 	 * Print the given character.
+	 * 
 	 * @param c The character to print.
 	 */
 	public final void print(char c) {
@@ -330,6 +337,7 @@ public final class IOInterface {
 
 	/**
 	 * Print the given integer in decimal.
+	 * 
 	 * @param i The integer to print.
 	 */
 	public final void print(int i) {
@@ -338,6 +346,7 @@ public final class IOInterface {
 
 	/**
 	 * Print the given long in decimal.
+	 * 
 	 * @param l The long to print.
 	 */
 	public final void print(long l) {
@@ -346,6 +355,7 @@ public final class IOInterface {
 
 	/**
 	 * Print the given float in decimal.
+	 * 
 	 * @param f The float to print.
 	 */
 	public final void print(float f) {
@@ -354,6 +364,7 @@ public final class IOInterface {
 
 	/**
 	 * Print the given double in decimal.
+	 * 
 	 * @param d The decimal to print.
 	 */
 	public final void print(double d) {
@@ -362,6 +373,7 @@ public final class IOInterface {
 
 	/**
 	 * Print the given character array.
+	 * 
 	 * @param s The character array to print.
 	 */
 	public final void print(char[] s) {
@@ -370,6 +382,7 @@ public final class IOInterface {
 
 	/**
 	 * Print the given object after converting it with {@link Object#toString()}, or "null" if it is null.
+	 * 
 	 * @param obj The object to print.
 	 */
 	public final void print(Object obj) {
@@ -379,6 +392,7 @@ public final class IOInterface {
 	// println overloads
 	/**
 	 * Print the given boolean; print "true" or "false" and then a new line.
+	 * 
 	 * @param x The boolean to print.
 	 */
 	public final void println(boolean x) {
@@ -387,6 +401,7 @@ public final class IOInterface {
 
 	/**
 	 * Print the given character and then a new line.
+	 * 
 	 * @param x The character to print.
 	 */
 	public final void println(char x) {
@@ -395,6 +410,7 @@ public final class IOInterface {
 
 	/**
 	 * Print the given integer in decimal and then a new line.
+	 * 
 	 * @param x The integer to print.
 	 */
 	public final void println(int x) {
@@ -403,6 +419,7 @@ public final class IOInterface {
 
 	/**
 	 * Print the given long in decimal and then a new line.
+	 * 
 	 * @param x The long to print.
 	 */
 	public final void println(long x) {
@@ -411,6 +428,7 @@ public final class IOInterface {
 
 	/**
 	 * Print the given float in decimal and then a new line.
+	 * 
 	 * @param x The float to print.
 	 */
 	public final void println(float x) {
@@ -419,6 +437,7 @@ public final class IOInterface {
 
 	/**
 	 * Print the given double in decimal and then a new line.
+	 * 
 	 * @param x The decimal to print.
 	 */
 	public final void println(double x) {
@@ -427,6 +446,7 @@ public final class IOInterface {
 
 	/**
 	 * Print the given character array and then a new line.
+	 * 
 	 * @param x The character array to print.
 	 */
 	public final void println(char[] x) {
@@ -434,7 +454,9 @@ public final class IOInterface {
 	}
 
 	/**
-	 * Print the given object after converting it with {@link Object#toString()}, or "null" if it is null. Then print a newline.
+	 * Print the given object after converting it with {@link Object#toString()}, or "null" if it is null. Then print a
+	 * newline.
+	 * 
 	 * @param x The object to print.
 	 */
 	public final void println(Object x) {

@@ -10,20 +10,21 @@ import klfr.sof.ast.PrimitiveTokenNode.PrimitiveToken;
 import klfr.sof.exceptions.*;
 
 /**
- * A module interpreter is a slightly modified interpreter that handles the
- * export keyword to store an exported binding. The exported bindings are then
- * accessible with the {@link ModuleInterpreter#getExports()} method.
+ * A module interpreter is a slightly modified interpreter that handles the export keyword to store an exported binding.
+ * The exported bindings are then accessible with the {@link ModuleInterpreter#getExports()} method.
  */
 public class ModuleInterpreter extends Interpreter {
-	private static final long serialVersionUID = 1L;
+
+	private static final long						serialVersionUID	= 1L;
 
 	/** The export bindings that are defined and later returned to the module importer. */
-	private final Map<Identifier, Stackable> exports = new TreeMap<>();
+	private final Map<Identifier, Stackable>	exports				= new TreeMap<>();
 
 	/**
 	 * Create a new module interpreter.
-	 * @param io The I/O interface that this module interpreter should use.
-	 * @param md The module discoverer used by this module interpreter to in turn load other modules.
+	 * 
+	 * @param io       The I/O interface that this module interpreter should use.
+	 * @param md       The module discoverer used by this module interpreter to in turn load other modules.
 	 * @param registry The native function registry to execute native functions.
 	 */
 	public ModuleInterpreter(IOInterface io, ModuleDiscoverer md, NativeFunctionRegistry registry) {
@@ -58,5 +59,5 @@ public class ModuleInterpreter extends Interpreter {
 		} else
 			return super.handle(pt);
 	}
-	
+
 }

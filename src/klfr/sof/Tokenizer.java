@@ -9,8 +9,8 @@ import java.util.regex.*;
 import klfr.Tuple;
 
 /**
- * The tokenizer is used by the parsing tools to quickly scan through SOF tokens.
- * <br/><br/>
+ * The tokenizer is used by the parsing tools to quickly scan through SOF tokens. <br/>
+ * <br/>
  * It wraps the terrible behavior of {@link Matcher}.
  * 
  * @author klfr
@@ -20,39 +20,39 @@ public final class Tokenizer implements Iterator<String> {
 	private Logger log = Logger.getLogger(this.getClass().getCanonicalName());
 
 	/**
-	 * Represents internal state of a tokenizer for transfering such states between
-	 * objects and storing state as a file (hence the Serializable
-	 * implementation).<br>
+	 * Represents internal state of a tokenizer for transfering such states between objects and storing state as a file
+	 * (hence the Serializable implementation).<br>
 	 * <br>
-	 * <strong>All of this classes properties are public to allow the SOF language
-	 * internal utilities to modify them. It is strongly disregarded to make any
-	 * modifications to a stored state object, as any modification might break the
-	 * tokenizer; i.e. a tokenizer created from such a state will experience
-	 * undocumented and indeterminate behavior.</strong>
+	 * <strong>All of this classes properties are public to allow the SOF language internal utilities to modify them. It is
+	 * strongly disregarded to make any modifications to a stored state object, as any modification might break the
+	 * tokenizer; i.e. a tokenizer created from such a state will experience undocumented and indeterminate
+	 * behavior.</strong>
 	 * 
 	 * @author klfr
 	 */
 	public static class TokenizerState implements Serializable {
-		private static final long serialVersionUID = 1L;
+
+		private static final long	serialVersionUID	= 1L;
 
 		/** The start index in the code. */
-		public int start;
+		public int						start;
 		/** The end index (exclusive) in the code. */
-		public int end;
+		public int						end;
 		/** The start of the region that is set in the matcher. */
-		public int regionStart;
+		public int						regionStart;
 		/** The end of the region (exclusive) that is set in the matcher. */
-		public int regionEnd;
+		public int						regionEnd;
 		/** The code that the tokenizer operates on. */
-		public String code;
+		public String					code;
 
 		/**
 		 * Create a new tokenizer state with the given parameters.
-		 * @param start The start index.
-		 * @param end The end index.
+		 * 
+		 * @param start       The start index.
+		 * @param end         The end index.
 		 * @param regionStart The region start index for the matcher.
-		 * @param regionEnd The region end index for the matcher.
-		 * @param code The code to operate on.
+		 * @param regionEnd   The region end index for the matcher.
+		 * @param code        The code to operate on.
 		 */
 		public TokenizerState(int start, int end, int regionStart, int regionEnd, String code) {
 			super();
@@ -75,32 +75,32 @@ public final class Tokenizer implements Iterator<String> {
 
 		/**
 		 * Checks equality on this tokenizer and the other tokenizer.
+		 * 
 		 * @param other The other tokenizer to compare to.
 		 * @return Whether the two tokenizers are equal.
 		 */
 		public final boolean equals(TokenizerState other) {
-			return other.start == this.start && other.end == this.end && other.regionStart == this.regionStart
-					&& other.regionEnd == this.regionEnd && other.code.equals(this.code);
+			return other.start == this.start && other.end == this.end && other.regionStart == this.regionStart && other.regionEnd == this.regionEnd && other.code.equals(this.code);
 		}
 
 		@Override
 		public String toString() {
-			return String.format("TokenizerState(%d->%d, r%d->%d [%s])", this.start, this.end, this.regionStart,
-					this.regionEnd, this.code.replace("\n", "\\n").replace("\r", "\\r").replace("\b", "\\b")
-							.replace("\t", "\\t").replace("\f", "\\f"));
+			return String.format("TokenizerState(%d->%d, r%d->%d [%s])", this.start, this.end, this.regionStart, this.regionEnd,
+					this.code.replace("\n", "\\n").replace("\r", "\\r").replace("\b", "\\b").replace("\t", "\\t").replace("\f", "\\f"));
 		}
 	}
 
-	private Matcher m;
+	private Matcher			m;
 	/**
 	 * stores the current state of the tokenizer
 	 */
-	private TokenizerState currentState;
+	private TokenizerState	currentState;
 	/** Stores the last token that was found by the match methods */
-	private String lastMatchedToken;
+	private String				lastMatchedToken;
 
 	/**
 	 * Returns the index of the last matched token.
+	 * 
 	 * @return The index of the last matched token.
 	 */
 	public final int start() {
@@ -117,6 +117,7 @@ public final class Tokenizer implements Iterator<String> {
 
 	/**
 	 * Returns the code that this tokenizer operates on.
+	 * 
 	 * @return The code that this tokenizer operates on.
 	 */
 	public final String getCode() {
@@ -124,8 +125,8 @@ public final class Tokenizer implements Iterator<String> {
 	}
 
 	/**
-	 * Creates a new tokenizer from a source code string. The tokenizer's state is
-	 * set up to start scanning the code from the beginning.
+	 * Creates a new tokenizer from a source code string. The tokenizer's state is set up to start scanning the code from
+	 * the beginning.
 	 * 
 	 * @param code The SOF source code to be used with this Tokenizer.
 	 * @return A new tokenizer.
@@ -135,9 +136,8 @@ public final class Tokenizer implements Iterator<String> {
 	}
 
 	/**
-	 * Creates a tokenizer from the given saved tokenizer state. This method does
-	 * not guarantee to return a functioning tokenizer as the tokenizer state might
-	 * be corrupted.
+	 * Creates a tokenizer from the given saved tokenizer state. This method does not guarantee to return a functioning
+	 * tokenizer as the tokenizer state might be corrupted.
 	 * 
 	 * @param state the state to create a tokenizer from
 	 * @return a new tokenizer without a state stack
@@ -149,12 +149,10 @@ public final class Tokenizer implements Iterator<String> {
 	}
 
 	/**
-	 * Create a state object that represents the current full internal state of the
-	 * Tokenizer excluding its saved state stack. The new state object is fully
-	 * independed from this tokenizer.<br>
+	 * Create a state object that represents the current full internal state of the Tokenizer excluding its saved state
+	 * stack. The new state object is fully independed from this tokenizer.<br>
 	 * <br>
-	 * This method is to be used together with {@code Tokenizer.fromState()} to
-	 * recreate the tokenizer later on or clone it.
+	 * This method is to be used together with {@code Tokenizer.fromState()} to recreate the tokenizer later on or clone it.
 	 * 
 	 * @return a new, independed TokenizerState
 	 */
@@ -176,12 +174,10 @@ public final class Tokenizer implements Iterator<String> {
 	}
 
 	/**
-	 * Returns the current execution position of the Tokenizer, as a (Line, Index)
-	 * number tuple. While the line number is one-based (as in text editors), the
-	 * index (inside the line) is zero-based (as in strings).
+	 * Returns the current execution position of the Tokenizer, as a (Line, Index) number tuple. While the line number is
+	 * one-based (as in text editors), the index (inside the line) is zero-based (as in strings).
 	 * 
-	 * @return A tuple with two integers that represent the line position and index
-	 *         inside the line; see above notes.
+	 * @return A tuple with two integers that represent the line position and index inside the line; see above notes.
 	 */
 	public final Tuple<Integer, Integer> getCurrentPosition() {
 		Matcher linefinder = Patterns.nlPat.matcher(getCode());
@@ -193,8 +189,7 @@ public final class Tokenizer implements Iterator<String> {
 			lineStart = linefinder.start() + 1;
 		}
 		// linenum -1 because we advanced past the actual line
-		log.fine(String.format("tuple current index %d computed to line %d starting at %d line-inside-index %d",
-				realIndex, linenum, lineStart, realIndex - (lineStart - 1)));
+		log.fine(String.format("tuple current index %d computed to line %d starting at %d line-inside-index %d", realIndex, linenum, lineStart, realIndex - (lineStart - 1)));
 		return new Tuple<>(linenum, realIndex - (lineStart - 1));
 	}
 
@@ -205,11 +200,11 @@ public final class Tokenizer implements Iterator<String> {
 
 	/**
 	 * Returns whether the tokenizer has exceeded its searching region.
+	 * 
 	 * @return whether the tokenizer has exceeded its searching region.
 	 */
 	private final boolean regionExceeded() {
-		return this.currentState.regionEnd < Math.max(this.currentState.start, this.currentState.end)
-				|| this.currentState.regionStart > Math.min(this.currentState.start, this.currentState.end);
+		return this.currentState.regionEnd < Math.max(this.currentState.start, this.currentState.end) || this.currentState.regionStart > Math.min(this.currentState.start, this.currentState.end);
 	}
 
 	/**
@@ -224,9 +219,8 @@ public final class Tokenizer implements Iterator<String> {
 	/**
 	 * Performs region- and state-safe find on the matcher from the given index.
 	 * 
-	 * @param advance Whether to actually store the new findings. hasNext(), for
-	 *                example, will set this to false to not change the state on
-	 *                repeated invocations.
+	 * @param advance Whether to actually store the new findings. hasNext(), for example, will set this to false to not
+	 *                   change the state on repeated invocations.
 	 */
 	private final boolean findNextToken(boolean advance) {
 		if (this.regionExceeded())
@@ -262,8 +256,7 @@ public final class Tokenizer implements Iterator<String> {
 	}
 
 	/**
-	 * Finds and returns the next token, or an empty string if there is no next
-	 * token.
+	 * Finds and returns the next token, or an empty string if there is no next token.
 	 * 
 	 * @return the next token, or an empty string if there is no next token.
 	 */

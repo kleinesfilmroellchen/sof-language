@@ -14,7 +14,7 @@ public final class IntPrimitive extends Primitive {
    private static final long serialVersionUID = 1L;
 
    /** The long that is represented by this primitive. */
-   private long value;
+   private long              value;
 
    private IntPrimitive(Long v) {
       this.value = v;
@@ -22,6 +22,7 @@ public final class IntPrimitive extends Primitive {
 
    /**
     * Create a new integer primitive.
+    * 
     * @param value The integer to create the primitive from.
     * @return A new integer primitive with the given value.
     */
@@ -36,6 +37,7 @@ public final class IntPrimitive extends Primitive {
 
    /**
     * Returns the value represented by this primitive.
+    * 
     * @return the value represented by this primitive.
     */
    public final Long value() {
@@ -43,11 +45,9 @@ public final class IntPrimitive extends Primitive {
    }
 
    /**
-    * Helper method to create an integer primitive from a string that is a valid
-    * integer literal according to SOF specs.
+    * Helper method to create an integer primitive from a string that is a valid integer literal according to SOF specs.
     * 
-    * @param integerString The string that only contains the integer in text
-    *                      format, to be converted.
+    * @param integerString The string that only contains the integer in text format, to be converted.
     * @return a new IntPrimitive with the parsed integer value.
     * @throws IncompleteCompilerException If the string does not represent a valid integer.
     */
@@ -70,11 +70,11 @@ public final class IntPrimitive extends Primitive {
       if (integerString.charAt(0) == '0') {
          char base = integerString.charAt(1);
          radix = switch (base) {
-            case 'b' ->       2;
-            case 'o' ->       8;
-            case 'd' ->      10;
-            case 'h', 'x' -> 16;
-            default -> throw new IncompleteCompilerException("syntax", "syntax.integer", integerString);
+         case 'b' -> 2;
+         case 'o' -> 8;
+         case 'd' -> 10;
+         case 'h', 'x' -> 16;
+         default -> throw new IncompleteCompilerException("syntax", "syntax.integer", integerString);
          };
          integerString = integerString.substring(2);
       }
@@ -91,12 +91,13 @@ public final class IntPrimitive extends Primitive {
       return new IntPrimitive(value * sign);
    }
 
-	/**
-	 * Execute optimized arithmetic add.
-	 * @param other The int to add.
-	 * @return The sum of this int and the other.
-	 * @see BuiltinOperations#add(Stackable, Stackable)
-	 */
+   /**
+    * Execute optimized arithmetic add.
+    * 
+    * @param other The int to add.
+    * @return The sum of this int and the other.
+    * @see BuiltinOperations#add(Stackable, Stackable)
+    */
    public final IntPrimitive add(IntPrimitive other) {
       if (this.value == 0)
          return other;
@@ -105,45 +106,49 @@ public final class IntPrimitive extends Primitive {
       return createIntPrimitive(this.value + other.value);
    }
 
-	/**
-	 * Execute optimized arithmetic divide.
-	 * @param other The int to divide.
-	 * @return {@code this / other}
-	 * @see BuiltinOperations#divide(Stackable, Stackable)
-	 */
+   /**
+    * Execute optimized arithmetic divide.
+    * 
+    * @param other The int to divide.
+    * @return {@code this / other}
+    * @see BuiltinOperations#divide(Stackable, Stackable)
+    */
    public final IntPrimitive divide(IntPrimitive other) throws ArithmeticException {
       return createIntPrimitive(this.value / other.value);
    }
-   
-	/**
-	 * Execute optimized arithmetic modulus.
-	 * @param other The int to modulus with.
-	 * @return {@code this % other}
-	 * @see BuiltinOperations#modulus(Stackable, Stackable)
-	 */
-	public final IntPrimitive modulus(IntPrimitive other) throws ArithmeticException {
-		if (other.value == 0) {
-			throw new ArithmeticException(String.format("Modulus by zero: %f mod %f", this.value, other.value));
-		}
-		return this.value == 0 ? this : createIntPrimitive(this.value % other.value);
-	}
 
-	/**
-	 * Execute optimized arithmetic multiply.
-	 * @param other The int to multiply.
-	 * @return {@code this * other}
-	 * @see BuiltinOperations#multiply(Stackable, Stackable)
-	 */
+   /**
+    * Execute optimized arithmetic modulus.
+    * 
+    * @param other The int to modulus with.
+    * @return {@code this % other}
+    * @see BuiltinOperations#modulus(Stackable, Stackable)
+    */
+   public final IntPrimitive modulus(IntPrimitive other) throws ArithmeticException {
+      if (other.value == 0) {
+         throw new ArithmeticException(String.format("Modulus by zero: %f mod %f", this.value, other.value));
+      }
+      return this.value == 0 ? this : createIntPrimitive(this.value % other.value);
+   }
+
+   /**
+    * Execute optimized arithmetic multiply.
+    * 
+    * @param other The int to multiply.
+    * @return {@code this * other}
+    * @see BuiltinOperations#multiply(Stackable, Stackable)
+    */
    public final IntPrimitive multiply(IntPrimitive other) {
       return this.value == 1 ? other : (other.value == 1 ? this : createIntPrimitive(this.value * other.value));
    }
 
-	/**
-	 * Execute optimized arithmetic subtract.
-	 * @param other The int to subtract.
-	 * @return {@code this - other}
-	 * @see BuiltinOperations#subtract(Stackable, Stackable)
-	 */
+   /**
+    * Execute optimized arithmetic subtract.
+    * 
+    * @param other The int to subtract.
+    * @return {@code this - other}
+    * @see BuiltinOperations#subtract(Stackable, Stackable)
+    */
    public final IntPrimitive subtract(IntPrimitive other) {
       if (other.value == 0)
          return this;
