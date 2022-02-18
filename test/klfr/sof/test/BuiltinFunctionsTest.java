@@ -163,7 +163,7 @@ class BuiltinFunctionsTest extends SofTestSuper {
 	@DisplayName("Test Callable conversion function")
 	void testConvertCallable() {
 		final var cb = new CodeBlock(new TokenListNode(List.of(), 0, new SOFFile(new File("."), "mock", null)));
-		final var function = Function.fromCodeBlock(cb, 0);
+		final var function = Function.fromCodeBlock(cb, 0, new Nametable());
 		final var cbAgain = assertDoesNotThrow(() -> Builtins.convertCallable(cb));
 		assertEquals(cb, cbAgain);
 		final var functionAgain = assertDoesNotThrow(() -> Builtins.convertCallable(function));

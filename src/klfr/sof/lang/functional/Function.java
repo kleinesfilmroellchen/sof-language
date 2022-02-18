@@ -17,14 +17,22 @@ public class Function extends CodeBlock {
 	public final long				arguments;
 
 	/**
+	 * The global nametable of the global scope that this function was created in. This is especially relevant for module
+	 * functions.
+	 */
+	protected final Nametable	globalNametable;
+
+	/**
 	 * Create a function with this code, with given numbers of arguments.
 	 * 
-	 * @param code      code of the function
-	 * @param arguments number of arguments the function recieves
+	 * @param code            code of the function
+	 * @param arguments       number of arguments the function recieves
+	 * @param globalNametable global nametable of the function's global scope.
 	 */
-	public Function(TokenListNode code, long arguments) {
+	public Function(TokenListNode code, long arguments, Nametable globalNametable) {
 		super(code);
 		this.arguments = arguments;
+		this.globalNametable = globalNametable;
 	}
 
 	@Override
@@ -41,12 +49,13 @@ public class Function extends CodeBlock {
 	 * Create a new SOF function based on the given code block. This is a utility for the interpreter because functions in
 	 * SOF programming are created from code blocks.
 	 * 
-	 * @param origin    The code block whose code is to be copied as this function's behavior.
-	 * @param arguments The number of arguments to this function.
+	 * @param origin          The code block whose code is to be copied as this function's behavior.
+	 * @param arguments       The number of arguments to this function.
+	 * @param globalNametable global nametable of the function's global scope.
 	 * @return A new SOF function with the given code block tokens as the behavior and the given number of arguments.
 	 */
-	public static Function fromCodeBlock(CodeBlock origin, int arguments) {
-		return new Function(origin.code, arguments);
+	public static Function fromCodeBlock(CodeBlock origin, int arguments, Nametable globalNametable) {
+		return new Function(origin.code, arguments, globalNametable);
 	}
 
 	@Override
@@ -56,7 +65,7 @@ public class Function extends CodeBlock {
 
 	@Override
 	public Stackable clone() {
-		return new Function(this.code, this.arguments);
+		return new Function(this.code, this.arguments, this.globalNametable);
 	}
 
 	@Override

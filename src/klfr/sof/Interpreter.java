@@ -492,14 +492,14 @@ public class Interpreter implements Serializable {
 		case Function: {
 			final var argcount = this.stack.popTyped(IntPrimitive.class);
 			final var code = this.stack.popTyped(CodeBlock.class).code;
-			this.stack.push(new Function(code, argcount.value()));
+			this.stack.push(new Function(code, argcount.value(), this.stack.globalNametable()));
 			return true;
 		}
 		case Constructor: {
 			// similar to normal function code above
 			final var argcount = this.stack.popTyped(IntPrimitive.class);
 			final var code = this.stack.popTyped(CodeBlock.class).code;
-			this.stack.push(new ConstructorFunction(code, argcount.value()));
+			this.stack.push(new ConstructorFunction(code, argcount.value(), this.stack.globalNametable()));
 			return true;
 		}
 		case Return: {
@@ -737,7 +737,7 @@ public class Interpreter implements Serializable {
 			}
 			// This function is curried; we create a proxy for it.
 			else {
-				final var curriedFunction = new CurriedFunction(function, args);
+				final var curriedFunction = new CurriedFunction(function, args, this.stack.globalNametable());
 				this.stack.push(curriedFunction);
 				return true;
 			}

@@ -26,9 +26,11 @@ public class PrintTests extends SofTestSuper {
 	@TestFactory
 	Stream<DynamicTest> testPrintStackables() throws SOFException {
 		final var codeBlock = new CodeBlock(new TokenListNode(List.of(), 12, new SOFFile(null, "source", null)));
-		return List.of(new Nametable(), new Identifier("identifier"), new TransparentData(TransparentType.CurryPipe), IntPrimitive.createIntPrimitive(42l), FloatPrimitive.createFloatPrimitive(20.4d), BoolPrimitive.createBoolPrimitive(true),
-				new Object(), new ListPrimitive(List.of(new Identifier("blah"), new Identifier("blah2"))), new FunctionDelimiter(), new MethodDelimiter(), Function.fromCodeBlock(codeBlock, 3), codeBlock,
-				StringPrimitive.createStringPrimitive("string"), new CurriedFunction(Function.fromCodeBlock(codeBlock, 6), List.of(new Identifier("moreblah")))).stream().map(object -> dynamicTest(object.typename(), () -> {
+		return List
+				.of(new Nametable(), new Identifier("identifier"), new TransparentData(TransparentType.CurryPipe), IntPrimitive.createIntPrimitive(42l), FloatPrimitive.createFloatPrimitive(20.4d), BoolPrimitive.createBoolPrimitive(true),
+						new Object(), new ListPrimitive(List.of(new Identifier("blah"), new Identifier("blah2"))), new FunctionDelimiter(), new MethodDelimiter(), Function.fromCodeBlock(codeBlock, 3, new Nametable()), codeBlock,
+						StringPrimitive.createStringPrimitive("string"), new CurriedFunction(Function.fromCodeBlock(codeBlock, 6, new Nametable()), List.of(new Identifier("moreblah")), new Nametable()))
+				.stream().map(object -> dynamicTest(object.typename(), () -> {
 					for (final var extensiveness : new DebugStringExtensiveness[] { DebugStringExtensiveness.Full, DebugStringExtensiveness.Compact, DebugStringExtensiveness.Type })
 						assertDoesNotThrow(() -> object.toDebugString(extensiveness));
 					assertDoesNotThrow(() -> object.print());

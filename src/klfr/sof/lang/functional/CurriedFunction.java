@@ -25,9 +25,10 @@ public class CurriedFunction extends Function {
 	 * @param base             The function that is curried.
 	 * @param curriedArguments The arguments that are curried to the function, in the order that they are supposed to be
 	 *                            passed to the function.
+	 * @param globalNametable  global nametable of the function's global scope.
 	 */
-	public CurriedFunction(Function base, List<Stackable> curriedArguments) {
-		super(base.code, base.arguments - curriedArguments.size());
+	public CurriedFunction(Function base, List<Stackable> curriedArguments, Nametable globalNametable) {
+		super(base.code, base.arguments - curriedArguments.size(), globalNametable);
 		this.curriedArguments = curriedArguments;
 	}
 
@@ -46,7 +47,7 @@ public class CurriedFunction extends Function {
 	 * @return The regular function beneath this curried function.
 	 */
 	public final Function getRegularFunction() {
-		return new Function(this.code, this.arguments + this.curriedArguments.size());
+		return new Function(this.code, this.arguments + this.curriedArguments.size(), this.globalNametable);
 	}
 
 	@Override
@@ -66,7 +67,7 @@ public class CurriedFunction extends Function {
 
 	@Override
 	public Stackable clone() {
-		return new CurriedFunction(this, curriedArguments);
+		return new CurriedFunction(this, curriedArguments, globalNametable);
 	}
 
 	@Override
