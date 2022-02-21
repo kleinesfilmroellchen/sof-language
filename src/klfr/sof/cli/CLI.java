@@ -196,7 +196,7 @@ public final class CLI {
 						codeUnit = Parser.parse(new File("<stdin>"), Preprocessor.preprocessCode(code));
 					} catch (CompilerException e) {
 						// give the user more lines to possibly fix the syntax error
-						while (true) {
+						while (scanner.hasNextLine()) {
 							io.print("... ");
 							final var nl = scanner.nextLine();
 							// end on blank line

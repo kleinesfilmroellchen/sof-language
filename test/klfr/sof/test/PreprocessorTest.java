@@ -19,6 +19,9 @@ class PreprocessorTest extends SofTestSuper {
 				Preprocessor.preprocessCode("abc def ghi jkl #* a multiline comment\nand a newline\nand another one*#\nthis comes after the blockcomment"));
 		assertEquals("abc \" def # here is no comment\" ghi\n", Preprocessor.preprocessCode("abc \" def # here is no comment\" ghi\n"));
 		assertEquals("abc \" def # here is no comment\"\n                                \n", Preprocessor.preprocessCode("abc \" def # here is no comment\"\n#but here is one \" with strings.\n"));
+		assertEquals("abc def ghi jkl                          \nand a newline", Preprocessor.preprocessCode("abc def ghi jkl #* a multiline comment *#\nand a newline"));
+		assertEquals("abc def ghi jkl                       \n                plus something after it", Preprocessor.preprocessCode("abc def ghi jkl #* a multiline comment\nand a newline*# plus something after it"));
+
 	}
 
 	@DisplayName("Test Preprocessor.indexOfMatching()")

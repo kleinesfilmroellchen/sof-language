@@ -4,6 +4,10 @@
 { "correct" } true if
 "correct" = assert
 
+"correct"
+{ "incorrect" } false if
+"correct" = assert
+
 { true assert } true
 { false assert } ifelse
 
@@ -16,6 +20,8 @@ i . 30 = assert
 
 # a false condition should not execute the while body
 0 { false assert } { false } while
+# ...which is not the case with do-while
+false { true } { false } dowhile assert
 
 switch:: {
 	false assert

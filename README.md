@@ -8,7 +8,7 @@ An experimental fully stack-based reverse-polish-notation functional and object-
 
 **This is an experimental programming language.** If you cause a nuclear war and the inevitable destruction of mankind by using this software, I am not to blame.
 
-SOF is written in Java 16 and requires org.reflections and java.logging to run. It leverages the module system (you may use it in your project as well!) and uses JUnit Jupiter for testing (currently) about 78% of the codebase.
+SOF is written in Java 16 and requires org.reflections and java.logging to run. It leverages the module system (you may use it in your project as well!) and uses JUnit Jupiter for testing (currently) about 85% of the codebase.
 
 ### Installation and CLI Usage
 

@@ -8,6 +8,7 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import klfr.Tuple;
 import klfr.sof.SOFFile;
 import klfr.sof.cli.Options;
 import klfr.sof.exceptions.*;
@@ -91,6 +92,22 @@ class SmallClassesTests extends SofTestSuper {
 		assertTrue(clone.identifiers().contains(id));
 		assertTrue(nt.hasMapping(id));
 		assertFalse(nt.hasMapping(new Identifier("zzz")));
+	}
+
+	@DisplayName("Tuple")
+	@Test
+	void testTuple() throws CloneNotSupportedException {
+		final var tuple = new Tuple<String, Integer>("blah", 2);
+		assertEquals(tuple, tuple.clone());
+		assertEquals(tuple, (Object)tuple.clone());
+		assertNotEquals(tuple, 6);
+		assertEquals(tuple.hashCode(), tuple.clone().hashCode());
+		assertDoesNotThrow(() -> tuple.toString());
+
+		assertEquals("blah", tuple.iterator().next());
+		for (final var element: tuple) {
+			assertNotEquals(null, element);
+		}
 	}
 }
 

@@ -3,7 +3,12 @@ package klfr.sof.test;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.io.StringReader;
+import java.io.StringWriter;
+
+import klfr.sof.IOInterface;
 import klfr.sof.cli.*;
+import klfr.sof.exceptions.*;
 
 @DisplayName("Test SOF's command line interface")
 class CLITests extends SofTestSuper {
@@ -17,6 +22,8 @@ class CLITests extends SofTestSuper {
 		assertTrue((Options.parseOptions(new String[] { "--performance" }).flags & Options.PERFORMANCE) != 0);
 
 		assertTrue((Options.parseOptions(new String[] { "-pd" }).flags & (Options.ONLY_PREPROCESSOR | Options.DEBUG)) != 0);
+		assertThrows(IllegalArgumentException.class, () -> Options.parseOptions(new String[] { "-k" }));
+		assertThrows(IllegalArgumentException.class, () -> Options.parseOptions(new String[] { "-c", "command", "-k" }));
 	}
 
 	@DisplayName("Test CLI options execution type")
@@ -35,6 +42,7 @@ class CLITests extends SofTestSuper {
 		assertEquals("no code", Options.parseOptions(new String[] { "-c", "no code" }).executionStrings.get(0));
 		assertEquals("./a/path.sof", Options.parseOptions(new String[] { "./a/path.sof" }).executionStrings.get(0));
 		assertTrue(Options.parseOptions(new String[] { "--help" }).executionStrings.isEmpty());
+		assertThrows(IllegalArgumentException.class, () -> Options.parseOptions(new String[] { "-c" }));
 	}
 
 	@DisplayName("Test CLI library option")
@@ -43,6 +51,52 @@ class CLITests extends SofTestSuper {
 		assertTrue(Options.parseOptions(new String[] { "--library", "library" }).overrideLibraryPath.isPresent());
 		assertFalse(Options.parseOptions(new String[] { "--help" }).overrideLibraryPath.isPresent());
 		assertEquals("library", Options.parseOptions(new String[] { "--library", "library" }).overrideLibraryPath.get());
+		assertThrows(IllegalArgumentException.class, () -> Options.parseOptions(new String[] { "--library" }));
+	}
+
+	@DisplayName("Test CLI runSOF")
+	@Test
+	void testRunSOF() {
+		final var io = new IOInterface(System.in, System.out);
+		assertDoesNotThrow(() -> CLI.runSOF(Options.parseOptions(new String[] { "-c", "1 2 + 3 = assert" }), io));
+		assertDoesNotThrow(() -> CLI.runSOF(Options.parseOptions(new String[] { "-d", "-c", "1 2 + 3 = assert" }), io));
+		assertThrows(CompilerException.class, () -> CLI.runSOF(Options.parseOptions(new String[] { "-c", "1 2 + 3 /= assert" }), io));
+		assertThrows(CompilerException.class, () -> CLI.runSOF(Options.parseOptions(new String[] { "-c", "1 2this is not valid code" }), io));
+		assertThrows(CompilerException.class, () -> CLI.runSOF(Options.parseOptions(new String[] { "-c", "1 { missing brace" }), io));
+
+		assertDoesNotThrow(() -> CLI.runSOF(Options.parseOptions(new String[] { "-P", "-c", "valid non preprocessed code" }), io));
+		assertThrows(CompilerException.class, () -> CLI.runSOF(Options.parseOptions(new String[] { "-P", "-c", "# invalid non preprocessed code" }), io));
+
+		assertDoesNotThrow(() -> CLI.runSOF(Options.parseOptions(new String[] { LanguageTests.SOURCE_FOLDER + "boolean.sof" }), io));
+		assertDoesNotThrow(() -> CLI.runSOF(Options.parseOptions(new String[] { "-p", LanguageTests.SOURCE_FOLDER + "boolean.sof" }), io));
+
+		final var interactiveIO = new IOInterface(new StringReader("true assert\n1 blah blah\n { incomplete line\nfinished here }\n\n"), new StringWriter());
+		assertDoesNotThrow(() -> CLI.runSOF(Options.parseOptions(new String[] {}), interactiveIO));
+		final var invalidInteractiveIO = new IOInterface(new StringReader("2bad code \""), new StringWriter());
+		assertDoesNotThrow(() -> CLI.runSOF(Options.parseOptions(new String[] {}), invalidInteractiveIO));
+
+		assertDoesNotThrow(() -> CLI.runSOF(Options.parseOptions(new String[] { "-h" }), io));
+		assertDoesNotThrow(() -> CLI.runSOF(Options.parseOptions(new String[] { "-v" }), io));
+	}
+
+	@DisplayName("Test program main")
+	@Test
+	void testMain() {
+		final var io = new IOInterface(System.in, System.out);
+		assertDoesNotThrow(() -> CLI.main(new String[] { "-c", "1 2 + 3 = assert" }));
+		assertDoesNotThrow(() -> CLI.main(new String[] { "-d", "-c", "1 2 + 3 = assert" }));
+		assertDoesNotThrow(() -> CLI.main(new String[] { "-c", "1 2 + 3 /= assert" }));
+		assertDoesNotThrow(() -> CLI.main(new String[] { "-c", "1 2this is not valid code" }));
+		assertDoesNotThrow(() -> CLI.main(new String[] { "-c", "1 { missing brace" }));
+
+		assertDoesNotThrow(() -> CLI.main(new String[] { "-P", "-c", "valid non preprocessed code" }));
+		assertDoesNotThrow(() -> CLI.main(new String[] { "-P", "-c", "# invalid non preprocessed code" }));
+
+		assertDoesNotThrow(() -> CLI.main(new String[] { LanguageTests.SOURCE_FOLDER + "boolean.sof" }));
+		assertDoesNotThrow(() -> CLI.main(new String[] { "-p", LanguageTests.SOURCE_FOLDER + "boolean.sof" }));
+
+		assertDoesNotThrow(() -> CLI.main(new String[] { "-h" }));
+		assertDoesNotThrow(() -> CLI.main(new String[] { "-v" }));
 	}
 }
 

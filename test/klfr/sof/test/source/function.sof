@@ -22,6 +22,12 @@ test : 42 = assert
 { true return false return } 0 function test globaldef
 test : assert
 
+# return nothing
+true { false return:0 } 0 function test globaldef
+test : assert
+false { true return:0 true return } 0 function test globaldef
+test : not assert
+
 # although not done in the above tests, a function can be called directly
 "string" { true return } 0 function . assert
 "string" = assert
