@@ -67,7 +67,7 @@ public final class CompilerException extends SOFException {
 	 *                           arguments are required.
 	 * @return nicely formatted multi-line string
 	 */
-	public static CompilerException from(String filename, Tokenizer expressionInfo, String name, String reason, final Object... formatArguments) {
+	public static CompilerException fromTokenizer(String filename, Tokenizer expressionInfo, String name, String reason, final Object... formatArguments) {
 		// setting the AST of this to null is fine because it is never read
 		SOFFile file = new SOFFile(new File(filename), expressionInfo.getCode(), null);
 		return new CompilerException(file, expressionInfo.start(), name, reason, formatArguments);
@@ -97,8 +97,8 @@ public final class CompilerException extends SOFException {
 	 * @param cause          The cause of this exception, an instance of the stub class {@link IncompleteCompilerException}
 	 * @return The newly constructed compiler exception.
 	 */
-	public static CompilerException fromIncomplete(Tokenizer expressionInfo, IncompleteCompilerException cause) {
-		final var exc = from("<unknown>", expressionInfo, cause.nameKey, cause.explanationKey, cause.formatArguments);
+	public static CompilerException fromIncompleteAndTokenizer(Tokenizer expressionInfo, IncompleteCompilerException cause) {
+		final var exc = fromTokenizer("<unknown>", expressionInfo, cause.nameKey, cause.explanationKey, cause.formatArguments);
 		exc.initCause(cause);
 		return exc;
 	}

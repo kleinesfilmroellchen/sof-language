@@ -72,7 +72,7 @@ public final class Parser {
 					log.finest(() -> String.format("Code block start token @ %4d", tokenizer.start()));
 					final var endPos = Preprocessor.indexOfMatching(tokenizer.getCode(), tokenizer.start(), Patterns.codeBlockStartPattern, Patterns.codeBlockEndPattern) - 1;
 					if (endPos < 0) {
-						throw CompilerException.from(source.sourceFile().getPath(), tokenizer, "syntax", "syntax.codeblock");
+						throw CompilerException.fromTokenizer(source.sourceFile().getPath(), tokenizer, "syntax", "syntax.codeblock");
 					}
 					final Node cbParsed = parse(source, tokenizer.start() + 1, endPos);
 					tokens.add(cbParsed);
@@ -114,10 +114,10 @@ public final class Parser {
 					log.finest(() -> String.format("Transparent token %30s @ %4d", token, tokenizer.start()));
 					tokens.add(new LiteralNode(new TransparentData(TransparentData.TransparentType.fromSymbol(token)), tokenizer.start(), source));
 				} else
-					throw CompilerException.from(source.sourceFile().getPath(), tokenizer, "syntax", null);
+					throw CompilerException.fromTokenizer(source.sourceFile().getPath(), tokenizer, "syntax", null);
 
 			} catch (final IncompleteCompilerException e) {
-				throw CompilerException.fromIncomplete(tokenizer, e);
+				throw CompilerException.fromIncompleteAndTokenizer(tokenizer, e);
 			}
 		}
 
