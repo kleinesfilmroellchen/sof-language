@@ -173,6 +173,62 @@ public final class BuiltinOperations {
 	}
 
 	/**
+	 * Arbitrary-type left bit shift in SOF. Both types are converted to integers beforehand.
+	 * 
+	 * @param a The number to be shifted.
+	 * @param b The shift amount.
+	 * @return {@code a << b}
+	 * @throws IncompleteCompilerException If the types cannot be used in a bit shift.
+	 */
+	public static final Stackable bitShiftLeft(Stackable a, Stackable b) throws IncompleteCompilerException {
+		Long ia = null;
+		if (a instanceof FloatPrimitive fa) {
+			ia = fa.value().longValue();
+		} else if (a instanceof IntPrimitive ia_) {
+			ia = ia_.value();
+		}
+		Long ib = null;
+		if (b instanceof FloatPrimitive fb) {
+			ib = fb.value().longValue();
+		} else if (b instanceof IntPrimitive ib_) {
+			ib = ib_.value();
+		}
+		if (ib == null | ia == null) {
+			throw new IncompleteCompilerException("type", "type.bitshift", a.typename(), b.typename());
+		}
+
+		return IntPrimitive.createIntPrimitive(ia << ib);
+	}
+
+	/**
+	 * Arbitrary-type right bit shift in SOF. Both types are converted to integers beforehand.
+	 * 
+	 * @param a The number to be shifted.
+	 * @param b The shift amount.
+	 * @return {@code a >> b}
+	 * @throws IncompleteCompilerException If the types cannot be used in a bit shift.
+	 */
+	public static final Stackable bitShiftRight(Stackable a, Stackable b) throws IncompleteCompilerException {
+		Long ia = null;
+		if (a instanceof FloatPrimitive fa) {
+			ia = fa.value().longValue();
+		} else if (a instanceof IntPrimitive ia_) {
+			ia = ia_.value();
+		}
+		Long ib = null;
+		if (b instanceof FloatPrimitive fb) {
+			ib = fb.value().longValue();
+		} else if (b instanceof IntPrimitive ib_) {
+			ib = ib_.value();
+		}
+		if (ib == null | ia == null) {
+			throw new IncompleteCompilerException("type", "type.bitshift", a.typename(), b.typename());
+		}
+
+		return IntPrimitive.createIntPrimitive(ia >> ib);
+	}
+
+	/**
 	 * Arbitrary-type logical AND (∧) in SOF.
 	 * 
 	 * @param a The first argument to the and.

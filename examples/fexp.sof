@@ -8,8 +8,7 @@
 	base . modulus . % base def
 	{
 		{ result . base . * modulus . % result def } exponent . 2 % 1 = if
-		# TODO: implement bit shifting
-		exponent . 2 / exponent def
+		exponent . 1 >> exponent def
 		base . dup * modulus . % base def
 	} { exponent . 0 > } while
 	
@@ -17,3 +16,4 @@
 } 3 function modularPow globaldef
 
 "Enter m, e, b: " write input convert:int : input convert:int : input convert:int : modularPow : writeln
+# 0 i def { 497 13 4 modularPow : } { i 1 + i . 1000 < } while

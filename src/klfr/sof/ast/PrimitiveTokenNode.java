@@ -28,6 +28,11 @@ public final class PrimitiveTokenNode extends Node {
 		/** The <code>%</code> primitive token. */
 		Modulus("%"),
 
+		/** The {@code <<} primitive token. */
+		BitShiftLeft("<<"),
+		/** The {@code >>} primitive token. */
+		BitShiftRight(">>"),
+
 		/** The <code>cat</code> primitive token. */
 		Concatenate("cat"),
 

@@ -275,6 +275,14 @@ public class Interpreter implements Serializable {
 			doBinaryOperation(BuiltinOperations::modulus);
 			return true;
 		}
+		case BitShiftLeft: {
+			doBinaryOperation(BuiltinOperations::bitShiftLeft);
+			return true;
+		}
+		case BitShiftRight: {
+			doBinaryOperation(BuiltinOperations::bitShiftRight);
+			return true;
+		}
 		case Concatenate: {
 			doBinaryOperation((a, b) -> StringPrimitive.createStringPrimitive(a.print() + b.print()));
 			return true;
