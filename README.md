@@ -1,4 +1,4 @@
-[![CodeQL](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/codeql-analysis.yml) [![Gradle CI & Tests](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/gradle.yml/badge.svg)](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/gradle.yml)
+[![CodeQL](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/codeql-analysis.yml) [![Gradle CI & Tests](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/gradle.yml/badge.svg)](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/gradle.yml) [![codecov](https://codecov.io/gh/kleinesfilmroellchen/sof-language/branch/master/graph/badge.svg?token=N0ZG8KO2IE)](https://codecov.io/gh/kleinesfilmroellchen/sof-language)
 
 # SOF - Stack with Objects and Functions
 
@@ -8,7 +8,7 @@ An experimental fully stack-based reverse-polish-notation functional and object-
 
 **This is an experimental programming language.** If you cause a nuclear war and the inevitable destruction of mankind by using this software, I am not to blame.
 
-SOF is written in Java 16 and requires org.reflections and java.logging to run. It leverages the module system (you may use it in your project as well!) and uses JUnit Jupiter for testing (currently) about 85% of the codebase.
+SOF is written in Java 16 and requires org.reflections and java.logging to run. It leverages the module system (you may use it in your project as well!) and uses JUnit Jupiter for testing the codebase. (See above for coverage reports as of the latest commit.)
 
 ### Installation and CLI Usage
 
