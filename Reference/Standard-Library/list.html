@@ -1,0 +1,229 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>list - SOF Programming Language Documentation</title>
+        <!-- Custom HTML head -->
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="../../favicon.svg">
+        <link rel="shortcut icon" href="../../favicon.png">
+        <link rel="stylesheet" href="../../css/variables.css">
+        <link rel="stylesheet" href="../../css/general.css">
+        <link rel="stylesheet" href="../../css/chrome.css">
+        <link rel="stylesheet" href="../../css/print.css" media="print">
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../../fonts/fonts.css">
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../../highlight.css">
+        <link rel="stylesheet" href="../../tomorrow-night.css">
+        <link rel="stylesheet" href="../../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../../Home.html">Home</a></li><li class="chapter-item expanded "><a href="../../Introduction.html"><strong aria-hidden="true">1.</strong> Getting Started</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../Introduction/Stack.html"><strong aria-hidden="true">1.1.</strong> The Stack</a></li><li class="chapter-item expanded "><a href="../../Introduction/Names-Errors.html"><strong aria-hidden="true">1.2.</strong> Names and Errors</a></li><li class="chapter-item expanded "><a href="../../Introduction/Functions.html"><strong aria-hidden="true">1.3.</strong> Functions</a></li></ol></li><li class="chapter-item expanded "><a href="../../Reference.html"><strong aria-hidden="true">2.</strong> Reference</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../Reference/Language-Specification.html"><strong aria-hidden="true">2.1.</strong> Language specification</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../Reference/Types.html"><strong aria-hidden="true">2.1.1.</strong> Types</a></li><li class="chapter-item expanded "><a href="../../Reference/PTs.html"><strong aria-hidden="true">2.1.2.</strong> Primitive Tokens</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../Reference/PTs/Arithmetic-Logic.html"><strong aria-hidden="true">2.1.2.1.</strong> Arithmetic</a></li><li class="chapter-item expanded "><a href="../../Reference/PTs/Control-flow.html"><strong aria-hidden="true">2.1.2.2.</strong> Control flow</a></li><li class="chapter-item expanded "><a href="../../Reference/PTs/Stack.html"><strong aria-hidden="true">2.1.2.3.</strong> Stack &amp; Naming</a></li><li class="chapter-item expanded "><a href="../../Reference/PTs/Functional.html"><strong aria-hidden="true">2.1.2.4.</strong> Functional</a></li><li class="chapter-item expanded "><a href="../../Reference/PTs/Typing.html"><strong aria-hidden="true">2.1.2.5.</strong> Typing</a></li><li class="chapter-item expanded "><a href="../../Reference/PTs/Modules.html"><strong aria-hidden="true">2.1.2.6.</strong> Modules</a></li></ol></li></ol></li><li class="chapter-item expanded "><a href="../../Reference/Builtin-functions.html"><strong aria-hidden="true">2.2.</strong> Built-in functions</a></li><li class="chapter-item expanded "><a href="../../Reference/Module-System.html"><strong aria-hidden="true">2.3.</strong> Module system</a></li><li class="chapter-item expanded "><a href="../../Reference/Standard-Library.html"><strong aria-hidden="true">2.4.</strong> Standard library</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../Reference/Standard-Library/math.html"><strong aria-hidden="true">2.4.1.</strong> math</a></li><li class="chapter-item expanded "><a href="../../Reference/Standard-Library/list.html" class="active"><strong aria-hidden="true">2.4.2.</strong> list</a></li></ol></li><li class="chapter-item expanded "><a href="../../Reference/Language-Internals.html"><strong aria-hidden="true">2.5.</strong> Language internals</a></li></ol></li><li class="chapter-item expanded "><a href="../../Programming-conventions.html"><strong aria-hidden="true">3.</strong> Programming conventions</a></li><li class="chapter-item expanded "><a href="../../Glossary.html"><strong aria-hidden="true">4.</strong> Glossary</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">SOF Programming Language Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="list-not-implemented"><a class="header" href="#list-not-implemented"><code>list</code> (Not implemented)</a></h1>
+<p>List functions are prefixed with <code>list_</code>; this prefix is omitted here. These functions are method-like functions to be called on a list.</p>
+<h2 id="element-index-into-a-list"><a class="header" href="#element-index-into-a-list"><code>element</code>: Index into a list</a></h2>
+<p><strong>Arguments</strong> &lt; list: List &lt; index: Integer</p>
+<p><strong>Return value</strong> &lt; element: the value at index <code>index</code> in the <code>list</code></p>
+<p>This function implements normal indexing into a list. Any element can be retrieved from a list by means of its index. Indices are zero-based as in most programming languages. This means that the first element in a list is referred to by an index of zero. Using a negative index will retrieve elements from the end of the list, i.e. an index of -1 refers to the last element of the list (disregarding its size), -2 to the second to last element and so on. This is very useful for list-size-independent indexing from the end.</p>
+<p>An index that would reach past the limits of the list throws an <code>IndexError</code>. The <code>element</code> function will always throw for empty lists. The indexing and throwing behavior is inherited by all list functions that take indices, unless noted otherwise.</p>
+<h2 id="length-length-of-a-list"><a class="header" href="#length-length-of-a-list"><code>length</code>: Length of a list</a></h2>
+<p><strong>Arguments</strong> &lt; list: List</p>
+<p><strong>Return value</strong> &lt; List length: Integer</p>
+<p>Returns the number of elements in the list, always nonnegative. Returns zero for the empty list.</p>
+<h2 id="head-first-element-of-a-list"><a class="header" href="#head-first-element-of-a-list"><code>head</code>: First element of a list</a></h2>
+<p><strong>Arguments</strong> &lt; list: List</p>
+<p><strong>Return value</strong> &lt; First element in the list: Any value</p>
+<p>This function returns the first value of the list. It throws <code>IndexError</code> if the list is empty.</p>
+<h2 id="tail-list-tail"><a class="header" href="#tail-list-tail"><code>tail</code>: List tail</a></h2>
+<p><strong>Arguments</strong> &lt; list: List</p>
+<p><strong>Return value</strong> &lt; The list's tail: List</p>
+<p>Returns a new list that has the first element of the old list removed. Together with <code>head</code>, it can be used to split a list into its first element and its remainder.</p>
+<p>Returns an empty list for the empty list.</p>
+<h2 id="reverse-reverse-a-list"><a class="header" href="#reverse-reverse-a-list"><code>reverse</code>: Reverse a list</a></h2>
+<p><strong>Arguments</strong> &lt; list: List</p>
+<p><strong>Return value</strong> &lt; The reverse of the list: List</p>
+<p>Returns a new list which has all the elements of the old list, but at inversed positions. For example, the last element is now the first and the second element is now the second-to-last.</p>
+<p>Returns the empty list for the empty list.</p>
+<h2 id="split-split-up-a-list"><a class="header" href="#split-split-up-a-list"><code>split</code>: Split up a list</a></h2>
+<p><strong>Arguments</strong> &lt; list: List &lt; index: Integer</p>
+<p><strong>Return value</strong> &lt; A two-element list with the first and second portion of the list, in that order.</p>
+<p>This function splits up a list into two halves. The first half contains all elements up to the index (including the element at the index), and the second half contains all elements after the index. The two halves are returned as a list containing two elements. It is a more efficient combination of the <code>take</code> and <code>after</code> functions.</p>
+<h2 id="take-first-n-elements-of-a-list"><a class="header" href="#take-first-n-elements-of-a-list"><code>take</code>: First n elements of a list</a></h2>
+<p><strong>Arguments</strong> &lt; list: List &lt; n: Integer</p>
+<p><strong>Return value</strong> &lt; List of length n: List</p>
+<p>Returns a new list that contains the elements of the given list up to the given index, exclusive. For positive n, this always means that the length of the new list is equal to n. Returns the empty list for n=0, returns the entire list if n is greater or equal the list's length.</p>
+<h2 id="after-elements-after-an-index"><a class="header" href="#after-elements-after-an-index"><code>after</code>: Elements after an index</a></h2>
+<p><strong>Arguments</strong> &lt; list: List &lt; n: Integer</p>
+<p><strong>Return value</strong> &lt; List with elmts after n: List</p>
+<p>Inverse of <code>take</code>; returns the elements that <code>take</code> dropped from the list. For positive n, this is equivalent to dropping the first n elements from the list, for negative n, it is equivalent to taking <code>|n|</code> elements from the end of the list (possibly the entire list if <code>|n| &gt; length(list)</code>. For n=0, the entire list is returned. For n greater than list length, the empty list is returned.</p>
+<h2 id="first-first-element-of-the-list"><a class="header" href="#first-first-element-of-the-list"><code>first</code>: First element of the list</a></h2>
+<p><strong>Arguments</strong> &lt; list: List</p>
+<p><strong>Return value</strong> &lt; element: Any value</p>
+<p>Returns the first element in the list, equivalent to <code>list 1 take</code>. This is intended for use with tuple-like lists.</p>
+<h2 id="second-second-element-of-a-list"><a class="header" href="#second-second-element-of-a-list"><code>second</code>: Second element of a list</a></h2>
+<p><strong>Arguments</strong> &lt; list: List</p>
+<p><strong>Return value</strong> &lt; second element: Any value</p>
+<p>Returns the second element of the list, similar to <code>fst</code>, and equivalent to <code>list 2 take</code>.</p>
+<h2 id="pair-create-a-tuple"><a class="header" href="#pair-create-a-tuple"><code>pair</code>: Create a tuple</a></h2>
+<p><strong>Arguments</strong> &lt; a: Any value &lt; b: Any value</p>
+<p><strong>Return value</strong> &lt; [ a, b ] : List</p>
+<p>Creates a two-element list from the two arguments. Main function for creating tuple-like lists (short lists of known length) and returning two values.</p>
+<h2 id="filter-filter-a-list"><a class="header" href="#filter-filter-a-list"><code>filter</code>: Filter a list</a></h2>
+<p><strong>Arguments</strong> &lt; list: List &lt; filter predicate: Callable</p>
+<p><strong>Return value</strong> &lt; filtered list: List</p>
+<p>This is the first of the higher-order list processing functions. <code>filter</code> takes a list and a callable. The callable is then provided with each element at a time in order (the element is placed on the stack and the callable is invoked, therefore at least both functions and codeblocks will work). For each element where the callable returns a truthy value, the element is retained in the resulting list. For each element where the callable returns a falsy value, the element is discarded. The result is a list where only the elements that the filtering function deemed necessary are retained.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../../Reference/Standard-Library/math.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                            <a rel="next" href="../../Reference/Language-Internals.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../../Reference/Standard-Library/math.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                    <a rel="next" href="../../Reference/Language-Internals.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        <script src="../../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../searcher.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+    </body>
+</html>

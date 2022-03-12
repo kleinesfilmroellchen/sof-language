@@ -1,0 +1,828 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>SOF Programming Language Documentation</title>
+        <meta name="robots" content="noindex" />
+        <!-- Custom HTML head -->
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="Home.html">Home</a></li><li class="chapter-item expanded "><a href="Introduction.html"><strong aria-hidden="true">1.</strong> Getting Started</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="Introduction/Stack.html"><strong aria-hidden="true">1.1.</strong> The Stack</a></li><li class="chapter-item expanded "><a href="Introduction/Names-Errors.html"><strong aria-hidden="true">1.2.</strong> Names and Errors</a></li><li class="chapter-item expanded "><a href="Introduction/Functions.html"><strong aria-hidden="true">1.3.</strong> Functions</a></li></ol></li><li class="chapter-item expanded "><a href="Reference.html"><strong aria-hidden="true">2.</strong> Reference</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="Reference/Language-Specification.html"><strong aria-hidden="true">2.1.</strong> Language specification</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="Reference/Types.html"><strong aria-hidden="true">2.1.1.</strong> Types</a></li><li class="chapter-item expanded "><a href="Reference/PTs.html"><strong aria-hidden="true">2.1.2.</strong> Primitive Tokens</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="Reference/PTs/Arithmetic-Logic.html"><strong aria-hidden="true">2.1.2.1.</strong> Arithmetic</a></li><li class="chapter-item expanded "><a href="Reference/PTs/Control-flow.html"><strong aria-hidden="true">2.1.2.2.</strong> Control flow</a></li><li class="chapter-item expanded "><a href="Reference/PTs/Stack.html"><strong aria-hidden="true">2.1.2.3.</strong> Stack &amp; Naming</a></li><li class="chapter-item expanded "><a href="Reference/PTs/Functional.html"><strong aria-hidden="true">2.1.2.4.</strong> Functional</a></li><li class="chapter-item expanded "><a href="Reference/PTs/Typing.html"><strong aria-hidden="true">2.1.2.5.</strong> Typing</a></li><li class="chapter-item expanded "><a href="Reference/PTs/Modules.html"><strong aria-hidden="true">2.1.2.6.</strong> Modules</a></li></ol></li></ol></li><li class="chapter-item expanded "><a href="Reference/Builtin-functions.html"><strong aria-hidden="true">2.2.</strong> Built-in functions</a></li><li class="chapter-item expanded "><a href="Reference/Module-System.html"><strong aria-hidden="true">2.3.</strong> Module system</a></li><li class="chapter-item expanded "><a href="Reference/Standard-Library.html"><strong aria-hidden="true">2.4.</strong> Standard library</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="Reference/Standard-Library/math.html"><strong aria-hidden="true">2.4.1.</strong> math</a></li><li class="chapter-item expanded "><a href="Reference/Standard-Library/list.html"><strong aria-hidden="true">2.4.2.</strong> list</a></li></ol></li><li class="chapter-item expanded "><a href="Reference/Language-Internals.html"><strong aria-hidden="true">2.5.</strong> Language internals</a></li></ol></li><li class="chapter-item expanded "><a href="Programming-conventions.html"><strong aria-hidden="true">3.</strong> Programming conventions</a></li><li class="chapter-item expanded "><a href="Glossary.html"><strong aria-hidden="true">4.</strong> Glossary</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">SOF Programming Language Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="welcome-to-the-sof-programming-language-documentation"><a class="header" href="#welcome-to-the-sof-programming-language-documentation">Welcome to the SOF Programming Language documentation!</a></h1>
+<p>This documentation details the Stack with Objects and Functions programming language, an experimental stack-based reverse-polish-notation functional programming language created by kleines Filmröllchen.</p>
+<ul>
+<li><a href="https://github.com/kleinesfilmroellchen/sof-language">Source code</a></li>
+</ul>
+<p>While the README is comprehensive on basic concepts and a good starting point for interested people (like you), the docs shall provide the most thorough information on SOF, including a full language description/specification and a from-scratch tutorial (no programming knowledge required).</p>
+<p>This documentation, like all of SOF, is a Work In Progress (WIP). As much as possible, non-implemented features are marked as such. It is licensed under <a href="https://www.gnu.org/licenses/fdl-1.3">GNU FDL 1.3</a>.</p>
+<h2 id="license"><a class="header" href="#license">License</a></h2>
+<p>Copyright (C) 2019-2021 kleines Filmröllchen.
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3
+or any later version published by the Free Software Foundation;
+with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
+A copy of the license is included in the section entitled &quot;GNU
+Free Documentation License&quot;.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h1>
+<p>This section is a tutorial and a more user-focused guide of SOF's features. It's recommended that you have some experience programming in common paradigms (imperative/OOP, functional).</p>
+<h2 id="basics"><a class="header" href="#basics">Basics</a></h2>
+<p>SOF is an interpreted language. Use the installation steps described in the <a href="https://github.com/kleinesfilmroellchen/sof-language/blob/master/README.md">Readme</a> to install SOF and launch the REPL interpreter. Note that the results of programs you typed in might not be visible; they are probably placed on the stack. This is different to a lot of REPL interpreters (such as Python or JavaShell), which print the result of the last expression, whether you put in a <code>println</code> or not. I recommend typing along with this tutorial and modifying the examples in your own creative ways to learn more about things are done in SOF. All example code shows the input and output of the interpreter, where <code>&gt;&gt;&gt;</code> is a user input line, <code>...</code> is a input continuation line and <code>!!!</code> is an error information starting line.</p>
+<p>Let's get the <a href="https://en.wikipedia.org/wiki/%22Hello,_World!%22_program">Hello World</a> out of the way:</p>
+<pre><code class="language-sof">&gt;&gt;&gt; &quot;Hello, world!&quot; writeln
+Hello, world!
+</code></pre>
+<p>This introduces both string literals (double quotes, escape sequences coming soon!) as well as the most basic I/O command: <code>writeln</code>, which takes a string and prints it to standard output, ending the line. Most languages call this command <code>println</code>, a leftover term from when such a command would actually instruct a printer to print the text on paper. But I'm getting off track here.</p>
+<p>You may have noticed something weird here. Don't believe me? Let's try some arithmetic:</p>
+<pre><code class="language-sof">&gt;&gt;&gt; 3 12 + writeln
+15
+&gt;&gt;&gt; 26 18 * writeln
+468
+&gt;&gt;&gt; 378 9 / writeln
+42
+&gt;&gt;&gt; 1 2 + 3 + writeln
+6
+</code></pre>
+<p>You can see that the first line clearly computes 3 + 12, but why is the operator (<code>+</code>, addition) after the numbers it operates on (<code>3</code> and <code>12</code>)? The reason is that the stack-based nature of SOF causes it to have postscript notation: all the operations come after the operands they operate on. Most famously, the document description language PostScript by Adobe uses this operation method, and - surprise, surprise - it works off a stack as well.</p>
+<p>Each operation or function will take a different number of arguments that come before it. As we saw, <code>writeln</code> only takes one argument: the thing to be printed, while <code>+</code> takes two arguments: the two numbers to be added. The same goes for the other arithmetic operations, including <code>-</code> not shown here.</p>
+<p>With this new knowledge, take a look at the last line. Where is the second operand to the second <code>+</code> instruction? The <code>3</code> is one of them, but the other seems to be missing. Except, of course, it doesn't.</p>
+<p>Any operation that occurs in SOF ever only has the Stack to work with. This means that not only do literals place their values onto the stack, but operations place their result back onto the stack. When the interpreter sees the first <code>+</code>, it retrieves the top two elements on the stack, which in this case happen to be the numbers <code>1</code> and <code>2</code> put there by the literals, and computes their sum. The result, 3, is placed back onto the stack, which can be imagined as shortening the code to <code>3 3 +</code>. The second <code>+</code> doesn't even know where its numbers come from - they may be from a user input function, they may be literals, they may be the result of an operation or they may be a duplication of another value (which, in this case, is quite possible). As long as they are both numbers, the <code>+</code> sums them and places that value onto the stack, ready for use in the next computation (which happens to be <code>writeln</code>).</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="the-stack"><a class="header" href="#the-stack">The Stack</a></h1>
+<p>You can't understand SOF without understanding the stack. On the flip side, once you do, SOF should feel much more intuitive.</p>
+<h2 id="what-is-a-stack"><a class="header" href="#what-is-a-stack">What is a stack?</a></h2>
+<p>This section will shortly explain the notion of a stack as used in computer science. Feel free to skip it if you know about stacks and the LIFO principle.</p>
+<p>A stack, in computer science, is just like a stack in the real world. Imagine a stack of books:</p>
+<pre><code>----------
+|  book  |
+----------
+ |  book  |
+ ----------
+|  book  |
+----------
+|  book  |
+----------
+</code></pre>
+<p>These books are heavy - you cannot lift more than one at a time. And because they are placed on top of each other, you can only access the topmost one. For these reasons, you can only do one of two basic things: put another book onto the stack or remove one book from the stack, making the book below that the new topmost book. (Technically, you could also count looking at the topmost book as a basic operation). These operations are called <strong>push</strong> and <strong>pop</strong> (and peek), respectively.</p>
+<p>The same thing goes for stacks in computer science, but now the books are stored in electronic memory and the books are data: in the case of SOF numbers, strings, commands, code etc. You will often see a stack being referred to as a LIFO queue, which stands for &quot;last in - first out&quot;, i.e. the last element that went into the &quot;queue&quot; (on top of the stack) is the first element that will be retrieved back with a pop operation.</p>
+<h2 id="advanced-stacking"><a class="header" href="#advanced-stacking">Advanced stacking</a></h2>
+<p>Here are some cool things to do with a stack:</p>
+<pre><code class="language-sof">&gt;&gt;&gt; &quot;world&quot; dup writeln writeln
+world
+world
+</code></pre>
+<p>The <code>dup</code> operator, short for duplicate, creates an identical copy of anything on the stack.</p>
+<pre><code class="language-sof">&gt;&gt;&gt; 6 7 8 pop writeln
+7
+</code></pre>
+<p>The <code>pop</code> operator does exactly what it says: it discards a value from the stack. In this case, this makes the 7 the topmost element of the stack, which is then printed.</p>
+<pre><code class="language-sof">&gt;&gt;&gt; 4 5 swap writeln
+4
+</code></pre>
+<p>The <code>swap</code> operator swaps the topmost two elements of the stack.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="names-and-errors"><a class="header" href="#names-and-errors">Names and Errors</a></h1>
+<p>Let's get into more advanced topics. Variables, branching and of course the programmer's favorite: Errors.</p>
+<h2 id="naming-things"><a class="header" href="#naming-things">Naming things</a></h2>
+<p>Right now, we are only using the stack for storing things. We can duplicate, remove and operate on these values, but if we need lower values that were put on the stack previously, we are going to run into some issues quickly. For this reason, we can use the mighty <code>def</code> operator:</p>
+<pre><code class="language-sof">&gt;&gt;&gt; 3 x def
+&gt;&gt;&gt; # do some stuff here
+&gt;&gt;&gt; x . writeln
+3
+</code></pre>
+<p><code>def</code> is short for &quot;define&quot;. In this case it defines that the name <code>x</code> should represent the number value <code>3</code>. Nothing fancy happens, but in the background, SOF created what is essentially a variable of name &quot;x&quot; and given it the value of the number 3. We can now go off and do something else (also note the use of basic <code># comments</code>) and come back later to retrieve x's value. This is done by giving the &quot;variable&quot;'s name followed by a <code>.</code> . That little dot, the Call operator, is incredibly powerful (and powers, like, everything in SOF at all), but let's not get ahead of ourselves. Here, it is just used to retrieve the value associated with a name. Also, from now on, we will use the proper SOF terminology and call this simple <code>x</code> an Identifier. It doesn't do anything on its own, it is just a piece of data that can be used to identify (hence the name) variables and other named things.</p>
+<h2 id="making-decisions"><a class="header" href="#making-decisions">Making decisions</a></h2>
+<p>You are probably already waiting for conditional execution and all that turing-complete stuff. Here it is:</p>
+<pre><code class="language-sof">&gt;&gt;&gt; { &quot;That number is small&quot; writeln } 4 1000 &lt; { &quot;That number is large&quot; writeln } ifelse         
+That number is small
+&gt;&gt;&gt; { &quot;That number is small&quot; writeln } 2000 1000 &lt; { &quot;That number is large&quot; writeln } ifelse 
+That number is large
+</code></pre>
+<p>There are a bunch of things here that need discussion. The braces delimit code blocks, which are a way of grouping instructions (in this case, two simple output writes) to be executed later. More on them in a bit. The <code>&lt;</code> is a basic comparison operator, a less than operator that needs two numbers and returns a boolean (true/false) according to the comparison result. Finally, the <code>ifelse</code> is an operation that takes in two executable things, in this case the code blocks, and executes them based on the boolean result that lies in between them: if it is true (if the number is smaller than 1000), it executes the first block, if it is false (greater 1000), it executes the second block. A simple if would omit the alternative block and just execute the first block if the condition was true:</p>
+<pre><code class="language-sof">&gt;&gt;&gt; { &quot;Primary school completed!&quot; writeln } 2 1 &gt; if
+Primary school completed!
+&gt;&gt;&gt; { &quot;Primary school completed!&quot; writeln } 2 4 &gt; if
+&gt;&gt;&gt;
+</code></pre>
+<h2 id="errors"><a class="header" href="#errors">Errors</a></h2>
+<p>Up until now, we have only written simple programs that do not crash, because they conform to SOF's syntax and other rules. But let's say you screwed up while typing a string and forgot the closing quote:</p>
+<pre><code class="language-sof">&gt;&gt;&gt; &quot;a string
+... 
+!!! Syntax Error in line 1 at index 1:
+ &quot;a string
+  ^
+    No closing '&quot;' for string literal.
+</code></pre>
+<p>The first thing that will happen when you try this is that a line with three dots will appear. This is because SOF found the error, but many errors can be corrected on the next line, so it gives you another chance. This error, however, is not resolvable: Ending the continuation line with another press of the enter key will make SOF scream at you. But in a good way.</p>
+<p>First, there is the !!! bit, which signals an error. Then, the name of the Error is given. The <a href="Introduction/Reference#errors">Errors section</a> in the reference has information on all errors, but the most common ones are Syntax, your code is sh*t, and Type, your data is sh*t. After the error type comes the information on where the error occurred (possibly incorrect) as well as the segment of code where the error occurred combined with a pointer to the exact character (mostly correct, no guarantees). This helps you find the place of mishap. Finally, there is some additional information on what went wrong: in this case, no closing quote for the string literal was found, which is exactly the error. Note that as with every language, the false behavior might be somewhere else, but wasn't detected due to legal SOF behavior. For example, you might be passing a wrong parameter to a function, which will only be detected when some operation tries to act on that parameter and finds it to be of a wrong type.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="its-a-bird-its-a-plane-no-wait---its-a-function"><a class="header" href="#its-a-bird-its-a-plane-no-wait---its-a-function">It's a bird! It's a plane! No wait - It's a function!</a></h1>
+<p>Functions are essentially code blocks on steroids. They can't do anything more or less, they are just safer and more convenient. To create a function, this pattern is generally used:</p>
+<pre><code class="language-sof"># create the function
+{ 3 + return } 1 function addThree globaldef
+# and call it
+1 addThree : writeln # 4
+</code></pre>
+<p>The important bit is the primitive token (keyword) <code>function</code>. It takes in a piece of executable SOF code, a &quot;Callable&quot;, as well as an argument count, which is 1 in this case. The code for the function here is a simple code block, the only way you can specify a Callable literally. Code block data behaves like any other data, it lives on the stack and can be assigned a name. Its superpower is <em>delayed execution</em>, that is, the SOF instructions you place inside it are not executed immediately, they are stored, to be run later. In this case, unlike the <code>if</code> and <code>ifelse</code> commands you saw earlier, we don't even use the stored code directly, instead, we use it as the logic of a newly created function. But the function itself is also just a Callable, some data, now sitting on the stack. To use it repeatedly from anywhere, we must <code>def</code> it like any other variable and give it a name. We use the <code>globaldef</code> in this case, which will always <code>def</code> globally (duh) (Python programmers: compare this to the <code>global</code> keyword). This pattern is SOF convention and allows you to define functions globally even inside other functions and classes.</p>
+<p>We can now call the function, like we called the variables beforehand. But behold! This time around, we don't simply retrieve the Identifier's &quot;value&quot; with <code>.</code>. That would be the function itself again, which we want to call! For this reason, the double-call operator <code>:</code> exists. It simply executes two calls, the first time retrieving the function, the second time executing it. It is both more performant and more compact than <code>. .</code>, but identical in function.</p>
+<p>Now, what happens when we call the function? If you know any programming language, you know that functions (or methods, procedures, lambdas or whatever they're called) can recieve one or more arguments. SOF, of course, is no different. If you know hardware/assembly-level programming, this may sound familiar: Arguments to an SOF function are expected to be on the stack. The function definition specifies the number of arguments, and SOF places a &quot;stack protector&quot; under all of a function's arguments. This means that a function's body cannot change anything that is on the stack, except for its arguments, of course. Also, anything that is on the stack when the function exits will be deleted, up to this &quot;stack protector&quot;. Think of the stack protector as a specially-marked return address in assembler. The function cannot mess with the caller's stack and cannot clobber it. You can absolutely be sure how many elements from the stack are consumed, according to the function's argument count.</p>
+<p>The code block looks familiar, but it now uses the new-fangled operation <code>return</code>. This will break out of the function body instantly and return the topmost value on the stack from the function. Alternatively, you can use the <code>return:nothing</code> PT, which will end the function without returning anything. This is the default behavior when the function's end is reached without a <code>return</code>. The return value is placed onto the stack, obviously. In the example we use it as an argument to <code>writeln</code>.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="language-reference"><a class="header" href="#language-reference">Language Reference</a></h1>
+<p>This section serves as the specification of the SOF language itself and its outer components.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="sof-language-specification"><a class="header" href="#sof-language-specification">SOF Language Specification</a></h1>
+<p>This section specifies the Stack with Objects and Functions programming language.</p>
+<h2 id="the-sof-source-file"><a class="header" href="#the-sof-source-file">The SOF source file</a></h2>
+<p>An SOF source file is a program or part of a program in the SOF programming language. The source files shall end with <code>.sof</code> or <code>.stackof</code>; the latter mainly for extension collisions. Every SOF source file must adhere to the following Extended Backus-Naur form specification:</p>
+<pre><code class="language-ebnf">(* A program is a series of tokens and comments, where tokens MUST be separated by whitespace. *)
+SofProgram = [Token] { [Comments] ?Whitespace? [Comments] Token } { [Comments] ?Whitespace? } ;
+
+Token = &quot;def&quot; | &quot;globaldef&quot; | &quot;dexport&quot; | &quot;use&quot; | &quot;export&quot;
+      | &quot;dup&quot; | &quot;pop&quot; | &quot;swap&quot;
+      | &quot;write&quot; | &quot;writeln&quot; | &quot;input&quot; | &quot;inputln&quot;
+      | &quot;if&quot; | &quot;ifelse&quot; | &quot;while&quot; | &quot;dowhile&quot; | &quot;switch&quot;
+      | &quot;function&quot; | &quot;constructor&quot;
+      | &quot;+&quot; | &quot;-&quot; | &quot;*&quot; | &quot;/&quot; | &quot;%&quot; | &quot;&lt;&lt;&quot; | &quot;&gt;&gt;&quot; | &quot;cat&quot;
+      | &quot;and&quot; | &quot;or&quot; | &quot;xor&quot; | &quot;not&quot;
+      | &quot;&lt;&quot; | &quot;&lt;=&quot; | &quot;&gt;&quot; | &quot;&gt;=&quot; | &quot;=&quot; | &quot;/=&quot;
+      | &quot;.&quot; | &quot;:&quot; | &quot;,&quot; | &quot;;&quot; | &quot;nativecall&quot;
+      | &quot;[&quot; | &quot;]&quot; | &quot;|&quot;
+      | &quot;describe&quot; | &quot;describes&quot; | &quot;assert&quot;
+      | Number | String | Boolean
+      | Identifier | CodeBlock ;
+
+Identifier = ?Unicode Letter? { ?Unicode Letter? | DecimalDigits | &quot;_&quot; | &quot;'&quot; | &quot;:&quot; } ;
+(* A code block recursively contains SOF code, i.e. an SofProgram. *)
+CodeBlock = &quot;{&quot; SofProgram &quot;}&quot; ;
+
+(* Literals *)
+String = '&quot;' { ?any character except &quot;? '\&quot;' } '&quot;' ;
+Boolean = &quot;true&quot; | &quot;false&quot; | &quot;True&quot; | &quot;False&quot; ;
+Number = [ &quot;+&quot; | &quot;-&quot; ] ( Integer | Decimal ) ;
+Integer = &quot;0&quot; ( &quot;h&quot; | &quot;x&quot; ) HexDigits { HexDigits }
+        | [ &quot;0d&quot; ] DecimalDigits { DecimalDigits }
+	| &quot;0o&quot; OctalDigits { DecimalDigits }
+	| &quot;0b&quot; BinaryDigits { BinaryDigits } ;
+Decimal = DecimalDigits { DecimalDigits } &quot;.&quot; DecimalDigits { DecimalDigits }
+          [ (&quot;e&quot; | &quot;E&quot;) ( &quot;+&quot; | &quot;-&quot; ) DecimalDigits { DecimalDigits } ] ;
+BinaryDigits = &quot;0&quot; | &quot;1&quot; ;
+OctalDigits = BinaryDigits | &quot;2&quot; | &quot;3&quot; | &quot;4&quot; | &quot;5&quot; | &quot;6&quot; | &quot;7&quot; ;
+DecimalDigits = OctalDigits | &quot;8&quot; | &quot;9&quot; ;
+HexDigits = DecimalDigits | &quot;a&quot; | &quot;b&quot; | &quot;c&quot; | &quot;d&quot; | &quot;e&quot; | &quot;f&quot; | &quot;A&quot; | &quot;B&quot; | &quot;C&quot; | &quot;D&quot; | &quot;E&quot; | &quot;F&quot; ;
+
+(* Comments are ignored. *)
+Comments = Comment { Comment } ;
+Comment = ( &quot;#&quot; { ?any? } ?Unicode line break/newline? )
+        | ( &quot;#*&quot; { ?any? } &quot;*#&quot; ) ;
+</code></pre>
+<p>Here, <code>SofProgram</code> is the syntax specification for an entire SOF source file. The source file consists of two types of syntactical constructs: <em>Comments</em> and <em>Tokens</em>.</p>
+<p>Comments are purely for the benefit of the programmer and are entirely ignored. Tooling is encouraged to place programming-language-like information about the code inside comments. There are two types of comments: Single-line comments start with <code>#</code> and extend to the end of the line, while multi-line comments start with <code>#*</code> and end with <code>*#</code> and can span multiple lines. In the following and the language reference in general, comments are treated as non-existent, and it is recommended to remove comments from the source code as one of the first steps of code processing.</p>
+<p>Tokens are the core of the SOF program. The tokens are ordered in a linear sequence. The only exception is the code block token: A code block recursively nests another sequence of tokens. The major other differentiation in the token type is between the <em>Literal Tokens</em> that behave and look like the literals in other programming languages, as well as the <em>Primitive Tokens</em> aka. keywords that execute program logic.</p>
+<h2 id="executing"><a class="header" href="#executing">Executing</a></h2>
+<p>Executing an SOF program is as simple as executing all tokens in the order that they are given in the source code. What each token does can vary wildly and each token is specified precisely in the main language reference. In general, executed tokens manipulate the <em>Stack</em> and the <em>Nametables</em>, and while Primitive Tokens have a predefined constant action, Literals vary depending on the exact token text given.</p>
+<h3 id="the-sof-program-environment"><a class="header" href="#the-sof-program-environment">The SOF program environment</a></h3>
+<p>Every SOF program has an environment in which it is executed. This mainly consists of the Stack and the Nametable (or Nametables). The stack is a LIFO stack/queue (last in, first out) that can contain any kind of value. Of these values, there are types that the user can place and read via the use of certain tokens, and there are the &quot;hidden types&quot; that are used to make the program execute correctly. The form of these types is less precisely defined because they heavily depend on the implementation. The following hidden types are used:</p>
+<ul>
+<li>Global nametable: Sits on the bottom of the stack and acts as the global nametable into which bindings and lookups are done if no other nametable is present; or if the <code>globaldef</code> or similar PTs are executed, which explicitly always operate on the global nametable.</li>
+<li>Function environment with local nametable: This is a nametable that hides the nametables below it on the stack when normal bindings and lookups are done. This nametable is placed on the stack when a function enters and can also serve as an indicator for the implementation on where to return execution to; similar to return addresses on assembly-level stacks. This nametable also holds a return value that is set by some tokens and returned to the caller (on the stack) when exiting the function. There are minor variations on the local nametables, for example for object constructors, but these behave almost the same.</li>
+</ul>
+<h4 id="the-literal-tokens"><a class="header" href="#the-literal-tokens">The literal tokens</a></h4>
+<p>The literal tokens are all used to specify a value of a built-in type literally. They most commonly come in the form of basic data types like numbers and literal strings, but technically, code blocks are also literals. When a literal token is encountered, its value is placed on the stack, and the value of the token is derived from its physical form. This is self-explanatory for the literals of type Integer, Float, String (escape processing is explained elsewhere), and Boolean.</p>
+<p>For code blocks, the code block's contained tokens must be stored in the data type in some form such that the contained tokens, and even additional code blocks, may be fully reconstructed by the implementation when the code block is later needed. This internal representation is deliberately kept unspecified so that implementations can choose any representation (or even multiple) that is most efficient in their circumstance. The code block, despite its appearance, therefore also just puts a data object on the stack that can later be executed or transformed as specified by the code block semantics. Most of these are given with the PTs that manipulate code blocks and can be found in the language reference. Because code blocks are considered to be immutable, implementations can take appropriate data-sharing measures to reduce these large on-stack data structures in size.</p>
+<h3 id="exiting-a-program"><a class="header" href="#exiting-a-program">Exiting a program</a></h3>
+<p>The SOF program exits when the last token is executed or an error occurs. The kinds of errors and when they are thrown are specified in the language reference. The implementation must guarantee that no memory leak or similar resource issue results from a normal or abnormal termination.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="types"><a class="header" href="#types">Types</a></h1>
+<p>SOF currently has the following types:</p>
+<h2 id="value"><a class="header" href="#value">Value</a></h2>
+<p>Base type of all other types; the reference implementation calls this <code>Stackable</code> (because it can sit on the stack).</p>
+<h2 id="callable"><a class="header" href="#callable">Callable</a></h2>
+<p>Technically speaking: Any type that can be operated on with the call operator <code>.</code>. But as this applies to every type, Callable is mostly used as a term to mean more complex types that actually execute logic when called. The most important callables are Identifier (performs nametable lookup), CodeBlock, and Function.</p>
+<h2 id="identifier"><a class="header" href="#identifier">Identifier</a></h2>
+<p>A specialized string-like type that can only contain specific characters (mostly letters and numbers). Used for name binding, i.e. the def and call operator families.</p>
+<h2 id="primitive"><a class="header" href="#primitive">Primitive</a></h2>
+<p>Any type that returns itself when called and can be specified with a simple literal. All the following basic data types are primitives.</p>
+<h3 id="number"><a class="header" href="#number">Number</a></h3>
+<p>Base type for number types. Arithmetic operations only operate on Numbers.</p>
+<h4 id="integer"><a class="header" href="#integer">Integer</a></h4>
+<p>Normal integral positive/negative Number. The reference implementation uses 64-bit storage, but this is not mandatory. Ideally, Integers have no limit on their size other than memory.</p>
+<h4 id="floatdecimal"><a class="header" href="#floatdecimal">Float/Decimal</a></h4>
+<p>Floating-point Number, 64 bits in the reference implementation. May be indefinitely precise.</p>
+<h3 id="boolean"><a class="header" href="#boolean">Boolean</a></h3>
+<p>Truth value, either <code>true</code> or <code>false</code>, the basis of program control flow. When called (future) it takes two elements from the stack and returns the lower one if it is <code>true</code>, or the higher one if it is <code>false</code>.</p>
+<h3 id="string"><a class="header" href="#string">String</a></h3>
+<p>Piece of text, infinitely long (memory-limited), all Unicode characters/code points supported.</p>
+<h2 id="codeblock"><a class="header" href="#codeblock">CodeBlock</a></h2>
+<p>A code block created with curly braces; contains SOF code to be executed without a safe environment or arguments/return values. The most basic Callable that has user-definable behavior; therefore, it is often used to compose operations and Callables that require other Callables.</p>
+<h2 id="function"><a class="header" href="#function">Function</a></h2>
+<p>A combination of a CodeBlock to be executed and a positive integer amount of arguments, possibly 0. When called, protects its internals through the use of an FD and places its arguments above that on the stack to be used by its code.</p>
+<h2 id="object"><a class="header" href="#object">Object</a></h2>
+<p>A data collection like a nametable, with the difference that objects are user-creatable and do not serve the role of stack delineation or as targets for <code>def</code>.</p>
+<h2 id="constructor"><a class="header" href="#constructor">Constructor</a></h2>
+<p>A special kind of function that, when called, creates a new object and is able to initialize that object.</p>
+<h1 id="errors-1"><a class="header" href="#errors-1">Errors</a></h1>
+<p>SOF throws a variety of errors when you mess something up. Currently, errors cannot be caught; for the possibility of adding this feature later, the <code>except</code> PT is reserved.</p>
+<h2 id="syntaxerror"><a class="header" href="#syntaxerror">SyntaxError</a></h2>
+<p>The input is not correct SOF syntax. This will occur:</p>
+<ul>
+<li>on unclosed strings, block comments and braces</li>
+<li>on too many closing braces</li>
+<li>on wrong Integer, Boolean and Decimal literals</li>
+<li>on invalid identifiers</li>
+</ul>
+<p>Syntax errors are unrecoverable, that is, they may never be caught.</p>
+<h2 id="typeerror"><a class="header" href="#typeerror">TypeError</a></h2>
+<p>An operation was attempted on incompatible or unsupported types. This will occur:</p>
+<ul>
+<li>on any native operation that has typed arguments.</li>
+<li>on PTs that require specific types. E.g.: <code>def</code>, call operator.</li>
+</ul>
+<h2 id="nameerror"><a class="header" href="#nameerror">NameError</a></h2>
+<p>It was attempted to retrieve the value of an identifier that is not defined in the current scope(s).</p>
+<h2 id="arithmeticerror"><a class="header" href="#arithmeticerror">ArithmeticError</a></h2>
+<p>An illegal mathematical operation was attempted: mostly divide by zero or its derivatives.</p>
+<h2 id="stackaccesserror"><a class="header" href="#stackaccesserror">StackAccessError</a></h2>
+<p>An operation attempted an illegal modification of the Stack:</p>
+<ul>
+<li>The end of the stack was reached; accessing the GNT/NNT is not allowed.</li>
+<li>An FD was reached; Stack access beyond it is not allowed.</li>
+</ul>
+<h2 id="stacksizeerror"><a class="header" href="#stacksizeerror">StackSizeError</a></h2>
+<p>(future) The Stack has reached the maximum feasible size. This will most likely only occur on recursive programs with deep recursion levels.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="primitive-tokens"><a class="header" href="#primitive-tokens">Primitive Tokens</a></h1>
+<p>Every primitive stack operation is called a primitive token. It is listed with its arguments, the stacklowest argument first, and its return value description. No return value section means that this operation places nothing on the stack. Get familiar with this argument and return type shorthand, it is used in all the documentation.</p>
+<h3 id="operation-special-cases-for-identifiers"><a class="header" href="#operation-special-cases-for-identifiers">Operation special cases for identifiers</a></h3>
+<p>In order to make in-place modification of defined values easier, it's possible to combine any of the binary operations <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>%</code>, <code>&lt;&lt;</code>, <code>&gt;&gt;</code>, <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code>, <code>=</code>, <code>/=</code>, <code>and</code>, <code>or</code>, <code>xor</code> with an identifier as the first (right, lower) argument. This will retrieve the value from the identifier through a <code>.</code>-like call, perform the operation on that value as the right argument instead, and then store the result back into the identifier like normal <code>def</code>. The result does not remain on the stack. This is equivalent to the +=, -= etc. operator found in many programming languages.</p>
+<h2 id="miscellaneous-tokens"><a class="header" href="#miscellaneous-tokens">Miscellaneous tokens</a></h2>
+<h3 id="input-string-input-function"><a class="header" href="#input-string-input-function"><code>input</code> (string input function)</a></h3>
+<p><strong>Return value</strong> &lt; the token read from stdin: String</p>
+<p>Reads one word, i.e. everything in the standard input up to the first (Unicode) whitespace character, without trailing or leading whitespace characters.</p>
+<h3 id="inputln-line-string-input-function"><a class="header" href="#inputln-line-string-input-function"><code>inputln</code> (line string input function)</a></h3>
+<p><strong>Return value</strong> &lt; the line read from stdin without line terminator(s): String</p>
+<p>Reads one line (any combination of line separators end one line) from standard input.</p>
+<h3 id="write-output-function"><a class="header" href="#write-output-function"><code>write</code> (output function)</a></h3>
+<p><strong>Arguments</strong> &lt; output: String</p>
+<p>Writes the argument to standard output.</p>
+<h3 id="writeln-output-function-w-line-break"><a class="header" href="#writeln-output-function-w-line-break"><code>writeln</code> (output function w/ line break)</a></h3>
+<p><strong>Arguments</strong> &lt; output: String</p>
+<p>Writes the argument to standard output and terminates the line.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="arithmetic-and-logic-pts"><a class="header" href="#arithmetic-and-logic-pts">Arithmetic and Logic PTs</a></h1>
+<h2 id="-add-operator"><a class="header" href="#-add-operator"><code>+</code> (add operator)</a></h2>
+<p><strong>Arguments</strong> &lt; left: Number &lt; right: Number</p>
+<p><strong>Return value</strong> &lt; Mathematically: <code>left + right</code>: Number</p>
+<p>Computes the sum of the two arguments. The result is an Integer if both arguments are Integers and a Decimal if any argument is a Decimal. Throws <code>TypeError</code> if any of the arguments has a non-number type.</p>
+<h2 id="--subtract-operator"><a class="header" href="#--subtract-operator"><code>-</code> (subtract operator)</a></h2>
+<p><strong>Arguments</strong> &lt; left: Number &lt; right: Number</p>
+<p><strong>Return value</strong> &lt; Mathematically: <code>left - right</code>: Number</p>
+<p>Computes the difference between the two arguments. The result is an Integer if both arguments are Integers and a Decimal if any argument is a Decimal. Throws <code>TypeError</code> if any of the arguments has a non-number type.</p>
+<h2 id="-multiply-operator"><a class="header" href="#-multiply-operator"><code>*</code> (multiply operator)</a></h2>
+<p><strong>Arguments</strong> &lt; left: Number &lt; right: Number</p>
+<p><strong>Return value</strong> &lt; Mathematically: <code>left · right</code>: Number</p>
+<p>Computes the product of the two arguments. The result is an Integer if both arguments are Integers and a Decimal if any argument is a Decimal. Throws <code>TypeError</code> if any of the arguments has a non-number type.</p>
+<h2 id="-divide-operator"><a class="header" href="#-divide-operator"><code>/</code> (divide operator)</a></h2>
+<p><strong>Arguments</strong> &lt; left: Number &lt; right: Number</p>
+<p><strong>Return value</strong> &lt; Mathematically: <code>left ÷ right</code>: Number</p>
+<p>Computes the result of the first argument divided by the second argument. The result is an Integer (division with remainder) if both arguments are Integers and a Decimal (division) if any argument is a Decimal. Throws <code>TypeError</code> if any of the arguments has a non-number type. Throws <code>ArithmeticError</code> if the right argument is zero.</p>
+<h2 id="-modulus-operator"><a class="header" href="#-modulus-operator"><code>%</code> (modulus operator)</a></h2>
+<p><strong>Arguments</strong> &lt; left: Number &lt; right: Number</p>
+<p><strong>Return value</strong> &lt; Mathematically: <code>left mod right</code>: Number</p>
+<p>Computes the result of the first argument modulus by the second argument. First, any Decimals are converted to Integers. Then, the remainder of the integer division of the two arguments is computed and returned. Throws <code>TypeError</code> if any of the arguments has a non-number type. Throws <code>ArithmeticError</code> if the right argument is zero.</p>
+<h2 id="--logical-bit-shift-operators"><a class="header" href="#--logical-bit-shift-operators"><code>&lt;&lt;</code>, <code>&gt;&gt;</code> (logical bit shift operators)</a></h2>
+<p><strong>Arguments</strong> &lt; base: Number &lt; amount: Number</p>
+<p><strong>Return value</strong> &lt; base (<code>&lt;&lt;</code> or <code>&gt;&gt;</code>) amount: Integer</p>
+<p>Computes the logical bit shift, that is the base (first argument) shifted left (&lt;&lt;) or right (&gt;&gt;) amount number of bits. Because this is a logical shift, it does not sign-extend the base. If this operation receives Floats as arguments, it truncates them to Integers.</p>
+<h2 id="----comparison-operators"><a class="header" href="#----comparison-operators"><code>&lt;</code>, <code>&gt;</code>, <code>&gt;=</code>, <code>&lt;=</code> (comparison operators)</a></h2>
+<p><strong>Arguments</strong> &lt; left: Number &lt; right: Number</p>
+<p><strong>Return value</strong> &lt; Result of the comparison: Boolean</p>
+<p>Compares the two arguments, always in the form <code>left &lt;comp&gt; right</code>. The operators are less than, greater than, less than or equal, greater than or equal, respectively. This operation throws a <code>TypeError</code> if any of the arguments is not a Number.</p>
+<h2 id="--equality-operators"><a class="header" href="#--equality-operators"><code>=</code>, <code>/=</code> (equality operators)</a></h2>
+<p><strong>Arguments</strong> &lt; left &lt; right</p>
+<p><strong>Return value</strong> &lt; Whether the values are equal/unequal: Boolean</p>
+<p>Checks whether the two arguments are equal or not equal, respectively. Two arguments are compared using the following algorithm:</p>
+<ul>
+<li>If both arguments are Numbers: Check whether their numeric value is equal. Integers are converted to Floats if at least one of the arguments is a Float.</li>
+<li>If both arguments are Booleans: Check whether they represent the same truth value.</li>
+<li>If both arguments are Strings: Check if every single one of their characters matches in order.</li>
+<li>If both arguments are Objects: Check if their nametables contain the same value for each key and whether they contain the same list of keys. The values are checked with this same algorithm.</li>
+<li>If both arguments are any other builtin value: Return false. This applies most importantly to CodeBlocks and Functions, as there is no simple way of determining their equality.</li>
+</ul>
+<p>If the arguments aren't of the same type, upcasting is done, where Booleans upcast to Numbers and all other types upcast to Strings. This means that, for example, <code>&quot;2&quot; 2 =</code> holds true. For stricter equality, check the types first.</p>
+<h2 id="and-or-xor-binary-logic-operators"><a class="header" href="#and-or-xor-binary-logic-operators"><code>and</code>, <code>or</code>, <code>xor</code> (binary logic operators)</a></h2>
+<p><strong>Arguments</strong> &lt; left &lt; right</p>
+<p><strong>Return value</strong> &lt; result of the operation: Boolean</p>
+<p>Compares the two operators according to their Boolean value. The algorithm of finding the boolean value is the exact same as <a href="Reference/PTs/Builtin-functions"><code>convert:bool</code></a> uses.</p>
+<h2 id="not-negation-operator"><a class="header" href="#not-negation-operator"><code>not</code> (negation operator)</a></h2>
+<p><strong>Arguments</strong> &lt; arg</p>
+<p><strong>Return value</strong> &lt; result of the negation: Boolean</p>
+<p>Negates <code>arg</code>'s value; if it was true, it is now false, if it was false, it is now true. If the argument is not a Boolean, its truthiness value is determined according to <code>convert:bool</code>.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="control-flow"><a class="header" href="#control-flow">Control flow</a></h1>
+<h2 id="dowhile-loop-with-at-least-one-iteration"><a class="header" href="#dowhile-loop-with-at-least-one-iteration"><code>dowhile</code> (loop with at least one iteration)</a></h2>
+<p>Identical to <code>while</code>, but will execute the body callable before checking the condition, which results in at least one call to the body.</p>
+<h2 id="if-conditional-execution-operator"><a class="header" href="#if-conditional-execution-operator"><code>if</code> (conditional execution operator)</a></h2>
+<p><strong>Arguments</strong> &lt; to execute: Callable &lt; condition: Boolean</p>
+<p>Executes the callable if <code>condition</code> is true.</p>
+<h2 id="ifelse-conditional-execution-operator-with-alternative"><a class="header" href="#ifelse-conditional-execution-operator-with-alternative"><code>ifelse</code> (conditional execution operator with alternative)</a></h2>
+<p><strong>Arguments</strong> &lt; to execute: Callable &lt; condition: Boolean &lt; to execute otherwise: Callable</p>
+<p>Executes the first callable if <code>condition</code> is true. Otherwise, executes the second callable.</p>
+<h2 id="switch-multi-ifelse-conditional-execution-operator"><a class="header" href="#switch-multi-ifelse-conditional-execution-operator"><code>switch</code> (multi-ifelse conditional execution operator)</a></h2>
+<p><strong>Arguments</strong> &lt; &quot;<code>switch::</code>&quot; (Identifier) &lt; ( case body: Callable &lt; case condition: Callable ) * any number of times &lt; default body: Callable</p>
+<p>Compact alternative to nested <code>ifelse</code>'s. The behavior if this Method is as follows:</p>
+<p>The default body, the element last on the stack, is stored for later use. Then, the entire stack is traversed two elements at a time. If the first element is the identifier &quot;<code>switch::</code>&quot;, the beginning/end of the switch has been reached; this special identifier serves as a sort of label to delineate the statement from the other, likely important stuff on the stack. As no case has been executed yet, the default body is executed.</p>
+<p>If, however, the first element is a Callable, it is executed and the algorithm expects a Boolean value to be situated on top of the stack afterward. If this Boolean is true, the second element, the corresponding case body, is executed. Otherwise, the search continues.</p>
+<p>After any body was executed, the stack has all elements up to the switch:: label removed, meaning that the bodies cannot store values onto the stack, but should use <code>def</code>s to save them to the NT.</p>
+<h2 id="while-loop-function"><a class="header" href="#while-loop-function"><code>while</code> (loop function)</a></h2>
+<p><strong>Arguments</strong> &lt; body: Callable &lt; condition: Callable</p>
+<p>For every iteration of executing the body, executes the condition callable, which should place a Boolean value onto the stack. If the boolean value is true, the body will be executed once and the cycle repeats, if it is false, the loop will end.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="stack--naming"><a class="header" href="#stack--naming">Stack &amp; Naming</a></h1>
+<h2 id="def-definition-operator"><a class="header" href="#def-definition-operator"><code>def</code> (definition operator)</a></h2>
+<p><strong>Arguments</strong> &lt; value: Value &lt; name: Identifier</p>
+<p>Modifies the LNT by setting the key-value pair <code>name: value</code>. This means that now the value of the identifier <code>name</code> is &quot;defined&quot; to be the value <code>value</code>, hence the name. Will overwrite any existing binding to <code>name</code>.</p>
+<h2 id="dup"><a class="header" href="#dup"><code>dup</code></a></h2>
+<p><strong>Arguments</strong> &lt; elmt: Value</p>
+<p><strong>Return value</strong> &lt; elmt &lt; elmt</p>
+<p>Duplicates the topmost element on the stack.</p>
+<h2 id="globaldef-global-definition-operator"><a class="header" href="#globaldef-global-definition-operator"><code>globaldef</code> (global definition operator)</a></h2>
+<p>The same as <code>def</code>, but always defines into the GNT.</p>
+<h2 id="pop-stack-remove-operator"><a class="header" href="#pop-stack-remove-operator"><code>pop</code> (stack remove operator)</a></h2>
+<p><strong>Arguments</strong> &lt; any</p>
+<p>Removes the topmost element from the stack and discards it.</p>
+<h2 id="swap-stack-exchange-operator"><a class="header" href="#swap-stack-exchange-operator"><code>swap</code> (stack exchange operator)</a></h2>
+<p><strong>Arguments</strong> &lt; x &lt; y</p>
+<p><strong>Return value</strong> &lt; y &lt; x</p>
+<p>Exchanges the position of the two top-most elements on the stack.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="functional"><a class="header" href="#functional">Functional</a></h1>
+<h2 id="-call-operator"><a class="header" href="#-call-operator"><code>.</code> (call operator)</a></h2>
+<p><strong>Arguments</strong> &lt; 0 or more &lt; tocall: Callable</p>
+<p><strong>Return value</strong> &lt; any value or none</p>
+<p>Calls the topmost element of the stack. Each type exhibits its own behavior when called, but the most basic are:</p>
+<ul>
+<li>Most primitives return themselves.</li>
+<li>Calling an identifier looks up that identifier's value in the innermost scope that has the identifier defined or throws a <code>NameError</code> if that fails.</li>
+<li>Calling a namespace looks up the next stack element, an identifier, in that namespace. This process is recursive, although currently namespaces cannot be nested.</li>
+<li>Calling a function executes it and consumes the specified number of arguments from the stack. The return value of the function is placed on the stack. An exception to this is when the function arguments are &quot;blocked off&quot; with a currying operator (see below). In that case, the function is not called but it and the curried arguments replaced by the curried function.</li>
+<li>Calling a code block executes it. There are neither arguments nor a return value.</li>
+</ul>
+<h2 id="-doublecallfunction-invoke-operator"><a class="header" href="#-doublecallfunction-invoke-operator"><code>:</code> (doublecall/function invoke operator)</a></h2>
+<p><strong>Arguments</strong> &lt; 0 or more &lt; tocall: Callable</p>
+<p><strong>Return value</strong> &lt; any value or none</p>
+<p>Calls the topmost element of the stack twice. I.e., after the first call, the now topmost element is immediately called again. Therefore, this PT is a shortcut that is exactly equivalent to (and faster than) <code>. .</code>. This is intended for convenient use of named functions, i.e. functions defined into a namespace. The first call will retrieve the function itself onto the stack, and the second call will execute it. Therefore, the normal way you will see functions be used is with <code>:</code>, and it's an easy indicator of distinguishing a variable lookup from a function call.</p>
+<h2 id="-currying-marker"><a class="header" href="#-currying-marker"><code>|</code> (currying marker)</a></h2>
+<p>This is a pseudo-value on the stack that does nothing and is invisible to almost all operations. It is used to limit the number of arguments a function receives. If a function, while retrieving arguments from the stack for calling, encounters a currying marker before all necessary arguments are found, the function is not called but a curried function is created instead that has the specified number of arguments &quot;pre-stored&quot;. The curried function can be called later, it takes the number of remaining arguments. These appear on the stack below the curried arguments, so that the actual argument order inside the function doesn't change.</p>
+<h2 id="function-function-definition-operator"><a class="header" href="#function-function-definition-operator"><code>function</code> (function definition operator)</a></h2>
+<p><strong>Arguments</strong> &lt; code: CodeBlock &lt; argcount: Integer</p>
+<p>Creates a function with <code>argcount</code> arguments. Usually, it is then <code>def</code>'d or <code>globaldef</code>'d with a name.</p>
+<h2 id="nativecall-native-function-invocation-operator"><a class="header" href="#nativecall-native-function-invocation-operator"><code>nativecall</code> (native function invocation operator)</a></h2>
+<p><strong>Arguments</strong> &lt; any number of arguments &lt; native function identifier: String</p>
+<p><strong>Return value</strong> &lt; any</p>
+<p>Calls a function defined natively in the interpreter. <a href="Reference/PTs/Language-internals#native-calls">Learn more</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="typing-related-pts"><a class="header" href="#typing-related-pts">Typing-related PTs</a></h1>
+<p>This includes PTs that create or handle complex types.</p>
+<h2 id="-list-marker"><a class="header" href="#-list-marker"><code>[</code> (list marker)</a></h2>
+<p>This is a pseudo-value on the stack that does nothing and is invisible to almost all operations. It is used as a delimiter for the start of a list when the list creator <code>]</code> is used. </p>
+<h2 id="-list-creator"><a class="header" href="#-list-creator"><code>]</code> (list creator)</a></h2>
+<p><strong>Arguments</strong> &lt; <code>[</code> &lt; any number of elements (&lt; <code>]</code>)</p>
+<p><strong>Return value</strong> &lt; literal: List</p>
+<p>Creates a new list from a number of literal values. This operation traverses the stack downwards until it hits the list start marker <code>[</code>; this means that the list creator operation is the only one that actually handles the start marker and doesn't just ignore it. All the elements in between are used as the initial values of the list, and they are ordered such that the lowest values are the first in the list. For example, the code <code>[ 1 2 3 ]</code> creates a list with the Integer elements 1, 2, and 3, in that exact order. This entire literal list creation system is therefore very intuitive while still respecting SOF's orthagonality.</p>
+<h2 id="-fieldcall-operator"><a class="header" href="#-fieldcall-operator"><code>,</code> (fieldcall operator)</a></h2>
+<p><strong>Arguments</strong> &lt; object: Object &lt; field: Callable</p>
+<p><strong>Return value</strong> &lt; object &lt; value</p>
+<p>Executes a call on the object's nametable with the given field as a Callable to execute. The field is usually an identifier identifying a field value on the object in question. It can however be any sort of callable data, including callables that do not interact with their nametable. The object is left on the stack below the return value, making it easily available for further processing.</p>
+<h2 id="-methodcall-operator"><a class="header" href="#-methodcall-operator"><code>;</code> (methodcall operator)</a></h2>
+<p><strong>Arguments</strong> &lt; object: Object &lt; 0 or more &lt; tocall: Callable</p>
+<p><strong>Return value</strong> object &lt; any value or none</p>
+<p>Calls the topmost element of the stack twice, like <code>:</code>. Additionally, remembers the object before the calls occur and places it back onto the stack below the return value of the second call. Furthermore, the function call actually happens with the object nametable as the function nametable, so the function can use object attributes as variables and modify the object with <code>def</code>'s. It is also possible to add new attributes to an object; for this reason, if you need named temporaries you should use an inner dummy function.</p>
+<p>This operator is intended to be used with method-like named functions, functions that expect an object to operate on. SOF technically has no bound functions (you can emulate them by attaching function values to object attributes, but using those is a lot more cumbersome), so all functions that act like methods are free functions expecting some object to operate on. The big advantage is that as long as you pass an object that <em>behaves</em> like the one the function expects, the function will operate just fine. The method call operation will leave the program with the result of the operation (possibly none), and the original object below it, which allows for it to be used further.</p>
+<h2 id="constructor-constructor-creation-operator"><a class="header" href="#constructor-constructor-creation-operator"><code>constructor</code> (constructor creation operator)</a></h2>
+<p><strong>Arguments</strong> &lt; code: CodeBlock &lt; args: Integer</p>
+<p><strong>Return value</strong> &lt; constructor: Constructor</p>
+<p>Creates a new object creation template by turning the code block into a constructor function. Inside the constructor's code block, <code>def</code>s can be used to initialize fields on the object's nametable. A new object can be created by executing the constructor; this is the earliest time that the code body is executed. Just like other functions, the constructor can obtain any number of arguments when called.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="modules"><a class="header" href="#modules">Modules</a></h1>
+<h2 id="dexport-definitionexport-operator"><a class="header" href="#dexport-definitionexport-operator"><code>dexport</code> (definition+export operator)</a></h2>
+<p><strong>Arguments</strong> &lt; value: Value &lt; name: Identifier</p>
+<p><code>name dexport</code> is syntactic sugar for <code>name globaldef name export</code>. This operator simply binds the value to name in the GNT and also exports it.</p>
+<h2 id="export"><a class="header" href="#export"><code>export</code></a></h2>
+<p><strong>Arguments</strong> &lt; name: Identifier</p>
+<p>Exports the value bound to name in the LNT. Exporting is the method of making data visible to other SOF modules that import this module. Only exported names, not all names in the GNT, will be available to the module after import.</p>
+<h2 id="use-import-module"><a class="header" href="#use-import-module"><code>use</code> (import module)</a></h2>
+<p><strong>Arguments</strong> &lt; module name: String</p>
+<p>This PT is part of the module system, documented <a href="Reference/PTs/Module-System">here</a>. It executes modules and imports their exported definitions into the global namespace.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="builtin-functions"><a class="header" href="#builtin-functions">Builtin functions</a></h1>
+<p>These functions are always available to the user, and part of the <code>prelude</code> file in the standard library. The difference to other modules is that the prelude file is executed as if its text was in the file itself, so normal module mechanisms don't apply unless you explicitly <code>&quot;prelude&quot; use</code>.</p>
+<h2 id="convertbool-not-implemented"><a class="header" href="#convertbool-not-implemented"><code>convert:bool</code> (Not implemented)</a></h2>
+<p><strong>Arguments</strong> &lt; toConvert</p>
+<p><strong>Return value</strong>: converted: Boolean</p>
+<p>Converts the argument to a Boolean. If the value is not already a Boolean, it uses the &quot;truthyness&quot; of the argument, which is almost always true. When the argument is 0 or 0.0, it is false.</p>
+<h2 id="convertfloat"><a class="header" href="#convertfloat"><code>convert:float</code></a></h2>
+<p><strong>Arguments</strong> &lt; toConvert</p>
+<p><strong>Return value</strong>: converted: Float</p>
+<p>Converts the argument to a float. The argument can either be a string containing a valid SOF float literal (plus any leading/trailing whitespace), an integer or a float already. The result is the corresponding float value; the function fails with a TypeError if conversion fails, e.g. wrong number format, unsupported origin type.</p>
+<h2 id="convertint"><a class="header" href="#convertint"><code>convert:int</code></a></h2>
+<p><strong>Arguments</strong> &lt; toConvert</p>
+<p><strong>Return value</strong>: converted: Integer</p>
+<p>Converts the argument to an integer. The argument can either be a string containing a valid SOF integer literal (plus any leading/trailing whitespace), an integer already or a float to be rounded. The result is the corresponding integer value; the function fails with a TypeError if conversion fails, e.g. wrong number format, unsupported origin type.</p>
+<h2 id="convertstring"><a class="header" href="#convertstring"><code>convert:string</code></a></h2>
+<p><strong>Arguments</strong> &lt; toConvert</p>
+<p><strong>Return value</strong>: converted: String</p>
+<p>Converts the argument to its string representation. This is the same process used by the output methods. The argument can be of any type, as any SOF type has a string representation, but the result might not be beautiful.</p>
+<h2 id="convertcallable"><a class="header" href="#convertcallable"><code>convert:callable</code></a></h2>
+<p><strong>Arguments</strong> &lt; toConvert</p>
+<p><strong>Return value</strong>: converted: Callable</p>
+<p>Converts the argument to its callable equivalent. This has the following result:</p>
+<ul>
+<li>&quot;Real&quot; callables are unchanged. This affects functions, code blocks and identifiers.</li>
+<li>Primitives are converted to a <a href="https://en.wikipedia.org/wiki/Church_encoding">Church encoding</a> version of themselves. (Not implemented) This means:
+<ul>
+<li>Natural numbers <code>n &gt;= 0</code> are converted to a callable that when called with another callable <code>f</code>, will result in a third callable <code>N(x)</code> that calls <code>f</code> on itself <code>n</code> times with the actual argument <code>x</code> as the initial argument to the &quot;f-chain&quot;. This is a wordy way of saying that any <code>n</code> is represented by an n-fold composition of <code>f</code>.</li>
+<li>Booleans are converted to a callable that when called with two arguments, will return the first (stack-lowest) argument if it is <code>true</code>, otherwise, it will return the second argument. This also means that <code>ca cb</code><strong><code>cond if</code></strong> (<code>ca</code>, <code>cb</code> Callables, <code>cond</code> Boolean) is equivalent to <code>ca cb cond</code><strong><code>convert:callable : .</code></strong></li>
+<li>Other Integers <code>x</code> are converted to a two-element list <code>[a, b]</code> where <code>a, b ∈ ℕ</code> are Church numerals as described above and <code>x = a - b</code>.</li>
+<li>Floats <code>x</code> are first converted to the most accurate rational representation. Then, a two-element list <code>[k, a]</code> is created where <code>k</code> is a Church numeral (integer), <code>a</code> is a Church-encoded natural number and <code>x = k / ( 1 + a )</code>.</li>
+</ul>
+</li>
+</ul>
+<p>The conversion fails on Strings and other more complex types and throws a TypeError.</p>
+<h2 id="random01"><a class="header" href="#random01"><code>random:01</code></a></h2>
+<p><strong>Return value</strong>: random number: Float</p>
+<p>Generates a pseudo-random number between 0 (inclusive) and 1 (exclusive), optimally using a system-provided RNG (such as <code>/dev/urandom</code> on Linux). <strong>THIS PSEUDO-RANDOM NUMBER GENERATOR IS NOT GUARANTEED TO BE CRYPTOGRAPHICALLY SAFE.</strong></p>
+<h2 id="randomint"><a class="header" href="#randomint"><code>random:int</code></a></h2>
+<p><strong>Arguments</strong> &lt; start: Integer &lt; end: Integer</p>
+<p><strong>Return value</strong>: random number: Integer</p>
+<p>Generates a pseudo-random number between start and end, inclusive. Uses <code>random01</code> as the initial source of randomness (and, therefore, is NOT CRYPTOGRAPHICALLY SAFE).</p>
+<h2 id="randomfloat"><a class="header" href="#randomfloat"><code>random:float</code></a></h2>
+<p><strong>Arguments</strong> &lt; start: Float &lt; end: Float</p>
+<p><strong>Return value</strong>: random number: Float</p>
+<p>Floating-point variant of <code>random:int</code> with equivalent behavior. Returns any floating point number between start and end, inclusive.</p>
+<h2 id="fmtx"><a class="header" href="#fmtx"><code>fmt'x</code></a></h2>
+<p><strong>Arguments</strong> &lt; format: String &lt; x format arguments</p>
+<p><strong>Return value</strong>: formatted: String</p>
+<p>Formats a string with a number of format arguments. <code>fmt'x</code> is just a placeholder name; the actual functions are called <code>fmt'0</code> through <code>fmt'9</code> with 0-9 arguments, respectively. The exact format specificer format is not well-documented and can be found with the relevant native implementations. It's similar to Java's format string syntax though, and some tests exist for it.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="the-sof-module-system"><a class="header" href="#the-sof-module-system">The SOF Module System</a></h1>
+<p>SOF's module system is intended to be simple, but flexible and practical. It is very reminiscent of Python's module system.</p>
+<h2 id="modules-files-and-folders"><a class="header" href="#modules-files-and-folders">Modules, files, and folders</a></h2>
+<p>Each SOF source code file is a separate module. Folders are not special, they can just serve to group modules and avoid naming conflicts. There are no special module names such as <strong>init</strong> or <strong>main</strong> in Python, all files ending in <code>.sof</code> are accessible equivalent modules.</p>
+<p>Modules are named hierarchically with familiar dot syntax. Modules starting with a dot <code>.</code> are relative modules, and modules starting with any other character are absolute modules.</p>
+<p>Relative modules import relative to the file location. Single dots (except the leading dot) are used to import one directory lower, i.e. the name between this dot and the one before it is considered a directory in with to look for the module. Double dots <code>..</code> are used to import a directory higher (cf. directory navigation in all major operating systems). The highest directory possible is the directory of the base module of the program if the relative import chain originates from the base module, or the directory of the libraries if the relative import chain originates from a library module that was imported absolutely. This distinction prevents nonsensical and dangerous &quot;upwards&quot; imports while allowing for useful features like sibling folder importing.</p>
+<p>Absolute modules import in the library directory. This is a runtime-constant directory which will later be accessible with command-line arguments and/or environment variables. It usually sits in a related directory to the SOF executable itself. The library directory contains not only the SOF standard library modules but also any modules added manually by the user or by package managers. Modules imported absolutely can import relatively themselves, which again allows for submodule structures even in the libraries. Within an absolute module, single dots can also be used to import in sub-directories of the library directory.</p>
+<p>The module name, i.e. the name after the final dot, never contains the <code>.sof</code> ending. This allows for the alternative endings and special file formats which are treated specially by the module system, like <code>.soflib</code>.</p>
+<p>Each naming segment in any module specification, which represents either folders or the final file, can contain all characters except the two slash characters (used by the operating systems for directory structure) and dots, of course.</p>
+<p>Given this detailed description, the method of resolving modules is unambiguous and straightforward. Modules are always treated with UTF-8 encoding, just as all SOF files are.</p>
+<h2 id="names"><a class="header" href="#names">Names</a></h2>
+<p>As SOF has no namespaces like C, care needs to be taken when naming functions and other exports of a module. As they overwrite all GNT entries of the same name upon import, duplicate definitions are technically allowed (though the interpreter might issue a warning). The convention <a href="Reference/Programming-conventions">as outlined in the programming conventions</a> is to use underscores for separating pseudo-namespaces where necessary.</p>
+<h2 id="the-use-export-and-dexport-primitive-tokens"><a class="header" href="#the-use-export-and-dexport-primitive-tokens">The <code>use</code>, <code>export</code> and <code>dexport</code> primitive tokens</a></h2>
+<p>The <code>use</code> primitive token is used to import a module. The module specification, its behavior explained above in detail, is given by a string. The SOF module system imports the specified module, which may come from the internal cache if it was already imported. Then, all of the bindings defined by <code>export</code> or <code>dexport</code> are imported into the importing file's global namespace. This means that you don't have to worry about cluttering global namespaces with unnecessary names: only the names you export in a module are visible to <code>use</code>rs of that module.</p>
+<p>Note that of course, <code>use</code> is recursive. SOF code that is currently executed as part of a module import can <code>use</code> other modules without any different rules or exceptions. The only impossible module connection is any sort of circular import. The reason is equivalent to Python's reason: Because module importing always involves executing the entire imported module's source code. However, given the huge ecosystem of Python libraries, it is clear that this is not a limitation and all circular dependencies can be reworked to strict hierarchical dependencies.</p>
+<h2 id="running-functions-in-other-modules"><a class="header" href="#running-functions-in-other-modules">Running functions in other modules</a></h2>
+<p>There is special treatment given to exported functions, which technically is a special rule about all functions but only becomes relevant with cross-module functions. All functions store the global nametable at the time of definition; i.e. the global nametable of their module or file. As each module gets its own global nametable, this means that functions in different modules refer to different GNTs, but functions in the same module refer to the same GNT. When a function is run, the global nametable is in fact temporarily replaced with the function's global nametable at defintion time (if necessary) and restored afterwards. This means that a function can access global values of its module like one would expect. To keep the orthagonality, the global nametable exchanging can be thought of as a stack of global nametables at the very bottom of the real stack. The actual global nametable is just the top of this sub-stack, and global nametables are pushed to and popped from the stack on function entry and exit.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="the-sof-standard-library"><a class="header" href="#the-sof-standard-library">The SOF standard library</a></h1>
+<p>This is the official collection of library functions and classes provided by the SOF system.</p>
+<!-- ## How to write your own library
+
+A library is simply a collection of related functionality, possibly implemented in a native Java class (explanation/implementation plan coming soon!). The tool `sof packlib` can pack a library by investigating the current or a given directory and combining all the found `.sof` source files into one `.soflib` file that is recognized by SOF's `use` PT. -->
+<h2 id="files-in-the-standard-library"><a class="header" href="#files-in-the-standard-library">Files in the standard library</a></h2>
+<ul>
+<li><code>math</code>: Usual mathematical operations.</li>
+<li><code>op</code>: (Not implemented) Built-in operations as callables.</li>
+<li><code>io</code>: (Not implemented) File input/output.</li>
+<li><code>list</code>: (Not implemented) List functions.</li>
+<li><code>fp</code>: (Not implemented) Helpers and tools for functional programming.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="math"><a class="header" href="#math"><code>math</code></a></h1>
+<h2 id="abs-absolute-value"><a class="header" href="#abs-absolute-value"><code>abs</code>: Absolute value</a></h2>
+<p><strong>Arguments</strong> &lt; a: Number</p>
+<p><strong>Return value</strong> &lt; <code>|a|</code>: Number</p>
+<p>Returns the absolute value of the given number.</p>
+<h2 id="sin-sine"><a class="header" href="#sin-sine"><code>sin</code>: Sine</a></h2>
+<p><strong>Arguments</strong> &lt; a: Float</p>
+<p><strong>Return value</strong> &lt; <code>sin(a)</code>: Float</p>
+<p>Returns the mathematical sine of the input. The input angle is treated as radians.</p>
+<h2 id="cos-cosine"><a class="header" href="#cos-cosine"><code>cos</code>: Cosine</a></h2>
+<p><strong>Arguments</strong> &lt; a: Float</p>
+<p><strong>Return value</strong> &lt; <code>cos(a)</code>: Float</p>
+<p>Returns the mathematical cosine of the input. The input angle is treated as radians.</p>
+<h2 id="tan-tangent"><a class="header" href="#tan-tangent"><code>tan</code>: Tangent</a></h2>
+<p><strong>Arguments</strong> &lt; a: Float</p>
+<p><strong>Return value</strong> &lt; <code>tan(a)</code>: Float</p>
+<p>Returns the mathematical tangent of the input. The input angle is treated as radians.</p>
+<h2 id="exp-exponent"><a class="header" href="#exp-exponent"><code>exp</code>: Exponent</a></h2>
+<p><strong>Arguments</strong> &lt; a: Float</p>
+<p><strong>Return value</strong> &lt; <code>e^a</code>: Float</p>
+<p>Returns e (Euler's constant, approximately 2.718281) to the power of a. This is the most accurate power function.</p>
+<h2 id="ln-natural-logarithm"><a class="header" href="#ln-natural-logarithm"><code>ln</code>: Natural logarithm</a></h2>
+<p><strong>Arguments</strong> &lt; a: Float</p>
+<p><strong>Return value</strong> &lt; <code>ln(a)</code>: Float</p>
+<p>Returns the natural logarithm of a. This is the most accurate logarithm function.</p>
+<h2 id="log-logarithm"><a class="header" href="#log-logarithm"><code>log</code>: Logarithm</a></h2>
+<p><strong>Arguments</strong> &lt; n: Float &lt; a: Float</p>
+<p><strong>Return value</strong> &lt; <code>log_n(a)</code>: Float</p>
+<p>Returns the logarithm with the base of n of a. This is mathematically equivalent to <code>ln(a) / ln(n)</code>.</p>
+<h2 id="hypot-hypotenuse"><a class="header" href="#hypot-hypotenuse"><code>hypot</code>: Hypotenuse</a></h2>
+<p><strong>Arguments</strong> &lt; a: Float &lt; b: Float</p>
+<p><strong>Return value</strong> &lt; <code>hypot(a, b)</code>: Float</p>
+<p>Returns the size of the hypotenuse with the adjacent and opposite being a and b. This is the value <code>sqrt(a*a + b*b)</code> as calculated by Pythagoras' formula, but it avoids overflows and imprecisions caused by large intermediary values.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="list-not-implemented"><a class="header" href="#list-not-implemented"><code>list</code> (Not implemented)</a></h1>
+<p>List functions are prefixed with <code>list_</code>; this prefix is omitted here. These functions are method-like functions to be called on a list.</p>
+<h2 id="element-index-into-a-list"><a class="header" href="#element-index-into-a-list"><code>element</code>: Index into a list</a></h2>
+<p><strong>Arguments</strong> &lt; list: List &lt; index: Integer</p>
+<p><strong>Return value</strong> &lt; element: the value at index <code>index</code> in the <code>list</code></p>
+<p>This function implements normal indexing into a list. Any element can be retrieved from a list by means of its index. Indices are zero-based as in most programming languages. This means that the first element in a list is referred to by an index of zero. Using a negative index will retrieve elements from the end of the list, i.e. an index of -1 refers to the last element of the list (disregarding its size), -2 to the second to last element and so on. This is very useful for list-size-independent indexing from the end.</p>
+<p>An index that would reach past the limits of the list throws an <code>IndexError</code>. The <code>element</code> function will always throw for empty lists. The indexing and throwing behavior is inherited by all list functions that take indices, unless noted otherwise.</p>
+<h2 id="length-length-of-a-list"><a class="header" href="#length-length-of-a-list"><code>length</code>: Length of a list</a></h2>
+<p><strong>Arguments</strong> &lt; list: List</p>
+<p><strong>Return value</strong> &lt; List length: Integer</p>
+<p>Returns the number of elements in the list, always nonnegative. Returns zero for the empty list.</p>
+<h2 id="head-first-element-of-a-list"><a class="header" href="#head-first-element-of-a-list"><code>head</code>: First element of a list</a></h2>
+<p><strong>Arguments</strong> &lt; list: List</p>
+<p><strong>Return value</strong> &lt; First element in the list: Any value</p>
+<p>This function returns the first value of the list. It throws <code>IndexError</code> if the list is empty.</p>
+<h2 id="tail-list-tail"><a class="header" href="#tail-list-tail"><code>tail</code>: List tail</a></h2>
+<p><strong>Arguments</strong> &lt; list: List</p>
+<p><strong>Return value</strong> &lt; The list's tail: List</p>
+<p>Returns a new list that has the first element of the old list removed. Together with <code>head</code>, it can be used to split a list into its first element and its remainder.</p>
+<p>Returns an empty list for the empty list.</p>
+<h2 id="reverse-reverse-a-list"><a class="header" href="#reverse-reverse-a-list"><code>reverse</code>: Reverse a list</a></h2>
+<p><strong>Arguments</strong> &lt; list: List</p>
+<p><strong>Return value</strong> &lt; The reverse of the list: List</p>
+<p>Returns a new list which has all the elements of the old list, but at inversed positions. For example, the last element is now the first and the second element is now the second-to-last.</p>
+<p>Returns the empty list for the empty list.</p>
+<h2 id="split-split-up-a-list"><a class="header" href="#split-split-up-a-list"><code>split</code>: Split up a list</a></h2>
+<p><strong>Arguments</strong> &lt; list: List &lt; index: Integer</p>
+<p><strong>Return value</strong> &lt; A two-element list with the first and second portion of the list, in that order.</p>
+<p>This function splits up a list into two halves. The first half contains all elements up to the index (including the element at the index), and the second half contains all elements after the index. The two halves are returned as a list containing two elements. It is a more efficient combination of the <code>take</code> and <code>after</code> functions.</p>
+<h2 id="take-first-n-elements-of-a-list"><a class="header" href="#take-first-n-elements-of-a-list"><code>take</code>: First n elements of a list</a></h2>
+<p><strong>Arguments</strong> &lt; list: List &lt; n: Integer</p>
+<p><strong>Return value</strong> &lt; List of length n: List</p>
+<p>Returns a new list that contains the elements of the given list up to the given index, exclusive. For positive n, this always means that the length of the new list is equal to n. Returns the empty list for n=0, returns the entire list if n is greater or equal the list's length.</p>
+<h2 id="after-elements-after-an-index"><a class="header" href="#after-elements-after-an-index"><code>after</code>: Elements after an index</a></h2>
+<p><strong>Arguments</strong> &lt; list: List &lt; n: Integer</p>
+<p><strong>Return value</strong> &lt; List with elmts after n: List</p>
+<p>Inverse of <code>take</code>; returns the elements that <code>take</code> dropped from the list. For positive n, this is equivalent to dropping the first n elements from the list, for negative n, it is equivalent to taking <code>|n|</code> elements from the end of the list (possibly the entire list if <code>|n| &gt; length(list)</code>. For n=0, the entire list is returned. For n greater than list length, the empty list is returned.</p>
+<h2 id="first-first-element-of-the-list"><a class="header" href="#first-first-element-of-the-list"><code>first</code>: First element of the list</a></h2>
+<p><strong>Arguments</strong> &lt; list: List</p>
+<p><strong>Return value</strong> &lt; element: Any value</p>
+<p>Returns the first element in the list, equivalent to <code>list 1 take</code>. This is intended for use with tuple-like lists.</p>
+<h2 id="second-second-element-of-a-list"><a class="header" href="#second-second-element-of-a-list"><code>second</code>: Second element of a list</a></h2>
+<p><strong>Arguments</strong> &lt; list: List</p>
+<p><strong>Return value</strong> &lt; second element: Any value</p>
+<p>Returns the second element of the list, similar to <code>fst</code>, and equivalent to <code>list 2 take</code>.</p>
+<h2 id="pair-create-a-tuple"><a class="header" href="#pair-create-a-tuple"><code>pair</code>: Create a tuple</a></h2>
+<p><strong>Arguments</strong> &lt; a: Any value &lt; b: Any value</p>
+<p><strong>Return value</strong> &lt; [ a, b ] : List</p>
+<p>Creates a two-element list from the two arguments. Main function for creating tuple-like lists (short lists of known length) and returning two values.</p>
+<h2 id="filter-filter-a-list"><a class="header" href="#filter-filter-a-list"><code>filter</code>: Filter a list</a></h2>
+<p><strong>Arguments</strong> &lt; list: List &lt; filter predicate: Callable</p>
+<p><strong>Return value</strong> &lt; filtered list: List</p>
+<p>This is the first of the higher-order list processing functions. <code>filter</code> takes a list and a callable. The callable is then provided with each element at a time in order (the element is placed on the stack and the callable is invoked, therefore at least both functions and codeblocks will work). For each element where the callable returns a truthy value, the element is retained in the resulting list. For each element where the callable returns a falsy value, the element is discarded. The result is a list where only the elements that the filtering function deemed necessary are retained.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="how-does-sof-actually-work"><a class="header" href="#how-does-sof-actually-work">How does SOF actually work?</a></h1>
+<p>This page shall describe the way that SOF works internally, while staying language-independent, as to accomodate other implementations of SOF compilers and interpreters. Nevertheless, Examples of the reference Java implementation shall be given, as it currently is the only existing implementation of SOF.</p>
+<h2 id="data-structures"><a class="header" href="#data-structures">Data Structures</a></h2>
+<p>SOF is a pure stack-based language. That means: All data always resides on the Stack, a linear unit of memory cells that contain data. Although we know a stack as being only LIFO and having one single visible element (the top, head or first element of the stack), in practice the SOF stack should be a <strong>Deque</strong>. If it wasn't, one would need two independent stacks for many operations (but both of them could be real, pure stacks).</p>
+<p>But what is a Deque? This term, pronounced &quot;deck&quot;, is short for &quot;double ended queue&quot; and describes a data structure with arbitrary access on both ends. The top of the deque is accessed with peek, pop and push, while the bottom of the deque is accessed with peekLast, popLast, pushLast. Java provides not only a Deque in its Collection framework, but also many specialized implementations, such as the currently used <code>ConcurrentLinkedDeque</code>, which is a double-linked-list implementation with threadsafety.</p>
+<p>All data lives on the stack, this was already stated. But how does this allow for named variables, namespaces and function calling? The answer is the second most important data structure of SOF, the <strong>Nametable</strong>.</p>
+<p>A Nametable is simply a list of key-value mappings (<code>Map</code> in Java and JavaScript, <code>dict</code> in python) that maps identifiers to any SOF data. Pretty simple, but this powers all of SOF. All defintions made by <code>def</code> are simply entries into nametables, the Call operator <code>.</code> simply accesses entries in nametables.</p>
+<h3 id="the-global-nametable"><a class="header" href="#the-global-nametable">The Global Nametable</a></h3>
+<p>The global nametable (GNT) is always the lowest element on the stack; when it is missing, something serious has gone wrong. The SOF programmer can never inspect, modify or remove the GNT, but it is being used all the time:</p>
+<ul>
+<li>All defintions made on a global level enter the GNT</li>
+<li>All imported NNTs (see below) are placed in the GNT</li>
+</ul>
+<p>The GNT will be discussed in further detail with its use cases.</p>
+<h2 id="scoping-the-call-and-def-operators"><a class="header" href="#scoping-the-call-and-def-operators">Scoping, the Call and Def operators</a></h2>
+<p>A Scope is created whenever a function starts. The scope is signaled by a special NT on the stack, called a function delimiter (FD). FDs hold special information on where to return execution when the function ends and what the return value is. Also, the FD cannot be taken off the stack by the program in any other way than returning from executing the current code block or function.</p>
+<p>As FDs are NTs, this means that at any point in the program there could be many NTs on the stack at once. To figure out which NT is to be used for the call operator <code>.</code> with an Identifier, the following simple rule is applied: <strong>Walk down the stack from top (last) to bottom (first). Whenever a Nametable is encountered, determine whether it contains the identifier that <code>.</code> wants to call. If so, retrieve this identifier's value from this Nametable, if not, continue the search all the way to the NNT/GNT. If nothing is found, throw a NameError</strong>. This ensures that definitions made in a &quot;more local&quot; NT are more important and hide those in a &quot;more global&quot; NT.</p>
+<p>Normally, <code>def</code> operates on the <strong>Local Nametable</strong> (LNT), which is simply the highest NT on the stack. This may be an FD, or the GNT if there is no FD. This importantly means that <strong>code inside a function cannot modify nametables outside unless using the <code>globaldef</code> operator</strong>:</p>
+<p>Sometimes, the user wants to define into the GNT. For this, the operator <code>globaldef</code> is provided, which exhibits the same behavior as <code>def</code> except for always defining into the GNT. This is useful for defining functions in an enclosed scope, modifying global variables and so on. It is also convention to always <code>globaldef</code> global functions, constructors, etc.</p>
+<h2 id="native-calls"><a class="header" href="#native-calls">Native calls</a></h2>
+<p>The PT <code>nativecall</code> executes a call to a natively implemented function. The only explicit argument of the native call is a string identifying the native function to call. Because the reference implementation is Java-based, the way in which native functions are identified is very similar to Java method signatures. The general form is <code>NativeFunction = Package { &quot;.&quot; Package } &quot;.&quot; Class &quot;#&quot; Method &quot;(&quot; [ ArgumentType ] { &quot;,&quot; ArgumentType } &quot;)&quot;</code>, where Package represents a legal Java package name, Class represents a legal Java class name and Method represents a legal Java method name. The argument types must be the internal SOF type names that the reference implementation uses, like StringPrimitive, FloatPrimitive etc. There may be any number of arguments separated by a comma (but no spaces!), and possibly none. The arguments are taken from the stack when <code>nativecall</code> runs, where the last argument taken from the stack is the first argument passed to the native function. The native function may return an SOF typed result, in which case it is placed on the stack, or it may return nothing (void), in which case the stack is not modified. Native functions may throw (incomplete) compiler exceptions, in which case they propagate from the <code>nativecall</code> as normal SOF errors of type <code>Native</code>.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="how-to-write-readable-sof-code"><a class="header" href="#how-to-write-readable-sof-code">How to write readable SOF code</a></h1>
+<p>This page will outline the conventions, idioms and common practices used when writing SOF code. Following this guide leads to good, idiomatic SOF code and APIs that other developers can use with ease. Most sections are in no particular order.</p>
+<h2 id="whitespace-use"><a class="header" href="#whitespace-use">Whitespace use</a></h2>
+<p>As SOF is very whitespace insensitive, good code uses whitespace to logically structure the otherwise pretty one-dimensional series of tokens.</p>
+<h4 id="token-separation"><a class="header" href="#token-separation">Token separation</a></h4>
+<p>Tokens on one line are separated with one single space. An exception is made when you want to align groups of tokens in multiple sequential lines: then, use of multiple spaces between tokens for alignment is encouraged.</p>
+<p><em>Example</em>: Defining a number of variables in sequence: Don't do this:</p>
+<pre><code class="language-sof">3 x def
+&quot;string&quot; msg def
+2 4 * eight def
+</code></pre>
+<p>Do this:</p>
+<pre><code class="language-sof">3        x     def
+&quot;string&quot; msg   def
+2 4 *    eight def
+</code></pre>
+<h4 id="line-breaks-and-token-grouping"><a class="header" href="#line-breaks-and-token-grouping">Line breaks and token grouping</a></h4>
+<p>Each line should contain one single action, or a logical unit of actions, which might require multiple tokens. In general, PTs should appear on the same line as their arguments, except when these arguments are already on the stack or require a lot of steps to be prepared.</p>
+<p>For PTs that take code blocks, such as <code>if</code>, the last closing brace and the PT itself should be on the same line, except when line length would be a problem.</p>
+<p>Code blocks should be split up into lines, where the opening and closing brace are on their own line, mimicking the &quot;braces on next line&quot; code style found in C-like languages. Exceptions are when the code block is very short (1-2 tokens) or contains only a single logical action (such as a function call with many parameters).</p>
+<p><em>Example</em>: Don't do this:</p>
+<pre><code class="language-sof"># define function
+{ pop 15 + return } 2 function someFunction globaldef
+# take user input, process it, store it, store a modified version, print one of two messages
+input convert:int : true someFunction : dup x def 3 + y def { &quot;large&quot; } { &quot;small&quot; } y . 33 &lt; ifelse
+</code></pre>
+<p>Do this:</p>
+<pre><code class="language-sof"># define function
+{
+    # discard first argument
+    pop
+    # compute something
+    15 + return
+} 2 function someFunction globaldef
+
+# take user input
+input convert:int :
+# process it
+true someFunction : dup
+# store it
+x def
+# store a modified version
+3 + y def
+# print one of two messages
+{ &quot;large&quot; } { &quot;small&quot; } y . 33 &lt; ifelse
+</code></pre>
+<h4 id="line-indentation"><a class="header" href="#line-indentation">Line indentation</a></h4>
+<p>Indenting one level should only be done inside code blocks; this also includes functions and methods. The braces of the code blocks themselves should be on the original indentation level, mimicking the &quot;braces on next line&quot; code style found in C-like languages. Whole-line comments are indented as code would be.</p>
+<p><em>Example</em>: Don't do this:</p>
+<pre><code class="language-sof">3 x def
+    {
+# a comment
+    3 someComputation :
+ 2 someComputation :
+      4 writeln
+ } 3 4 &lt; if
+</code></pre>
+<p>Do this:</p>
+<pre><code class="language-sof">3 x def
+{
+    # a comment
+    3 someComputation :
+    2 someComputation :
+    4 writeln
+} 3 4 &lt; if
+</code></pre>
+<p>An exception to the indentation rule are methods: They, together with the constructor, should be aligned one level further than the surrounding code. The constructor defining calls themselves ( <code>3 constructor &lt;classname&gt; globaldef &lt;classname&gt; :</code> ) should be on the same indentation level as the surrounding code.</p>
+<h2 id="naming-conventions"><a class="header" href="#naming-conventions">Naming conventions</a></h2>
+<p>General naming in SOF is done with CamelCase. All names except for constructors (classes) should be lowercase, constructors are uppercase. <em>Examples</em>: <code>fooFunc</code>, <code>connectToWebservice</code>, <code>doCoolComputation</code>, <code>myVariable</code>, <code>vector1</code>, <code>MyClass</code>, <code>Circle</code>, <code>FileCommunicator</code>. Names in general should be self-explanatory and human-readable, avoid abbreviations and name collisions. (There is no significant speed benefit on shorter names, as all names are identified through some sort of hash)</p>
+<p>Special naming conventions are used for functions that provide similar functionality (there is, of course, no function overloading in SOF): functions of this sort should be of the form <code>fname'args:variant</code>. <code>fname</code> is the general name of the function collection. <code>args</code> is either the number of arguments or the argument's types, separated by additional <code>'</code>. <code>variant</code> is either the variation on the base functionality or the return type.</p>
+<p><em>Examples</em>: The functions <code>random:01</code>, <code>random:int</code> and <code>random:float</code> all provide randomness, but <code>:01</code> returns values between 0 and 1, <code>:int</code> returns integers in a range and <code>:float</code> returns floats in a range. Similarly, the function collection <code>convert:&lt;type&gt;</code> includes a lot of functions that convert to a specific type from other supported types. The <code>writef'&lt;argc&gt;</code> functions all provide formatted standard output writing, but with a different number of formatting arguments specified by the <code>argc</code>.</p>
+<h3 id="cross-module-naming"><a class="header" href="#cross-module-naming">Cross-module naming</a></h3>
+<p>Names in modules can use an underscore to separate pseudo-namespaces (identical to the module name) from actual names. If the function names are reasonably generic and the number of exports in a module is small, this can be omitted.</p>
+<p>For example, all the list functions in standard library <code>list</code> have a <code>list_</code> prefix, such as <code>list_elem</code></p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="glossary"><a class="header" href="#glossary">Glossary</a></h1>
+<ul>
+<li><strong>PT</strong>: Primitive token. A special token that has the syntax of an identifier (i.e. if it wasn't special, it would be treated as an identifier) but executes a special operation that (for the most part) cannot be accomplished by other means.</li>
+<li><strong>Nametable</strong>: A key-value mapping structure (compare to Java's &amp; JavaScript's <code>Map</code>, python's <code>dict</code>) that is the second most important data structure of SOF internally after the Stack. All Nametables live on the Stack.</li>
+<li><strong>GNT</strong>: Global nametable. Lowest element on the stack, used for top-level lookups and <code>globaldef</code>. Exported functions keep the GNT at export time.</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+            </nav>
+
+        </div>
+
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
+        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        <script type="text/javascript">
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+    </body>
+</html>

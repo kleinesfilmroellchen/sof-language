@@ -1,0 +1,193 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Module system - SOF Programming Language Documentation</title>
+        <!-- Custom HTML head -->
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../Home.html">Home</a></li><li class="chapter-item expanded "><a href="../Introduction.html"><strong aria-hidden="true">1.</strong> Getting Started</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Introduction/Stack.html"><strong aria-hidden="true">1.1.</strong> The Stack</a></li><li class="chapter-item expanded "><a href="../Introduction/Names-Errors.html"><strong aria-hidden="true">1.2.</strong> Names and Errors</a></li><li class="chapter-item expanded "><a href="../Introduction/Functions.html"><strong aria-hidden="true">1.3.</strong> Functions</a></li></ol></li><li class="chapter-item expanded "><a href="../Reference.html"><strong aria-hidden="true">2.</strong> Reference</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Reference/Language-Specification.html"><strong aria-hidden="true">2.1.</strong> Language specification</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Reference/Types.html"><strong aria-hidden="true">2.1.1.</strong> Types</a></li><li class="chapter-item expanded "><a href="../Reference/PTs.html"><strong aria-hidden="true">2.1.2.</strong> Primitive Tokens</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Reference/PTs/Arithmetic-Logic.html"><strong aria-hidden="true">2.1.2.1.</strong> Arithmetic</a></li><li class="chapter-item expanded "><a href="../Reference/PTs/Control-flow.html"><strong aria-hidden="true">2.1.2.2.</strong> Control flow</a></li><li class="chapter-item expanded "><a href="../Reference/PTs/Stack.html"><strong aria-hidden="true">2.1.2.3.</strong> Stack &amp; Naming</a></li><li class="chapter-item expanded "><a href="../Reference/PTs/Functional.html"><strong aria-hidden="true">2.1.2.4.</strong> Functional</a></li><li class="chapter-item expanded "><a href="../Reference/PTs/Typing.html"><strong aria-hidden="true">2.1.2.5.</strong> Typing</a></li><li class="chapter-item expanded "><a href="../Reference/PTs/Modules.html"><strong aria-hidden="true">2.1.2.6.</strong> Modules</a></li></ol></li></ol></li><li class="chapter-item expanded "><a href="../Reference/Builtin-functions.html"><strong aria-hidden="true">2.2.</strong> Built-in functions</a></li><li class="chapter-item expanded "><a href="../Reference/Module-System.html" class="active"><strong aria-hidden="true">2.3.</strong> Module system</a></li><li class="chapter-item expanded "><a href="../Reference/Standard-Library.html"><strong aria-hidden="true">2.4.</strong> Standard library</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Reference/Standard-Library/math.html"><strong aria-hidden="true">2.4.1.</strong> math</a></li><li class="chapter-item expanded "><a href="../Reference/Standard-Library/list.html"><strong aria-hidden="true">2.4.2.</strong> list</a></li></ol></li><li class="chapter-item expanded "><a href="../Reference/Language-Internals.html"><strong aria-hidden="true">2.5.</strong> Language internals</a></li></ol></li><li class="chapter-item expanded "><a href="../Programming-conventions.html"><strong aria-hidden="true">3.</strong> Programming conventions</a></li><li class="chapter-item expanded "><a href="../Glossary.html"><strong aria-hidden="true">4.</strong> Glossary</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">SOF Programming Language Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="the-sof-module-system"><a class="header" href="#the-sof-module-system">The SOF Module System</a></h1>
+<p>SOF's module system is intended to be simple, but flexible and practical. It is very reminiscent of Python's module system.</p>
+<h2 id="modules-files-and-folders"><a class="header" href="#modules-files-and-folders">Modules, files, and folders</a></h2>
+<p>Each SOF source code file is a separate module. Folders are not special, they can just serve to group modules and avoid naming conflicts. There are no special module names such as <strong>init</strong> or <strong>main</strong> in Python, all files ending in <code>.sof</code> are accessible equivalent modules.</p>
+<p>Modules are named hierarchically with familiar dot syntax. Modules starting with a dot <code>.</code> are relative modules, and modules starting with any other character are absolute modules.</p>
+<p>Relative modules import relative to the file location. Single dots (except the leading dot) are used to import one directory lower, i.e. the name between this dot and the one before it is considered a directory in with to look for the module. Double dots <code>..</code> are used to import a directory higher (cf. directory navigation in all major operating systems). The highest directory possible is the directory of the base module of the program if the relative import chain originates from the base module, or the directory of the libraries if the relative import chain originates from a library module that was imported absolutely. This distinction prevents nonsensical and dangerous &quot;upwards&quot; imports while allowing for useful features like sibling folder importing.</p>
+<p>Absolute modules import in the library directory. This is a runtime-constant directory which will later be accessible with command-line arguments and/or environment variables. It usually sits in a related directory to the SOF executable itself. The library directory contains not only the SOF standard library modules but also any modules added manually by the user or by package managers. Modules imported absolutely can import relatively themselves, which again allows for submodule structures even in the libraries. Within an absolute module, single dots can also be used to import in sub-directories of the library directory.</p>
+<p>The module name, i.e. the name after the final dot, never contains the <code>.sof</code> ending. This allows for the alternative endings and special file formats which are treated specially by the module system, like <code>.soflib</code>.</p>
+<p>Each naming segment in any module specification, which represents either folders or the final file, can contain all characters except the two slash characters (used by the operating systems for directory structure) and dots, of course.</p>
+<p>Given this detailed description, the method of resolving modules is unambiguous and straightforward. Modules are always treated with UTF-8 encoding, just as all SOF files are.</p>
+<h2 id="names"><a class="header" href="#names">Names</a></h2>
+<p>As SOF has no namespaces like C, care needs to be taken when naming functions and other exports of a module. As they overwrite all GNT entries of the same name upon import, duplicate definitions are technically allowed (though the interpreter might issue a warning). The convention <a href="Programming-conventions">as outlined in the programming conventions</a> is to use underscores for separating pseudo-namespaces where necessary.</p>
+<h2 id="the-use-export-and-dexport-primitive-tokens"><a class="header" href="#the-use-export-and-dexport-primitive-tokens">The <code>use</code>, <code>export</code> and <code>dexport</code> primitive tokens</a></h2>
+<p>The <code>use</code> primitive token is used to import a module. The module specification, its behavior explained above in detail, is given by a string. The SOF module system imports the specified module, which may come from the internal cache if it was already imported. Then, all of the bindings defined by <code>export</code> or <code>dexport</code> are imported into the importing file's global namespace. This means that you don't have to worry about cluttering global namespaces with unnecessary names: only the names you export in a module are visible to <code>use</code>rs of that module.</p>
+<p>Note that of course, <code>use</code> is recursive. SOF code that is currently executed as part of a module import can <code>use</code> other modules without any different rules or exceptions. The only impossible module connection is any sort of circular import. The reason is equivalent to Python's reason: Because module importing always involves executing the entire imported module's source code. However, given the huge ecosystem of Python libraries, it is clear that this is not a limitation and all circular dependencies can be reworked to strict hierarchical dependencies.</p>
+<h2 id="running-functions-in-other-modules"><a class="header" href="#running-functions-in-other-modules">Running functions in other modules</a></h2>
+<p>There is special treatment given to exported functions, which technically is a special rule about all functions but only becomes relevant with cross-module functions. All functions store the global nametable at the time of definition; i.e. the global nametable of their module or file. As each module gets its own global nametable, this means that functions in different modules refer to different GNTs, but functions in the same module refer to the same GNT. When a function is run, the global nametable is in fact temporarily replaced with the function's global nametable at defintion time (if necessary) and restored afterwards. This means that a function can access global values of its module like one would expect. To keep the orthagonality, the global nametable exchanging can be thought of as a stack of global nametables at the very bottom of the real stack. The actual global nametable is just the top of this sub-stack, and global nametables are pushed to and popped from the stack on function entry and exit.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../Reference/Builtin-functions.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                            <a rel="next" href="../Reference/Standard-Library.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../Reference/Builtin-functions.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                    <a rel="next" href="../Reference/Standard-Library.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+    </body>
+</html>
