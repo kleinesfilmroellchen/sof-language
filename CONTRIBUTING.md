@@ -14,6 +14,6 @@ Code should follow the general Java code conventions, but isn't as strictly regu
 
 - Tabs instead of spaces, everywhere.
 - Readable names in CamelCase everywhere. The general rule "Classes are nouns, methods are verbs" applies.
-- Limit non-comment lines to about 100-120 characters.
+- Use the provided formatter config to format all Java code. SOF code should follow the SOF code style conventions as can be found in the documentation.
 - No code containing warnings, unless good reasons are given. This, most importantly, includes imports and wildcard imports, unsafe typecasting and unused variables.
 - **Good documentation**. If a method, class, member, non-trivial variable is undocumented, it should not be part of a commit. File bug reports for any undocumented code you can find. Good documentation includes stating intent, noting edge cases, documenting parameters, throws, and return values.
