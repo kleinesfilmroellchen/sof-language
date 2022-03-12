@@ -1,4 +1,4 @@
-[![CodeQL](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/codeql-analysis.yml) [![Gradle CI & Tests](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/gradle.yml/badge.svg)](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/gradle.yml) [![codecov](https://codecov.io/gh/kleinesfilmroellchen/sof-language/branch/master/graph/badge.svg?token=N0ZG8KO2IE)](https://codecov.io/gh/kleinesfilmroellchen/sof-language)
+[![CodeQL](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/codeql-analysis.yml) [![Gradle CI & Tests](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/gradle.yml/badge.svg)](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/gradle.yml) [![codecov](https://codecov.io/gh/kleinesfilmroellchen/sof-language/branch/master/graph/badge.svg?token=N0ZG8KO2IE)](https://codecov.io/gh/kleinesfilmroellchen/sof-language) **[documentation](https://kleinesfilmroellchen.github.io/sof-language/)**
 
 # SOF - Stack with Objects and Functions
 
@@ -51,6 +51,12 @@ Quit the program with ^C.
 ```
 
 A basic Visual Studio language support extension has been written, which can be found [on the marketplace](https://marketplace.visualstudio.com/items?itemName=kleinesfilmroellchen.sof-language-support) and [here on github](https://github.com/kleinesfilmroellchen/sof-syntaxhighlight).
+
+The documentation is browsable in-repo in [docs](./docs) or online [here](https://kleinesfilmroellchen.github.io/sof-language/) and can be built into website-compatible HTML with [mdbook](https://rust-lang.github.io/mdBook/index.html):
+
+```command
+cd docs; mdbook build
+```
 
 ## 1. What is SOF?
 
