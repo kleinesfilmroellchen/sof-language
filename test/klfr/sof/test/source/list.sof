@@ -1,9 +1,0 @@
-# SOF test file - list tests
-
-[ 2 3 55 ]
-
-[ 89 "string" blah ] describe
-
-/= assert
-
-[ 2 3 4 ] [ 2 3 4 ] = assert
