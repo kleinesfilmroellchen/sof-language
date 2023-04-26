@@ -45,7 +45,7 @@ Converts the argument to its callable equivalent. This has the following result:
 
 - "Real" callables are unchanged. This affects functions, code blocks and identifiers.
 - Primitives are converted to a [Church encoding](https://en.wikipedia.org/wiki/Church_encoding) version of themselves. (Not implemented) This means:
-    - Natural numbers `n >= 0` are converted to a callable that when called with another callable `f`, will result in a third callable `N(x)` that calls `f` on itself `n` times with the actual argument `x` as the initial argument to the "f-chain". This is a wordy way of saying that any `n` is represented by an n-fold composition of `f`.
+    - Natural numbers `n >= 0` are converted to a callable that when called with another callable `f`, will call `f` `n` times. If `f` returns a value and receives an argument, this is exactly equivalent to the notion of Church numerals.
     - Booleans are converted to a callable that when called with two arguments, will return the first (stack-lowest) argument if it is `true`, otherwise, it will return the second argument. This also means that `ca cb`**`cond if`** (`ca`, `cb` Callables, `cond` Boolean) is equivalent to `ca cb cond`**`convert:callable : .`**
     - Other Integers `x` are converted to a two-element list `[a, b]` where `a, b ∈ ℕ` are Church numerals as described above and `x = a - b`.
     - Floats `x` are first converted to the most accurate rational representation. Then, a two-element list `[k, a]` is created where `k` is a Church numeral (integer), `a` is a Church-encoded natural number and `x = k / ( 1 + a )`.

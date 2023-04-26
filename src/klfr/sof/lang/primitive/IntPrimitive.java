@@ -2,6 +2,7 @@ package klfr.sof.lang.primitive;
 
 import klfr.sof.exceptions.*;
 import klfr.sof.lang.*;
+import klfr.sof.lib.ChurchNumeral;
 
 /**
  * Integer, i.e. whole positive or negative number primitive type.
@@ -170,6 +171,8 @@ public final class IntPrimitive extends Primitive {
    public boolean equals(Stackable other) {
       if (other instanceof IntPrimitive otherInt) {
          return otherInt.value == this.value;
+      } else if (other instanceof ChurchNumeral numeral) {
+         return this.value == numeral.value();
       }
       return false;
    }

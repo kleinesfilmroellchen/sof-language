@@ -18,6 +18,7 @@ import klfr.sof.lang.functional.*;
 import klfr.sof.lang.oop.*;
 import klfr.sof.lang.oop.Object;
 import klfr.sof.lang.primitive.*;
+import klfr.sof.lib.ChurchNumeral;
 
 @DisplayName("Test outputting and printing")
 public class PrintTests extends SofTestSuper {
@@ -29,7 +30,7 @@ public class PrintTests extends SofTestSuper {
 		return List
 				.of(new Nametable(), new Identifier("identifier"), new TransparentData(TransparentType.CurryPipe), IntPrimitive.createIntPrimitive(42l), FloatPrimitive.createFloatPrimitive(20.4d), BoolPrimitive.createBoolPrimitive(true),
 						new Object(), new ListPrimitive(List.of(new Identifier("blah"), new Identifier("blah2"))), new FunctionDelimiter(), new MethodDelimiter(), Function.fromCodeBlock(codeBlock, 3, new Nametable()), codeBlock,
-						StringPrimitive.createStringPrimitive("string"), new CurriedFunction(Function.fromCodeBlock(codeBlock, 6, new Nametable()), List.of(new Identifier("moreblah")), new Nametable()))
+						StringPrimitive.createStringPrimitive("string"), new CurriedFunction(Function.fromCodeBlock(codeBlock, 6, new Nametable()), List.of(new Identifier("moreblah")), new Nametable()), new ChurchNumeral(20))
 				.stream().map(object -> dynamicTest(object.typename(), () -> {
 					for (final var extensiveness : new DebugStringExtensiveness[] { DebugStringExtensiveness.Full, DebugStringExtensiveness.Compact, DebugStringExtensiveness.Type })
 						assertDoesNotThrow(() -> object.toDebugString(extensiveness));

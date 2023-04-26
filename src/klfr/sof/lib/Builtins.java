@@ -166,8 +166,8 @@ public final class Builtins {
 	public static Stackable convertCallable(Stackable toConvert) throws IncompleteCompilerException {
 		if (toConvert instanceof CodeBlock || toConvert instanceof Function) {
 			return toConvert;
-		} else {
-			//TODO: Implement Church Numerals
+		} else if (toConvert instanceof IntPrimitive integer) {
+			return new ChurchNumeral(integer.value());
 		}
 
 		throw new IncompleteCompilerException("type");

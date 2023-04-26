@@ -670,7 +670,7 @@ public class Interpreter implements Serializable {
 	 * @param toCall The stackable that is to be called.
 	 * @param scope  The nametable that should act as the surrounding scope for the call. Note that some call types, such as
 	 *                  identifiers, do not use a scope.
-	 * @return Whether any of the subcalls encountered a return statement. This is necessary so that return statements
+	 * @return Whether execution of the current function should continue. This is necessary so that return statements
 	 *         propagate through CodeBlocks and are only caught by Functions.
 	 * @throws CompilerException           If the call fails with a specified location.
 	 * @throws IncompleteCompilerException If the call fails with no specified location.
@@ -774,6 +774,15 @@ public class Interpreter implements Serializable {
 			final var subProgram = codeblock.code;
 			// just run, no return value, no stack protect
 			return subProgram.forEach((Node.ForEachType) this::handle);
+		} else if (toCall instanceof ChurchNumeral numeral) {
+			final var callCount = numeral.value();
+			final var toCallRepeatedly = this.stack.pop();
+			for (int i = 0; i < callCount; ++i) {
+				final var result = this.doCall(toCallRepeatedly, scope);
+				if (!result)
+					return false;
+			}
+			return true;
 		} else
 			throw new IncompleteCompilerException("call", "type.call", toCall.typename());
 	}

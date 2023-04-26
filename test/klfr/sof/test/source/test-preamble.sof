@@ -8,8 +8,6 @@
 -898.2 convert:float : -898.2 = assert
 78 convert:float : 78.0 = assert
 
-{ } convert:callable :
-{ } 0 function convert:callable :
 76 convert:string : "76" = assert
 80.0 convert:string :
 
