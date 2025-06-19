@@ -32,7 +32,7 @@ version = '0.1'
 
 java {
 	modularity.inferModulePath = true
-	toolchain.languageVersion = JavaLanguageVersion.of(16)
+	toolchain.languageVersion = JavaLanguageVersion.of(24)
 }
 
 compileJava {
@@ -56,7 +56,7 @@ sourceSets {
 			srcDirs = ['src']
 		}
 		output.resourcesDir = file('build/out/bin')
-		java.outputDir = file('build/out/bin')
+		java.destinationDirectory.set(file('build/out/bin'))
 	}
 
 	test {
@@ -67,7 +67,7 @@ sourceSets {
 			srcDirs = ['test']
 		}
 		output.resourcesDir = file('build/out/testbins')
-		java.outputDir = file('build/out/testbins')
+		java.destinationDirectory.set(file('build/out/testbins'))
 	}
 }
 
@@ -110,7 +110,7 @@ tasks.named('test') {
 	finalizedBy jacocoTestReport // report is always generated after tests run
 }
 jacoco {
-    toolVersion = "0.8.7"
+    toolVersion = "0.8.13"
     reportsDirectory = layout.buildDirectory.dir('jcc-report')
 }
 jacocoTestReport {
