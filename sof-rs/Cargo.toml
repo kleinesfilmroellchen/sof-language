@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+gc-arena = "0.5.3"
+gc-arena-derive = "0.5.3"
 miette = { version = "7.6.0", features = ["fancy-no-backtrace"] }
 thiserror = "2.0.12"
 unicode-ident = "1.0.18"

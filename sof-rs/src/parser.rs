@@ -1,24 +1,45 @@
-use std::iter::Peekable;
+use std::rc::Rc;
 
-use miette::SourceOffset;
+use gc_arena::Mutation;
 use miette::SourceSpan;
-use unicode_ident::is_xid_continue;
-use unicode_ident::is_xid_start;
 
 use crate::ErrorKind;
+use crate::lexer;
+use crate::lexer::Identifier;
+use crate::runtime::Stackable;
 
 #[derive(Debug)]
-pub enum RawToken {
-    Keyword(Keyword),
-    Decimal(f64),
-    Integer(i64),
-    String(String),
-    Boolean(bool),
-    Identifier(Identifier),
+pub enum InnerToken {
+    Command(Command),
+    Literal(Literal),
+    CodeBlock(Vec<Token>),
 }
 
 #[derive(Debug)]
-pub enum Keyword {
+pub enum Literal {
+    Integer(i64),
+    Decimal(f64),
+    Identifier(Identifier),
+    String(String),
+    Boolean(bool),
+    ListStart,
+}
+
+impl Literal {
+    pub fn as_stackable<'gc>(&self) -> Stackable<'gc> {
+        match self {
+            Literal::Integer(int) => Stackable::Integer(*int),
+            Literal::Decimal(decimal) => Stackable::Decimal(*decimal),
+            Literal::Identifier(identifier) => Stackable::Identifier(identifier.clone()),
+            Literal::String(string) => Stackable::String(Rc::new(string.clone())),
+            Literal::Boolean(boolean) => Stackable::Boolean(*boolean),
+            Literal::ListStart => Stackable::ListStart,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum Command {
     Def,
     Globaldef,
     Dexport,
@@ -62,307 +83,156 @@ pub enum Keyword {
     FieldCall,
     MethodCall,
     NativeCall,
-    ListStart,
-    ListEnd,
+    CreateList,
     Describe,
     DescribeS,
     Assert,
-    CodeBlockStart,
-    CodeBlockEnd,
 }
 
-impl Keyword {
-    pub fn checked_from_char(chr: char) -> Self {
-        match chr {
-            '+' => Self::Plus,
-            '-' => Self::Minus,
-            '/' => Self::Divide,
-            '*' => Self::Multiply,
-            '%' => Self::Modulus,
-            '=' => Self::Equal,
-            '>' => Self::Greater,
-            '<' => Self::Less,
-            '[' => Self::ListStart,
-            '{' => Self::CodeBlockStart,
-            '}' => Self::CodeBlockEnd,
-            ']' => Self::ListEnd,
-            '|' => Self::Curry,
-            '.' => Self::Call,
-            ':' => Self::DoubleCall,
-            ',' => Self::FieldCall,
-            ';' => Self::MethodCall,
+impl Command {
+    pub fn from_keyword_checked(keyword: lexer::Keyword) -> Self {
+        match keyword {
+            lexer::Keyword::Def => Self::Def,
+            lexer::Keyword::Globaldef => Self::Globaldef,
+            lexer::Keyword::Dexport => Self::Dexport,
+            lexer::Keyword::Use => Self::Use,
+            lexer::Keyword::Export => Self::Export,
+            lexer::Keyword::Dup => Self::Dup,
+            lexer::Keyword::Pop => Self::Pop,
+            lexer::Keyword::Swap => Self::Swap,
+            lexer::Keyword::Write => Self::Write,
+            lexer::Keyword::Writeln => Self::Writeln,
+            lexer::Keyword::Input => Self::Input,
+            lexer::Keyword::Inputln => Self::Inputln,
+            lexer::Keyword::If => Self::If,
+            lexer::Keyword::Ifelse => Self::Ifelse,
+            lexer::Keyword::While => Self::While,
+            lexer::Keyword::DoWhile => Self::DoWhile,
+            lexer::Keyword::Switch => Self::Switch,
+            lexer::Keyword::Function => Self::Function,
+            lexer::Keyword::Constructor => Self::Constructor,
+            lexer::Keyword::Plus => Self::Plus,
+            lexer::Keyword::Minus => Self::Minus,
+            lexer::Keyword::Multiply => Self::Multiply,
+            lexer::Keyword::Divide => Self::Divide,
+            lexer::Keyword::Modulus => Self::Modulus,
+            lexer::Keyword::LeftShift => Self::LeftShift,
+            lexer::Keyword::RightShift => Self::RightShift,
+            lexer::Keyword::Cat => Self::Cat,
+            lexer::Keyword::And => Self::And,
+            lexer::Keyword::Or => Self::Or,
+            lexer::Keyword::Xor => Self::Xor,
+            lexer::Keyword::Not => Self::Not,
+            lexer::Keyword::Less => Self::Less,
+            lexer::Keyword::LessEqual => Self::LessEqual,
+            lexer::Keyword::Greater => Self::Greater,
+            lexer::Keyword::GreaterEqual => Self::GreaterEqual,
+            lexer::Keyword::Equal => Self::Equal,
+            lexer::Keyword::NotEqual => Self::NotEqual,
+            lexer::Keyword::Call => Self::Call,
+            lexer::Keyword::DoubleCall => Self::DoubleCall,
+            lexer::Keyword::Curry => Self::Curry,
+            lexer::Keyword::FieldCall => Self::FieldCall,
+            lexer::Keyword::MethodCall => Self::MethodCall,
+            lexer::Keyword::NativeCall => Self::NativeCall,
+            lexer::Keyword::ListEnd => Self::CreateList,
+            lexer::Keyword::Describe => Self::Describe,
+            lexer::Keyword::DescribeS => Self::DescribeS,
+            lexer::Keyword::Assert => Self::Assert,
             _ => unreachable!(),
         }
-    }
-
-    pub fn checked_from_chars(first: char, second: char) -> Self {
-        match (first, second) {
-            ('>', '>') => Self::RightShift,
-            ('<', '<') => Self::LeftShift,
-            ('>', '=') => Self::GreaterEqual,
-            ('<', '=') => Self::LessEqual,
-            ('/', '=') => Self::NotEqual,
-            _ => unreachable!(),
-        }
-    }
-
-    pub fn from_identifier_keyword(ident: &str) -> Option<Self> {
-        Some(match ident {
-            "if" => Self::If,
-            "ifelse" => Self::Ifelse,
-            "def" => Self::Def,
-            "globaldef" => Self::Globaldef,
-            "dexport" => Self::Dexport,
-            "export" => Self::Export,
-            "use" => Self::Use,
-            "pop" => Self::Pop,
-            "dup" => Self::Dup,
-            "swap" => Self::Swap,
-            "write" => Self::Write,
-            "writeln" => Self::Writeln,
-            "input" => Self::Input,
-            "inputln" => Self::Inputln,
-            "cat" => Self::Cat,
-            "and" => Self::And,
-            "or" => Self::Or,
-            "xor" => Self::Xor,
-            "not" => Self::Not,
-            "nativecall" => Self::NativeCall,
-            "describe" => Self::Describe,
-            "describes" => Self::DescribeS,
-            "assert" => Self::Assert,
-            "while" => Self::While,
-            "dowhile" => Self::DoWhile,
-            "switch" => Self::Switch,
-            "function" => Self::Function,
-            "constructor" => Self::Constructor,
-            _ => return None,
-        })
     }
 }
 
 #[derive(Debug)]
 pub struct Token {
-    pub token: RawToken,
+    pub inner: InnerToken,
     pub span: SourceSpan,
 }
 
-#[derive(Debug)]
-pub struct Identifier(String);
-
-pub fn lex(string: impl AsRef<str>) -> Result<Vec<Token>, ErrorKind> {
-    let mut char_iter = string.as_ref().chars().enumerate().peekable();
-    let mut tokens = Vec::new();
-    while let Some((next_position, next_char)) = char_iter.next() {
-        let next_offset = next_position.into();
-        match next_char {
-            '#' => {
-                // comment
-                let multiline = char_iter.peek().is_some_and(|(_, c)| *c == '*');
-                if multiline {
-                    char_iter.next();
-                }
-                while let Some((_, comment_char)) = char_iter.next() {
-                    match comment_char {
-                        '\n' if !multiline => break,
-                        '*' if char_iter.peek().is_some_and(|(_, c)| *c == '#') => {
-                            char_iter.next();
-                            break;
+pub fn parse(tokens: Vec<&lexer::Token>) -> Result<Vec<Token>, ErrorKind> {
+    let mut token_iter = tokens.into_iter();
+    let mut output = Vec::new();
+    while let Some(lexer::Token { token, span }) = token_iter.next() {
+        match token {
+            lexer::RawToken::Keyword(lexer::Keyword::ListStart) => output.push(Token {
+                inner: InnerToken::Literal(Literal::ListStart),
+                span: *span,
+            }),
+            lexer::RawToken::Decimal(decimal) => output.push(Token {
+                inner: InnerToken::Literal(Literal::Decimal(*decimal)),
+                span: *span,
+            }),
+            lexer::RawToken::Integer(int) => output.push(Token {
+                inner: InnerToken::Literal(Literal::Integer(*int)),
+                span: *span,
+            }),
+            lexer::RawToken::String(string) => output.push(Token {
+                inner: InnerToken::Literal(Literal::String(string.clone())),
+                span: *span,
+            }),
+            lexer::RawToken::Boolean(boolean) => output.push(Token {
+                inner: InnerToken::Literal(Literal::Boolean(*boolean)),
+                span: *span,
+            }),
+            lexer::RawToken::Identifier(identifier) => output.push(Token {
+                inner: InnerToken::Literal(Literal::Identifier(identifier.clone())),
+                span: *span,
+            }),
+            lexer::RawToken::Keyword(lexer::Keyword::CodeBlockStart) => {
+                let mut depth = 1usize;
+                let mut inner_tokens = Vec::new();
+                let mut last_span = *span;
+                while let Some(
+                    full_next_token @ lexer::Token {
+                        token: next_inner_token,
+                        span: next_span,
+                    },
+                ) = token_iter.next()
+                {
+                    last_span = *next_span;
+                    match next_inner_token {
+                        lexer::RawToken::Keyword(lexer::Keyword::CodeBlockStart) => {
+                            depth += 1;
+                        }
+                        lexer::RawToken::Keyword(lexer::Keyword::CodeBlockEnd) => {
+                            depth -= 1;
                         }
                         _ => {}
                     }
-                }
-            }
-            c if is_xid_start(c) => {
-                let mut ident = String::new();
-                ident.push(c);
-                while let Some((_, idc)) = char_iter.next() {
-                    if is_xid_continue(idc) || [':', '\''].contains(&idc) {
-                        ident.push(idc);
-                    } else if idc.is_whitespace() {
+                    if depth == 0 {
                         break;
-                    } else {
-                        return Err(ErrorKind::InvalidIdentifier {
-                            chr: idc,
-                            span: (SourceOffset::from(next_position + ident.chars().count()), 1)
-                                .into(),
-                            ident,
-                        });
                     }
+                    inner_tokens.push(full_next_token);
+                }
+                if depth > 0 {
+                    return Err(ErrorKind::UnclosedCodeBlock {
+                        start_span: *span,
+                        end_span: Some(last_span),
+                    });
                 }
 
-                tokens.push(Token {
-                    span: (next_offset, ident.chars().count()).into(),
-                    token: if ident.to_ascii_lowercase() == "true" {
-                        RawToken::Boolean(true)
-                    } else if ident.to_ascii_lowercase() == "false" {
-                        RawToken::Boolean(false)
-                    } else {
-                        Keyword::from_identifier_keyword(&ident).map_or_else(
-                            || RawToken::Identifier(Identifier(ident)),
-                            |kw| RawToken::Keyword(kw),
-                        )
-                    },
+                let span = SourceSpan::new(
+                    span.offset().into(),
+                    last_span.offset() - span.offset() + last_span.len(),
+                );
+                let parsed = parse(inner_tokens)?;
+                output.push(Token {
+                    inner: InnerToken::CodeBlock(parsed),
+                    span,
                 });
             }
-            c if c.is_whitespace() => continue,
-            '+' | '-' | '*' | '/' | '%' | '=' | '>' | '<' | '.' | ',' | ';' | ':' | '[' | ']'
-            | '|' | '{' | '}'
-                if char_iter.peek().is_none_or(|(_, c)| c.is_whitespace()) =>
-            {
-                tokens.push(Token {
-                    span: SourceSpan::new(next_offset, 1),
-                    token: RawToken::Keyword(Keyword::checked_from_char(next_char)),
+            lexer::RawToken::Keyword(lexer::Keyword::CodeBlockEnd) => {
+                return Err(ErrorKind::UnclosedCodeBlock {
+                    start_span: *span,
+                    end_span: None,
                 });
             }
-            '>' if matches!(char_iter.peek(), Some((_, '>' | '='))) => {
-                tokens.push(Token {
-                    span: SourceSpan::new(next_offset, 2),
-                    token: RawToken::Keyword(Keyword::checked_from_chars(
-                        next_char,
-                        char_iter.next().unwrap().1,
-                    )),
-                });
-            }
-            '<' if matches!(char_iter.peek(), Some((_, '<' | '='))) => {
-                tokens.push(Token {
-                    span: SourceSpan::new(next_offset, 2),
-                    token: RawToken::Keyword(Keyword::checked_from_chars(
-                        next_char,
-                        char_iter.next().unwrap().1,
-                    )),
-                });
-            }
-            '/' if matches!(char_iter.peek(), Some((_, '='))) => {
-                tokens.push(Token {
-                    span: SourceSpan::new(next_offset, 2),
-                    token: RawToken::Keyword(Keyword::NotEqual),
-                });
-            }
-            '"' => {
-                let mut string = String::new();
-                while let Some((pos, string_char)) = char_iter.next() {
-                    match string_char {
-                        '"' => break,
-                        '\\' => {
-                            let (_, escaped) =
-                                char_iter.next().ok_or(ErrorKind::UnclosedString {
-                                    span: SourceSpan::new(pos.into(), 0),
-                                })?;
-                            string.push(escaped);
-                        }
-                        _ => string.push(string_char),
-                    }
-                }
-                tokens.push(Token {
-                    span: SourceSpan::new(next_offset, string.chars().count()),
-                    token: RawToken::String(string),
-                })
-            }
-            '0'..='9' | '+' | '-' => {
-                let (token, length) = parse_number(next_offset, next_char, &mut char_iter)?;
-                tokens.push(Token {
-                    span: SourceSpan::new(next_offset, length),
-                    token,
-                })
-            }
-            _ => {
-                return Err(ErrorKind::InvalidCharacter {
-                    chr: next_char,
-                    span: SourceSpan::new(next_offset, 1),
-                });
-            }
+            lexer::RawToken::Keyword(keyword) => output.push(Token {
+                inner: InnerToken::Command(Command::from_keyword_checked(*keyword)),
+                span: *span,
+            }),
         }
     }
-    Ok(tokens)
-}
-
-fn parse_number(
-    start_offset: SourceOffset,
-    first_char: char,
-    char_iter: &mut Peekable<impl Iterator<Item = (usize, char)>>,
-) -> Result<(RawToken, usize), ErrorKind> {
-    let mut number_string = String::new();
-    number_string.push(first_char);
-    while char_iter.peek().is_some_and(|(_, c)| !c.is_whitespace()) {
-        number_string.push(char_iter.next().unwrap().1);
-    }
-    let string_length = number_string.chars().count();
-
-    if let Some((prefix @ ("" | "-" | "+"), hex_number)) = number_string.split_once("0x") {
-        // starts with "0x" and optional sign – hex digit
-        parse_with_radix::<16>(
-            prefix,
-            hex_number,
-            &number_string,
-            start_offset,
-            string_length,
-        )
-    } else if let Some((prefix @ ("" | "-" | "+"), hex_number)) = number_string.split_once("0b") {
-        // starts with "0b" and optional sign – binary digit
-        parse_with_radix::<2>(
-            prefix,
-            hex_number,
-            &number_string,
-            start_offset,
-            string_length,
-        )
-    } else if let Some((prefix @ ("" | "-" | "+"), hex_number)) = number_string.split_once("0o") {
-        // starts with "0o" and optional sign – octal digit
-        parse_with_radix::<8>(
-            prefix,
-            hex_number,
-            &number_string,
-            start_offset,
-            string_length,
-        )
-    } else {
-        // some kind of decimal digit, possibly floating-point
-
-        // all digits, so an integer
-        if number_string
-            .chars()
-            .enumerate()
-            .all(|(i, c)| c.is_ascii_digit() || (i == 0 && ['+', '-'].contains(&c)))
-        {
-            parse_with_radix::<10>(
-                "",
-                &number_string,
-                &number_string,
-                start_offset,
-                string_length,
-            )
-        } else {
-            // probably a float
-            Ok((
-                RawToken::Decimal(number_string.parse().map_err(|inner| {
-                    ErrorKind::InvalidFloat {
-                        number_text: number_string,
-                        inner,
-                        span: (start_offset, string_length).into(),
-                    }
-                })?),
-                string_length,
-            ))
-        }
-    }
-}
-
-fn parse_with_radix<const RADIX: u32>(
-    prefix: &str,
-    number: &str,
-    number_string: &String,
-    start_offset: SourceOffset,
-    string_length: usize,
-) -> Result<(RawToken, usize), ErrorKind> {
-    let mut number =
-        i64::from_str_radix(number, RADIX).map_err(|inner| ErrorKind::InvalidInteger {
-            span: (start_offset, string_length).into(),
-            number_text: number_string.clone(),
-            inner,
-        })?;
-    if prefix == "-" {
-        number *= -1;
-    }
-    Ok((RawToken::Integer(number), string_length))
+    Ok(output)
 }

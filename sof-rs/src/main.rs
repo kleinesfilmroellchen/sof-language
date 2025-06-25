@@ -5,26 +5,31 @@ use miette::Diagnostic;
 use miette::SourceSpan;
 use thiserror::Error;
 
+use crate::interpreter::run;
+
+mod interpreter;
+mod lexer;
 mod parser;
+mod runtime;
 
 #[derive(Error, Diagnostic, Debug)]
 pub enum ErrorKind {
     #[error("{message}")]
-    #[diagnostic(code(ParserError))]
+    #[diagnostic(code(SyntaxError))]
     Parser {
         message: &'static str,
         #[label = "here"]
         span: SourceSpan,
     },
     #[error("invalid character '{chr}'")]
-    #[diagnostic(code(ParserError))]
+    #[diagnostic(code(SyntaxError))]
     InvalidCharacter {
         chr: char,
         #[label = "invalid"]
         span: SourceSpan,
     },
     #[error("invalid character '{chr}' in identifier \"{ident}\"")]
-    #[diagnostic(code(ParserError))]
+    #[diagnostic(code(SyntaxError))]
     InvalidIdentifier {
         chr: char,
         ident: String,
@@ -32,7 +37,7 @@ pub enum ErrorKind {
         span: SourceSpan,
     },
     #[error("invalid number \"{number_text}\"")]
-    #[diagnostic(code(ParserError))]
+    #[diagnostic(code(SyntaxError))]
     InvalidInteger {
         number_text: String,
         inner: ParseIntError,
@@ -40,7 +45,7 @@ pub enum ErrorKind {
         span: SourceSpan,
     },
     #[error("invalid number \"{number_text}\"")]
-    #[diagnostic(code(ParserError))]
+    #[diagnostic(code(SyntaxError))]
     InvalidFloat {
         number_text: String,
         inner: ParseFloatError,
@@ -48,10 +53,18 @@ pub enum ErrorKind {
         span: SourceSpan,
     },
     #[error("unclosed string")]
-    #[diagnostic(code(ParserError))]
+    #[diagnostic(code(SyntaxError))]
     UnclosedString {
         #[label = "string terminator '\"' expected here"]
         span: SourceSpan,
+    },
+    #[error("unclosed code block")]
+    #[diagnostic(code(SyntaxError))]
+    UnclosedCodeBlock {
+        #[label = "this code block is unclosed"]
+        start_span: SourceSpan,
+        #[label = "code block end '}}' expected here"]
+        end_span: Option<SourceSpan>,
     },
 }
 
@@ -82,7 +95,10 @@ fn main() -> miette::Result<()> {
 }
 
 fn sof_main(code: impl AsRef<str>) -> miette::Result<()> {
-    let result = parser::lex(code)?;
-    println!("{result:#?}");
+    let result = lexer::lex(code)?;
+    // println!("{result:#?}");
+    let parsed = parser::parse(result.iter().collect())?;
+    // println!("{parsed:#?}");
+    run(parsed)?;
     Ok(())
 }
