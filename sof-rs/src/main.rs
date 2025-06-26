@@ -6,6 +6,7 @@ use miette::SourceSpan;
 use thiserror::Error;
 
 use crate::interpreter::run;
+use crate::parser::Command;
 
 mod interpreter;
 mod lexer;
@@ -65,6 +66,35 @@ pub enum ErrorKind {
         start_span: SourceSpan,
         #[label = "code block end '}}' expected here"]
         end_span: Option<SourceSpan>,
+    },
+    #[error("cannot pop value from empty stack")]
+    #[diagnostic(code(StackAccessError))]
+    MissingValue {
+        #[label]
+        span: SourceSpan,
+    },
+    #[error("invalid types for operation {operation}: {lhs} and {rhs}")]
+    #[diagnostic(code(TypeError))]
+    InvalidTypes {
+        operation: Command,
+        lhs: String,
+        rhs: String,
+        #[label]
+        span: SourceSpan,
+    },
+    #[error("divide by zero: {lhs} / {rhs}")]
+    #[diagnostic(code(ArithmeticError))]
+    DivideByZero {
+        lhs: String,
+        rhs: String,
+        #[label]
+        span: SourceSpan,
+    },
+    #[error("assertion failed")]
+    #[diagnostic(code(AssertionError))]
+    AssertionFailed {
+        #[label]
+        span: SourceSpan,
     },
 }
 

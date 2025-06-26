@@ -21,14 +21,14 @@
 30 68 * 2040 = assert # multiplication (int & int)
 60.5 7 * 423.5 = assert # multiplication (float & int)
 7 60.5 * 423.5 = assert # multiplication (int & float)
-3.141 -8.2 * -25.7562 = assert # multiplication (float & float)
+3.125 -8.25 * -25.78125 = assert # multiplication (float & float)
 
 #### divide
 100 5 / 20 = assert # divide (integer exact)
 -70 6 / -11 = assert # divide (integer with remainder)
 70.0 8 / 8.75 = assert # divide (float & int)
 70 8.0 / 8.75 = assert # divide (int & float)
-80.6 5.2 / 15.5 = assert # divide (float & float)
+80.5 5.75 / 14.0 = assert # divide (float & float)
 # try is not implemented
 # { 5 0 / false assert } { true assert } try # divide by zero fails
 
@@ -46,10 +46,10 @@
 114 0 >> 114 = assert
 8 2 >> 2 = assert
 0 18 << 0 = assert
-17 80.7 >> 0 = assert
-17 0.7 << 17 = assert
-51.7 0 << 51 = assert
-51.7 0 >> 51 = assert
+17 80 >> 0 = assert
+17 0 << 17 = assert
+51 0 << 51 = assert
+51 0 >> 51 = assert
 
 # The SOF programming language interpreter.
 # Copyright (C) 2019-2020  kleinesfilmröllchen

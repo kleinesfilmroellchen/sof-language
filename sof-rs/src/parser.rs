@@ -1,6 +1,6 @@
+use std::fmt::Display;
 use std::rc::Rc;
 
-use gc_arena::Mutation;
 use miette::SourceSpan;
 
 use crate::ErrorKind;
@@ -8,14 +8,14 @@ use crate::lexer;
 use crate::lexer::Identifier;
 use crate::runtime::Stackable;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum InnerToken {
     Command(Command),
     Literal(Literal),
     CodeBlock(Vec<Token>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Literal {
     Integer(i64),
     Decimal(f64),
@@ -38,7 +38,7 @@ impl Literal {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Command {
     Def,
     Globaldef,
@@ -87,6 +87,64 @@ pub enum Command {
     Describe,
     DescribeS,
     Assert,
+}
+
+impl Display for Command {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Def => "def",
+                Self::Globaldef => "globaldef",
+                Self::Dexport => "dexport",
+                Self::Use => "use",
+                Self::Export => "export",
+                Self::Dup => "dup",
+                Self::Pop => "pop",
+                Self::Swap => "swap",
+                Self::Write => "write",
+                Self::Writeln => "writeln",
+                Self::Input => "input",
+                Self::Inputln => "inputln",
+                Self::If => "if",
+                Self::Ifelse => "ifelse",
+                Self::While => "while",
+                Self::DoWhile => "dowhile",
+                Self::Switch => "switch",
+                Self::Function => "function",
+                Self::Constructor => "constructor",
+                Self::Plus => "+",
+                Self::Minus => "-",
+                Self::Multiply => "*",
+                Self::Divide => "/",
+                Self::Modulus => "%",
+                Self::LeftShift => "<<",
+                Self::RightShift => ">>",
+                Self::Cat => "cat",
+                Self::And => "and",
+                Self::Or => "or",
+                Self::Xor => "xor",
+                Self::Not => "not",
+                Self::Less => "<",
+                Self::LessEqual => "<=",
+                Self::Greater => ">",
+                Self::GreaterEqual => ">=",
+                Self::Equal => "=",
+                Self::NotEqual => "/=",
+                Self::Call => ".",
+                Self::DoubleCall => ":",
+                Self::Curry => "|",
+                Self::FieldCall => ",",
+                Self::MethodCall => ";",
+                Self::NativeCall => "nativecall",
+                Self::CreateList => "]",
+                Self::Describe => "describe",
+                Self::DescribeS => "describes",
+                Self::Assert => "assert",
+            }
+        )
+    }
 }
 
 impl Command {
@@ -148,6 +206,12 @@ impl Command {
 pub struct Token {
     pub inner: InnerToken,
     pub span: SourceSpan,
+}
+
+impl PartialEq for Token {
+    fn eq(&self, other: &Self) -> bool {
+        self.inner == other.inner
+    }
 }
 
 pub fn parse(tokens: Vec<&lexer::Token>) -> Result<Vec<Token>, ErrorKind> {

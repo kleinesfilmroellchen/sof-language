@@ -1,5 +1,13 @@
 use std::collections::HashMap;
 use std::collections::VecDeque;
+use std::fmt::Display;
+use std::ops::Add;
+use std::ops::Div;
+use std::ops::Mul;
+use std::ops::Rem;
+use std::ops::Shl;
+use std::ops::Shr;
+use std::ops::Sub;
 use std::rc::Rc;
 
 use gc_arena::Arena;
@@ -7,9 +15,11 @@ use gc_arena::Mutation;
 use gc_arena::Rootable;
 use gc_arena::lock::GcRefLock;
 use gc_arena_derive::Collect;
+use miette::SourceSpan;
 
 use crate::ErrorKind;
 use crate::lexer::Identifier;
+use crate::parser::Command;
 use crate::parser::Token;
 
 #[derive(Debug, Collect)]
@@ -27,13 +37,13 @@ pub enum Stackable<'gc> {
     ListStart,
 }
 
-#[derive(Debug, Collect)]
+#[derive(Debug, Collect, PartialEq)]
 #[collect(require_static)]
 pub struct CodeBlock {
     pub(crate) code: Vec<Token>,
 }
 
-#[derive(Debug, Collect)]
+#[derive(Debug, Collect, PartialEq)]
 #[collect(require_static)]
 pub struct Function {
     arguments: usize,
@@ -41,13 +51,13 @@ pub struct Function {
     code: Vec<Token>,
 }
 
-#[derive(Debug, Collect)]
+#[derive(Debug, Collect, PartialEq)]
 #[collect(no_drop)]
 pub struct Object<'gc> {
     fields: Nametable<'gc>,
 }
 
-#[derive(Debug, Collect)]
+#[derive(Debug, Collect, PartialEq)]
 #[collect(no_drop)]
 pub struct Nametable<'gc> {
     entries: HashMap<Identifier, GcRefLock<'gc, Stackable<'gc>>>,
@@ -59,113 +69,152 @@ pub struct Stack<'gc>(pub GcRefLock<'gc, VecDeque<Stackable<'gc>>>);
 
 pub type StackArena = Arena<Rootable![Stack<'_>]>;
 
+macro_rules! numeric_op {
+    ($vis:vis $func_name:ident($command:ident, $func:ident)) => {
+        $vis fn $func_name(
+            &self,
+            other: Stackable<'gc>,
+            span: SourceSpan,
+        ) -> Result<Stackable<'gc>, ErrorKind> {
+            Ok(match (self, &other) {
+                (Stackable::Integer(lhs), Stackable::Integer(rhs)) => Stackable::Integer(lhs.$func(rhs)),
+                (Stackable::Integer(lhs), Stackable::Decimal(rhs)) => {
+                    Stackable::Decimal((*lhs as f64).$func(rhs))
+                }
+                (Stackable::Decimal(lhs), Stackable::Integer(rhs)) => {
+                    Stackable::Decimal(lhs.$func(*rhs as f64))
+                }
+                (Stackable::Decimal(lhs), Stackable::Decimal(rhs)) => Stackable::Decimal(lhs.$func(rhs)),
+                _ => {
+                    return Err(ErrorKind::InvalidTypes {
+                        operation: Command::$command,
+                        lhs: self.to_string(),
+                        rhs: other.to_string(),
+                        span,
+                    });
+                }
+            })
+        }
+    };
+}
+
 impl<'gc> Stackable<'gc> {
-    pub fn add(
+    numeric_op!(pub add(Plus, add));
+    numeric_op!(pub subtract(Minus, sub));
+    numeric_op!(pub multiply(Multiply, mul));
+    numeric_op!(divide_unchecked(Divide, div));
+    numeric_op!(modulus_unchecked(Modulus, rem));
+
+    pub fn divide(
         &self,
         other: Stackable<'gc>,
-        mc: &Mutation<'gc>,
+        span: SourceSpan,
     ) -> Result<Stackable<'gc>, ErrorKind> {
-        Ok(match (self, other) {
-            (Stackable::Integer(lhs), Stackable::Integer(rhs)) => Stackable::Integer(*lhs + rhs),
-            (Stackable::Integer(_), Stackable::Decimal(_)) => todo!(),
-            (Stackable::Integer(_), Stackable::Boolean(_)) => todo!(),
-            (Stackable::Integer(_), Stackable::Identifier(identifier)) => todo!(),
-            (Stackable::Integer(_), Stackable::String(_)) => todo!(),
-            (Stackable::Integer(_), Stackable::CodeBlock(_)) => todo!(),
-            (Stackable::Integer(_), Stackable::Function(_)) => todo!(),
-            (Stackable::Integer(_), Stackable::Object(_)) => todo!(),
-            (Stackable::Integer(_), Stackable::Nametable(_)) => todo!(),
-            (Stackable::Integer(_), Stackable::ListStart) => todo!(),
-            (Stackable::Decimal(_), Stackable::Integer(_)) => todo!(),
-            (Stackable::Decimal(lhs), Stackable::Decimal(rhs)) => Stackable::Decimal(*lhs + rhs),
-            (Stackable::Decimal(_), Stackable::Boolean(_)) => todo!(),
-            (Stackable::Decimal(_), Stackable::Identifier(identifier)) => todo!(),
-            (Stackable::Decimal(_), Stackable::String(_)) => todo!(),
-            (Stackable::Decimal(_), Stackable::CodeBlock(_)) => todo!(),
-            (Stackable::Decimal(_), Stackable::Function(_)) => todo!(),
-            (Stackable::Decimal(_), Stackable::Object(_)) => todo!(),
-            (Stackable::Decimal(_), Stackable::Nametable(_)) => todo!(),
-            (Stackable::Decimal(_), Stackable::ListStart) => todo!(),
-            (Stackable::Boolean(_), Stackable::Integer(_)) => todo!(),
-            (Stackable::Boolean(_), Stackable::Decimal(_)) => todo!(),
-            (Stackable::Boolean(_), Stackable::Boolean(_)) => todo!(),
-            (Stackable::Boolean(_), Stackable::Identifier(identifier)) => todo!(),
-            (Stackable::Boolean(_), Stackable::String(_)) => todo!(),
-            (Stackable::Boolean(_), Stackable::CodeBlock(_)) => todo!(),
-            (Stackable::Boolean(_), Stackable::Function(_)) => todo!(),
-            (Stackable::Boolean(_), Stackable::Object(_)) => todo!(),
-            (Stackable::Boolean(_), Stackable::Nametable(_)) => todo!(),
-            (Stackable::Boolean(_), Stackable::ListStart) => todo!(),
-            (Stackable::Identifier(identifier), Stackable::Integer(_)) => todo!(),
-            (Stackable::Identifier(identifier), Stackable::Decimal(_)) => todo!(),
-            (Stackable::Identifier(identifier), Stackable::Boolean(_)) => todo!(),
-            (Stackable::Identifier(identifier), Stackable::Identifier(_)) => todo!(),
-            (Stackable::Identifier(identifier), Stackable::String(_)) => todo!(),
-            (Stackable::Identifier(identifier), Stackable::CodeBlock(_)) => todo!(),
-            (Stackable::Identifier(identifier), Stackable::Function(_)) => todo!(),
-            (Stackable::Identifier(identifier), Stackable::Object(_)) => todo!(),
-            (Stackable::Identifier(identifier), Stackable::Nametable(_)) => todo!(),
-            (Stackable::Identifier(identifier), Stackable::ListStart) => todo!(),
-            (Stackable::String(_), Stackable::Integer(_)) => todo!(),
-            (Stackable::String(_), Stackable::Decimal(_)) => todo!(),
-            (Stackable::String(_), Stackable::Boolean(_)) => todo!(),
-            (Stackable::String(_), Stackable::Identifier(identifier)) => todo!(),
-            (Stackable::String(_), Stackable::String(_)) => todo!(),
-            (Stackable::String(_), Stackable::CodeBlock(_)) => todo!(),
-            (Stackable::String(_), Stackable::Function(_)) => todo!(),
-            (Stackable::String(_), Stackable::Object(_)) => todo!(),
-            (Stackable::String(_), Stackable::Nametable(_)) => todo!(),
-            (Stackable::String(_), Stackable::ListStart) => todo!(),
-            (Stackable::CodeBlock(_), Stackable::Integer(_)) => todo!(),
-            (Stackable::CodeBlock(_), Stackable::Decimal(_)) => todo!(),
-            (Stackable::CodeBlock(_), Stackable::Boolean(_)) => todo!(),
-            (Stackable::CodeBlock(_), Stackable::Identifier(identifier)) => todo!(),
-            (Stackable::CodeBlock(_), Stackable::String(_)) => todo!(),
-            (Stackable::CodeBlock(_), Stackable::CodeBlock(_)) => todo!(),
-            (Stackable::CodeBlock(_), Stackable::Function(_)) => todo!(),
-            (Stackable::CodeBlock(_), Stackable::Object(_)) => todo!(),
-            (Stackable::CodeBlock(_), Stackable::Nametable(_)) => todo!(),
-            (Stackable::CodeBlock(_), Stackable::ListStart) => todo!(),
-            (Stackable::Function(_), Stackable::Integer(_)) => todo!(),
-            (Stackable::Function(_), Stackable::Decimal(_)) => todo!(),
-            (Stackable::Function(_), Stackable::Boolean(_)) => todo!(),
-            (Stackable::Function(_), Stackable::Identifier(identifier)) => todo!(),
-            (Stackable::Function(_), Stackable::String(_)) => todo!(),
-            (Stackable::Function(_), Stackable::CodeBlock(_)) => todo!(),
-            (Stackable::Function(_), Stackable::Function(_)) => todo!(),
-            (Stackable::Function(_), Stackable::Object(_)) => todo!(),
-            (Stackable::Function(_), Stackable::Nametable(_)) => todo!(),
-            (Stackable::Function(_), Stackable::ListStart) => todo!(),
-            (Stackable::Object(_), Stackable::Integer(_)) => todo!(),
-            (Stackable::Object(_), Stackable::Decimal(_)) => todo!(),
-            (Stackable::Object(_), Stackable::Boolean(_)) => todo!(),
-            (Stackable::Object(_), Stackable::Identifier(identifier)) => todo!(),
-            (Stackable::Object(_), Stackable::String(_)) => todo!(),
-            (Stackable::Object(_), Stackable::CodeBlock(_)) => todo!(),
-            (Stackable::Object(_), Stackable::Function(_)) => todo!(),
-            (Stackable::Object(_), Stackable::Object(_)) => todo!(),
-            (Stackable::Object(_), Stackable::Nametable(_)) => todo!(),
-            (Stackable::Object(_), Stackable::ListStart) => todo!(),
-            (Stackable::Nametable(_), Stackable::Integer(_)) => todo!(),
-            (Stackable::Nametable(_), Stackable::Decimal(_)) => todo!(),
-            (Stackable::Nametable(_), Stackable::Boolean(_)) => todo!(),
-            (Stackable::Nametable(_), Stackable::Identifier(identifier)) => todo!(),
-            (Stackable::Nametable(_), Stackable::String(_)) => todo!(),
-            (Stackable::Nametable(_), Stackable::CodeBlock(_)) => todo!(),
-            (Stackable::Nametable(_), Stackable::Function(_)) => todo!(),
-            (Stackable::Nametable(_), Stackable::Object(_)) => todo!(),
-            (Stackable::Nametable(_), Stackable::Nametable(_)) => todo!(),
-            (Stackable::Nametable(_), Stackable::ListStart) => todo!(),
-            (Stackable::ListStart, Stackable::Integer(_)) => todo!(),
-            (Stackable::ListStart, Stackable::Decimal(_)) => todo!(),
-            (Stackable::ListStart, Stackable::Boolean(_)) => todo!(),
-            (Stackable::ListStart, Stackable::Identifier(identifier)) => todo!(),
-            (Stackable::ListStart, Stackable::String(_)) => todo!(),
-            (Stackable::ListStart, Stackable::CodeBlock(_)) => todo!(),
-            (Stackable::ListStart, Stackable::Function(_)) => todo!(),
-            (Stackable::ListStart, Stackable::Object(_)) => todo!(),
-            (Stackable::ListStart, Stackable::Nametable(_)) => todo!(),
-            (Stackable::ListStart, Stackable::ListStart) => todo!(),
+        if matches!(other, Stackable::Integer(0) | Stackable::Decimal(0.0)) {
+            Err(ErrorKind::DivideByZero {
+                lhs: self.to_string(),
+                rhs: other.to_string(),
+                span,
+            })
+        } else {
+            self.divide_unchecked(other, span)
+        }
+    }
+
+    pub fn modulus(
+        &self,
+        other: Stackable<'gc>,
+        span: SourceSpan,
+    ) -> Result<Stackable<'gc>, ErrorKind> {
+        if matches!(other, Stackable::Integer(0) | Stackable::Decimal(0.0)) {
+            Err(ErrorKind::DivideByZero {
+                lhs: self.to_string(),
+                rhs: other.to_string(),
+                span,
+            })
+        } else {
+            self.modulus_unchecked(other, span)
+        }
+    }
+
+    pub fn shift_left(
+        &self,
+        other: Stackable<'gc>,
+        span: SourceSpan,
+    ) -> Result<Stackable<'gc>, ErrorKind> {
+        Ok(match (self, &other) {
+            (Stackable::Integer(lhs), Stackable::Integer(rhs)) => {
+                Stackable::Integer(lhs.unbounded_shl((*rhs & 0xffff_ffff) as u32))
+            }
+            _ => {
+                return Err(ErrorKind::InvalidTypes {
+                    operation: Command::LeftShift,
+                    lhs: self.to_string(),
+                    rhs: other.to_string(),
+                    span,
+                });
+            }
         })
+    }
+    pub fn shift_right(
+        &self,
+        other: Stackable<'gc>,
+        span: SourceSpan,
+    ) -> Result<Stackable<'gc>, ErrorKind> {
+        Ok(match (self, &other) {
+            (Stackable::Integer(lhs), Stackable::Integer(rhs)) => {
+                Stackable::Integer(lhs.unbounded_shr((*rhs & 0xffff_ffff) as u32))
+            }
+            _ => {
+                return Err(ErrorKind::InvalidTypes {
+                    operation: Command::RightShift,
+                    lhs: self.to_string(),
+                    rhs: other.to_string(),
+                    span,
+                });
+            }
+        })
+    }
+}
+
+impl<'gc> Display for Stackable<'gc> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Stackable::Integer(int) => write!(f, "{int}"),
+            Stackable::Decimal(dec) => write!(f, "{dec}"),
+            Stackable::Boolean(boolean) => write!(f, "{boolean}"),
+            Stackable::Identifier(identifier) => write!(f, "{identifier}"),
+            Stackable::String(string) => write!(f, "\"{string}\""),
+            Stackable::CodeBlock(cb) => write!(f, "[CodeBlock {}n ]", cb.borrow().code.len()),
+            Stackable::Function(func) => write!(
+                f,
+                "[Function/{} {}n ]",
+                func.borrow().arguments,
+                func.borrow().code.len()
+            ),
+            Stackable::Object(_) => write!(f, "[Object]"),
+            Stackable::Nametable(nt) => write!(f, "NT[{}]", nt.borrow().entries.len()),
+            Stackable::ListStart => write!(f, "["),
+        }
+    }
+}
+
+impl<'gc> PartialEq for Stackable<'gc> {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Integer(l0), Self::Integer(r0)) => l0 == r0,
+            (Self::Integer(l0), Self::Decimal(r0)) => *l0 as f64 == *r0,
+            (Self::Decimal(l0), Self::Decimal(r0)) => l0 == r0,
+            (Self::Decimal(l0), Self::Integer(r0)) => *l0 == *r0 as f64,
+            (Self::Boolean(l0), Self::Boolean(r0)) => l0 == r0,
+            (Self::Identifier(l0), Self::Identifier(r0)) => l0 == r0,
+            (Self::String(l0), Self::String(r0)) => l0 == r0,
+            (Self::CodeBlock(l0), Self::CodeBlock(r0)) => l0 == r0,
+            (Self::Function(l0), Self::Function(r0)) => l0 == r0,
+            (Self::Object(l0), Self::Object(r0)) => l0 == r0,
+            (Self::Nametable(l0), Self::Nametable(r0)) => l0 == r0,
+            (Self::ListStart, Self::ListStart) => true,
+            _ => false,
+        }
     }
 }

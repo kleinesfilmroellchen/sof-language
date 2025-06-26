@@ -4,6 +4,7 @@ use gc_arena::Arena;
 use gc_arena::Gc;
 use gc_arena::lock::GcRefLock;
 use gc_arena::lock::RefLock;
+use miette::SourceSpan;
 
 use crate::ErrorKind;
 use crate::parser::Command;
@@ -23,14 +24,15 @@ pub fn run(tokens: Vec<Token>) -> Result<(), ErrorKind> {
     run_on_arena(&mut arena, tokens)
 }
 
-fn run_on_arena(arena: &mut StackArena, tokens: Vec<Token>) -> Result<(), ErrorKind> {
+pub fn run_on_arena(arena: &mut StackArena, tokens: Vec<Token>) -> Result<(), ErrorKind> {
     let token_iter = tokens.into_iter();
     for token in token_iter {
         execute_token(token, arena)?;
-        arena.mutate_root(|_, stack| {
-            let stack = stack.0.borrow();
-            println!("stack state: {stack:#?}");
-        })
+        // arena.mutate_root(|_, stack| {
+        //     let stack = stack.0.borrow();
+        //     println!("stack state: {stack:#?}");
+        // });
+        arena.collect_debt();
     }
     Ok(())
 }
@@ -52,12 +54,100 @@ fn execute_token(token: Token, arena: &mut StackArena) -> Result<(), ErrorKind> 
         }),
         InnerToken::Command(Command::Plus) => arena.mutate_root(|mc, stack| {
             let mut mut_stack = stack.0.borrow_mut(mc);
-            let rhs = mut_stack.pop_back().expect("proper error");
-            let lhs = mut_stack.pop_back().expect("proper error");
-            let result = lhs.add(rhs, mc)?;
+            let rhs = pop_stack(&mut mut_stack, token.span)?;
+            let lhs = pop_stack(&mut mut_stack, token.span)?;
+            let result = lhs.add(rhs, token.span)?;
             mut_stack.push_back(result);
             Ok(())
         }),
+        InnerToken::Command(Command::Minus) => arena.mutate_root(|mc, stack| {
+            let mut mut_stack = stack.0.borrow_mut(mc);
+            let rhs = pop_stack(&mut mut_stack, token.span)?;
+            let lhs = pop_stack(&mut mut_stack, token.span)?;
+            let result = lhs.subtract(rhs, token.span)?;
+            mut_stack.push_back(result);
+            Ok(())
+        }),
+        InnerToken::Command(Command::Multiply) => arena.mutate_root(|mc, stack| {
+            let mut mut_stack = stack.0.borrow_mut(mc);
+            let rhs = pop_stack(&mut mut_stack, token.span)?;
+            let lhs = pop_stack(&mut mut_stack, token.span)?;
+            let result = lhs.multiply(rhs, token.span)?;
+            mut_stack.push_back(result);
+            Ok(())
+        }),
+        InnerToken::Command(Command::Divide) => arena.mutate_root(|mc, stack| {
+            let mut mut_stack = stack.0.borrow_mut(mc);
+            let rhs = pop_stack(&mut mut_stack, token.span)?;
+            let lhs = pop_stack(&mut mut_stack, token.span)?;
+            let result = lhs.divide(rhs, token.span)?;
+            mut_stack.push_back(result);
+            Ok(())
+        }),
+        InnerToken::Command(Command::Modulus) => arena.mutate_root(|mc, stack| {
+            let mut mut_stack = stack.0.borrow_mut(mc);
+            let rhs = pop_stack(&mut mut_stack, token.span)?;
+            let lhs = pop_stack(&mut mut_stack, token.span)?;
+            let result = lhs.modulus(rhs, token.span)?;
+            mut_stack.push_back(result);
+            Ok(())
+        }),
+        InnerToken::Command(Command::LeftShift) => arena.mutate_root(|mc, stack| {
+            let mut mut_stack = stack.0.borrow_mut(mc);
+            let rhs = pop_stack(&mut mut_stack, token.span)?;
+            let lhs = pop_stack(&mut mut_stack, token.span)?;
+            let result = lhs.shift_left(rhs, token.span)?;
+            mut_stack.push_back(result);
+            Ok(())
+        }),
+        InnerToken::Command(Command::RightShift) => arena.mutate_root(|mc, stack| {
+            let mut mut_stack = stack.0.borrow_mut(mc);
+            let rhs = pop_stack(&mut mut_stack, token.span)?;
+            let lhs = pop_stack(&mut mut_stack, token.span)?;
+            let result = lhs.shift_right(rhs, token.span)?;
+            mut_stack.push_back(result);
+            Ok(())
+        }),
+        InnerToken::Command(Command::Equal) => arena.mutate_root(|mc, stack| {
+            let mut mut_stack = stack.0.borrow_mut(mc);
+            let rhs = pop_stack(&mut mut_stack, token.span)?;
+            let lhs = pop_stack(&mut mut_stack, token.span)?;
+            let result = Stackable::Boolean(lhs.eq(&rhs));
+            mut_stack.push_back(result);
+            Ok(())
+        }),
+        InnerToken::Command(Command::NotEqual) => arena.mutate_root(|mc, stack| {
+            let mut mut_stack = stack.0.borrow_mut(mc);
+            let rhs = pop_stack(&mut mut_stack, token.span)?;
+            let lhs = pop_stack(&mut mut_stack, token.span)?;
+            let result = Stackable::Boolean(lhs.ne(&rhs));
+            mut_stack.push_back(result);
+            Ok(())
+        }),
+        InnerToken::Command(Command::Assert) => arena.mutate_root(|mc, stack| {
+            let mut mut_stack = stack.0.borrow_mut(mc);
+            let value = pop_stack(&mut mut_stack, token.span)?;
+            if matches!(value, Stackable::Boolean(false)) {
+                Err(ErrorKind::AssertionFailed { span: token.span })
+            } else {
+                Ok(())
+            }
+        }),
         _ => todo!(),
+    }
+}
+
+fn pop_stack<'a>(
+    stack: &mut VecDeque<Stackable<'a>>,
+    span: SourceSpan,
+) -> Result<Stackable<'a>, ErrorKind> {
+    let value = stack
+        .pop_back()
+        .ok_or_else(|| ErrorKind::MissingValue { span })?;
+    if matches!(value, Stackable::Nametable(_)) {
+        stack.push_back(value);
+        Err(ErrorKind::MissingValue { span })
+    } else {
+        Ok(value)
     }
 }
