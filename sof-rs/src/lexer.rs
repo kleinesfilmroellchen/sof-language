@@ -254,6 +254,7 @@ pub fn lex(string: impl AsRef<str>) -> Result<Vec<Token>, Error> {
                 });
             }
             '/' if matches!(char_iter.peek(), Some((_, '='))) => {
+                char_iter.next();
                 tokens.push(Token {
                     span: SourceSpan::new(next_offset, 2),
                     token: RawToken::Keyword(Keyword::NotEqual),

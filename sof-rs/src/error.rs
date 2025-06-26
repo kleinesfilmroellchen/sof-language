@@ -69,6 +69,14 @@ pub enum Error {
         #[label]
         span: SourceSpan,
     },
+    #[error("invalid type for operation {operation}: {value}")]
+    #[diagnostic(code(TypeError))]
+    InvalidType {
+        operation: Command,
+        value: String,
+        #[label]
+        span: SourceSpan,
+    },
     #[error("divide by zero: {lhs} / {rhs}")]
     #[diagnostic(code(ArithmeticError))]
     DivideByZero {

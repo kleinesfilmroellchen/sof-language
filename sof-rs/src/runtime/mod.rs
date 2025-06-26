@@ -2,6 +2,9 @@ use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::fmt::Display;
 use std::ops::Add;
+use std::ops::BitAnd;
+use std::ops::BitOr;
+use std::ops::BitXor;
 use std::ops::Div;
 use std::ops::Mul;
 use std::ops::Rem;
@@ -95,6 +98,26 @@ macro_rules! numeric_op {
     };
 }
 
+macro_rules! logic_op {
+    ($vis:vis $func_name:ident($command:ident, $func:ident)) => {
+        $vis fn $func_name(
+            &self,
+            other: Stackable<'gc>,
+            span: SourceSpan,
+        ) -> Result<Stackable<'gc>, Error> {
+            match (self, &other) {
+                (Stackable::Boolean(lhs), Stackable::Boolean(rhs)) => Ok(Stackable::Boolean(lhs.$func(rhs))),
+                _ => Err(Error::InvalidTypes {
+                    operation: Command::$command,
+                    lhs: self.to_string(),
+                    rhs: other.to_string(),
+                    span,
+                })
+            }
+        }
+    };
+}
+
 impl<'gc> Stackable<'gc> {
     numeric_op!(pub add(Plus, add));
     numeric_op!(pub subtract(Minus, sub));
@@ -135,39 +158,51 @@ impl<'gc> Stackable<'gc> {
         other: Stackable<'gc>,
         span: SourceSpan,
     ) -> Result<Stackable<'gc>, Error> {
-        Ok(match (self, &other) {
-            (Stackable::Integer(lhs), Stackable::Integer(rhs)) => {
-                Stackable::Integer(lhs.unbounded_shl((*rhs & 0xffff_ffff) as u32))
-            }
-            _ => {
-                return Err(Error::InvalidTypes {
-                    operation: Command::LeftShift,
-                    lhs: self.to_string(),
-                    rhs: other.to_string(),
-                    span,
-                });
-            }
-        })
+        match (self, &other) {
+            (Stackable::Integer(lhs), Stackable::Integer(rhs)) => Ok(Stackable::Integer(
+                lhs.unbounded_shl((*rhs & 0xffff_ffff) as u32),
+            )),
+            _ => Err(Error::InvalidTypes {
+                operation: Command::LeftShift,
+                lhs: self.to_string(),
+                rhs: other.to_string(),
+                span,
+            }),
+        }
     }
+
     pub fn shift_right(
         &self,
         other: Stackable<'gc>,
         span: SourceSpan,
     ) -> Result<Stackable<'gc>, Error> {
-        Ok(match (self, &other) {
-            (Stackable::Integer(lhs), Stackable::Integer(rhs)) => {
-                Stackable::Integer(lhs.unbounded_shr((*rhs & 0xffff_ffff) as u32))
-            }
-            _ => {
-                return Err(Error::InvalidTypes {
-                    operation: Command::RightShift,
-                    lhs: self.to_string(),
-                    rhs: other.to_string(),
-                    span,
-                });
-            }
-        })
+        match (self, &other) {
+            (Stackable::Integer(lhs), Stackable::Integer(rhs)) => Ok(Stackable::Integer(
+                lhs.unbounded_shr((*rhs & 0xffff_ffff) as u32),
+            )),
+            _ => Err(Error::InvalidTypes {
+                operation: Command::RightShift,
+                lhs: self.to_string(),
+                rhs: other.to_string(),
+                span,
+            }),
+        }
     }
+
+    pub fn negate(&self, span: SourceSpan) -> Result<Stackable<'gc>, Error> {
+        match self {
+            Stackable::Boolean(value) => Ok(Stackable::Boolean(!value)),
+            _ => Err(Error::InvalidType {
+                operation: Command::Not,
+                value: self.to_string(),
+                span,
+            }),
+        }
+    }
+
+    logic_op!(pub and(And, bitand));
+    logic_op!(pub or(Or, bitor));
+    logic_op!(pub xor(Xor, bitxor));
 }
 
 impl<'gc> Display for Stackable<'gc> {

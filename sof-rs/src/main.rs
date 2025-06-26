@@ -72,6 +72,7 @@ fn main() -> miette::Result<()> {
 fn run_code_on_arena(code: impl AsRef<str>, arena: &mut StackArena) -> miette::Result<()> {
     let result = lexer::lex(code)?;
     let parsed = parser::parse(result.iter().collect())?;
+    // println!("{parsed:#?}");
     run_on_arena(arena, parsed)?;
     Ok(())
 }

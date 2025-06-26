@@ -127,6 +127,37 @@ fn execute_token(token: Token, arena: &mut StackArena) -> Result<(), Error> {
             mut_stack.push_back(result);
             Ok(())
         }),
+        InnerToken::Command(Command::Not) => arena.mutate_root(|mc, stack| {
+            let mut mut_stack = stack.0.borrow_mut(mc);
+            let value = pop_stack(&mut mut_stack, token.span)?;
+            let result = value.negate(token.span)?;
+            mut_stack.push_back(result);
+            Ok(())
+        }),
+        InnerToken::Command(Command::And) => arena.mutate_root(|mc, stack| {
+            let mut mut_stack = stack.0.borrow_mut(mc);
+            let rhs = pop_stack(&mut mut_stack, token.span)?;
+            let lhs = pop_stack(&mut mut_stack, token.span)?;
+            let result = lhs.and(rhs, token.span)?;
+            mut_stack.push_back(result);
+            Ok(())
+        }),
+        InnerToken::Command(Command::Or) => arena.mutate_root(|mc, stack| {
+            let mut mut_stack = stack.0.borrow_mut(mc);
+            let rhs = pop_stack(&mut mut_stack, token.span)?;
+            let lhs = pop_stack(&mut mut_stack, token.span)?;
+            let result = lhs.or(rhs, token.span)?;
+            mut_stack.push_back(result);
+            Ok(())
+        }),
+        InnerToken::Command(Command::Xor) => arena.mutate_root(|mc, stack| {
+            let mut mut_stack = stack.0.borrow_mut(mc);
+            let rhs = pop_stack(&mut mut_stack, token.span)?;
+            let lhs = pop_stack(&mut mut_stack, token.span)?;
+            let result = lhs.xor(rhs, token.span)?;
+            mut_stack.push_back(result);
+            Ok(())
+        }),
         InnerToken::Command(Command::Assert) => arena.mutate_root(|mc, stack| {
             let mut mut_stack = stack.0.borrow_mut(mc);
             let value = pop_stack(&mut mut_stack, token.span)?;
