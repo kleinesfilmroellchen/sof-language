@@ -6,7 +6,7 @@ use gc_arena::lock::GcRefLock;
 use gc_arena::lock::RefLock;
 use miette::SourceSpan;
 
-use crate::ErrorKind;
+use crate::error::Error;
 use crate::parser::Command;
 use crate::parser::InnerToken;
 use crate::parser::Token;
@@ -15,7 +15,7 @@ use crate::runtime::Stack;
 use crate::runtime::StackArena;
 use crate::runtime::Stackable;
 
-pub fn run(tokens: Vec<Token>) -> Result<(), ErrorKind> {
+pub fn run(tokens: Vec<Token>) -> Result<(), Error> {
     let mut arena: StackArena = Arena::new(|mc| {
         let stack = Gc::new(mc, RefLock::new(VecDeque::with_capacity(64)));
         Stack(stack)
@@ -24,7 +24,7 @@ pub fn run(tokens: Vec<Token>) -> Result<(), ErrorKind> {
     run_on_arena(&mut arena, tokens)
 }
 
-pub fn run_on_arena(arena: &mut StackArena, tokens: Vec<Token>) -> Result<(), ErrorKind> {
+pub fn run_on_arena(arena: &mut StackArena, tokens: Vec<Token>) -> Result<(), Error> {
     let token_iter = tokens.into_iter();
     for token in token_iter {
         execute_token(token, arena)?;
@@ -37,7 +37,7 @@ pub fn run_on_arena(arena: &mut StackArena, tokens: Vec<Token>) -> Result<(), Er
     Ok(())
 }
 
-fn execute_token(token: Token, arena: &mut StackArena) -> Result<(), ErrorKind> {
+fn execute_token(token: Token, arena: &mut StackArena) -> Result<(), Error> {
     match token.inner {
         InnerToken::Literal(literal) => arena.mutate_root(|mc, stack| {
             let mut mut_stack = stack.0.borrow_mut(mc);
@@ -128,7 +128,7 @@ fn execute_token(token: Token, arena: &mut StackArena) -> Result<(), ErrorKind> 
             let mut mut_stack = stack.0.borrow_mut(mc);
             let value = pop_stack(&mut mut_stack, token.span)?;
             if matches!(value, Stackable::Boolean(false)) {
-                Err(ErrorKind::AssertionFailed { span: token.span })
+                Err(Error::AssertionFailed { span: token.span })
             } else {
                 Ok(())
             }
@@ -140,13 +140,13 @@ fn execute_token(token: Token, arena: &mut StackArena) -> Result<(), ErrorKind> 
 fn pop_stack<'a>(
     stack: &mut VecDeque<Stackable<'a>>,
     span: SourceSpan,
-) -> Result<Stackable<'a>, ErrorKind> {
+) -> Result<Stackable<'a>, Error> {
     let value = stack
         .pop_back()
-        .ok_or_else(|| ErrorKind::MissingValue { span })?;
+        .ok_or_else(|| Error::MissingValue { span })?;
     if matches!(value, Stackable::Nametable(_)) {
         stack.push_back(value);
-        Err(ErrorKind::MissingValue { span })
+        Err(Error::MissingValue { span })
     } else {
         Ok(value)
     }

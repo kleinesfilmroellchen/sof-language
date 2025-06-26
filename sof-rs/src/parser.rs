@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use miette::SourceSpan;
 
-use crate::ErrorKind;
+use crate::error::Error;
 use crate::lexer;
 use crate::lexer::Identifier;
 use crate::runtime::Stackable;
@@ -214,7 +214,7 @@ impl PartialEq for Token {
     }
 }
 
-pub fn parse(tokens: Vec<&lexer::Token>) -> Result<Vec<Token>, ErrorKind> {
+pub fn parse(tokens: Vec<&lexer::Token>) -> Result<Vec<Token>, Error> {
     let mut token_iter = tokens.into_iter();
     let mut output = Vec::new();
     while let Some(lexer::Token { token, span }) = token_iter.next() {
@@ -270,7 +270,7 @@ pub fn parse(tokens: Vec<&lexer::Token>) -> Result<Vec<Token>, ErrorKind> {
                     inner_tokens.push(full_next_token);
                 }
                 if depth > 0 {
-                    return Err(ErrorKind::UnclosedCodeBlock {
+                    return Err(Error::UnclosedCodeBlock {
                         start_span: *span,
                         end_span: Some(last_span),
                     });
@@ -287,7 +287,7 @@ pub fn parse(tokens: Vec<&lexer::Token>) -> Result<Vec<Token>, ErrorKind> {
                 });
             }
             lexer::RawToken::Keyword(lexer::Keyword::CodeBlockEnd) => {
-                return Err(ErrorKind::UnclosedCodeBlock {
+                return Err(Error::UnclosedCodeBlock {
                     start_span: *span,
                     end_span: None,
                 });

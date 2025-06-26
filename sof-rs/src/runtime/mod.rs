@@ -5,19 +5,16 @@ use std::ops::Add;
 use std::ops::Div;
 use std::ops::Mul;
 use std::ops::Rem;
-use std::ops::Shl;
-use std::ops::Shr;
 use std::ops::Sub;
 use std::rc::Rc;
 
 use gc_arena::Arena;
-use gc_arena::Mutation;
 use gc_arena::Rootable;
 use gc_arena::lock::GcRefLock;
 use gc_arena_derive::Collect;
 use miette::SourceSpan;
 
-use crate::ErrorKind;
+use crate::error::Error;
 use crate::lexer::Identifier;
 use crate::parser::Command;
 use crate::parser::Token;
@@ -75,7 +72,7 @@ macro_rules! numeric_op {
             &self,
             other: Stackable<'gc>,
             span: SourceSpan,
-        ) -> Result<Stackable<'gc>, ErrorKind> {
+        ) -> Result<Stackable<'gc>, Error> {
             Ok(match (self, &other) {
                 (Stackable::Integer(lhs), Stackable::Integer(rhs)) => Stackable::Integer(lhs.$func(rhs)),
                 (Stackable::Integer(lhs), Stackable::Decimal(rhs)) => {
@@ -86,7 +83,7 @@ macro_rules! numeric_op {
                 }
                 (Stackable::Decimal(lhs), Stackable::Decimal(rhs)) => Stackable::Decimal(lhs.$func(rhs)),
                 _ => {
-                    return Err(ErrorKind::InvalidTypes {
+                    return Err(Error::InvalidTypes {
                         operation: Command::$command,
                         lhs: self.to_string(),
                         rhs: other.to_string(),
@@ -105,13 +102,9 @@ impl<'gc> Stackable<'gc> {
     numeric_op!(divide_unchecked(Divide, div));
     numeric_op!(modulus_unchecked(Modulus, rem));
 
-    pub fn divide(
-        &self,
-        other: Stackable<'gc>,
-        span: SourceSpan,
-    ) -> Result<Stackable<'gc>, ErrorKind> {
+    pub fn divide(&self, other: Stackable<'gc>, span: SourceSpan) -> Result<Stackable<'gc>, Error> {
         if matches!(other, Stackable::Integer(0) | Stackable::Decimal(0.0)) {
-            Err(ErrorKind::DivideByZero {
+            Err(Error::DivideByZero {
                 lhs: self.to_string(),
                 rhs: other.to_string(),
                 span,
@@ -125,9 +118,9 @@ impl<'gc> Stackable<'gc> {
         &self,
         other: Stackable<'gc>,
         span: SourceSpan,
-    ) -> Result<Stackable<'gc>, ErrorKind> {
+    ) -> Result<Stackable<'gc>, Error> {
         if matches!(other, Stackable::Integer(0) | Stackable::Decimal(0.0)) {
-            Err(ErrorKind::DivideByZero {
+            Err(Error::DivideByZero {
                 lhs: self.to_string(),
                 rhs: other.to_string(),
                 span,
@@ -141,13 +134,13 @@ impl<'gc> Stackable<'gc> {
         &self,
         other: Stackable<'gc>,
         span: SourceSpan,
-    ) -> Result<Stackable<'gc>, ErrorKind> {
+    ) -> Result<Stackable<'gc>, Error> {
         Ok(match (self, &other) {
             (Stackable::Integer(lhs), Stackable::Integer(rhs)) => {
                 Stackable::Integer(lhs.unbounded_shl((*rhs & 0xffff_ffff) as u32))
             }
             _ => {
-                return Err(ErrorKind::InvalidTypes {
+                return Err(Error::InvalidTypes {
                     operation: Command::LeftShift,
                     lhs: self.to_string(),
                     rhs: other.to_string(),
@@ -160,13 +153,13 @@ impl<'gc> Stackable<'gc> {
         &self,
         other: Stackable<'gc>,
         span: SourceSpan,
-    ) -> Result<Stackable<'gc>, ErrorKind> {
+    ) -> Result<Stackable<'gc>, Error> {
         Ok(match (self, &other) {
             (Stackable::Integer(lhs), Stackable::Integer(rhs)) => {
                 Stackable::Integer(lhs.unbounded_shr((*rhs & 0xffff_ffff) as u32))
             }
             _ => {
-                return Err(ErrorKind::InvalidTypes {
+                return Err(Error::InvalidTypes {
                     operation: Command::RightShift,
                     lhs: self.to_string(),
                     rhs: other.to_string(),

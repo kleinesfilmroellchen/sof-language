@@ -9,7 +9,7 @@ use miette::SourceSpan;
 use unicode_ident::is_xid_continue;
 use unicode_ident::is_xid_start;
 
-use crate::ErrorKind;
+use crate::error::Error;
 
 #[derive(Debug, Clone)]
 pub enum RawToken {
@@ -170,7 +170,7 @@ impl Display for Identifier {
     }
 }
 
-pub fn lex(string: impl AsRef<str>) -> Result<Vec<Token>, ErrorKind> {
+pub fn lex(string: impl AsRef<str>) -> Result<Vec<Token>, Error> {
     let mut char_iter = string.as_ref().chars().enumerate().peekable();
     let mut tokens = Vec::new();
     while let Some((next_position, next_char)) = char_iter.next() {
@@ -202,7 +202,7 @@ pub fn lex(string: impl AsRef<str>) -> Result<Vec<Token>, ErrorKind> {
                     } else if idc.is_whitespace() {
                         break;
                     } else {
-                        return Err(ErrorKind::InvalidIdentifier {
+                        return Err(Error::InvalidIdentifier {
                             chr: idc,
                             span: (SourceOffset::from(next_position + ident.chars().count()), 1)
                                 .into(),
@@ -265,10 +265,9 @@ pub fn lex(string: impl AsRef<str>) -> Result<Vec<Token>, ErrorKind> {
                     match string_char {
                         '"' => break,
                         '\\' => {
-                            let (_, escaped) =
-                                char_iter.next().ok_or(ErrorKind::UnclosedString {
-                                    span: SourceSpan::new(pos.into(), 0),
-                                })?;
+                            let (_, escaped) = char_iter.next().ok_or(Error::UnclosedString {
+                                span: SourceSpan::new(pos.into(), 0),
+                            })?;
                             string.push(escaped);
                         }
                         _ => string.push(string_char),
@@ -287,7 +286,7 @@ pub fn lex(string: impl AsRef<str>) -> Result<Vec<Token>, ErrorKind> {
                 })
             }
             _ => {
-                return Err(ErrorKind::InvalidCharacter {
+                return Err(Error::InvalidCharacter {
                     chr: next_char,
                     span: SourceSpan::new(next_offset, 1),
                 });
@@ -301,7 +300,7 @@ fn parse_number(
     start_offset: SourceOffset,
     first_char: char,
     char_iter: &mut Peekable<impl Iterator<Item = (usize, char)>>,
-) -> Result<(RawToken, usize), ErrorKind> {
+) -> Result<(RawToken, usize), Error> {
     let mut number_string = String::new();
     number_string.push(first_char);
     while char_iter.peek().is_some_and(|(_, c)| !c.is_whitespace()) {
@@ -355,12 +354,10 @@ fn parse_number(
         } else {
             // probably a float
             Ok((
-                RawToken::Decimal(number_string.parse().map_err(|inner| {
-                    ErrorKind::InvalidFloat {
-                        number_text: number_string,
-                        inner,
-                        span: (start_offset, string_length).into(),
-                    }
+                RawToken::Decimal(number_string.parse().map_err(|inner| Error::InvalidFloat {
+                    number_text: number_string,
+                    inner,
+                    span: (start_offset, string_length).into(),
                 })?),
                 string_length,
             ))
@@ -374,13 +371,12 @@ fn parse_with_radix<const RADIX: u32>(
     number_string: &String,
     start_offset: SourceOffset,
     string_length: usize,
-) -> Result<(RawToken, usize), ErrorKind> {
-    let mut number =
-        i64::from_str_radix(number, RADIX).map_err(|inner| ErrorKind::InvalidInteger {
-            span: (start_offset, string_length).into(),
-            number_text: number_string.clone(),
-            inner,
-        })?;
+) -> Result<(RawToken, usize), Error> {
+    let mut number = i64::from_str_radix(number, RADIX).map_err(|inner| Error::InvalidInteger {
+        span: (start_offset, string_length).into(),
+        number_text: number_string.clone(),
+        inner,
+    })?;
     if prefix == "-" {
         number *= -1;
     }
