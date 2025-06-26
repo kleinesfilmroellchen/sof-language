@@ -16,12 +16,15 @@ use crate::runtime::StackArena;
 use crate::runtime::Stackable;
 
 pub fn run(tokens: Vec<Token>) -> Result<(), Error> {
-    let mut arena: StackArena = Arena::new(|mc| {
+    let mut arena: StackArena = new_arena();
+    run_on_arena(&mut arena, tokens)
+}
+
+pub fn new_arena() -> StackArena {
+    Arena::new(|mc| {
         let stack = Gc::new(mc, RefLock::new(VecDeque::with_capacity(64)));
         Stack(stack)
-    });
-
-    run_on_arena(&mut arena, tokens)
+    })
 }
 
 pub fn run_on_arena(arena: &mut StackArena, tokens: Vec<Token>) -> Result<(), Error> {

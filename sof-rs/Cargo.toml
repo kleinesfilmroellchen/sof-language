@@ -7,5 +7,6 @@ edition = "2024"
 gc-arena = "0.5.3"
 gc-arena-derive = "0.5.3"
 miette = { version = "7.6.0", features = ["fancy-no-backtrace"] }
+rustyline = { version = "16.0.0", default-features = false }
 thiserror = "2.0.12"
 unicode-ident = "1.0.18"
