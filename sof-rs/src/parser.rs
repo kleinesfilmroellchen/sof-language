@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::fmt::Display;
 use std::rc::Rc;
 
@@ -38,7 +39,7 @@ impl Literal {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Command {
     Def,
     Globaldef,
@@ -198,6 +199,23 @@ impl Command {
             lexer::Keyword::DescribeS => Self::DescribeS,
             lexer::Keyword::Assert => Self::Assert,
             _ => unreachable!(),
+        }
+    }
+}
+
+impl PartialEq<Ordering> for Command {
+    fn eq(&self, other: &Ordering) -> bool {
+        match (self, other) {
+            (Command::LessEqual, Ordering::Less)
+            | (Command::LessEqual, Ordering::Equal)
+            | (Command::Greater, Ordering::Greater)
+            | (Command::GreaterEqual, Ordering::Equal)
+            | (Command::GreaterEqual, Ordering::Greater)
+            | (Command::Equal, Ordering::Equal)
+            | (Command::NotEqual, Ordering::Less)
+            | (Command::NotEqual, Ordering::Greater)
+            | (Command::Less, Ordering::Less) => true,
+            _ => false,
         }
     }
 }

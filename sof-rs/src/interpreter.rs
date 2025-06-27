@@ -127,6 +127,19 @@ fn execute_token(token: Token, arena: &mut StackArena) -> Result<(), Error> {
             mut_stack.push_back(result);
             Ok(())
         }),
+        InnerToken::Command(
+            command @ (Command::Greater
+            | Command::GreaterEqual
+            | Command::Less
+            | Command::LessEqual),
+        ) => arena.mutate_root(|mc, stack| {
+            let mut mut_stack = stack.0.borrow_mut(mc);
+            let rhs = pop_stack(&mut mut_stack, token.span)?;
+            let lhs = pop_stack(&mut mut_stack, token.span)?;
+            let result = lhs.compare(rhs, command, token.span)?;
+            mut_stack.push_back(Stackable::Boolean(command == result));
+            Ok(())
+        }),
         InnerToken::Command(Command::Not) => arena.mutate_root(|mc, stack| {
             let mut mut_stack = stack.0.borrow_mut(mc);
             let value = pop_stack(&mut mut_stack, token.span)?;

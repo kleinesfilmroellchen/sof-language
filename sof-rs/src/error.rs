@@ -85,6 +85,14 @@ pub enum Error {
         #[label]
         span: SourceSpan,
     },
+    #[error("non-comparable values: {lhs} and {rhs}")]
+    #[diagnostic(code(ArithmeticError))]
+    Incomparable {
+        lhs: String,
+        rhs: String,
+        #[label]
+        span: SourceSpan,
+    },
     #[error("assertion failed")]
     #[diagnostic(code(AssertionError))]
     AssertionFailed {

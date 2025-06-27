@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::fmt::Display;
@@ -197,6 +198,48 @@ impl<'gc> Stackable<'gc> {
                 value: self.to_string(),
                 span,
             }),
+        }
+    }
+
+    pub fn compare(
+        &self,
+        other: Stackable<'gc>,
+        operation: Command,
+        span: SourceSpan,
+    ) -> Result<Ordering, Error> {
+        if self.eq(&other) {
+            Ok(Ordering::Equal)
+        } else {
+            match (self, &other) {
+                (Stackable::Integer(lhs), Stackable::Integer(rhs)) => Ok(lhs.cmp(rhs)),
+                (Stackable::Integer(lhs), Stackable::Decimal(rhs)) => (*lhs as f64)
+                    .partial_cmp(rhs)
+                    .ok_or_else(|| Error::Incomparable {
+                        lhs: self.to_string(),
+                        rhs: other.to_string(),
+                        span,
+                    }),
+                (Stackable::Decimal(lhs), Stackable::Integer(rhs)) => lhs
+                    .partial_cmp(&(*rhs as f64))
+                    .ok_or_else(|| Error::Incomparable {
+                        lhs: self.to_string(),
+                        rhs: other.to_string(),
+                        span,
+                    }),
+                (Stackable::Decimal(lhs), Stackable::Decimal(rhs)) => {
+                    lhs.partial_cmp(rhs).ok_or_else(|| Error::Incomparable {
+                        lhs: self.to_string(),
+                        rhs: other.to_string(),
+                        span,
+                    })
+                }
+                _ => Err(Error::InvalidTypes {
+                    operation,
+                    lhs: self.to_string(),
+                    rhs: other.to_string(),
+                    span,
+                }),
+            }
         }
     }
 

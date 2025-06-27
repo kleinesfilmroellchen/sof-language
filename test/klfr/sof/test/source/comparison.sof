@@ -4,7 +4,9 @@
 #### equality
 3 3 = assert # int
 4.0 4.0 = assert # float
-"abc" "abc" = assert "" "" = assert "\nza warudo" "\nza warudo" # string
+"abc" "abc" = assert
+"" "" = assert
+"\nza warudo" "\nza warudo" # string
 { blah } { blah } = assert # code block
 
 #### inequality
