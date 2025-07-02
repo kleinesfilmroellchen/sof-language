@@ -1,3 +1,5 @@
+use std::time;
+
 use log::debug;
 use log::info;
 use miette::miette;
@@ -30,7 +32,6 @@ fn main() -> miette::Result<()> {
     }))?;
     env_logger::Builder::from_default_env()
         .filter_level(log::LevelFilter::Info)
-        .filter_module("sof", log::LevelFilter::Trace)
         .init();
 
     if let Some(filename) = std::env::args().nth(1) {
@@ -94,10 +95,27 @@ fn run_code_on_arena(code: impl AsRef<str>, arena: &mut StackArena) -> miette::R
 }
 
 fn sof_main(code: impl AsRef<str>) -> miette::Result<()> {
+    let start_time = time::Instant::now();
     let lexed = lexer::lex(code)?;
-    debug!("lexed: {lexed:#?}");
+    debug!(target: "sof::lexer", "lexed: {lexed:#?}");
     let parsed = parser::parse(lexed.iter().collect())?;
-    debug!("parsed: {parsed:#?}");
-    run(parsed)?;
+    debug!(target: "sof::parser", "parsed: {parsed:#?}");
+    let metrics = run(parsed)?;
+    let end_time = time::Instant::now();
+
+    info!(
+        "Performance metrics:
+total time:   {:>13.2}μs
+tokens run:   {:>10}
+time / token: {:>13.2?}μs
+calls:        {:>10}
+GC runs:      {:>10}",
+        (end_time - start_time).as_nanos() as f64 / 1_000.,
+        metrics.token_count,
+        (end_time - start_time).as_micros() as f64 / metrics.token_count as f64,
+        metrics.call_count,
+        metrics.gc_count,
+    );
+
     Ok(())
 }

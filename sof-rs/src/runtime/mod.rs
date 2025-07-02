@@ -26,7 +26,7 @@ use crate::lexer::Identifier;
 use crate::parser::Command;
 use crate::parser::Token;
 
-#[derive(Debug, Collect)]
+#[derive(Debug, Collect, Clone)]
 #[collect(no_drop)]
 pub enum Stackable<'gc> {
     Integer(i64),
@@ -72,10 +72,14 @@ pub type InnerStack<'gc> = VecDeque<Stackable<'gc>>;
 /// Stack type and GC root.
 #[derive(Debug, Collect, Clone)]
 #[collect(no_drop)]
-pub struct Stack<'gc>(pub GcRefLock<'gc, InnerStack<'gc>>);
+pub struct Stack<'gc> {
+    pub main: GcRefLock<'gc, InnerStack<'gc>>,
+    /// Utility stack not visible for the program, currently only used by while loops.
+    pub utility: GcRefLock<'gc, InnerStack<'gc>>,
+}
 
 /// GC arena type for the SOF runtime, based on the stack root.
-pub type StackArena = Arena<Rootable![Stack<'_>]>;
+pub type StackArena = Arena<Rootable!(Stack<'_>)>;
 
 macro_rules! numeric_op {
     ($vis:vis $func_name:ident($command:ident, $func:ident)) => {
@@ -254,21 +258,23 @@ impl<'gc> Stackable<'gc> {
     logic_op!(pub or(Or, bitor));
     logic_op!(pub xor(Xor, bitxor));
 
-    pub fn call<'a>(
+    /// Starts a call sequence of a Callable.
+    /// Returns the next interpreter action, since calling usually involves nonstandard actions.
+    pub fn enter_call<'a>(
         &self,
         mc: &Mutation<'a>,
         stack: Stack<'a>,
         span: SourceSpan,
-    ) -> Result<InterpreterAction, Error> {
+    ) -> Result<Vec<InterpreterAction>, Error> {
         match self {
             Stackable::Identifier(identifier) => todo!("look up identifier in nametable"),
             Stackable::CodeBlock(codeblock) => {
                 // TODO: eliminate the clone via ref-counted token lists
                 let code = codeblock.borrow().code.clone();
-                Ok(InterpreterAction::ExecuteCall {
+                Ok(vec![InterpreterAction::ExecuteCall {
                     code,
                     return_behavior: CallReturnBehavior::BlockCall,
-                })
+                }])
             }
             Stackable::Function(function) => todo!("call function"),
             _ => Err(Error::InvalidType {

@@ -15,6 +15,8 @@ pub enum InnerToken {
     Command(Command),
     Literal(Literal),
     CodeBlock(Vec<Token>),
+    /// Special token only used internally to support while loops.
+    WhileBody,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -240,6 +242,7 @@ impl Debug for Token {
             InnerToken::Command(arg0) => f.debug_tuple("Command").field(arg0).finish(),
             InnerToken::Literal(arg0) => f.debug_tuple("Literal").field(arg0).finish(),
             InnerToken::CodeBlock(arg0) => f.debug_tuple("CodeBlock").field(arg0).finish(),
+            InnerToken::WhileBody => f.debug_tuple("WhileBody").finish(),
         }?;
         write!(f, ", {:?} }}", (self.span.offset(), self.span.len()))
     }
