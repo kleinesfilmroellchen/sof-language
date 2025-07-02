@@ -416,7 +416,6 @@ fn execute_token<'a>(
             let mut mut_stack = stack.main.borrow_mut(mc);
             let conditional_callable = pop_stack(&mut mut_stack, token.span)?;
             let loop_body = pop_stack(&mut mut_stack, token.span)?;
-            mut_stack.push_back(conditional_callable.clone());
             let mut utility_stack = stack.utility.borrow_mut(mc);
             trace!("    starting do-while, call body once");
             let mut actions = loop_body.enter_call(mc, stack, token.span)?;
