@@ -14,6 +14,8 @@ random:01 :
 
 true false swap assert
 
+true false pop assert
+
 "blahblah" true . assert
 
 describe describes
