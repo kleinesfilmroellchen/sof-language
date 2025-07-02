@@ -1,3 +1,6 @@
+use log::debug;
+use log::info;
+use miette::miette;
 use rustyline::Config;
 use rustyline::error::ReadlineError;
 
@@ -25,9 +28,22 @@ fn main() -> miette::Result<()> {
                 .build(),
         )
     }))?;
+    env_logger::Builder::from_default_env()
+        .filter_level(log::LevelFilter::Info)
+        .filter_module("sof", log::LevelFilter::Trace)
+        .init();
 
     if let Some(filename) = std::env::args().nth(1) {
-        let code = std::fs::read_to_string(filename).unwrap();
+        info!(
+            "sof version {} (sof-rs), main file is {filename}",
+            env!("CARGO_PKG_VERSION"),
+        );
+        let code = std::fs::read_to_string(&filename).map_err(|err| {
+            miette! {
+                code = "IOError",
+                "could not read source file {filename}: {err}"
+            }
+        })?;
         let result = sof_main(&code);
         match result {
             Ok(_) => Ok(()),
@@ -72,14 +88,16 @@ fn main() -> miette::Result<()> {
 fn run_code_on_arena(code: impl AsRef<str>, arena: &mut StackArena) -> miette::Result<()> {
     let result = lexer::lex(code)?;
     let parsed = parser::parse(result.iter().collect())?;
-    // println!("{parsed:#?}");
+    debug!("parsed code as {parsed:#?}");
     run_on_arena(arena, parsed)?;
     Ok(())
 }
 
 fn sof_main(code: impl AsRef<str>) -> miette::Result<()> {
-    let result = lexer::lex(code)?;
-    let parsed = parser::parse(result.iter().collect())?;
+    let lexed = lexer::lex(code)?;
+    debug!("lexed: {lexed:#?}");
+    let parsed = parser::parse(lexed.iter().collect())?;
+    debug!("parsed: {parsed:#?}");
     run(parsed)?;
     Ok(())
 }

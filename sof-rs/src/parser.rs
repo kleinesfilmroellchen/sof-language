@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::fmt::Debug;
 use std::fmt::Display;
 use std::rc::Rc;
 
@@ -9,14 +10,14 @@ use crate::lexer;
 use crate::lexer::Identifier;
 use crate::runtime::Stackable;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum InnerToken {
     Command(Command),
     Literal(Literal),
     CodeBlock(Vec<Token>),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Literal {
     Integer(i64),
     Decimal(f64),
@@ -220,7 +221,7 @@ impl PartialEq<Ordering> for Command {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone)]
 pub struct Token {
     pub inner: InnerToken,
     pub span: SourceSpan,
@@ -229,6 +230,18 @@ pub struct Token {
 impl PartialEq for Token {
     fn eq(&self, other: &Self) -> bool {
         self.inner == other.inner
+    }
+}
+
+impl Debug for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("Token { ")?;
+        match &self.inner {
+            InnerToken::Command(arg0) => f.debug_tuple("Command").field(arg0).finish(),
+            InnerToken::Literal(arg0) => f.debug_tuple("Literal").field(arg0).finish(),
+            InnerToken::CodeBlock(arg0) => f.debug_tuple("CodeBlock").field(arg0).finish(),
+        }?;
+        write!(f, ", {:?} }}", (self.span.offset(), self.span.len()))
     }
 }
 

@@ -13,12 +13,15 @@ use std::ops::Sub;
 use std::rc::Rc;
 
 use gc_arena::Arena;
+use gc_arena::Mutation;
 use gc_arena::Rootable;
 use gc_arena::lock::GcRefLock;
 use gc_arena_derive::Collect;
 use miette::SourceSpan;
 
 use crate::error::Error;
+use crate::interpreter::CallReturnBehavior;
+use crate::interpreter::InterpreterAction;
 use crate::lexer::Identifier;
 use crate::parser::Command;
 use crate::parser::Token;
@@ -64,10 +67,14 @@ pub struct Nametable<'gc> {
     entries: HashMap<Identifier, GcRefLock<'gc, Stackable<'gc>>>,
 }
 
-#[derive(Debug, Collect)]
+/// Inner stack type that is the actual raw data structure of the stack.
+pub type InnerStack<'gc> = VecDeque<Stackable<'gc>>;
+/// Stack type and GC root.
+#[derive(Debug, Collect, Clone)]
 #[collect(no_drop)]
-pub struct Stack<'gc>(pub GcRefLock<'gc, VecDeque<Stackable<'gc>>>);
+pub struct Stack<'gc>(pub GcRefLock<'gc, InnerStack<'gc>>);
 
+/// GC arena type for the SOF runtime, based on the stack root.
 pub type StackArena = Arena<Rootable![Stack<'_>]>;
 
 macro_rules! numeric_op {
@@ -246,6 +253,31 @@ impl<'gc> Stackable<'gc> {
     logic_op!(pub and(And, bitand));
     logic_op!(pub or(Or, bitor));
     logic_op!(pub xor(Xor, bitxor));
+
+    pub fn call<'a>(
+        &self,
+        mc: &Mutation<'a>,
+        stack: Stack<'a>,
+        span: SourceSpan,
+    ) -> Result<InterpreterAction, Error> {
+        match self {
+            Stackable::Identifier(identifier) => todo!("look up identifier in nametable"),
+            Stackable::CodeBlock(codeblock) => {
+                // TODO: eliminate the clone via ref-counted token lists
+                let code = codeblock.borrow().code.clone();
+                Ok(InterpreterAction::ExecuteCall {
+                    code,
+                    return_behavior: CallReturnBehavior::BlockCall,
+                })
+            }
+            Stackable::Function(function) => todo!("call function"),
+            _ => Err(Error::InvalidType {
+                operation: Command::Call,
+                value: self.to_string(),
+                span,
+            }),
+        }
+    }
 }
 
 impl<'gc> Display for Stackable<'gc> {

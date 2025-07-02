@@ -4,8 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+env_logger = { version = "0.11.8", default-features = false, features = ["auto-color"] }
 gc-arena = "0.5.3"
 gc-arena-derive = "0.5.3"
+log = "0.4.27"
 miette = { version = "7.6.0", features = ["fancy-no-backtrace"] }
 rustyline = { version = "16.0.0", default-features = false }
 thiserror = "2.0.12"

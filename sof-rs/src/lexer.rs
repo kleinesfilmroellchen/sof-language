@@ -145,13 +145,27 @@ impl Keyword {
     }
 }
 
-#[derive(Debug)]
 pub struct Token {
     pub token: RawToken,
     pub span: SourceSpan,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash, Collect)]
+impl std::fmt::Debug for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("Token { ")?;
+        match &self.token {
+            RawToken::Keyword(arg0) => write!(f, "keyword({:?})", arg0),
+            RawToken::Decimal(arg0) => write!(f, "{:?}", arg0),
+            RawToken::Integer(arg0) => write!(f, "{:?}", arg0),
+            RawToken::String(arg0) => write!(f, "{:?}", arg0),
+            RawToken::Boolean(arg0) => write!(f, "{:?}", arg0),
+            RawToken::Identifier(arg0) => write!(f, "{:?}", arg0),
+        }?;
+        write!(f, ", {:?} }}", (self.span.offset(), self.span.len()))
+    }
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Collect)]
 #[collect(require_static)]
 #[repr(transparent)]
 pub struct Identifier(Rc<String>);
@@ -167,6 +181,12 @@ impl Deref for Identifier {
 impl Display for Identifier {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
+    }
+}
+
+impl std::fmt::Debug for Identifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "id({})", self.0)
     }
 }
 
