@@ -74,6 +74,8 @@ public final class PrimitiveTokenNode extends Node {
 		Switch("switch"),
 		/** The <code>while</code> primitive token. */
 		While("while"),
+		/** The <code>dowhile</code> primitive token. */
+		DoWhile("dowhile"),
 
 		/** The <code>def</code> primitive token. */
 		Define("def"),

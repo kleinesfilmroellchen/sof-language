@@ -14,9 +14,9 @@
 { false assert } false
 { true assert } ifelse
 
-# 0 i def
-# 0 { i . 3 + i def } { 1 + dup 10 <= } while
-# i . 30 = assert
+0 i def
+0 { i . 3 + i def } { 1 + dup 10 <= } while
+i . 30 = assert
 
 0 { 1 + } { dup 10 < } while
 10 = assert

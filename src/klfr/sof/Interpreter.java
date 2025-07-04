@@ -409,6 +409,29 @@ public class Interpreter implements Serializable {
 					return true;
 			}
 		}
+		case DoWhile: {
+			final var condCallable = this.stack.popSafe();
+			final var bodyCallable = this.stack.popSafe();
+
+			// run initial body
+			var retflag = this.doCall(bodyCallable);
+			if (!retflag)
+				return retflag;
+
+			while (true) {
+				// execute the condition
+				this.doCall(condCallable);
+				var preContinue = this.stack.popSafe();
+				if (preContinue.isTrue()) {
+					// abort if the return flag was set (false)
+					retflag = this.doCall(bodyCallable);
+					if (!retflag)
+						return retflag;
+				} else
+					// end normally when condition doesn't hold anymore
+					return true;
+			}
+		}
 		// naming and calling
 		case Call: {
 			final Stackable toCall = this.stack.popSafe();
