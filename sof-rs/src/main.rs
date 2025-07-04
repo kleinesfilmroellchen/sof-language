@@ -17,6 +17,9 @@ mod lexer;
 mod parser;
 mod runtime;
 
+#[cfg(test)]
+mod test;
+
 fn main() -> miette::Result<()> {
     miette::set_hook(Box::new(|_| {
         Box::new(
@@ -94,7 +97,7 @@ fn run_code_on_arena(code: impl AsRef<str>, arena: &mut StackArena) -> miette::R
     Ok(())
 }
 
-fn sof_main(code: impl AsRef<str>) -> miette::Result<()> {
+pub fn sof_main(code: impl AsRef<str>) -> miette::Result<()> {
     let start_time = time::Instant::now();
     let lexed = lexer::lex(code)?;
     debug!(target: "sof::lexer", "lexed: {lexed:#?}");
