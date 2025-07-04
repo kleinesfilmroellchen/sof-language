@@ -1,0 +1,60 @@
+name: Interpreter build and test
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  build-java:
+    name: Build and test Java (sof-language)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 24
+        uses: actions/setup-java@v2
+        with:
+          java-version: "24"
+          distribution: "temurin"
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v3
+      - name: Build
+        run: ./gradlew build
+      - name: Test and generate coverage information
+        run: ./gradlew coverage
+      - name: Upload coverage information to codecov
+        uses: codecov/codecov-action@v2
+        with:
+          files: build/jcc-report/test/jacocoTestReport.xml
+          name: sof-coverage-upload
+          fail_ci_if_error: false
+          verbose: true
+
+  build-rust:
+    name: Build and test Rust (sof-rs)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+      - name: Output Rust version to file
+        run: cargo --version > rust-version
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('rust-version') }}
+      - name: Install nextest
+        run: curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
+
+      - name: Build
+        run: cargo build --verbose --bins --tests
+      - name: Run tests
+        run: cargo nextest run --verbose
