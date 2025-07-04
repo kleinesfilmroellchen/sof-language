@@ -1,5 +1,4 @@
 use std::cmp::Ordering;
-use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::fmt::Display;
 use std::ops::Add;
@@ -19,12 +18,15 @@ use gc_arena::lock::GcRefLock;
 use gc_arena_derive::Collect;
 use miette::SourceSpan;
 
+use self::nametable::Nametable;
 use crate::error::Error;
 use crate::interpreter::CallReturnBehavior;
 use crate::interpreter::InterpreterAction;
 use crate::lexer::Identifier;
 use crate::parser::Command;
 use crate::parser::Token;
+
+pub mod nametable;
 
 #[derive(Debug, Collect, Clone)]
 #[collect(no_drop)]
@@ -61,12 +63,6 @@ pub struct Object<'gc> {
     fields: Nametable<'gc>,
 }
 
-#[derive(Debug, Collect, PartialEq)]
-#[collect(no_drop)]
-pub struct Nametable<'gc> {
-    entries: HashMap<Identifier, GcRefLock<'gc, Stackable<'gc>>>,
-}
-
 /// Inner stack type that is the actual raw data structure of the stack.
 pub type InnerStack<'gc> = VecDeque<Stackable<'gc>>;
 /// Stack type and GC root.
@@ -76,6 +72,23 @@ pub struct Stack<'gc> {
     pub main: GcRefLock<'gc, InnerStack<'gc>>,
     /// Utility stack not visible for the program, currently only used by while loops.
     pub utility: GcRefLock<'gc, InnerStack<'gc>>,
+}
+
+impl<'gc> Stack<'gc> {
+    pub fn first_nametable(
+        &self,
+        span: SourceSpan,
+    ) -> Result<GcRefLock<'gc, Nametable<'gc>>, Error> {
+        self.main
+            .borrow()
+            .iter()
+            .rev()
+            .find_map(|stackable| match stackable {
+                Stackable::Nametable(nt) => Some(nt.clone()),
+                _ => None,
+            })
+            .ok_or(Error::MissingNametable { span })
+    }
 }
 
 /// GC arena type for the SOF runtime, based on the stack root.
@@ -267,7 +280,12 @@ impl<'gc> Stackable<'gc> {
         span: SourceSpan,
     ) -> Result<Vec<InterpreterAction>, Error> {
         match self {
-            Stackable::Identifier(identifier) => todo!("look up identifier in nametable"),
+            Stackable::Identifier(identifier) => {
+                let first_nametable = stack.first_nametable(span)?;
+                let value = first_nametable.borrow().lookup(identifier.clone(), span)?;
+                stack.main.borrow_mut(mc).push_back(value);
+                Ok(vec![])
+            }
             Stackable::CodeBlock(codeblock) => {
                 // TODO: eliminate the clone via ref-counted token lists
                 let code = codeblock.borrow().code.clone();

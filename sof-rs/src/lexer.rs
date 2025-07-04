@@ -1,7 +1,7 @@
 use std::fmt::Display;
 use std::iter::Peekable;
 use std::ops::Deref;
-use std::rc::Rc;
+use std::sync::Arc;
 
 use gc_arena_derive::Collect;
 use miette::SourceOffset;
@@ -168,7 +168,7 @@ impl std::fmt::Debug for Token {
 #[derive(Clone, Eq, PartialEq, Hash, Collect)]
 #[collect(require_static)]
 #[repr(transparent)]
-pub struct Identifier(Rc<String>);
+pub struct Identifier(Arc<String>);
 
 impl Deref for Identifier {
     type Target = String;
@@ -239,7 +239,7 @@ pub fn lex(string: impl AsRef<str>) -> Result<Vec<Token>, Error> {
                         RawToken::Boolean(false)
                     } else {
                         Keyword::from_identifier_keyword(&ident).map_or_else(
-                            || RawToken::Identifier(Identifier(Rc::new(ident))),
+                            || RawToken::Identifier(Identifier(Arc::new(ident))),
                             |kw| RawToken::Keyword(kw),
                         )
                     },

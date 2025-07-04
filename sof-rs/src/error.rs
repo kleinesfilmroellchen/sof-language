@@ -5,6 +5,7 @@ use miette::Diagnostic;
 use miette::SourceSpan;
 use thiserror::Error;
 
+use crate::lexer::Identifier;
 use crate::parser::Command;
 
 #[derive(Error, Diagnostic, Debug)]
@@ -57,6 +58,19 @@ pub enum Error {
     #[error("cannot pop value from empty stack")]
     #[diagnostic(code(StackAccessError))]
     MissingValue {
+        #[label]
+        span: SourceSpan,
+    },
+    #[error("no nametable available")]
+    #[diagnostic(code(StackAccessError))]
+    MissingNametable {
+        #[label]
+        span: SourceSpan,
+    },
+    #[error("name {name} is not defined")]
+    #[diagnostic(code(NameError))]
+    UndefinedValue {
+        name: Identifier,
         #[label]
         span: SourceSpan,
     },

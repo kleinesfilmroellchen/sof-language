@@ -18,6 +18,8 @@ use crate::runtime::InnerStack;
 use crate::runtime::Stack;
 use crate::runtime::StackArena;
 use crate::runtime::Stackable;
+use crate::runtime::nametable::Nametable;
+use crate::runtime::nametable::NametableType;
 
 #[derive(Default, Clone, Copy)]
 #[non_exhaustive]
@@ -36,6 +38,10 @@ pub fn new_arena() -> StackArena {
     Arena::new(|mc| {
         let main = Gc::new(mc, RefLock::new(VecDeque::with_capacity(64)));
         let utility = Gc::new(mc, RefLock::new(VecDeque::with_capacity(64)));
+        main.borrow_mut(mc).push_back(Stackable::Nametable(Gc::new(
+            mc,
+            RefLock::new(Nametable::new(NametableType::Global)),
+        )));
         Stack { main, utility }
     })
 }
@@ -450,6 +456,21 @@ fn execute_token<'a>(
                 trace!("    --- end of while body, condition is false");
                 no_action()
             }
+        }
+        InnerToken::Command(Command::Def) => {
+            let next_nametable = stack.first_nametable(token.span)?;
+            let mut mut_stack = stack.main.borrow_mut(mc);
+            let name_stackable = pop_stack(&mut mut_stack, token.span)?;
+            let Stackable::Identifier(name) = name_stackable else {
+                return Err(Error::InvalidType {
+                    operation: Command::Def,
+                    value: name_stackable.to_string(),
+                    span: token.span,
+                });
+            };
+            let value = pop_stack(&mut mut_stack, token.span)?;
+            next_nametable.borrow_mut(mc).define(name, value);
+            no_action()
         }
         _ => todo!(),
     }
