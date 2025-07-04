@@ -1,18 +1,20 @@
-[![CodeQL](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/codeql-analysis.yml) [![Gradle CI & Tests](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/gradle.yml/badge.svg)](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/gradle.yml) [![codecov](https://codecov.io/gh/kleinesfilmroellchen/sof-language/branch/master/graph/badge.svg?token=N0ZG8KO2IE)](https://codecov.io/gh/kleinesfilmroellchen/sof-language) **[documentation](https://kleinesfilmroellchen.github.io/sof-language/)**
+[![CodeQL](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/codeql-analysis.yml) [![Build and Tests](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/build.yml/badge.svg)](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/build.yml) [![codecov](https://codecov.io/gh/kleinesfilmroellchen/sof-language/branch/master/graph/badge.svg?token=N0ZG8KO2IE)](https://codecov.io/gh/kleinesfilmroellchen/sof-language) **[![documentation](https://github.com/kleinesfilmroellchen/sof-language/actions/workflows/docs.yml/badge.svg)](https://kleinesfilmroellchen.github.io/sof-language/)**
 
 # SOF - Stack with Objects and Functions
 
 An experimental fully stack-based reverse-polish-notation functional and object-oriented programming language concieved and implemented by kleinesfilmröllchen.
 
-###### SOF is to be pronounced 'ess-oh-eff' in English or `/əs.ʊu.ˈəf/` in IPA. If you want to make me angry, you can also pronounce it 'sohf'.
+###### SOF is to be pronounced 'ess-oh-eff' in English or `/əs.ʊu.ˈəf/` in IPA.
 
 **This is an experimental programming language.** If you cause a nuclear war and the inevitable destruction of mankind by using this software, I am not to blame.
 
-SOF is written in Java 16 and requires org.reflections and java.logging to run. It leverages the module system (you may use it in your project as well!) and uses JUnit Jupiter for testing the codebase. (See above for coverage reports as of the latest commit.)
+The original SOF interpreter is written in Java 16 (build chain uses Java 24, but anything as low as 16 should work) and requires org.reflections and java.logging to run. It leverages the module system (you may use it in your project as well!) and uses JUnit Jupiter for testing the codebase. (See above for coverage reports as of the latest commit.)
 
-### Installation and CLI Usage
+There is a casual effort right now to rewrite the interpreter in Rust as [sof-rs](sof-rs).
 
-This is a Gradle 7 project using the Java Application plugin with the module system and JUnit Jupiter tests. The usual Gradle tasks for these situations exist and have not been renamed/added to. As a quick reference: Use `gradle build` to run the full build including tests. Run `gradle test` to run the tests, and `gradle coverage` for tests and coverage (reports are in `build/jcc-report/test/html`). Use `gradle javadoc` to build the javadoc. All building happens into the `build/` subfolders.
+## Installation and CLI Usage
+
+This is a Gradle 8 project using the Java Application plugin with the module system and JUnit Jupiter tests. The usual Gradle tasks for these situations exist and have not been renamed/added to. As a quick reference: Use `gradle build` to run the full build including tests. Run `gradle test` to run the tests, and `gradle coverage` for tests and coverage (reports are in `build/jcc-report/test/html`). Use `gradle javadoc` to build the javadoc. All building happens into the `build/` subfolders.
 
 Use `gradle run` to execute the SOF CLI. However, Gradles obnoxious build output will obscure a bunch of the program output. Therefore, you should use `gradle install` and then run the binaries from `build/install/sof-language`. This works on Windows and Linux.
 
@@ -198,7 +200,7 @@ Just to be pretentious; Antoine de Saint-Exupéry is famously quoted on
 
 > Perfection is achieved, not when there is nothing more to add, but when there is nothing left to take away.
 
-I think that SOF is an excellent example of this. I cannot currently think of anything that you can take away from SOF without making it inferior in capability (or, at least, severely less usable, like removing the function PT would do, for example). It is very surprising indeed that such a simple thing as a reverse-polish notation language with three token types and literally less than 30 lines of syntax definition could be as feature-rich and capable as any other modern programming language, even if with odd syntax and inferior speed. (The latter is down to me being simply not capable of writing an efficient interpreter or any sort of compiler. PostScript and Forth prove that postfix languages can be extremely performant.)
+I think that SOF is an excellent example of this. I cannot currently think of anything that you can take away from SOF without making it inferior in capability (or, at least, severely less usable, like removing the `function` PT would do, for example). It is very surprising indeed that such a simple thing as a reverse-polish notation language with three token types and literally less than 30 lines of syntax definition could be as feature-rich and capable as any other modern programming language, even if with odd syntax and inferior speed. (The latter is down to me being simply not capable of writing an efficient interpreter or any sort of compiler. PostScript and Forth prove that postfix languages can be extremely performant.)
 
 ## 5. Running on SerenityOS
 
