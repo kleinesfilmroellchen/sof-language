@@ -182,18 +182,14 @@ public final class BuiltinOperations {
 	 */
 	public static final Stackable bitShiftLeft(Stackable a, Stackable b) throws IncompleteCompilerException {
 		Long ia = null;
-		if (a instanceof FloatPrimitive fa) {
-			ia = fa.value().longValue();
-		} else if (a instanceof IntPrimitive ia_) {
+		if (a instanceof IntPrimitive ia_) {
 			ia = ia_.value();
 		}
 		Long ib = null;
-		if (b instanceof FloatPrimitive fb) {
-			ib = fb.value().longValue();
-		} else if (b instanceof IntPrimitive ib_) {
+		if (b instanceof IntPrimitive ib_) {
 			ib = ib_.value();
 		}
-		if (ib == null | ia == null) {
+		if (ib == null || ia == null) {
 			throw new IncompleteCompilerException("type", "type.bitshift", a.typename(), b.typename());
 		}
 
@@ -210,18 +206,14 @@ public final class BuiltinOperations {
 	 */
 	public static final Stackable bitShiftRight(Stackable a, Stackable b) throws IncompleteCompilerException {
 		Long ia = null;
-		if (a instanceof FloatPrimitive fa) {
-			ia = fa.value().longValue();
-		} else if (a instanceof IntPrimitive ia_) {
+		if (a instanceof IntPrimitive ia_) {
 			ia = ia_.value();
 		}
 		Long ib = null;
-		if (b instanceof FloatPrimitive fb) {
-			ib = fb.value().longValue();
-		} else if (b instanceof IntPrimitive ib_) {
+		if (b instanceof IntPrimitive ib_) {
 			ib = ib_.value();
 		}
-		if (ib == null | ia == null) {
+		if (ib == null || ia == null) {
 			throw new IncompleteCompilerException("type", "type.bitshift", a.typename(), b.typename());
 		}
 

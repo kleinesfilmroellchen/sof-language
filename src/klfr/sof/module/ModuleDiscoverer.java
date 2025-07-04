@@ -4,13 +4,11 @@ import java.io.*;
 import java.nio.file.*;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.logging.*;
 
 import klfr.sof.*;
-import klfr.sof.cli.CLI;
 import klfr.sof.exceptions.*;
 
 /**
@@ -31,28 +29,6 @@ public final class ModuleDiscoverer {
 
 	// #region Constructors
 	// This would be so much easier with default method arguments...
-
-	/**
-	 * Full constructor that uses the given module registry and standard library directory.
-	 * 
-	 * @param registry            A module registry that is to be used by this discoverer internally.
-	 * @param stdlibBaseDirectory The base directory of the standard library to be used by this discoverer.
-	 */
-	public ModuleDiscoverer(final ModuleRegistry registry, final File stdlibBaseDirectory) {
-		this.registry = registry;
-		this.stdlibBaseDirectory = stdlibBaseDirectory;
-	}
-
-	/**
-	 * Uses the provided module registry and the default (relative) standard library directory.
-	 * 
-	 * @param registry A module registry that is to be used by this discoverer internally.
-	 */
-	public ModuleDiscoverer(final ModuleRegistry registry) {
-		this.registry = registry;
-		this.stdlibBaseDirectory = getDefaultStdlibDirectory();
-	}
-
 	/**
 	 * Ûses the provided standard library directory and an empty module registry.
 	 * 
