@@ -208,18 +208,18 @@ impl Command {
 
 impl PartialEq<Ordering> for Command {
     fn eq(&self, other: &Ordering) -> bool {
-        match (self, other) {
+        matches!(
+            (self, other),
             (Command::LessEqual, Ordering::Less)
-            | (Command::LessEqual, Ordering::Equal)
-            | (Command::Greater, Ordering::Greater)
-            | (Command::GreaterEqual, Ordering::Equal)
-            | (Command::GreaterEqual, Ordering::Greater)
-            | (Command::Equal, Ordering::Equal)
-            | (Command::NotEqual, Ordering::Less)
-            | (Command::NotEqual, Ordering::Greater)
-            | (Command::Less, Ordering::Less) => true,
-            _ => false,
-        }
+                | (Command::LessEqual, Ordering::Equal)
+                | (Command::Greater, Ordering::Greater)
+                | (Command::GreaterEqual, Ordering::Equal)
+                | (Command::GreaterEqual, Ordering::Greater)
+                | (Command::Equal, Ordering::Equal)
+                | (Command::NotEqual, Ordering::Less)
+                | (Command::NotEqual, Ordering::Greater)
+                | (Command::Less, Ordering::Less)
+        )
     }
 }
 
@@ -281,12 +281,10 @@ pub fn parse(tokens: Vec<&lexer::Token>) -> Result<Vec<Token>, Error> {
                 let mut depth = 1usize;
                 let mut inner_tokens = Vec::new();
                 let mut last_span = *span;
-                while let Some(
-                    full_next_token @ lexer::Token {
-                        token: next_inner_token,
-                        span: next_span,
-                    },
-                ) = token_iter.next()
+                for full_next_token @ lexer::Token {
+                    token: next_inner_token,
+                    span: next_span,
+                } in token_iter.by_ref()
                 {
                     last_span = *next_span;
                     match next_inner_token {

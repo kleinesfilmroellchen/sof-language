@@ -216,7 +216,7 @@ pub fn lex(string: impl AsRef<str>) -> Result<Vec<Token>, Error> {
             c if is_xid_start(c) => {
                 let mut ident = String::new();
                 ident.push(c);
-                while let Some((_, idc)) = char_iter.next() {
+                for (_, idc) in char_iter.by_ref() {
                     if is_xid_continue(idc) || [':', '\''].contains(&idc) {
                         ident.push(idc);
                     } else if idc.is_whitespace() {
@@ -233,14 +233,14 @@ pub fn lex(string: impl AsRef<str>) -> Result<Vec<Token>, Error> {
 
                 tokens.push(Token {
                     span: (next_offset, ident.chars().count()).into(),
-                    token: if ident.to_ascii_lowercase() == "true" {
+                    token: if ident.eq_ignore_ascii_case("true") {
                         RawToken::Boolean(true)
-                    } else if ident.to_ascii_lowercase() == "false" {
+                    } else if ident.eq_ignore_ascii_case("false") {
                         RawToken::Boolean(false)
                     } else {
                         Keyword::from_identifier_keyword(&ident).map_or_else(
                             || RawToken::Identifier(Identifier(Arc::new(ident))),
-                            |kw| RawToken::Keyword(kw),
+                            RawToken::Keyword,
                         )
                     },
                 });
@@ -389,13 +389,13 @@ fn parse_number(
 fn parse_with_radix<const RADIX: u32>(
     prefix: &str,
     number: &str,
-    number_string: &String,
+    number_string: &str,
     start_offset: SourceOffset,
     string_length: usize,
 ) -> Result<(RawToken, usize), Error> {
     let mut number = i64::from_str_radix(number, RADIX).map_err(|inner| Error::InvalidInteger {
         span: (start_offset, string_length).into(),
-        number_text: number_string.clone(),
+        number_text: number_string.to_owned(),
         inner,
     })?;
     if prefix == "-" {

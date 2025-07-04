@@ -84,7 +84,7 @@ impl<'gc> Stack<'gc> {
             .iter()
             .rev()
             .find_map(|stackable| match stackable {
-                Stackable::Nametable(nt) => Some(nt.clone()),
+                Stackable::Nametable(nt) => Some(*nt),
                 _ => None,
             })
             .ok_or(Error::MissingNametable { span })

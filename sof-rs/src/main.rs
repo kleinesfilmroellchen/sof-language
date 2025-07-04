@@ -50,7 +50,7 @@ fn main() -> miette::Result<()> {
             Ok(_) => Ok(()),
             Err(why) => {
                 let full_err = why.with_source_code(code);
-                Err(full_err.into())
+                Err(full_err)
             }
         }
     } else {

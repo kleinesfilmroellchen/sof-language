@@ -477,9 +477,7 @@ fn execute_token<'a>(
 }
 
 fn pop_stack<'a>(stack: &mut InnerStack<'a>, span: SourceSpan) -> Result<Stackable<'a>, Error> {
-    let value = stack
-        .pop_back()
-        .ok_or_else(|| Error::MissingValue { span })?;
+    let value = stack.pop_back().ok_or(Error::MissingValue { span })?;
     if matches!(value, Stackable::Nametable(_)) {
         stack.push_back(value);
         Err(Error::MissingValue { span })
