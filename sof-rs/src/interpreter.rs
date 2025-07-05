@@ -1,8 +1,10 @@
 use std::cell::LazyCell;
+use std::sync::Arc;
 
 use gc_arena::Arena;
 use gc_arena::Mutation;
 use gc_arena::lock::GcRefLock;
+use gc_arena::lock::RefLock;
 use log::debug;
 use log::trace;
 use smallvec::SmallVec;
@@ -14,6 +16,7 @@ use crate::parser::Command;
 use crate::parser::InnerToken;
 use crate::parser::Token;
 use crate::runtime::CodeBlock;
+use crate::runtime::Function;
 use crate::runtime::Stack;
 use crate::runtime::StackArena;
 use crate::runtime::Stackable;
@@ -46,6 +49,8 @@ pub fn run_on_arena(arena: &mut StackArena, tokens: TokenVec) -> Result<Metrics,
     token_execution_stack.push((token_iter, CallReturnBehavior::BlockCall));
     let mut metrics = Metrics::default();
 
+    // true if we’re currently in the process of unwinding a return call up to the next function
+    let mut is_unwinding_return = false;
     while let Some((current_stack, stack_action)) = token_execution_stack.last_mut() {
         let Some(token) = current_stack.next() else {
             match *stack_action {
@@ -57,14 +62,31 @@ pub fn run_on_arena(arena: &mut StackArena, tokens: TokenVec) -> Result<Metrics,
                     );
                     token_execution_stack.pop();
                 }
-                CallReturnBehavior::FunctionCall => todo!("finalize function call"),
+                CallReturnBehavior::FunctionCall => {
+                    debug!(
+                        "[{}] returning from function, remaining call stack depth {}",
+                        metrics.token_count,
+                        token_execution_stack.len() - 1
+                    );
+                    is_unwinding_return = false;
+                    token_execution_stack.pop();
+                    arena.mutate_root(|mc, stack| {
+                        let value = stack.pop_nametable(mc, (0, 0).into())?;
+                        if let Some(return_value) = &value.borrow().return_value {
+                            stack.push(mc, return_value.clone());
+                        }
+                        Ok(())
+                    })?;
+                }
                 CallReturnBehavior::Loop => {
                     arena.mutate(|mc, stack| {
                         let mut utility_stack = stack.utility.borrow_mut(mc);
                         // pop last conditional
                         let last_conditional_result = utility_stack.pop().unwrap();
 
-                        if !matches!(last_conditional_result, Stackable::Boolean(true)) {
+                        if !matches!(last_conditional_result, Stackable::Boolean(true))
+                            || is_unwinding_return
+                        {
                             trace!(
                                 "[{}] exiting while loop because of condition {:?}",
                                 metrics.token_count, last_conditional_result
@@ -113,6 +135,7 @@ pub fn run_on_arena(arena: &mut StackArena, tokens: TokenVec) -> Result<Metrics,
             trace!("[{}] stack: {:?}", metrics.token_count, stack);
         });
 
+        // perform garbage collection if necessary
         if arena.metrics().allocation_debt() >= COLLECTION_THRESHOLD {
             debug!(
                 target: "sof::gc",
@@ -141,6 +164,28 @@ pub fn run_on_arena(arena: &mut StackArena, tokens: TokenVec) -> Result<Metrics,
                     metrics.call_count += 1;
                     token_execution_stack.push((ArcVecIter::new(code), return_behavior));
                 }
+                InterpreterAction::Return => {
+                    debug!(
+                        "[{}] immediate function return, call stack depth {}",
+                        metrics.token_count,
+                        token_execution_stack.len() + 1
+                    );
+                    // Many execution stacks, such as loops, need to do complex cleanup.
+                    // Therefore, we simply signal every single stack to exit by
+                    // (1) emptying all stack’s token lists
+                    // (2) setting the global return flag that causes loops (and other constructs) to terminate unconditionally.
+                    let mut stack_position = token_execution_stack.len() - 1;
+                    loop {
+                        let (list, behavior) = &mut token_execution_stack[stack_position];
+                        *list = ArcVecIter::new(Arc::default());
+                        // this was our function call, stop here; and failsafe for global token list
+                        if *behavior == CallReturnBehavior::FunctionCall || stack_position == 0 {
+                            break;
+                        }
+                        stack_position -= 1;
+                    }
+                    is_unwinding_return = true;
+                }
             }
         }
     }
@@ -159,6 +204,8 @@ pub(crate) enum InterpreterAction {
         code: TokenVec,
         return_behavior: CallReturnBehavior,
     },
+    /// Return from current function scope.
+    Return,
 }
 
 impl From<()> for InterpreterAction {
@@ -170,7 +217,7 @@ impl From<()> for InterpreterAction {
 pub type ActionVec = SmallVec<[InterpreterAction; 2]>;
 
 /// Different possible behaviors after a call return, each corresponding to a kind of call that SOF can do.
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub(crate) enum CallReturnBehavior {
     /// Don’t do anything.
     #[default]
@@ -401,6 +448,7 @@ fn execute_token<'a>(
             utility_stack.push(loop_body);
             utility_stack.push(conditional_callable);
             utility_stack.push(Stackable::Boolean(true));
+            #[allow(clippy::declare_interior_mutable_const)]
             const EMPTY_VEC: LazyCell<TokenVec> = LazyCell::new(TokenVec::default);
 
             // insert the while body logic at the start so it is executed after the initial loop body action(s)
@@ -408,6 +456,7 @@ fn execute_token<'a>(
             actions.insert(
                 0,
                 InterpreterAction::ExecuteCall {
+                    #[allow(clippy::borrow_interior_mutable_const)]
                     code: EMPTY_VEC.clone(),
                     return_behavior: CallReturnBehavior::Loop,
                 },
@@ -430,7 +479,7 @@ fn execute_token<'a>(
             }
         }
         InnerToken::Command(Command::Def) => {
-            let next_nametable = stack.top_nametable(token.span)?;
+            let next_nametable = stack.top_nametable();
             let name_stackable = stack.pop(mc, token.span)?;
             let Stackable::Identifier(name) = name_stackable else {
                 return Err(Error::InvalidType {
@@ -443,6 +492,61 @@ fn execute_token<'a>(
             next_nametable.borrow_mut(mc).define(name, value);
             no_action()
         }
+        InnerToken::Command(Command::Globaldef) => {
+            let global_nametable = stack.global_nametable();
+            let name_stackable = stack.pop(mc, token.span)?;
+            let Stackable::Identifier(name) = name_stackable else {
+                return Err(Error::InvalidType {
+                    operation: Command::Globaldef,
+                    value: name_stackable.to_string().into(),
+                    span: token.span,
+                });
+            };
+            let value = stack.pop(mc, token.span)?;
+            global_nametable.borrow_mut(mc).define(name, value);
+            no_action()
+        }
+        InnerToken::Command(Command::Function) => {
+            let argument_count = stack.pop(mc, token.span)?;
+            let body = stack.pop(mc, token.span)?;
+            let Stackable::Integer(argument_count) = argument_count else {
+                return Err(Error::InvalidType {
+                    operation: Command::Function,
+                    value: argument_count.to_string().into(),
+                    span: token.span,
+                });
+            };
+            let Stackable::CodeBlock(body) = body else {
+                return Err(Error::InvalidType {
+                    operation: Command::Function,
+                    value: body.to_string().into(),
+                    span: token.span,
+                });
+            };
+            stack.push(
+                mc,
+                Stackable::Function(GcRefLock::new(
+                    mc,
+                    RefLock::new(Function::new(
+                        argument_count
+                            .try_into()
+                            .map_err(|_| Error::InvalidArgumentCount {
+                                argument_count,
+                                span: token.span,
+                            })?,
+                        body.borrow().code.clone(),
+                    )),
+                )),
+            );
+            no_action()
+        }
+        InnerToken::Command(Command::Return) => {
+            let return_value = stack.pop(mc, token.span)?;
+            let top_nametable = stack.top_nametable();
+            top_nametable.borrow_mut(mc).set_return_value(return_value);
+            Ok(smallvec![InterpreterAction::Return])
+        }
+        InnerToken::Command(Command::ReturnNothing) => Ok(smallvec![InterpreterAction::Return]),
         _ => todo!(),
     }
 }

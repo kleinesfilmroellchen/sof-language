@@ -90,6 +90,8 @@ pub enum Command {
     Describe,
     DescribeS,
     Assert,
+    Return,
+    ReturnNothing,
 }
 
 impl Display for Command {
@@ -143,6 +145,8 @@ impl Display for Command {
                 Self::Describe => "describe",
                 Self::DescribeS => "describes",
                 Self::Assert => "assert",
+                Self::Return => "return",
+                Self::ReturnNothing => "return:0",
             }
         )
     }
@@ -196,6 +200,8 @@ impl Command {
             lexer::Keyword::Describe => Self::Describe,
             lexer::Keyword::DescribeS => Self::DescribeS,
             lexer::Keyword::Assert => Self::Assert,
+            lexer::Keyword::Return => Self::Return,
+            lexer::Keyword::ReturnNothing => Self::ReturnNothing,
             _ => unreachable!(),
         }
     }

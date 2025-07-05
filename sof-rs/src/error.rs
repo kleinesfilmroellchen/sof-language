@@ -114,4 +114,18 @@ pub enum Error {
         #[label]
         span: SourceSpan,
     },
+    #[error("invalid argument count {argument_count}, must be positive")]
+    #[diagnostic(code(TypeError))]
+    InvalidArgumentCount {
+        argument_count: i64,
+        #[label]
+        span: SourceSpan,
+    },
+    #[error("not enough arguments, needed {argument_count}")]
+    #[diagnostic(code(StackAccessError))]
+    NotEnoughArguments {
+        argument_count: usize,
+        #[label]
+        span: SourceSpan,
+    },
 }

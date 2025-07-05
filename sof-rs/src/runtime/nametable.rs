@@ -20,6 +20,7 @@ pub enum NametableType {
 pub struct Nametable<'gc> {
     pub entries: HashMap<Identifier, Stackable<'gc>, ahash::RandomState>,
     pub kind: NametableType,
+    pub return_value: Option<Stackable<'gc>>,
 }
 
 impl<'gc> Nametable<'gc> {
@@ -27,6 +28,7 @@ impl<'gc> Nametable<'gc> {
         Self {
             entries: HashMap::with_hasher(ahash::RandomState::with_seed(2)),
             kind,
+            return_value: None,
         }
     }
 
@@ -42,5 +44,9 @@ impl<'gc> Nametable<'gc> {
                 span,
             })
             .cloned()
+    }
+
+    pub fn set_return_value(&mut self, value: Stackable<'gc>) {
+        self.return_value = Some(value);
     }
 }

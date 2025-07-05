@@ -32,6 +32,15 @@ test : not assert
 "string" { true return } 0 function . assert
 "string" = assert
 
+# call function within function
+{ true test : return } 0 function . assert
+
+# call codeblock within function
+{ 2 { 3 + } . return } 0 function . 5 = assert
+
+# run loop within function
+{ 0 i def { { i . return } i . 5 > if } { i . 1 + dup i def 10 < } while return:0 } 0 function . 6 = assert
+
 ## Currying
 
 { + return } 2 function add globaldef

@@ -69,6 +69,8 @@ pub enum Keyword {
     Describe,
     DescribeS,
     Assert,
+    Return,
+    ReturnNothing,
     CodeBlockStart,
     CodeBlockEnd,
 }
@@ -138,6 +140,8 @@ impl Keyword {
             "switch" => Self::Switch,
             "function" => Self::Function,
             "constructor" => Self::Constructor,
+            "return" => Self::Return,
+            "return:0" => Self::ReturnNothing,
             _ => return None,
         })
     }

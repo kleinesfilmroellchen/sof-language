@@ -64,6 +64,16 @@ pub struct Function {
     code: TokenVec,
 }
 
+impl Function {
+    pub fn new(arguments: usize, code: TokenVec) -> Self {
+        Self {
+            arguments,
+            is_constructor: false,
+            code,
+        }
+    }
+}
+
 #[derive(Debug, Collect, PartialEq)]
 #[collect(no_drop)]
 pub struct Object<'gc> {
@@ -98,10 +108,17 @@ impl<'gc> Stack<'gc> {
         me
     }
 
-    pub fn top_nametable(&self, span: SourceSpan) -> Result<GcRefLock<'gc, Nametable<'gc>>, Error> {
+    pub fn top_nametable(&self) -> GcRefLock<'gc, Nametable<'gc>> {
         match self.main.borrow()[self.top_nametable] {
-            Stackable::Nametable(nt) => Ok(nt),
-            _ => Err(Error::MissingNametable { span }),
+            Stackable::Nametable(nt) => nt,
+            _ => unreachable!("missing nametable"),
+        }
+    }
+
+    pub fn global_nametable(&self) -> GcRefLock<'gc, Nametable<'gc>> {
+        match self.main.borrow()[0] {
+            Stackable::Nametable(nt) => nt,
+            _ => unreachable!("missing nametable"),
         }
     }
 
@@ -138,6 +155,38 @@ impl<'gc> Stack<'gc> {
         self.top_nametable = self.main.borrow().len() - 1;
     }
 
+    pub fn insert_nametable_at(
+        &mut self,
+        mc: &Mutation<'gc>,
+        position: usize,
+        nametable: GcRefLock<'gc, Nametable<'gc>>,
+        span: SourceSpan,
+    ) -> Result<(), Error> {
+        let stack = self.main.borrow();
+        if position > stack.len() {
+            return Err(Error::NotEnoughArguments {
+                span,
+                argument_count: position,
+            });
+        }
+        let insert_position = stack.len() - position;
+        if stack[insert_position..]
+            .iter()
+            .any(|v| matches!(v, Stackable::Nametable(_)))
+        {
+            return Err(Error::NotEnoughArguments {
+                span,
+                argument_count: position,
+            });
+        }
+        drop(stack);
+        self.main
+            .borrow_mut(mc)
+            .insert(insert_position, Stackable::Nametable(nametable));
+        self.top_nametable = insert_position;
+        Ok(())
+    }
+
     #[inline]
     pub fn pop(&self, mc: &Mutation<'gc>, span: SourceSpan) -> Result<Stackable<'gc>, Error> {
         let mut mut_stack = self.main.borrow_mut(mc);
@@ -152,6 +201,33 @@ impl<'gc> Stack<'gc> {
             Err(Error::MissingValue { span })
         } else {
             Ok(value)
+        }
+    }
+
+    /// Pops everything above and including the topmost nametable. Never pops the global nametable.
+    pub fn pop_nametable(
+        &mut self,
+        mc: &Mutation<'gc>,
+        span: SourceSpan,
+    ) -> Result<GcRefLock<'gc, Nametable<'gc>>, Error> {
+        let mut mut_stack = self.main.borrow_mut(mc);
+        loop {
+            let top_value = Self::unchecked_pop(&mut mut_stack);
+            if mut_stack.is_empty() {
+                mut_stack.push(top_value);
+                return Err(Error::MissingNametable { span });
+            } else if let Stackable::Nametable(nt) = top_value {
+                self.top_nametable = mut_stack
+                    .iter()
+                    .enumerate()
+                    .rev()
+                    .find_map(|(i, el)| match el {
+                        Stackable::Nametable(_) => Some(i),
+                        _ => None,
+                    })
+                    .unwrap_or(0);
+                return Ok(nt);
+            }
         }
     }
 
@@ -364,7 +440,18 @@ impl<'gc> Stackable<'gc> {
                 code: codeblock.borrow().code.clone(),
                 return_behavior: CallReturnBehavior::BlockCall,
             }]),
-            Stackable::Function(function) => todo!("call function"),
+            Stackable::Function(function) => {
+                let function = function.borrow();
+                assert!(!function.is_constructor, "constructor not implemented");
+                // insert nametable below arguments
+                let function_nametable =
+                    GcRefLock::new(mc, RefLock::new(Nametable::new(NametableType::Function)));
+                stack.insert_nametable_at(mc, function.arguments, function_nametable, span)?;
+                Ok(smallvec![InterpreterAction::ExecuteCall {
+                    code: function.code.clone(),
+                    return_behavior: CallReturnBehavior::FunctionCall,
+                }])
+            }
             _ => Err(Error::InvalidType {
                 operation: Command::Call,
                 value: self.to_string().into(),
