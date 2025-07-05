@@ -89,6 +89,18 @@ impl<'gc> Stack<'gc> {
             })
             .ok_or(Error::MissingNametable { span })
     }
+
+    pub fn lookup(&self, name: Identifier, span: SourceSpan) -> Result<Stackable<'gc>, Error> {
+        self.main
+            .borrow()
+            .iter()
+            .rev()
+            .find_map(|stackable| match stackable {
+                Stackable::Nametable(nt) => nt.borrow().lookup(name.clone(), span).ok(),
+                _ => None,
+            })
+            .ok_or(Error::UndefinedValue { name, span })
+    }
 }
 
 /// GC arena type for the SOF runtime, based on the stack root.
@@ -281,8 +293,7 @@ impl<'gc> Stackable<'gc> {
     ) -> Result<Vec<InterpreterAction>, Error> {
         match self {
             Stackable::Identifier(identifier) => {
-                let first_nametable = stack.first_nametable(span)?;
-                let value = first_nametable.borrow().lookup(identifier.clone(), span)?;
+                let value = stack.lookup(identifier.clone(), span)?;
                 stack.main.borrow_mut(mc).push_back(value);
                 Ok(vec![])
             }

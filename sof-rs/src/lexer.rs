@@ -63,7 +63,7 @@ pub enum Keyword {
     Call,
     DoubleCall,
     Curry,
-    FieldCall,
+    FieldAccess,
     MethodCall,
     NativeCall,
     ListStart,
@@ -93,7 +93,7 @@ impl Keyword {
             '|' => Self::Curry,
             '.' => Self::Call,
             ':' => Self::DoubleCall,
-            ',' => Self::FieldCall,
+            ',' => Self::FieldAccess,
             ';' => Self::MethodCall,
             _ => unreachable!(),
         }

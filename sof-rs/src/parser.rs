@@ -82,10 +82,8 @@ pub enum Command {
     Equal,
     NotEqual,
     Call,
-    DoubleCall,
     Curry,
-    FieldCall,
-    MethodCall,
+    FieldAccess,
     NativeCall,
     CreateList,
     Describe,
@@ -137,10 +135,8 @@ impl Display for Command {
                 Self::Equal => "=",
                 Self::NotEqual => "/=",
                 Self::Call => ".",
-                Self::DoubleCall => ":",
                 Self::Curry => "|",
-                Self::FieldCall => ",",
-                Self::MethodCall => ";",
+                Self::FieldAccess => ",",
                 Self::NativeCall => "nativecall",
                 Self::CreateList => "]",
                 Self::Describe => "describe",
@@ -192,10 +188,8 @@ impl Command {
             lexer::Keyword::Equal => Self::Equal,
             lexer::Keyword::NotEqual => Self::NotEqual,
             lexer::Keyword::Call => Self::Call,
-            lexer::Keyword::DoubleCall => Self::DoubleCall,
             lexer::Keyword::Curry => Self::Curry,
-            lexer::Keyword::FieldCall => Self::FieldCall,
-            lexer::Keyword::MethodCall => Self::MethodCall,
+            lexer::Keyword::FieldAccess => Self::FieldAccess,
             lexer::Keyword::NativeCall => Self::NativeCall,
             lexer::Keyword::ListEnd => Self::CreateList,
             lexer::Keyword::Describe => Self::Describe,
@@ -323,6 +317,31 @@ pub fn parse(tokens: Vec<&lexer::Token>) -> Result<Vec<Token>, Error> {
                     start_span: *span,
                     end_span: None,
                 });
+            }
+            // desugar convenience commands into two separate tokens to simplify interpreter
+            lexer::RawToken::Keyword(lexer::Keyword::DoubleCall) => {
+                output.extend_from_slice(&[
+                    Token {
+                        inner: InnerToken::Command(Command::Call),
+                        span: *span,
+                    },
+                    Token {
+                        inner: InnerToken::Command(Command::Call),
+                        span: *span,
+                    },
+                ]);
+            }
+            lexer::RawToken::Keyword(lexer::Keyword::MethodCall) => {
+                output.extend_from_slice(&[
+                    Token {
+                        inner: InnerToken::Command(Command::FieldAccess),
+                        span: *span,
+                    },
+                    Token {
+                        inner: InnerToken::Command(Command::Call),
+                        span: *span,
+                    },
+                ]);
             }
             lexer::RawToken::Keyword(keyword) => output.push(Token {
                 inner: InnerToken::Command(Command::from_keyword_checked(*keyword)),
