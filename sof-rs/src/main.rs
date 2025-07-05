@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use std::time;
 
 use log::debug;
@@ -11,7 +12,9 @@ use crate::interpreter::run;
 use crate::interpreter::run_on_arena;
 use crate::runtime::StackArena;
 
+mod arc_iter;
 mod error;
+mod identifier;
 mod interpreter;
 mod lexer;
 mod parser;
@@ -91,7 +94,7 @@ fn main() -> miette::Result<()> {
 
 fn run_code_on_arena(code: impl AsRef<str>, arena: &mut StackArena) -> miette::Result<()> {
     let result = lexer::lex(code)?;
-    let parsed = parser::parse(result.iter().collect())?;
+    let parsed = Arc::new(parser::parse(result.iter().collect())?);
     debug!("parsed code as {parsed:#?}");
     run_on_arena(arena, parsed)?;
     Ok(())
@@ -101,7 +104,7 @@ pub fn sof_main(code: impl AsRef<str>) -> miette::Result<()> {
     let start_time = time::Instant::now();
     let lexed = lexer::lex(code)?;
     debug!(target: "sof::lexer", "lexed: {lexed:#?}");
-    let parsed = parser::parse(lexed.iter().collect())?;
+    let parsed = Arc::new(parser::parse(lexed.iter().collect())?);
     debug!(target: "sof::parser", "parsed: {parsed:#?}");
     let metrics = run(parsed)?;
     let end_time = time::Instant::now();

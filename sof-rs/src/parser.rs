@@ -1,20 +1,21 @@
 use std::cmp::Ordering;
 use std::fmt::Debug;
 use std::fmt::Display;
-use std::rc::Rc;
 
+use flexstr::SharedStr;
 use miette::SourceSpan;
 
 use crate::error::Error;
+use crate::identifier::Identifier;
 use crate::lexer;
-use crate::lexer::Identifier;
 use crate::runtime::Stackable;
+use crate::runtime::TokenVec;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum InnerToken {
     Command(Command),
     Literal(Literal),
-    CodeBlock(Vec<Token>),
+    CodeBlock(TokenVec),
     /// Special token only used internally to support while loops.
     WhileBody,
 }
@@ -24,7 +25,7 @@ pub enum Literal {
     Integer(i64),
     Decimal(f64),
     Identifier(Identifier),
-    String(String),
+    String(SharedStr),
     Boolean(bool),
     ListStart,
 }
@@ -35,7 +36,7 @@ impl Literal {
             Literal::Integer(int) => Stackable::Integer(*int),
             Literal::Decimal(decimal) => Stackable::Decimal(*decimal),
             Literal::Identifier(identifier) => Stackable::Identifier(identifier.clone()),
-            Literal::String(string) => Stackable::String(Rc::new(string.clone())),
+            Literal::String(string) => Stackable::String(string.clone()),
             Literal::Boolean(boolean) => Stackable::Boolean(*boolean),
             Literal::ListStart => Stackable::ListStart,
         }
@@ -308,7 +309,7 @@ pub fn parse(tokens: Vec<&lexer::Token>) -> Result<Vec<Token>, Error> {
                 );
                 let parsed = parse(inner_tokens)?;
                 output.push(Token {
-                    inner: InnerToken::CodeBlock(parsed),
+                    inner: InnerToken::CodeBlock(parsed.into()),
                     span,
                 });
             }

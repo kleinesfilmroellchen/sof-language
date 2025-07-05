@@ -4,7 +4,7 @@ use gc_arena_derive::Collect;
 use miette::SourceSpan;
 
 use crate::error::Error;
-use crate::lexer::Identifier;
+use crate::identifier::Identifier;
 use crate::runtime::Stackable;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Collect)]
@@ -18,14 +18,14 @@ pub enum NametableType {
 #[derive(Debug, Collect, PartialEq)]
 #[collect(no_drop)]
 pub struct Nametable<'gc> {
-    pub entries: HashMap<Identifier, Stackable<'gc>>,
+    pub entries: HashMap<Identifier, Stackable<'gc>, ahash::RandomState>,
     pub kind: NametableType,
 }
 
 impl<'gc> Nametable<'gc> {
     pub fn new(kind: NametableType) -> Self {
         Self {
-            entries: HashMap::new(),
+            entries: HashMap::with_hasher(ahash::RandomState::with_seed(2)),
             kind,
         }
     }

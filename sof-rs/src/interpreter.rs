@@ -1,25 +1,23 @@
-use std::collections::VecDeque;
+use std::cell::LazyCell;
 
 use gc_arena::Arena;
-use gc_arena::Gc;
 use gc_arena::Mutation;
 use gc_arena::lock::GcRefLock;
-use gc_arena::lock::RefLock;
 use log::debug;
 use log::trace;
-use miette::SourceSpan;
+use smallvec::SmallVec;
+use smallvec::smallvec;
 
+use crate::arc_iter::ArcVecIter;
 use crate::error::Error;
 use crate::parser::Command;
 use crate::parser::InnerToken;
 use crate::parser::Token;
 use crate::runtime::CodeBlock;
-use crate::runtime::InnerStack;
 use crate::runtime::Stack;
 use crate::runtime::StackArena;
 use crate::runtime::Stackable;
-use crate::runtime::nametable::Nametable;
-use crate::runtime::nametable::NametableType;
+use crate::runtime::TokenVec;
 
 #[derive(Default, Clone, Copy)]
 #[non_exhaustive]
@@ -29,34 +27,26 @@ pub struct Metrics {
     pub call_count: usize,
 }
 
-pub fn run(tokens: Vec<Token>) -> Result<Metrics, Error> {
+pub fn run(tokens: TokenVec) -> Result<Metrics, Error> {
     let mut arena: StackArena = new_arena();
     run_on_arena(&mut arena, tokens)
 }
 
 pub fn new_arena() -> StackArena {
-    Arena::new(|mc| {
-        let main = Gc::new(mc, RefLock::new(VecDeque::with_capacity(64)));
-        let utility = Gc::new(mc, RefLock::new(VecDeque::with_capacity(64)));
-        main.borrow_mut(mc).push_back(Stackable::Nametable(Gc::new(
-            mc,
-            RefLock::new(Nametable::new(NametableType::Global)),
-        )));
-        Stack { main, utility }
-    })
+    Arena::new(|mc| Stack::new(mc))
 }
 
 // TODO: tune this
 pub const COLLECTION_THRESHOLD: f64 = 0.2;
 
-pub fn run_on_arena(arena: &mut StackArena, tokens: Vec<Token>) -> Result<Metrics, Error> {
-    let token_iter = tokens.into_iter();
+pub fn run_on_arena(arena: &mut StackArena, tokens: TokenVec) -> Result<Metrics, Error> {
+    let token_iter = ArcVecIter::new(tokens.clone());
     // Use a stack of token lists to be executed. At the end of each list is some kind of call return.
-    let mut token_execution_stack = VecDeque::new();
-    token_execution_stack.push_back((token_iter, CallReturnBehavior::BlockCall));
+    let mut token_execution_stack = Vec::new();
+    token_execution_stack.push((token_iter, CallReturnBehavior::BlockCall));
     let mut metrics = Metrics::default();
 
-    while let Some((current_stack, stack_action)) = token_execution_stack.back_mut() {
+    while let Some((current_stack, stack_action)) = token_execution_stack.last_mut() {
         let Some(token) = current_stack.next() else {
             match *stack_action {
                 CallReturnBehavior::BlockCall => {
@@ -65,14 +55,14 @@ pub fn run_on_arena(arena: &mut StackArena, tokens: Vec<Token>) -> Result<Metric
                         metrics.token_count,
                         token_execution_stack.len() - 1
                     );
-                    token_execution_stack.pop_back();
+                    token_execution_stack.pop();
                 }
                 CallReturnBehavior::FunctionCall => todo!("finalize function call"),
                 CallReturnBehavior::Loop => {
                     arena.mutate(|mc, stack| {
                         let mut utility_stack = stack.utility.borrow_mut(mc);
                         // pop last conditional
-                        let last_conditional_result = utility_stack.pop_back().unwrap();
+                        let last_conditional_result = utility_stack.pop().unwrap();
 
                         if !matches!(last_conditional_result, Stackable::Boolean(true)) {
                             trace!(
@@ -80,32 +70,33 @@ pub fn run_on_arena(arena: &mut StackArena, tokens: Vec<Token>) -> Result<Metric
                                 metrics.token_count, last_conditional_result
                             );
                             // pop utility data (loop body and conditional)
-                            utility_stack.pop_back();
-                            utility_stack.pop_back();
+                            utility_stack.pop();
+                            utility_stack.pop();
                             // remove the loop element
-                            token_execution_stack.pop_back();
+                            token_execution_stack.pop();
                         } else {
                             trace!("[{}] re-running while loop", metrics.token_count);
                             let conditional_callable =
                                 utility_stack[utility_stack.len() - 1].clone();
-                            let mut mut_stack = stack.main.borrow_mut(mc);
                             // add back callable
-                            mut_stack.push_back(conditional_callable);
+                            stack.push(mc, conditional_callable);
                             // remove the loop element
-                            token_execution_stack.pop_back();
+                            token_execution_stack.pop();
                             // push another round of loop execution to the stack
-                            token_execution_stack.push_back((
-                                vec![
-                                    Token {
-                                        inner: InnerToken::Command(Command::Call),
-                                        span: (0, 0).into(),
-                                    },
-                                    Token {
-                                        inner: InnerToken::WhileBody,
-                                        span: (0, 0).into(),
-                                    },
-                                ]
-                                .into_iter(),
+                            token_execution_stack.push((
+                                ArcVecIter::new(
+                                    vec![
+                                        Token {
+                                            inner: InnerToken::Command(Command::Call),
+                                            span: (0, 0).into(),
+                                        },
+                                        Token {
+                                            inner: InnerToken::WhileBody,
+                                            span: (0, 0).into(),
+                                        },
+                                    ]
+                                    .into(),
+                                ),
                                 CallReturnBehavior::Loop,
                             ));
                         }
@@ -117,10 +108,9 @@ pub fn run_on_arena(arena: &mut StackArena, tokens: Vec<Token>) -> Result<Metric
 
         metrics.token_count += 1;
         trace!("[{}] executing token {token:?}", metrics.token_count);
-        let actions: Vec<InterpreterAction> =
-            arena.mutate(|mc, stack| execute_token(token.clone(), mc, stack.clone()))?;
+        let actions: ActionVec = arena.mutate_root(|mc, stack| execute_token(token, mc, stack))?;
         arena.mutate(|_, stack| {
-            trace!("[{}] stack: {:?}", metrics.token_count, stack.main);
+            trace!("[{}] stack: {:?}", metrics.token_count, stack);
         });
 
         if arena.metrics().allocation_debt() >= COLLECTION_THRESHOLD {
@@ -149,7 +139,7 @@ pub fn run_on_arena(arena: &mut StackArena, tokens: Vec<Token>) -> Result<Metric
                         token_execution_stack.len() + 1
                     );
                     metrics.call_count += 1;
-                    token_execution_stack.push_back((code.into_iter(), return_behavior));
+                    token_execution_stack.push((ArcVecIter::new(code), return_behavior));
                 }
             }
         }
@@ -166,7 +156,7 @@ pub(crate) enum InterpreterAction {
     /// Execute the given list of tokens before further tokens in the current list.
     /// Then follow the return behavior given.
     ExecuteCall {
-        code: Vec<Token>,
+        code: TokenVec,
         return_behavior: CallReturnBehavior,
     },
 }
@@ -176,6 +166,8 @@ impl From<()> for InterpreterAction {
         Self::None
     }
 }
+
+pub type ActionVec = SmallVec<[InterpreterAction; 2]>;
 
 /// Different possible behaviors after a call return, each corresponding to a kind of call that SOF can do.
 #[derive(Clone, Copy, Debug, Default)]
@@ -195,99 +187,94 @@ pub(crate) enum CallReturnBehavior {
 }
 
 #[inline]
-fn no_action() -> Result<Vec<InterpreterAction>, Error> {
-    Ok(vec![InterpreterAction::None])
+fn no_action() -> Result<ActionVec, Error> {
+    Ok(smallvec![InterpreterAction::None])
 }
 
 fn execute_token<'a>(
-    token: Token,
+    token: &Token,
     mc: &Mutation<'a>,
-    stack: Stack<'a>,
-) -> Result<Vec<InterpreterAction>, Error> {
-    match token.inner {
+    stack: &mut Stack<'a>,
+) -> Result<ActionVec, Error> {
+    match &token.inner {
         InnerToken::Literal(literal) => {
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            mut_stack.push_back(literal.as_stackable());
+            stack.push(mc, literal.as_stackable());
             no_action()
         }
         InnerToken::CodeBlock(tokens) => {
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            mut_stack.push_back(Stackable::CodeBlock(GcRefLock::new(
+            stack.push(
                 mc,
-                CodeBlock { code: tokens }.into(),
-            )));
+                Stackable::CodeBlock(GcRefLock::new(
+                    mc,
+                    CodeBlock {
+                        code: tokens.clone(),
+                    }
+                    .into(),
+                )),
+            );
             no_action()
         }
         InnerToken::Command(Command::Plus) => {
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            let rhs = pop_stack(&mut mut_stack, token.span)?;
-            let lhs = pop_stack(&mut mut_stack, token.span)?;
+            let rhs = stack.pop(mc, token.span)?;
+            let lhs = stack.pop(mc, token.span)?;
             let result = lhs.add(rhs, token.span)?;
-            mut_stack.push_back(result);
+            stack.push(mc, result);
             no_action()
         }
         InnerToken::Command(Command::Minus) => {
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            let rhs = pop_stack(&mut mut_stack, token.span)?;
-            let lhs = pop_stack(&mut mut_stack, token.span)?;
+            let rhs = stack.pop(mc, token.span)?;
+            let lhs = stack.pop(mc, token.span)?;
             let result = lhs.subtract(rhs, token.span)?;
-            mut_stack.push_back(result);
+            stack.push(mc, result);
             no_action()
         }
         InnerToken::Command(Command::Multiply) => {
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            let rhs = pop_stack(&mut mut_stack, token.span)?;
-            let lhs = pop_stack(&mut mut_stack, token.span)?;
+            let rhs = stack.pop(mc, token.span)?;
+            let lhs = stack.pop(mc, token.span)?;
             let result = lhs.multiply(rhs, token.span)?;
-            mut_stack.push_back(result);
+            stack.push(mc, result);
             no_action()
         }
         InnerToken::Command(Command::Divide) => {
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            let rhs = pop_stack(&mut mut_stack, token.span)?;
-            let lhs = pop_stack(&mut mut_stack, token.span)?;
+            let rhs = stack.pop(mc, token.span)?;
+            let lhs = stack.pop(mc, token.span)?;
             let result = lhs.divide(rhs, token.span)?;
-            mut_stack.push_back(result);
+            stack.push(mc, result);
             no_action()
         }
         InnerToken::Command(Command::Modulus) => {
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            let rhs = pop_stack(&mut mut_stack, token.span)?;
-            let lhs = pop_stack(&mut mut_stack, token.span)?;
+            let rhs = stack.pop(mc, token.span)?;
+            let lhs = stack.pop(mc, token.span)?;
             let result = lhs.modulus(rhs, token.span)?;
-            mut_stack.push_back(result);
+            stack.push(mc, result);
             no_action()
         }
         InnerToken::Command(Command::LeftShift) => {
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            let rhs = pop_stack(&mut mut_stack, token.span)?;
-            let lhs = pop_stack(&mut mut_stack, token.span)?;
+            let rhs = stack.pop(mc, token.span)?;
+            let lhs = stack.pop(mc, token.span)?;
             let result = lhs.shift_left(rhs, token.span)?;
-            mut_stack.push_back(result);
+            stack.push(mc, result);
             no_action()
         }
         InnerToken::Command(Command::RightShift) => {
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            let rhs = pop_stack(&mut mut_stack, token.span)?;
-            let lhs = pop_stack(&mut mut_stack, token.span)?;
+            let rhs = stack.pop(mc, token.span)?;
+            let lhs = stack.pop(mc, token.span)?;
             let result = lhs.shift_right(rhs, token.span)?;
-            mut_stack.push_back(result);
+            stack.push(mc, result);
             no_action()
         }
         InnerToken::Command(Command::Equal) => {
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            let rhs = pop_stack(&mut mut_stack, token.span)?;
-            let lhs = pop_stack(&mut mut_stack, token.span)?;
+            let rhs = stack.pop(mc, token.span)?;
+            let lhs = stack.pop(mc, token.span)?;
             let result = Stackable::Boolean(lhs.eq(&rhs));
-            mut_stack.push_back(result);
+            stack.push(mc, result);
             no_action()
         }
         InnerToken::Command(Command::NotEqual) => {
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            let rhs = pop_stack(&mut mut_stack, token.span)?;
-            let lhs = pop_stack(&mut mut_stack, token.span)?;
+            let rhs = stack.pop(mc, token.span)?;
+            let lhs = stack.pop(mc, token.span)?;
             let result = Stackable::Boolean(lhs.ne(&rhs));
-            mut_stack.push_back(result);
+            stack.push(mc, result);
             no_action()
         }
         InnerToken::Command(
@@ -296,47 +283,41 @@ fn execute_token<'a>(
             | Command::Less
             | Command::LessEqual),
         ) => {
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            let rhs = pop_stack(&mut mut_stack, token.span)?;
-            let lhs = pop_stack(&mut mut_stack, token.span)?;
-            let result = lhs.compare(rhs, command, token.span)?;
-            mut_stack.push_back(Stackable::Boolean(command == result));
+            let rhs = stack.pop(mc, token.span)?;
+            let lhs = stack.pop(mc, token.span)?;
+            let result = lhs.compare(rhs, *command, token.span)?;
+            stack.push(mc, Stackable::Boolean(*command == result));
             no_action()
         }
         InnerToken::Command(Command::Not) => {
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            let value = pop_stack(&mut mut_stack, token.span)?;
+            let value = stack.pop(mc, token.span)?;
             let result = value.negate(token.span)?;
-            mut_stack.push_back(result);
+            stack.push(mc, result);
             no_action()
         }
         InnerToken::Command(Command::And) => {
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            let rhs = pop_stack(&mut mut_stack, token.span)?;
-            let lhs = pop_stack(&mut mut_stack, token.span)?;
+            let rhs = stack.pop(mc, token.span)?;
+            let lhs = stack.pop(mc, token.span)?;
             let result = lhs.and(rhs, token.span)?;
-            mut_stack.push_back(result);
+            stack.push(mc, result);
             no_action()
         }
         InnerToken::Command(Command::Or) => {
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            let rhs = pop_stack(&mut mut_stack, token.span)?;
-            let lhs = pop_stack(&mut mut_stack, token.span)?;
+            let rhs = stack.pop(mc, token.span)?;
+            let lhs = stack.pop(mc, token.span)?;
             let result = lhs.or(rhs, token.span)?;
-            mut_stack.push_back(result);
+            stack.push(mc, result);
             no_action()
         }
         InnerToken::Command(Command::Xor) => {
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            let rhs = pop_stack(&mut mut_stack, token.span)?;
-            let lhs = pop_stack(&mut mut_stack, token.span)?;
+            let rhs = stack.pop(mc, token.span)?;
+            let lhs = stack.pop(mc, token.span)?;
             let result = lhs.xor(rhs, token.span)?;
-            mut_stack.push_back(result);
+            stack.push(mc, result);
             no_action()
         }
         InnerToken::Command(Command::Assert) => {
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            let value = pop_stack(&mut mut_stack, token.span)?;
+            let value = stack.pop(mc, token.span)?;
             if matches!(value, Stackable::Boolean(false)) {
                 Err(Error::AssertionFailed { span: token.span })
             } else {
@@ -344,67 +325,58 @@ fn execute_token<'a>(
             }
         }
         InnerToken::Command(Command::Pop) => {
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            let _ = pop_stack(&mut mut_stack, token.span)?;
+            let _ = stack.pop(mc, token.span)?;
             no_action()
         }
         InnerToken::Command(Command::Dup) => {
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            let value = pop_stack(&mut mut_stack, token.span)?;
-            mut_stack.push_back(value.clone());
-            mut_stack.push_back(value);
+            let value = stack.pop(mc, token.span)?;
+            stack.push(mc, value.clone());
+            stack.push(mc, value);
             no_action()
         }
         InnerToken::Command(Command::Swap) => {
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            let first = pop_stack(&mut mut_stack, token.span)?;
-            let second = pop_stack(&mut mut_stack, token.span)?;
-            mut_stack.push_back(second);
-            mut_stack.push_back(first);
+            let first = stack.pop(mc, token.span)?;
+            let second = stack.pop(mc, token.span)?;
+            stack.push(mc, second);
+            stack.push(mc, first);
             no_action()
         }
         InnerToken::Command(Command::Call) => {
             // make sure to end mutable stack borrow before call occurs, which will likely borrow mutably again
-            let callable = {
-                let mut mut_stack = stack.main.borrow_mut(mc);
-                pop_stack(&mut mut_stack, token.span)?
-            };
-            callable.enter_call(mc, stack.clone(), token.span)
+            let callable = { stack.pop(mc, token.span)? };
+            callable.enter_call(mc, stack, token.span)
         }
         InnerToken::Command(Command::If) => {
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            let conditional = pop_stack(&mut mut_stack, token.span)?;
-            let callable = pop_stack(&mut mut_stack, token.span)?;
+            let conditional = stack.pop(mc, token.span)?;
+            let callable = stack.pop(mc, token.span)?;
             if matches!(conditional, Stackable::Boolean(true)) {
                 trace!("    executing if body");
-                callable.enter_call(mc, stack.clone(), token.span)
+                callable.enter_call(mc, stack, token.span)
             } else {
                 no_action()
             }
         }
         InnerToken::Command(Command::Ifelse) => {
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            let callable_else = pop_stack(&mut mut_stack, token.span)?;
-            let conditional = pop_stack(&mut mut_stack, token.span)?;
-            let callable_if = pop_stack(&mut mut_stack, token.span)?;
+            let callable_else = stack.pop(mc, token.span)?;
+            let conditional = stack.pop(mc, token.span)?;
+            let callable_if = stack.pop(mc, token.span)?;
             if matches!(conditional, Stackable::Boolean(true)) {
                 trace!("    executing if body");
-                callable_if.enter_call(mc, stack.clone(), token.span)
+                callable_if.enter_call(mc, stack, token.span)
             } else {
                 trace!("    executing else body");
-                callable_else.enter_call(mc, stack.clone(), token.span)
+                callable_else.enter_call(mc, stack, token.span)
             }
         }
         InnerToken::Command(Command::While) => {
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            let conditional_callable = pop_stack(&mut mut_stack, token.span)?;
-            let loop_body = pop_stack(&mut mut_stack, token.span)?;
-            mut_stack.push_back(conditional_callable.clone());
+            let conditional_callable = stack.pop(mc, token.span)?;
+            let loop_body = stack.pop(mc, token.span)?;
+            stack.push(mc, conditional_callable.clone());
             let mut utility_stack = stack.utility.borrow_mut(mc);
-            utility_stack.push_back(loop_body);
-            utility_stack.push_back(conditional_callable);
+            utility_stack.push(loop_body);
+            utility_stack.push(conditional_callable);
             trace!("    starting while");
-            Ok(vec![InterpreterAction::ExecuteCall {
+            Ok(smallvec![InterpreterAction::ExecuteCall {
                 code: vec![
                     Token {
                         inner: InnerToken::Command(Command::Call),
@@ -414,28 +386,29 @@ fn execute_token<'a>(
                         inner: InnerToken::WhileBody,
                         span: token.span,
                     },
-                ],
+                ]
+                .into(),
                 return_behavior: CallReturnBehavior::Loop,
             }])
         }
         InnerToken::Command(Command::DoWhile) => {
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            let conditional_callable = pop_stack(&mut mut_stack, token.span)?;
-            let loop_body = pop_stack(&mut mut_stack, token.span)?;
+            let conditional_callable = stack.pop(mc, token.span)?;
+            let loop_body = stack.pop(mc, token.span)?;
             let mut utility_stack = stack.utility.borrow_mut(mc);
             trace!("    starting do-while, call body once");
             let mut actions = loop_body.enter_call(mc, stack, token.span)?;
             // set up utility stack for loop return behavior logic; last iteration is treated as true to not immediately exit
-            utility_stack.push_back(loop_body);
-            utility_stack.push_back(conditional_callable);
-            utility_stack.push_back(Stackable::Boolean(true));
+            utility_stack.push(loop_body);
+            utility_stack.push(conditional_callable);
+            utility_stack.push(Stackable::Boolean(true));
+            const EMPTY_VEC: LazyCell<TokenVec> = LazyCell::new(TokenVec::default);
 
             // insert the while body logic at the start so it is executed after the initial loop body action(s)
             // the body action is *empty* so the return behavior is immediately run and it figures out the state of things from the utility stack setup
             actions.insert(
                 0,
                 InterpreterAction::ExecuteCall {
-                    code: vec![],
+                    code: EMPTY_VEC.clone(),
                     return_behavior: CallReturnBehavior::Loop,
                 },
             );
@@ -444,44 +417,32 @@ fn execute_token<'a>(
         // almost like if, but with the special utility stack
         InnerToken::WhileBody => {
             let mut utility_stack = stack.utility.borrow_mut(mc);
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            let conditional = pop_stack(&mut mut_stack, token.span)?;
+            let conditional = stack.pop(mc, token.span)?;
             let loop_body = utility_stack[utility_stack.len() - 2].clone();
             // signal to the loop end what the conditional looks like
-            utility_stack.push_back(conditional.clone());
+            utility_stack.push(conditional.clone());
             if matches!(conditional, Stackable::Boolean(true)) {
                 trace!("    executing while body");
-                loop_body.enter_call(mc, stack.clone(), token.span)
+                loop_body.enter_call(mc, stack, token.span)
             } else {
                 trace!("    --- end of while body, condition is false");
                 no_action()
             }
         }
         InnerToken::Command(Command::Def) => {
-            let next_nametable = stack.first_nametable(token.span)?;
-            let mut mut_stack = stack.main.borrow_mut(mc);
-            let name_stackable = pop_stack(&mut mut_stack, token.span)?;
+            let next_nametable = stack.top_nametable(token.span)?;
+            let name_stackable = stack.pop(mc, token.span)?;
             let Stackable::Identifier(name) = name_stackable else {
                 return Err(Error::InvalidType {
                     operation: Command::Def,
-                    value: name_stackable.to_string(),
+                    value: name_stackable.to_string().into(),
                     span: token.span,
                 });
             };
-            let value = pop_stack(&mut mut_stack, token.span)?;
+            let value = stack.pop(mc, token.span)?;
             next_nametable.borrow_mut(mc).define(name, value);
             no_action()
         }
         _ => todo!(),
-    }
-}
-
-fn pop_stack<'a>(stack: &mut InnerStack<'a>, span: SourceSpan) -> Result<Stackable<'a>, Error> {
-    let value = stack.pop_back().ok_or(Error::MissingValue { span })?;
-    if matches!(value, Stackable::Nametable(_)) {
-        stack.push_back(value);
-        Err(Error::MissingValue { span })
-    } else {
-        Ok(value)
     }
 }

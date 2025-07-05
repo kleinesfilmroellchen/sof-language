@@ -1,22 +1,20 @@
-use std::fmt::Display;
 use std::iter::Peekable;
-use std::ops::Deref;
-use std::sync::Arc;
 
-use gc_arena_derive::Collect;
+use flexstr::SharedStr;
 use miette::SourceOffset;
 use miette::SourceSpan;
 use unicode_ident::is_xid_continue;
 use unicode_ident::is_xid_start;
 
 use crate::error::Error;
+use crate::identifier::Identifier;
 
 #[derive(Debug, Clone)]
 pub enum RawToken {
     Keyword(Keyword),
     Decimal(f64),
     Integer(i64),
-    String(String),
+    String(SharedStr),
     Boolean(bool),
     Identifier(Identifier),
 }
@@ -165,31 +163,6 @@ impl std::fmt::Debug for Token {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Hash, Collect)]
-#[collect(require_static)]
-#[repr(transparent)]
-pub struct Identifier(Arc<String>);
-
-impl Deref for Identifier {
-    type Target = String;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl Display for Identifier {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
-    }
-}
-
-impl std::fmt::Debug for Identifier {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "id({})", self.0)
-    }
-}
-
 pub fn lex(string: impl AsRef<str>) -> Result<Vec<Token>, Error> {
     let mut char_iter = string.as_ref().chars().enumerate().peekable();
     let mut tokens = Vec::new();
@@ -226,7 +199,7 @@ pub fn lex(string: impl AsRef<str>) -> Result<Vec<Token>, Error> {
                             chr: idc,
                             span: (SourceOffset::from(next_position + ident.chars().count()), 1)
                                 .into(),
-                            ident,
+                            ident: ident.into(),
                         });
                     }
                 }
@@ -239,7 +212,7 @@ pub fn lex(string: impl AsRef<str>) -> Result<Vec<Token>, Error> {
                         RawToken::Boolean(false)
                     } else {
                         Keyword::from_identifier_keyword(&ident).map_or_else(
-                            || RawToken::Identifier(Identifier(Arc::new(ident))),
+                            || RawToken::Identifier(Identifier::new(&ident)),
                             RawToken::Keyword,
                         )
                     },
@@ -296,7 +269,7 @@ pub fn lex(string: impl AsRef<str>) -> Result<Vec<Token>, Error> {
                 }
                 tokens.push(Token {
                     span: SourceSpan::new(next_offset, string.chars().count()),
-                    token: RawToken::String(string),
+                    token: RawToken::String(string.into()),
                 })
             }
             '0'..='9' | '+' | '-' => {
@@ -376,7 +349,7 @@ fn parse_number(
             // probably a float
             Ok((
                 RawToken::Decimal(number_string.parse().map_err(|inner| Error::InvalidFloat {
-                    number_text: number_string,
+                    number_text: number_string.into(),
                     inner,
                     span: (start_offset, string_length).into(),
                 })?),
@@ -395,7 +368,7 @@ fn parse_with_radix<const RADIX: u32>(
 ) -> Result<(RawToken, usize), Error> {
     let mut number = i64::from_str_radix(number, RADIX).map_err(|inner| Error::InvalidInteger {
         span: (start_offset, string_length).into(),
-        number_text: number_string.to_owned(),
+        number_text: number_string.into(),
         inner,
     })?;
     if prefix == "-" {

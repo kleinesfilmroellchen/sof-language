@@ -1,5 +1,4 @@
 use std::cmp::Ordering;
-use std::collections::VecDeque;
 use std::fmt::Display;
 use std::ops::Add;
 use std::ops::BitAnd;
@@ -9,22 +8,27 @@ use std::ops::Div;
 use std::ops::Mul;
 use std::ops::Rem;
 use std::ops::Sub;
-use std::rc::Rc;
+use std::sync::Arc;
 
+use flexstr::SharedStr;
 use gc_arena::Arena;
 use gc_arena::Mutation;
 use gc_arena::Rootable;
 use gc_arena::lock::GcRefLock;
+use gc_arena::lock::RefLock;
 use gc_arena_derive::Collect;
 use miette::SourceSpan;
+use smallvec::smallvec;
 
 use self::nametable::Nametable;
 use crate::error::Error;
+use crate::identifier::Identifier;
+use crate::interpreter::ActionVec;
 use crate::interpreter::CallReturnBehavior;
 use crate::interpreter::InterpreterAction;
-use crate::lexer::Identifier;
 use crate::parser::Command;
 use crate::parser::Token;
+use crate::runtime::nametable::NametableType;
 
 pub mod nametable;
 
@@ -34,8 +38,9 @@ pub enum Stackable<'gc> {
     Integer(i64),
     Decimal(f64),
     Boolean(bool),
-    Identifier(Identifier),
-    String(Rc<String>),
+    // both pseudo-string-types are allocated off-GC-heap
+    Identifier(#[collect(require_static)] Identifier),
+    String(#[collect(require_static)] SharedStr),
     CodeBlock(GcRefLock<'gc, CodeBlock>),
     Function(GcRefLock<'gc, Function>),
     Object(GcRefLock<'gc, Object<'gc>>),
@@ -43,10 +48,12 @@ pub enum Stackable<'gc> {
     ListStart,
 }
 
+pub type TokenVec = Arc<Vec<Token>>;
+
 #[derive(Debug, Collect, PartialEq)]
 #[collect(require_static)]
 pub struct CodeBlock {
-    pub(crate) code: Vec<Token>,
+    pub(crate) code: TokenVec,
 }
 
 #[derive(Debug, Collect, PartialEq)]
@@ -54,7 +61,7 @@ pub struct CodeBlock {
 pub struct Function {
     arguments: usize,
     is_constructor: bool,
-    code: Vec<Token>,
+    code: TokenVec,
 }
 
 #[derive(Debug, Collect, PartialEq)]
@@ -64,42 +71,98 @@ pub struct Object<'gc> {
 }
 
 /// Inner stack type that is the actual raw data structure of the stack.
-pub type InnerStack<'gc> = VecDeque<Stackable<'gc>>;
+pub type InnerStack<'gc> = Vec<Stackable<'gc>>;
 /// Stack type and GC root.
-#[derive(Debug, Collect, Clone)]
+#[derive(Debug, Collect)]
 #[collect(no_drop)]
 pub struct Stack<'gc> {
-    pub main: GcRefLock<'gc, InnerStack<'gc>>,
+    main: GcRefLock<'gc, InnerStack<'gc>>,
     /// Utility stack not visible for the program, currently only used by while loops.
     pub utility: GcRefLock<'gc, InnerStack<'gc>>,
+
+    top_nametable: usize,
 }
 
 impl<'gc> Stack<'gc> {
-    pub fn first_nametable(
-        &self,
-        span: SourceSpan,
-    ) -> Result<GcRefLock<'gc, Nametable<'gc>>, Error> {
-        self.main
-            .borrow()
-            .iter()
-            .rev()
-            .find_map(|stackable| match stackable {
-                Stackable::Nametable(nt) => Some(*nt),
-                _ => None,
-            })
-            .ok_or(Error::MissingNametable { span })
+    pub fn new(mc: &Mutation<'gc>) -> Self {
+        let mut me = Self {
+            main: GcRefLock::new(mc, RefLock::new(Vec::with_capacity(64))),
+            utility: GcRefLock::new(mc, RefLock::new(Vec::with_capacity(64))),
+            top_nametable: 0,
+        };
+
+        me.push_nametable(
+            mc,
+            GcRefLock::new(mc, RefLock::new(Nametable::new(NametableType::Global))),
+        );
+        me
+    }
+
+    pub fn top_nametable(&self, span: SourceSpan) -> Result<GcRefLock<'gc, Nametable<'gc>>, Error> {
+        match self.main.borrow()[self.top_nametable] {
+            Stackable::Nametable(nt) => Ok(nt),
+            _ => Err(Error::MissingNametable { span }),
+        }
     }
 
     pub fn lookup(&self, name: Identifier, span: SourceSpan) -> Result<Stackable<'gc>, Error> {
-        self.main
-            .borrow()
-            .iter()
-            .rev()
-            .find_map(|stackable| match stackable {
-                Stackable::Nametable(nt) => nt.borrow().lookup(name.clone(), span).ok(),
-                _ => None,
-            })
-            .ok_or(Error::UndefinedValue { name, span })
+        // fast path for top nametable
+        match self.main.borrow()[self.top_nametable] {
+            Stackable::Nametable(nt) => nt.borrow().lookup(name.clone(), span).ok(),
+            _ => None,
+        }
+        .or_else(|| {
+            self.main
+                .borrow()
+                .iter()
+                .rev()
+                .find_map(|stackable| match stackable {
+                    Stackable::Nametable(nt) => nt.borrow().lookup(name.clone(), span).ok(),
+                    _ => None,
+                })
+        })
+        .ok_or(Error::UndefinedValue { name, span })
+    }
+
+    /// Value must not be a nametable.
+    pub fn push(&self, mc: &Mutation<'gc>, value: Stackable<'gc>) {
+        self.main.borrow_mut(mc).push(value);
+    }
+
+    pub fn push_nametable(
+        &mut self,
+        mc: &Mutation<'gc>,
+        nametable: GcRefLock<'gc, Nametable<'gc>>,
+    ) {
+        self.push(mc, Stackable::Nametable(nametable));
+        self.top_nametable = self.main.borrow().len() - 1;
+    }
+
+    #[inline]
+    pub fn pop(&self, mc: &Mutation<'gc>, span: SourceSpan) -> Result<Stackable<'gc>, Error> {
+        let mut mut_stack = self.main.borrow_mut(mc);
+        // SAFETY: We have one value at the start, and that is a nametable.
+        //         Below, we check that we never pop nametables, so this one value will remain.
+        let value = Self::unchecked_pop(&mut mut_stack);
+        // fast path: did not reach top nametable, therefore cannot be a nametable
+        if mut_stack.len() >= self.top_nametable {
+            Ok(value)
+        } else if matches!(value, Stackable::Nametable(_)) {
+            mut_stack.push(value);
+            Err(Error::MissingValue { span })
+        } else {
+            Ok(value)
+        }
+    }
+
+    /// Caller must guarantee that there is at least one element on the stack.
+    #[inline(always)]
+    fn unchecked_pop(stack: &mut InnerStack<'gc>) -> Stackable<'gc> {
+        // SAFETY: Caller guarantees len() >= 1
+        let value = unsafe { stack.get_unchecked(stack.len() - 1) }.clone();
+        // SAFETY: Decreasing the length is always safe.
+        unsafe { stack.set_len(stack.len() - 1) };
+        value
     }
 }
 
@@ -125,8 +188,8 @@ macro_rules! numeric_op {
                 _ => {
                     return Err(Error::InvalidTypes {
                         operation: Command::$command,
-                        lhs: self.to_string(),
-                        rhs: other.to_string(),
+                        lhs: self.to_string().into(),
+                        rhs: other.to_string().into(),
                         span,
                     });
                 }
@@ -146,8 +209,8 @@ macro_rules! logic_op {
                 (Stackable::Boolean(lhs), Stackable::Boolean(rhs)) => Ok(Stackable::Boolean(lhs.$func(rhs))),
                 _ => Err(Error::InvalidTypes {
                     operation: Command::$command,
-                    lhs: self.to_string(),
-                    rhs: other.to_string(),
+                    lhs: self.to_string().into(),
+                    rhs: other.to_string().into(),
                     span,
                 })
             }
@@ -165,8 +228,8 @@ impl<'gc> Stackable<'gc> {
     pub fn divide(&self, other: Stackable<'gc>, span: SourceSpan) -> Result<Stackable<'gc>, Error> {
         if matches!(other, Stackable::Integer(0) | Stackable::Decimal(0.0)) {
             Err(Error::DivideByZero {
-                lhs: self.to_string(),
-                rhs: other.to_string(),
+                lhs: self.to_string().into(),
+                rhs: other.to_string().into(),
                 span,
             })
         } else {
@@ -181,8 +244,8 @@ impl<'gc> Stackable<'gc> {
     ) -> Result<Stackable<'gc>, Error> {
         if matches!(other, Stackable::Integer(0) | Stackable::Decimal(0.0)) {
             Err(Error::DivideByZero {
-                lhs: self.to_string(),
-                rhs: other.to_string(),
+                lhs: self.to_string().into(),
+                rhs: other.to_string().into(),
                 span,
             })
         } else {
@@ -201,8 +264,8 @@ impl<'gc> Stackable<'gc> {
             )),
             _ => Err(Error::InvalidTypes {
                 operation: Command::LeftShift,
-                lhs: self.to_string(),
-                rhs: other.to_string(),
+                lhs: self.to_string().into(),
+                rhs: other.to_string().into(),
                 span,
             }),
         }
@@ -219,8 +282,8 @@ impl<'gc> Stackable<'gc> {
             )),
             _ => Err(Error::InvalidTypes {
                 operation: Command::RightShift,
-                lhs: self.to_string(),
-                rhs: other.to_string(),
+                lhs: self.to_string().into(),
+                rhs: other.to_string().into(),
                 span,
             }),
         }
@@ -231,7 +294,7 @@ impl<'gc> Stackable<'gc> {
             Stackable::Boolean(value) => Ok(Stackable::Boolean(!value)),
             _ => Err(Error::InvalidType {
                 operation: Command::Not,
-                value: self.to_string(),
+                value: self.to_string().into(),
                 span,
             }),
         }
@@ -251,28 +314,28 @@ impl<'gc> Stackable<'gc> {
                 (Stackable::Integer(lhs), Stackable::Decimal(rhs)) => (*lhs as f64)
                     .partial_cmp(rhs)
                     .ok_or_else(|| Error::Incomparable {
-                        lhs: self.to_string(),
-                        rhs: other.to_string(),
+                        lhs: self.to_string().into(),
+                        rhs: other.to_string().into(),
                         span,
                     }),
                 (Stackable::Decimal(lhs), Stackable::Integer(rhs)) => lhs
                     .partial_cmp(&(*rhs as f64))
                     .ok_or_else(|| Error::Incomparable {
-                        lhs: self.to_string(),
-                        rhs: other.to_string(),
+                        lhs: self.to_string().into(),
+                        rhs: other.to_string().into(),
                         span,
                     }),
                 (Stackable::Decimal(lhs), Stackable::Decimal(rhs)) => {
                     lhs.partial_cmp(rhs).ok_or_else(|| Error::Incomparable {
-                        lhs: self.to_string(),
-                        rhs: other.to_string(),
+                        lhs: self.to_string().into(),
+                        rhs: other.to_string().into(),
                         span,
                     })
                 }
                 _ => Err(Error::InvalidTypes {
                     operation,
-                    lhs: self.to_string(),
-                    rhs: other.to_string(),
+                    lhs: self.to_string().into(),
+                    rhs: other.to_string().into(),
                     span,
                 }),
             }
@@ -288,27 +351,23 @@ impl<'gc> Stackable<'gc> {
     pub fn enter_call<'a>(
         &self,
         mc: &Mutation<'a>,
-        stack: Stack<'a>,
+        stack: &mut Stack<'a>,
         span: SourceSpan,
-    ) -> Result<Vec<InterpreterAction>, Error> {
+    ) -> Result<ActionVec, Error> {
         match self {
             Stackable::Identifier(identifier) => {
                 let value = stack.lookup(identifier.clone(), span)?;
-                stack.main.borrow_mut(mc).push_back(value);
-                Ok(vec![])
+                stack.main.borrow_mut(mc).push(value);
+                Ok(smallvec![])
             }
-            Stackable::CodeBlock(codeblock) => {
-                // TODO: eliminate the clone via ref-counted token lists
-                let code = codeblock.borrow().code.clone();
-                Ok(vec![InterpreterAction::ExecuteCall {
-                    code,
-                    return_behavior: CallReturnBehavior::BlockCall,
-                }])
-            }
+            Stackable::CodeBlock(codeblock) => Ok(smallvec![InterpreterAction::ExecuteCall {
+                code: codeblock.borrow().code.clone(),
+                return_behavior: CallReturnBehavior::BlockCall,
+            }]),
             Stackable::Function(function) => todo!("call function"),
             _ => Err(Error::InvalidType {
                 operation: Command::Call,
-                value: self.to_string(),
+                value: self.to_string().into(),
                 span,
             }),
         }

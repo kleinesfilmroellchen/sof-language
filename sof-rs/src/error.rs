@@ -1,11 +1,12 @@
 use std::num::ParseFloatError;
 use std::num::ParseIntError;
 
+use flexstr::SharedStr;
 use miette::Diagnostic;
 use miette::SourceSpan;
 use thiserror::Error;
 
-use crate::lexer::Identifier;
+use crate::identifier::Identifier;
 use crate::parser::Command;
 
 #[derive(Error, Diagnostic, Debug)]
@@ -21,14 +22,14 @@ pub enum Error {
     #[diagnostic(code(SyntaxError))]
     InvalidIdentifier {
         chr: char,
-        ident: String,
+        ident: SharedStr,
         #[label = "invalid"]
         span: SourceSpan,
     },
     #[error("invalid number \"{number_text}\"")]
     #[diagnostic(code(SyntaxError))]
     InvalidInteger {
-        number_text: String,
+        number_text: SharedStr,
         inner: ParseIntError,
         #[label("{inner}")]
         span: SourceSpan,
@@ -36,7 +37,7 @@ pub enum Error {
     #[error("invalid number \"{number_text}\"")]
     #[diagnostic(code(SyntaxError))]
     InvalidFloat {
-        number_text: String,
+        number_text: SharedStr,
         inner: ParseFloatError,
         #[label("{inner}")]
         span: SourceSpan,
@@ -78,8 +79,8 @@ pub enum Error {
     #[diagnostic(code(TypeError))]
     InvalidTypes {
         operation: Command,
-        lhs: String,
-        rhs: String,
+        lhs: SharedStr,
+        rhs: SharedStr,
         #[label]
         span: SourceSpan,
     },
@@ -87,23 +88,23 @@ pub enum Error {
     #[diagnostic(code(TypeError))]
     InvalidType {
         operation: Command,
-        value: String,
+        value: SharedStr,
         #[label]
         span: SourceSpan,
     },
     #[error("divide by zero: {lhs} / {rhs}")]
     #[diagnostic(code(ArithmeticError))]
     DivideByZero {
-        lhs: String,
-        rhs: String,
+        lhs: SharedStr,
+        rhs: SharedStr,
         #[label]
         span: SourceSpan,
     },
     #[error("non-comparable values: {lhs} and {rhs}")]
     #[diagnostic(code(ArithmeticError))]
     Incomparable {
-        lhs: String,
-        rhs: String,
+        lhs: SharedStr,
+        rhs: SharedStr,
         #[label]
         span: SourceSpan,
     },

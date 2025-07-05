@@ -1,0 +1,17 @@
+1000000 repetitions def
+
+0 i def
+{ 12 13 + 4 / foo def foo . 2 - pop }
+	{
+		i . 1 + dup i def
+		repetitions . <
+	} while
+
+# { 12 13 + 4 / foo def foo . 2 - pop } 0 function
+
+# 0 i def
+
+# {
+# 	i . 1 + dup i def
+# 	repetitions . <
+# } while
