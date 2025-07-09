@@ -46,6 +46,7 @@ pub enum Stackable<'gc> {
     Object(GcRefLock<'gc, Object<'gc>>),
     Nametable(GcRefLock<'gc, Nametable<'gc>>),
     ListStart,
+    Curry,
 }
 
 pub type TokenVec = Arc<Vec<Token>>;
@@ -199,6 +200,9 @@ impl<'gc> Stack<'gc> {
         } else if matches!(value, Stackable::Nametable(_)) {
             mut_stack.push(value);
             Err(Error::MissingValue { span })
+        } else if matches!(value, Stackable::Curry) {
+            // some recursion for this slow path, might be tail-call optimized even
+            self.pop(mc, span)
         } else {
             Ok(value)
         }
@@ -443,6 +447,7 @@ impl<'gc> Stackable<'gc> {
             Stackable::Function(function) => {
                 let function = function.borrow();
                 assert!(!function.is_constructor, "constructor not implemented");
+                // TODO: handle currying here
                 // insert nametable below arguments
                 let function_nametable =
                     GcRefLock::new(mc, RefLock::new(Nametable::new(NametableType::Function)));
@@ -479,6 +484,7 @@ impl<'gc> Display for Stackable<'gc> {
             Stackable::Object(_) => write!(f, "[Object]"),
             Stackable::Nametable(nt) => write!(f, "NT[{}]", nt.borrow().entries.len()),
             Stackable::ListStart => write!(f, "["),
+            Stackable::Curry => write!(f, "|"),
         }
     }
 }

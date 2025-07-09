@@ -28,6 +28,7 @@ pub enum Literal {
     String(SharedStr),
     Boolean(bool),
     ListStart,
+    Curry,
 }
 
 impl Literal {
@@ -39,6 +40,7 @@ impl Literal {
             Literal::String(string) => Stackable::String(string.clone()),
             Literal::Boolean(boolean) => Stackable::Boolean(*boolean),
             Literal::ListStart => Stackable::ListStart,
+            Literal::Curry => Stackable::Curry,
         }
     }
 }
@@ -83,7 +85,6 @@ pub enum Command {
     Equal,
     NotEqual,
     Call,
-    Curry,
     FieldAccess,
     NativeCall,
     CreateList,
@@ -138,7 +139,6 @@ impl Display for Command {
                 Self::Equal => "=",
                 Self::NotEqual => "/=",
                 Self::Call => ".",
-                Self::Curry => "|",
                 Self::FieldAccess => ",",
                 Self::NativeCall => "nativecall",
                 Self::CreateList => "]",
@@ -193,7 +193,6 @@ impl Command {
             lexer::Keyword::Equal => Self::Equal,
             lexer::Keyword::NotEqual => Self::NotEqual,
             lexer::Keyword::Call => Self::Call,
-            lexer::Keyword::Curry => Self::Curry,
             lexer::Keyword::FieldAccess => Self::FieldAccess,
             lexer::Keyword::NativeCall => Self::NativeCall,
             lexer::Keyword::ListEnd => Self::CreateList,
@@ -256,6 +255,10 @@ pub fn parse(tokens: Vec<&lexer::Token>) -> Result<Vec<Token>, Error> {
         match token {
             lexer::RawToken::Keyword(lexer::Keyword::ListStart) => output.push(Token {
                 inner: InnerToken::Literal(Literal::ListStart),
+                span: *span,
+            }),
+            lexer::RawToken::Keyword(lexer::Keyword::Curry) => output.push(Token {
+                inner: InnerToken::Literal(Literal::Curry),
                 span: *span,
             }),
             lexer::RawToken::Decimal(decimal) => output.push(Token {

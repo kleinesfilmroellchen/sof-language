@@ -238,6 +238,25 @@ fn no_action() -> Result<ActionVec, Error> {
     Ok(smallvec![InterpreterAction::None])
 }
 
+macro_rules! binary_op {
+    ($op:ident, $stack:ident, $mc:ident, $token:ident) => {{
+        let rhs = $stack.pop($mc, $token.span)?;
+        let lhs = $stack.pop($mc, $token.span)?;
+        if let Stackable::Identifier(lhs_ident) = &lhs {
+            let left_value = $stack.lookup(lhs_ident.clone(), $token.span)?;
+            let result = left_value.$op(rhs, $token.span)?;
+            $stack
+                .top_nametable()
+                .borrow_mut($mc)
+                .define(lhs_ident.clone(), result);
+        } else {
+            let result = lhs.$op(rhs, $token.span)?;
+            $stack.push($mc, result);
+        }
+        no_action()
+    }};
+}
+
 fn execute_token<'a>(
     token: &Token,
     mc: &Mutation<'a>,
@@ -261,55 +280,13 @@ fn execute_token<'a>(
             );
             no_action()
         }
-        InnerToken::Command(Command::Plus) => {
-            let rhs = stack.pop(mc, token.span)?;
-            let lhs = stack.pop(mc, token.span)?;
-            let result = lhs.add(rhs, token.span)?;
-            stack.push(mc, result);
-            no_action()
-        }
-        InnerToken::Command(Command::Minus) => {
-            let rhs = stack.pop(mc, token.span)?;
-            let lhs = stack.pop(mc, token.span)?;
-            let result = lhs.subtract(rhs, token.span)?;
-            stack.push(mc, result);
-            no_action()
-        }
-        InnerToken::Command(Command::Multiply) => {
-            let rhs = stack.pop(mc, token.span)?;
-            let lhs = stack.pop(mc, token.span)?;
-            let result = lhs.multiply(rhs, token.span)?;
-            stack.push(mc, result);
-            no_action()
-        }
-        InnerToken::Command(Command::Divide) => {
-            let rhs = stack.pop(mc, token.span)?;
-            let lhs = stack.pop(mc, token.span)?;
-            let result = lhs.divide(rhs, token.span)?;
-            stack.push(mc, result);
-            no_action()
-        }
-        InnerToken::Command(Command::Modulus) => {
-            let rhs = stack.pop(mc, token.span)?;
-            let lhs = stack.pop(mc, token.span)?;
-            let result = lhs.modulus(rhs, token.span)?;
-            stack.push(mc, result);
-            no_action()
-        }
-        InnerToken::Command(Command::LeftShift) => {
-            let rhs = stack.pop(mc, token.span)?;
-            let lhs = stack.pop(mc, token.span)?;
-            let result = lhs.shift_left(rhs, token.span)?;
-            stack.push(mc, result);
-            no_action()
-        }
-        InnerToken::Command(Command::RightShift) => {
-            let rhs = stack.pop(mc, token.span)?;
-            let lhs = stack.pop(mc, token.span)?;
-            let result = lhs.shift_right(rhs, token.span)?;
-            stack.push(mc, result);
-            no_action()
-        }
+        InnerToken::Command(Command::Plus) => binary_op!(add, stack, mc, token),
+        InnerToken::Command(Command::Minus) => binary_op!(subtract, stack, mc, token),
+        InnerToken::Command(Command::Multiply) => binary_op!(multiply, stack, mc, token),
+        InnerToken::Command(Command::Divide) => binary_op!(divide, stack, mc, token),
+        InnerToken::Command(Command::Modulus) => binary_op!(modulus, stack, mc, token),
+        InnerToken::Command(Command::LeftShift) => binary_op!(shift_left, stack, mc, token),
+        InnerToken::Command(Command::RightShift) => binary_op!(shift_right, stack, mc, token),
         InnerToken::Command(Command::Equal) => {
             let rhs = stack.pop(mc, token.span)?;
             let lhs = stack.pop(mc, token.span)?;
