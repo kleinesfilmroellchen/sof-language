@@ -1,11 +1,11 @@
-use std::env::current_dir;
+#![cfg_attr(feature = "nightly", feature(test))]
+
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time;
 
-use flexstr::SharedStr;
 use log::{debug, info};
-use miette::{NamedSource, SourceCode, miette};
+use miette::{NamedSource, miette};
 use rustyline::Config;
 use rustyline::error::ReadlineError;
 

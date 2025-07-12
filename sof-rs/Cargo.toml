@@ -19,5 +19,12 @@ smallvec = { version = "1", features = ["const_generics"] }
 thiserror = "2"
 unicode-ident = "1"
 
+[build-dependencies]
+rustversion = "1"
+
+[features]
+# Do not set this feature manually, it is always set by the build script on a nightly compiler automatically.
+nightly = []
+
 [profile.release]
 debug = true

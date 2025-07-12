@@ -1,4 +1,4 @@
-1000000 repetitions def
+100000 repetitions def
 
 0 i def
 { 12 13 + 4 / foo def foo . 2 - pop }

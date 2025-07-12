@@ -4,6 +4,9 @@ use miette::Result;
 
 use crate::sof_main;
 
+#[cfg(feature = "nightly")]
+extern crate test;
+
 const BASE_TEST_FILE_PATH: &str = "../test/klfr/sof/test/source";
 
 fn run_file_test(name: impl AsRef<Path>) -> Result<()> {
@@ -13,13 +16,19 @@ fn run_file_test(name: impl AsRef<Path>) -> Result<()> {
 }
 
 macro_rules! file_tests {
-    ($($test_names:ident),*) => {$(
-        #[test]
-        fn $test_names() -> Result<()> {
-            run_file_test(concat!(stringify!($test_names), ".sof"))
-        }
-    )*};
-    ($($test_names:ident),*,) => { file_tests!{$($test_names),*} };
+	($($test_names:ident),*) => {$(
+		#[cfg(not(feature = "nightly"))]
+		#[test]
+		fn $test_names() -> Result<()> {
+			run_file_test(concat!(stringify!($test_names), ".sof"))
+		}
+		#[cfg(feature = "nightly")]
+		#[bench]
+		fn $test_names(b: &mut test::Bencher) {
+			b.iter(|| run_file_test(concat!(stringify!($test_names), ".sof")).unwrap());
+		}
+	)*};
+	($($test_names:ident),*,) => { file_tests!{$($test_names),*} };
 }
 
 file_tests! {
@@ -37,4 +46,13 @@ file_tests! {
 	objects,
 	string,
 	test_preamble,
+}
+
+mod bench {
+	#[allow(unused)] use super::*;
+
+	#[test]
+	fn benchmark_many_calls() -> Result<()> {
+		run_file_test("benchmark/many_calls.sof")
+	}
 }

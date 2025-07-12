@@ -281,7 +281,7 @@ impl<'gc> Stack<'gc> {
 	/// Caller must guarantee that there is at least one element on the stack.
 	#[inline(always)]
 	fn unchecked_pop(stack: &mut InnerStack<'gc>) -> Stackable<'gc> {
-		debug_assert!(stack.len() > 0);
+		debug_assert!(!stack.is_empty());
 		// SAFETY: Caller guarantees len() >= 1
 		let value = unsafe { stack.get_unchecked(stack.len() - 1) }.clone();
 		// SAFETY: Decreasing the length is always safe.
@@ -464,10 +464,10 @@ impl<'gc> Stackable<'gc> {
 				if let Some(curried_argument_count) = stack.next_currying_marker(function.borrow().arguments) {
 					debug!(
 						"found curry marker during function call of {}, will curry {curried_argument_count} arguments",
-						Stackable::Function(function.clone())
+						Stackable::Function(*function)
 					);
 					// function is being curried
-					let function_copy = function.clone();
+					let function_copy = *function;
 					let arguments = stack.pop_n(mc, curried_argument_count)?;
 					let _ = stack.raw_pop(mc);
 					let curried_function =
@@ -495,7 +495,7 @@ impl<'gc> Stackable<'gc> {
 					let _ = stack.raw_pop(mc);
 					let mut mut_function = curried_function.borrow_mut(mc);
 					mut_function.curried_arguments.insert_many(0, arguments);
-					stack.push(mc, Stackable::CurriedFunction(curried_function.clone()));
+					stack.push(mc, Stackable::CurriedFunction(*curried_function));
 					Ok(smallvec![])
 				} else {
 					let curried_function = curried_function.borrow();

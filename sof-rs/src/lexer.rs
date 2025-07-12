@@ -154,12 +154,12 @@ impl std::fmt::Debug for Token {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		f.write_str("Token { ")?;
 		match &self.token {
-			RawToken::Keyword(arg0) => write!(f, "keyword({:?})", arg0),
-			RawToken::Decimal(arg0) => write!(f, "{:?}", arg0),
-			RawToken::Integer(arg0) => write!(f, "{:?}", arg0),
-			RawToken::String(arg0) => write!(f, "{:?}", arg0),
-			RawToken::Boolean(arg0) => write!(f, "{:?}", arg0),
-			RawToken::Identifier(arg0) => write!(f, "{:?}", arg0),
+			RawToken::Keyword(arg0) => write!(f, "keyword({arg0:?})"),
+			RawToken::Decimal(arg0) => write!(f, "{arg0:?}"),
+			RawToken::Integer(arg0) => write!(f, "{arg0:?}"),
+			RawToken::String(arg0) => write!(f, "{arg0:?}"),
+			RawToken::Boolean(arg0) => write!(f, "{arg0:?}"),
+			RawToken::Identifier(arg0) => write!(f, "{arg0:?}"),
 		}?;
 		write!(f, ", {:?} }}", (self.span.offset(), self.span.len()))
 	}
