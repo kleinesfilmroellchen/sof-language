@@ -1,8 +1,11 @@
+use std::env::current_dir;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time;
 
+use flexstr::SharedStr;
 use log::{debug, info};
-use miette::miette;
+use miette::{NamedSource, SourceCode, miette};
 use rustyline::Config;
 use rustyline::error::ReadlineError;
 
@@ -18,6 +21,45 @@ mod parser;
 mod runtime;
 
 #[cfg(test)] mod test;
+
+/// Returns a pretty-printed variant of the given path.
+///
+/// The pretty-printing rules are as follows:
+/// - If the file is relative to the working directory, print a relative file name without leading `./`.
+/// - If the file is not relative, i.e. its canonical path does not contain the working directory, print an absolute
+///   file name. On Windows, extended path length syntax (`\\?\`) is omitted.
+///
+/// # Panics
+/// Programming bugs.
+#[must_use]
+fn file_name_for(path: &Path) -> String {
+	let cwd = uniform_canonicalize(&PathBuf::from(".")).unwrap();
+	if path.starts_with(&cwd) {
+		path.strip_prefix(cwd).unwrap().to_string_lossy().to_string()
+	} else {
+		path.as_os_str().to_string_lossy().to_string()
+	}
+}
+
+/// Implements a more uniform canonicalization. The main difference to ``std::fs::canonicalize`` is that it doesn't
+/// create the extended length syntax on Windows. This is for better compatibility with file link-supporting terminals
+/// and the `trycmd` integration tests.
+#[inline]
+fn uniform_canonicalize(path: &Path) -> std::io::Result<PathBuf> {
+	#[cfg(not(any(windows, target_family = "wasm")))]
+	{
+		path.canonicalize()
+	}
+	#[cfg(windows)]
+	{
+		// All extended length paths start with '\\?\' (length 4), see https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file#maximum-path-length-limitation
+		Ok(PathBuf::from(path.canonicalize()?.into_os_string().to_string_lossy()[4 ..].to_owned()))
+	}
+	#[cfg(target_family = "wasm")]
+	{
+		Ok(path.to_owned())
+	}
+}
 
 fn main() -> miette::Result<()> {
 	miette::set_hook(Box::new(|_| {
@@ -35,20 +77,18 @@ fn main() -> miette::Result<()> {
 	env_logger::Builder::from_default_env().filter_level(log::LevelFilter::Info).init();
 
 	if let Some(filename) = std::env::args().nth(1) {
-		info!("sof version {} (sof-rs), main file is {filename}", env!("CARGO_PKG_VERSION"),);
-		let code = std::fs::read_to_string(&filename).map_err(|err| {
+		let readable_filename = file_name_for(Path::new(filename.as_str()));
+		info!("sof version {} (sof-rs), main file is {readable_filename}", env!("CARGO_PKG_VERSION"),);
+		let code = std::fs::read_to_string(&readable_filename).map_err(|err| {
 			miette! {
 				code = "IOError",
-				"could not read source file {filename}: {err}"
+				"could not read source file {readable_filename}: {err}"
 			}
 		})?;
 		let result = sof_main(&code);
 		match result {
 			Ok(_) => Ok(()),
-			Err(why) => {
-				let full_err = why.with_source_code(code);
-				Err(full_err)
-			},
+			Err(why) => Err(why.with_source_code(NamedSource::new(readable_filename, code))),
 		}
 	} else {
 		let mut rl =

@@ -5,10 +5,10 @@ use std::sync::Arc;
 
 use flexstr::SharedStr;
 use gc_arena::lock::{GcRefLock, RefLock};
-use gc_arena::{Arena, Mutation, Rootable};
-use gc_arena_derive::Collect;
+use gc_arena::{Arena, Collect, Mutation, Rootable};
+use log::debug;
 use miette::SourceSpan;
-use smallvec::smallvec;
+use smallvec::{SmallVec, smallvec};
 
 use self::nametable::Nametable;
 use crate::error::Error;
@@ -30,6 +30,7 @@ pub enum Stackable<'gc> {
 	String(#[collect(require_static)] SharedStr),
 	CodeBlock(GcRefLock<'gc, CodeBlock>),
 	Function(GcRefLock<'gc, Function>),
+	CurriedFunction(GcRefLock<'gc, CurriedFunction<'gc>>),
 	Object(GcRefLock<'gc, Object<'gc>>),
 	Nametable(GcRefLock<'gc, Nametable<'gc>>),
 	ListStart,
@@ -44,7 +45,7 @@ pub struct CodeBlock {
 	pub(crate) code: TokenVec,
 }
 
-#[derive(Debug, Collect, PartialEq)]
+#[derive(Debug, Collect, PartialEq, Clone)]
 #[collect(require_static)]
 pub struct Function {
 	arguments:      usize,
@@ -55,6 +56,38 @@ pub struct Function {
 impl Function {
 	pub fn new(arguments: usize, code: TokenVec) -> Self {
 		Self { arguments, is_constructor: false, code }
+	}
+}
+
+pub type CurriedArguments<'gc> = SmallVec<[Stackable<'gc>; 8]>;
+
+#[derive(Debug, Clone)]
+pub struct CurriedFunction<'gc> {
+	curried_arguments: CurriedArguments<'gc>,
+	function:          GcRefLock<'gc, Function>,
+}
+
+impl<'gc> CurriedFunction<'gc> {
+	pub fn remaining_arguments(&self) -> usize {
+		self.function.borrow().arguments - self.curried_arguments.len()
+	}
+}
+
+// Required as SmallVec does not implement Collect, but contains garbage-collected data so require_static is impossible.
+// SAFETY: We trace both `function` as well as every value in `curried_arguments` (via iterator).
+unsafe impl<'gc> Collect for CurriedFunction<'gc> {
+	fn needs_trace() -> bool
+	where
+		Self: Sized,
+	{
+		true
+	}
+
+	fn trace(&self, cc: &gc_arena::Collection) {
+		self.function.trace(cc);
+		for element in &self.curried_arguments {
+			element.trace(cc);
+		}
 	}
 }
 
@@ -149,24 +182,73 @@ impl<'gc> Stack<'gc> {
 		Ok(())
 	}
 
+	/// Returns the next currying marker, if the marker is up to `max_arguments` places from the stack top. In other
+	/// words, if a function with `max_arguments` arguments would be called on the stack currently, this function
+	/// reports whether the function would be curried thanks to a currying marker (returning how many arguments are
+	/// above the currying marker), or not (`None`).
+	pub fn next_currying_marker(&self, max_arguments: usize) -> Option<usize> {
+		let stack = self.main.borrow();
+		if stack.len() < max_arguments {
+			return None;
+		}
+
+		// Limit search to either max_arguments from the back, or the position of the top nametable.
+		stack[(stack.len() - max_arguments).max(self.top_nametable + 1) ..]
+			.iter()
+			.rev()
+			.enumerate()
+			.find_map(|(i, v)| if matches!(v, Stackable::Curry) { Some(i) } else { None })
+	}
+
+	/// Performs a pop according to language rules.
+	///
+	/// - Nametables cannot be popped with this function and will return an error.
+	/// - Currying markers are ignored and silently dropped.
+	///
+	/// If you need to pop nametables, use [`Self::pop_nametable`] instead.
 	#[inline]
 	pub fn pop(&self, mc: &Mutation<'gc>, span: SourceSpan) -> Result<Stackable<'gc>, Error> {
 		let mut mut_stack = self.main.borrow_mut(mc);
 		// SAFETY: We have one value at the start, and that is a nametable.
 		//         Below, we check that we never pop nametables, so this one value will remain.
 		let value = Self::unchecked_pop(&mut mut_stack);
-		// fast path: did not reach top nametable, therefore cannot be a nametable
-		if mut_stack.len() >= self.top_nametable {
+		// TODO: tell the compiler that this is unlikely
+		if matches!(value, Stackable::Curry) {
+			debug!("ignoring curry marker on stack");
+			drop(mut_stack);
+			// some recursion for this slow path, might be tail-call optimized even
+			self.pop(mc, span)
+		} else if mut_stack.len() >= self.top_nametable {
+			// fast path: did not reach top nametable, therefore cannot be a nametable
 			Ok(value)
 		} else if matches!(value, Stackable::Nametable(_)) {
 			mut_stack.push(value);
 			Err(Error::MissingValue { span })
-		} else if matches!(value, Stackable::Curry) {
-			// some recursion for this slow path, might be tail-call optimized even
-			self.pop(mc, span)
 		} else {
 			Ok(value)
 		}
+	}
+
+	/// Peeks the topmost value on the stack for debugging purposes. This does not follow language rules.
+	pub fn raw_peek(&self) -> Option<Stackable<'gc>> {
+		self.main.borrow().last().cloned()
+	}
+
+	/// Pops a value from the stack, disregarding language rules. This means that this function can pop nametables and
+	/// curry markers. This function does not update the top nametable pointer and will leave the stack in an
+	/// inconsistent state if used to pop a nametable. Use [`Self::pop_nametable`] instead.
+	pub fn raw_pop(&mut self, mc: &Mutation<'gc>) -> Stackable<'gc> {
+		self.main.borrow_mut(mc).pop().expect("missing nametable")
+	}
+
+	/// Caller must guarantee that `count` elements are available to pop, and that all of them are no nametables or
+	/// currying markers.
+	#[inline]
+	pub fn pop_n(&self, mc: &Mutation<'gc>, count: usize) -> Result<CurriedArguments<'gc>, Error> {
+		let mut mut_stack = self.main.borrow_mut(mc);
+		debug_assert!(mut_stack.len() >= count, "at least {count} elements must be available to pop");
+		let values = Self::unchecked_pop_n(&mut mut_stack, count);
+		Ok(values)
 	}
 
 	/// Pops everything above and including the topmost nametable. Never pops the global nametable.
@@ -199,11 +281,23 @@ impl<'gc> Stack<'gc> {
 	/// Caller must guarantee that there is at least one element on the stack.
 	#[inline(always)]
 	fn unchecked_pop(stack: &mut InnerStack<'gc>) -> Stackable<'gc> {
+		debug_assert!(stack.len() > 0);
 		// SAFETY: Caller guarantees len() >= 1
 		let value = unsafe { stack.get_unchecked(stack.len() - 1) }.clone();
 		// SAFETY: Decreasing the length is always safe.
 		unsafe { stack.set_len(stack.len() - 1) };
 		value
+	}
+
+	/// Caller must guarantee that there is at least `count` elements on the stack.
+	#[inline(always)]
+	fn unchecked_pop_n(stack: &mut InnerStack<'gc>, count: usize) -> CurriedArguments<'gc> {
+		debug_assert!(stack.len() >= count);
+		// SAFETY: Caller guarantees len() >= count.
+		let values = unsafe { stack.get_unchecked(stack.len() - count ..) }.iter().cloned().collect();
+		// SAFETY: Decreasing the length is always safe.
+		unsafe { stack.set_len(stack.len() - count) };
+		values
 	}
 }
 
@@ -355,12 +449,7 @@ impl<'gc> Stackable<'gc> {
 
 	/// Starts a call sequence of a Callable.
 	/// Returns the next interpreter action, since calling usually involves nonstandard actions.
-	pub fn enter_call<'a>(
-		&self,
-		mc: &Mutation<'a>,
-		stack: &mut Stack<'a>,
-		span: SourceSpan,
-	) -> Result<ActionVec, Error> {
+	pub fn enter_call(&self, mc: &Mutation<'gc>, stack: &mut Stack<'gc>, span: SourceSpan) -> Result<ActionVec, Error> {
 		match self {
 			Stackable::Identifier(identifier) => {
 				let value = stack.lookup(identifier.clone(), span)?;
@@ -372,16 +461,58 @@ impl<'gc> Stackable<'gc> {
 				return_behavior: CallReturnBehavior::BlockCall,
 			}]),
 			Stackable::Function(function) => {
-				let function = function.borrow();
-				assert!(!function.is_constructor, "constructor not implemented");
-				// TODO: handle currying here
-				// insert nametable below arguments
-				let function_nametable = GcRefLock::new(mc, RefLock::new(Nametable::new(NametableType::Function)));
-				stack.insert_nametable_at(mc, function.arguments, function_nametable, span)?;
-				Ok(smallvec![InterpreterAction::ExecuteCall {
-					code:            function.code.clone(),
-					return_behavior: CallReturnBehavior::FunctionCall,
-				}])
+				if let Some(curried_argument_count) = stack.next_currying_marker(function.borrow().arguments) {
+					debug!(
+						"found curry marker during function call of {}, will curry {curried_argument_count} arguments",
+						Stackable::Function(function.clone())
+					);
+					// function is being curried
+					let function_copy = function.clone();
+					let arguments = stack.pop_n(mc, curried_argument_count)?;
+					let _ = stack.raw_pop(mc);
+					let curried_function =
+						CurriedFunction { curried_arguments: arguments, function: function_copy };
+					stack.push(mc, Stackable::CurriedFunction(GcRefLock::new(mc, RefLock::new(curried_function))));
+					Ok(smallvec![])
+				} else {
+					let function = function.borrow();
+					assert!(!function.is_constructor, "constructor not implemented");
+					// insert nametable below arguments
+					let function_nametable = GcRefLock::new(mc, RefLock::new(Nametable::new(NametableType::Function)));
+					stack.insert_nametable_at(mc, function.arguments, function_nametable, span)?;
+					Ok(smallvec![InterpreterAction::ExecuteCall {
+						code:            function.code.clone(),
+						return_behavior: CallReturnBehavior::FunctionCall,
+					}])
+				}
+			},
+			Stackable::CurriedFunction(curried_function) => {
+				if let Some(curried_argument_count) =
+					stack.next_currying_marker(curried_function.borrow().remaining_arguments())
+				{
+					// function is being curried (again)
+					let arguments = stack.pop_n(mc, curried_argument_count)?;
+					let _ = stack.raw_pop(mc);
+					let mut mut_function = curried_function.borrow_mut(mc);
+					mut_function.curried_arguments.insert_many(0, arguments);
+					stack.push(mc, Stackable::CurriedFunction(curried_function.clone()));
+					Ok(smallvec![])
+				} else {
+					let curried_function = curried_function.borrow();
+					let function = curried_function.function.borrow();
+					assert!(!function.is_constructor, "constructor not implemented");
+					// push arguments to the stack
+					for argument in &curried_function.curried_arguments {
+						stack.push(mc, argument.clone());
+					}
+					// insert nametable below arguments
+					let function_nametable = GcRefLock::new(mc, RefLock::new(Nametable::new(NametableType::Function)));
+					stack.insert_nametable_at(mc, function.arguments, function_nametable, span)?;
+					Ok(smallvec![InterpreterAction::ExecuteCall {
+						code:            function.code.clone(),
+						return_behavior: CallReturnBehavior::FunctionCall,
+					}])
+				}
 			},
 			_ => Err(Error::InvalidType { operation: Command::Call, value: self.to_string().into(), span }),
 		}
@@ -399,6 +530,15 @@ impl<'gc> Display for Stackable<'gc> {
 			Stackable::CodeBlock(cb) => write!(f, "[CodeBlock {}n ]", cb.borrow().code.len()),
 			Stackable::Function(func) => {
 				write!(f, "[Function/{} {}n ]", func.borrow().arguments, func.borrow().code.len())
+			},
+			Stackable::CurriedFunction(func) => {
+				write!(
+					f,
+					"[CurriedFunction({})/{} {}n ]",
+					func.borrow().curried_arguments.len(),
+					func.borrow().function.borrow().arguments,
+					func.borrow().function.borrow().code.len()
+				)
 			},
 			Stackable::Object(_) => write!(f, "[Object]"),
 			Stackable::Nametable(nt) => write!(f, "NT[{}]", nt.borrow().entries.len()),

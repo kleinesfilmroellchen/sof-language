@@ -46,7 +46,7 @@ test : not assert
 { + return } 2 function add globaldef
 | 4 add : add4 globaldef
 1 add4 : 5 = assert
--20 add4 15 = assert
+-20 add4 : -16 = assert
 
 # unnecessary currying delimiter
 1 | 2 7 add : 9 = assert

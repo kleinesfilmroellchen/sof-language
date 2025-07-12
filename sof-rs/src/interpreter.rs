@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use gc_arena::lock::{GcRefLock, RefLock};
 use gc_arena::{Arena, Mutation};
-use log::{debug, trace};
+use log::{debug, info, trace};
 use smallvec::{SmallVec, smallvec};
 
 use crate::arc_iter::ArcVecIter;
@@ -249,6 +249,7 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 		InnerToken::Command(Command::Equal) => {
 			let rhs = stack.pop(mc, token.span)?;
 			let lhs = stack.pop(mc, token.span)?;
+			debug!("{rhs} = {lhs}");
 			let result = Stackable::Boolean(lhs.eq(&rhs));
 			stack.push(mc, result);
 			no_action()
@@ -317,8 +318,8 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 		InnerToken::Command(Command::Swap) => {
 			let first = stack.pop(mc, token.span)?;
 			let second = stack.pop(mc, token.span)?;
-			stack.push(mc, second);
 			stack.push(mc, first);
+			stack.push(mc, second);
 			no_action()
 		},
 		InnerToken::Command(Command::Call) => {
@@ -470,6 +471,15 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 			Ok(smallvec![InterpreterAction::Return])
 		},
 		InnerToken::Command(Command::ReturnNothing) => Ok(smallvec![InterpreterAction::Return]),
+		InnerToken::Command(Command::DescribeS) => {
+			// TODO: make this a bit nicer
+			info!("{stack:#?}");
+			no_action()
+		},
+		InnerToken::Command(Command::Describe) => {
+			info!("{:#?}", stack.raw_peek());
+			no_action()
+		},
 		_ => todo!(),
 	}
 }
