@@ -90,6 +90,14 @@ pub enum Error {
 		#[label]
 		span:      SourceSpan,
 	},
+	#[error("invalid type in {name}: {value}")]
+	#[diagnostic(code(TypeError))]
+	InvalidTypeNative {
+		name:  SharedStr,
+		value: SharedStr,
+		#[label]
+		span:  SourceSpan,
+	},
 	#[error("divide by zero: {lhs} / {rhs}")]
 	#[diagnostic(code(ArithmeticError))]
 	DivideByZero {
@@ -125,5 +133,12 @@ pub enum Error {
 		argument_count: usize,
 		#[label]
 		span:           SourceSpan,
+	},
+	#[error("native function {name} not found")]
+	#[diagnostic(code(NativeError))]
+	UnknownNativeFunction {
+		name: SharedStr,
+		#[label]
+		span: SourceSpan,
 	},
 }

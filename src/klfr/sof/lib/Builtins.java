@@ -134,6 +134,8 @@ public final class Builtins {
 			return IntPrimitive.createIntegerFromString(string.value());
 		} else if (toConvert instanceof IntPrimitive integer)
 			return integer;
+		else if (toConvert instanceof BoolPrimitive bool)
+			return IntPrimitive.createIntPrimitive((long) (bool.value() ? 1 : 0));
 
 		throw new IncompleteCompilerException("type");
 	}
@@ -152,6 +154,8 @@ public final class Builtins {
 			return FloatPrimitive.createFloatPrimitive(integer.value().doubleValue());
 		} else if (toConvert instanceof FloatPrimitive flt)
 			return flt;
+		else if (toConvert instanceof BoolPrimitive bool)
+			return FloatPrimitive.createFloatPrimitive(bool.value() ? 1.0d : 0.0d);
 
 		throw new IncompleteCompilerException("type");
 	}

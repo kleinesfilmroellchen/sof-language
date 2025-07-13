@@ -58,7 +58,6 @@ public final class NativeFunctionRegistry {
 	public final void registerAllFromPackage(String packageName) throws IOException {
 		Reflections pakage = new Reflections(packageName);
 		var classes = pakage.get(SubTypes.of(TypesAnnotated.with(NativeFunctionCollection.class)).asClass());
-		;
 		log.fine(String.format("In package %s found classes: %s", packageName, classes.toString()));
 
 		for (var clazz : classes) {

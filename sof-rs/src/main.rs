@@ -1,6 +1,7 @@
 //! SOF interpreter written in Rust.
 
 #![cfg_attr(feature = "nightly", feature(test))]
+#![allow(special_module_name)]
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -17,6 +18,7 @@ use crate::runtime::interpreter::{new_arena, run, run_on_arena};
 mod arc_iter;
 mod error;
 mod identifier;
+mod lib;
 mod parser;
 mod runtime;
 mod token;

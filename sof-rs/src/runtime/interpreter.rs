@@ -9,6 +9,7 @@ use smallvec::{SmallVec, smallvec};
 use crate::arc_iter::ArcVecIter;
 use crate::error::Error;
 use crate::identifier::Identifier;
+use crate::lib::DEFAULT_REGISTRY;
 use crate::runtime::stackable::{CodeBlock, Function, TokenVec};
 use crate::runtime::util::{SwitchCase, SwitchCases, UtilityData};
 use crate::runtime::{Stack, StackArena, Stackable};
@@ -507,11 +508,7 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 				default_case.enter_call(mc, stack, token.span)
 			} else {
 				let SwitchCase { conditional, body } = cases.0.remove(0);
-				utility.push(UtilityData::Switch {
-					remaining_cases: cases,
-					default_case,
-					next_body: body,
-				});
+				utility.push(UtilityData::Switch { remaining_cases: cases, default_case, next_body: body });
 				stack.push(mc, conditional);
 				Ok(smallvec![InterpreterAction::ExecuteCall {
 					code:            vec![
@@ -526,14 +523,12 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 		InnerToken::SwitchBody => {
 			let should_execute_body = stack.pop(mc, token.span)?;
 			let mut utility = stack.utility.borrow_mut(mc);
-			let Some(UtilityData::Switch { remaining_cases, default_case, next_body }) =
-				utility.last_mut()
-			else {
+			let Some(UtilityData::Switch { remaining_cases, default_case, next_body }) = utility.last_mut() else {
 				panic!("incorrect switch data")
 			};
 			// found a true case, remove the utility data and call the next body
 			if matches!(should_execute_body, Stackable::Boolean(true)) {
-					trace!("    found true switch case, entering body");
+				trace!("    found true switch case, entering body");
 				let result = next_body.enter_call(mc, stack, token.span);
 				utility.pop();
 				result
@@ -543,7 +538,8 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 					*next_body = body.clone();
 					stack.push(mc, conditional.clone());
 					remaining_cases.0.remove(0);
-					// run the SwitchBody logic again after the conditional call, to evaluate the next body we just prepared
+					// run the SwitchBody logic again after the conditional call, to evaluate the next body we just
+					// prepared
 					Ok(smallvec![InterpreterAction::ExecuteCall {
 						code:            vec![
 							Token { inner: InnerToken::Command(Command::Call), span: token.span },
@@ -558,6 +554,18 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 					default_case.enter_call(mc, stack, token.span)
 				}
 			}
+		},
+		InnerToken::Command(Command::NativeCall) => {
+			let function_name = stack.pop(mc, token.span)?;
+			let Stackable::String(name) = function_name else {
+				return Err(Error::InvalidType {
+					operation: Command::NativeCall,
+					value:     function_name.to_string().into(),
+					span:      token.span,
+				});
+			};
+			DEFAULT_REGISTRY.call_function(&name, stack, mc, token.span)?;
+			no_action()
 		},
 		InnerToken::Command(_) => todo!(),
 	}

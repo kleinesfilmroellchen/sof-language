@@ -46,6 +46,7 @@ file_tests! {
 	objects,
 	string,
 	test_preamble,
+	nativecall,
 }
 
 mod bench {

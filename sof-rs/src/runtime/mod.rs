@@ -14,6 +14,7 @@ pub mod interpreter;
 pub mod nametable;
 pub mod stackable;
 mod util;
+pub mod native;
 
 pub use stackable::Stackable;
 
@@ -202,8 +203,9 @@ impl<'gc> Stack<'gc> {
 	#[inline(always)]
 	fn unchecked_pop(stack: &mut InnerStack<'gc>) -> Stackable<'gc> {
 		debug_assert!(!stack.is_empty());
+		// Drop correctness is guaranteed as the pointer read takes ownership without moving and set_len discards the value without Drop.
 		// SAFETY: Caller guarantees len() >= 1
-		let value = unsafe { stack.get_unchecked(stack.len() - 1) }.clone();
+		let value = unsafe { stack.as_mut_ptr().offset((stack.len() - 1) as isize).read() };
 		// SAFETY: Decreasing the length is always safe.
 		unsafe { stack.set_len(stack.len() - 1) };
 		value

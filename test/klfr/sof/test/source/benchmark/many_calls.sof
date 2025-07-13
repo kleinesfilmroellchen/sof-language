@@ -7,11 +7,11 @@
 		repetitions . <
 	} while
 
-# { 12 13 + 4 / foo def foo . 2 - pop } 0 function
+{ 12 13 + 4 / foo def foo . 2 - pop } 0 function
 
-# 0 i def
+0 i def
 
-# {
-# 	i . 1 + dup i def
-# 	repetitions . <
-# } while
+{
+	i . 1 + dup i def
+	repetitions . <
+} while

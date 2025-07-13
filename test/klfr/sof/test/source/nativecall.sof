@@ -1,0 +1,9 @@
+
+{ "klfr.sof.lib.Builtins#convertInt(Stackable)" nativecall 1 = assert } checkIntOne def
+
+true checkIntOne :
+1.3 checkIntOne :
+0.5 checkIntOne :
+"1" checkIntOne :
+
+true "klfr.sof.lib.Builtins#convertFloat(Stackable)" nativecall 1.0 = assert
