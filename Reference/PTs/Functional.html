@@ -159,6 +159,11 @@
 <p><strong>Arguments</strong> &lt; any number of arguments &lt; native function identifier: String</p>
 <p><strong>Return value</strong> &lt; any</p>
 <p>Calls a function defined natively in the interpreter. <a href="Language-internals#native-calls">Learn more</a>.</p>
+<h2 id="return-function-return-operator"><a class="header" href="#return-function-return-operator"><code>return</code> (function return operator)</a></h2>
+<p><strong>Arguments</strong> &lt; any</p>
+<p>Saves the topmost value on the stack as the current function’s return value, then returns from the function immediately, exiting all non-function scopes (like code blocks) and clearing the stack down the function’s scope.</p>
+<h2 id="return0-value-less-function-return-operator"><a class="header" href="#return0-value-less-function-return-operator"><code>return:0</code> (value-less function return operator)</a></h2>
+<p>Returns from the current function just like <code>return</code>, but does not return any value (and does not consume anything from the stack).</p>
 
                     </main>
 
