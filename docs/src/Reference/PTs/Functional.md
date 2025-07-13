@@ -39,3 +39,13 @@ Creates a function with `argcount` arguments. Usually, it is then `def`'d or `gl
 **Return value** < any
 
 Calls a function defined natively in the interpreter. [Learn more](Language-internals#native-calls).
+
+## `return` (function return operator)
+
+**Arguments** < any
+
+Saves the topmost value on the stack as the current function’s return value, then returns from the function immediately, exiting all non-function scopes (like code blocks) and clearing the stack down the function’s scope.
+
+## `return:0` (value-less function return operator)
+
+Returns from the current function just like `return`, but does not return any value (and does not consume anything from the stack).
