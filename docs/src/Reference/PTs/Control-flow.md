@@ -20,13 +20,11 @@ Executes the first callable if `condition` is true. Otherwise, executes the seco
 
 **Arguments** < "`switch::`" (Identifier) < ( case body: Callable < case condition: Callable ) * any number of times < default body: Callable
 
-Compact alternative to nested `ifelse`'s. The behavior if this Method is as follows:
+Compact alternative to nested `ifelse`'s. The behavior of this is as follows:
 
 The default body, the element last on the stack, is stored for later use. Then, the entire stack is traversed two elements at a time. If the first element is the identifier "`switch::`", the beginning/end of the switch has been reached; this special identifier serves as a sort of label to delineate the statement from the other, likely important stuff on the stack. As no case has been executed yet, the default body is executed.
 
 If, however, the first element is a Callable, it is executed and the algorithm expects a Boolean value to be situated on top of the stack afterward. If this Boolean is true, the second element, the corresponding case body, is executed. Otherwise, the search continues.
-
-After any body was executed, the stack has all elements up to the switch:: label removed, meaning that the bodies cannot store values onto the stack, but should use `def`s to save them to the NT.
 
 ## `while` (loop function)
 

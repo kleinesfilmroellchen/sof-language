@@ -8,10 +8,12 @@ use crate::error::Error;
 use crate::identifier::Identifier;
 use crate::runtime::nametable::NametableType;
 use crate::runtime::stackable::CurriedArguments;
+use crate::runtime::util::UtilityData;
 
 pub mod interpreter;
 pub mod nametable;
 pub mod stackable;
+mod util;
 
 pub use stackable::Stackable;
 
@@ -23,7 +25,7 @@ pub type InnerStack<'gc> = Vec<Stackable<'gc>>;
 pub struct Stack<'gc> {
 	main:        GcRefLock<'gc, InnerStack<'gc>>,
 	/// Utility stack not visible for the program, currently only used by while loops.
-	pub utility: GcRefLock<'gc, InnerStack<'gc>>,
+	pub utility: GcRefLock<'gc, Vec<UtilityData<'gc>>>,
 
 	top_nametable: usize,
 }

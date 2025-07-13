@@ -15,6 +15,8 @@ pub enum InnerToken {
 	CodeBlock(TokenVec),
 	/// Special token only used internally to support while loops.
 	WhileBody,
+	/// Special token only used internally to support switch cases.
+	SwitchBody,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -230,6 +232,7 @@ impl Debug for Token {
 			InnerToken::Literal(arg0) => f.debug_tuple("Literal").field(arg0).finish(),
 			InnerToken::CodeBlock(arg0) => f.debug_tuple("CodeBlock").field(arg0).finish(),
 			InnerToken::WhileBody => f.debug_tuple("WhileBody").finish(),
+			InnerToken::SwitchBody => f.debug_tuple("SwitchBody").finish(),
 		}?;
 		write!(f, ", {:?} }}", (self.span.offset(), self.span.len()))
 	}

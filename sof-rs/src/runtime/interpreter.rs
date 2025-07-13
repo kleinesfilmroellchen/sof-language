@@ -8,7 +8,9 @@ use smallvec::{SmallVec, smallvec};
 
 use crate::arc_iter::ArcVecIter;
 use crate::error::Error;
+use crate::identifier::Identifier;
 use crate::runtime::stackable::{CodeBlock, Function, TokenVec};
+use crate::runtime::util::{SwitchCase, SwitchCases, UtilityData};
 use crate::runtime::{Stack, StackArena, Stackable};
 use crate::token::{Command, InnerToken, Token};
 
@@ -31,7 +33,7 @@ pub fn new_arena() -> StackArena {
 }
 
 // TODO: tune this
-pub const COLLECTION_THRESHOLD: f64 = 0.2;
+pub const COLLECTION_THRESHOLD: f64 = 50.;
 
 pub fn run_on_arena(arena: &mut StackArena, tokens: TokenVec) -> Result<Metrics, Error> {
 	let token_iter = ArcVecIter::new(tokens);
@@ -72,24 +74,23 @@ pub fn run_on_arena(arena: &mut StackArena, tokens: TokenVec) -> Result<Metrics,
 				CallReturnBehavior::Loop => {
 					arena.mutate(|mc, stack| {
 						let mut utility_stack = stack.utility.borrow_mut(mc);
-						// pop last conditional
-						let last_conditional_result = utility_stack.pop().unwrap();
 
-						if !matches!(last_conditional_result, Stackable::Boolean(true)) || is_unwinding_return {
-							trace!(
-								"[{}] exiting while loop because of condition {:?}",
-								metrics.token_count, last_conditional_result
-							);
+						let Some(UtilityData::While { conditional_callable, conditional_result, .. }) =
+							utility_stack.last_mut()
+						else {
+							panic!("incorrect while data")
+						};
+
+						if !*conditional_result || is_unwinding_return {
+							trace!("[{}] exiting while loop because condition is false", metrics.token_count);
 							// pop utility data (loop body and conditional)
-							utility_stack.pop();
 							utility_stack.pop();
 							// remove the loop element
 							token_execution_stack.pop();
 						} else {
 							trace!("[{}] re-running while loop", metrics.token_count);
-							let conditional_callable = utility_stack[utility_stack.len() - 1].clone();
 							// add back callable
-							stack.push(mc, conditional_callable);
+							stack.push(mc, conditional_callable.clone());
 							// remove the loop element
 							token_execution_stack.pop();
 							// push another round of loop execution to the stack
@@ -121,10 +122,10 @@ pub fn run_on_arena(arena: &mut StackArena, tokens: TokenVec) -> Result<Metrics,
 		if arena.metrics().allocation_debt() >= COLLECTION_THRESHOLD {
 			debug!(
 				target: "sof::gc",
-				"[{}] debt is {} at total allocation of {}, running GC.",
+				"[{}] debt is {} at total GC allocation of {}, running GC.",
 				metrics.token_count,
 				arena.metrics().allocation_debt(),
-				arena.metrics().total_allocation()
+				arena.metrics().total_gc_allocation()
 			);
 			metrics.gc_count += 1;
 			arena.collect_debt();
@@ -355,11 +356,15 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 		InnerToken::Command(Command::While) => {
 			let conditional_callable = stack.pop(mc, token.span)?;
 			let loop_body = stack.pop(mc, token.span)?;
-			stack.push(mc, conditional_callable.clone());
 			let mut utility_stack = stack.utility.borrow_mut(mc);
-			utility_stack.push(loop_body);
-			utility_stack.push(conditional_callable);
+			utility_stack.push(UtilityData::While {
+				body:                 loop_body,
+				conditional_callable: conditional_callable.clone(),
+				conditional_result:   false,
+			});
 			trace!("    starting while");
+			// add back conditional callable, which will immediately be called by our token sequence below
+			stack.push(mc, conditional_callable);
 			Ok(smallvec![InterpreterAction::ExecuteCall {
 				code:            vec![Token { inner: InnerToken::Command(Command::Call), span: token.span }, Token {
 					inner: InnerToken::WhileBody,
@@ -377,9 +382,7 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 			let mut actions = loop_body.enter_call(mc, stack, token.span)?;
 			// set up utility stack for loop return behavior logic; last iteration is treated as true to not immediately
 			// exit
-			utility_stack.push(loop_body);
-			utility_stack.push(conditional_callable);
-			utility_stack.push(Stackable::Boolean(true));
+			utility_stack.push(UtilityData::While { body: loop_body, conditional_callable, conditional_result: true });
 			#[allow(clippy::declare_interior_mutable_const, clippy::items_after_statements)]
 			const EMPTY_VEC: LazyCell<TokenVec> = LazyCell::new(TokenVec::default);
 
@@ -396,13 +399,15 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 		// almost like if, but with the special utility stack
 		InnerToken::WhileBody => {
 			let mut utility_stack = stack.utility.borrow_mut(mc);
-			let conditional = stack.pop(mc, token.span)?;
-			let loop_body = utility_stack[utility_stack.len() - 2].clone();
+			let stack_conditional = stack.pop(mc, token.span)?;
+			let Some(UtilityData::While { body, conditional_result, .. }) = utility_stack.last_mut() else {
+				panic!("incorrect while data")
+			};
 			// signal to the loop end what the conditional looks like
-			utility_stack.push(conditional.clone());
-			if matches!(conditional, Stackable::Boolean(true)) {
+			*conditional_result = matches!(stack_conditional, Stackable::Boolean(true));
+			if *conditional_result {
 				trace!("    executing while body");
-				loop_body.enter_call(mc, stack, token.span)
+				body.enter_call(mc, stack, token.span)
 			} else {
 				trace!("    --- end of while body, condition is false");
 				no_action()
@@ -482,6 +487,77 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 		InnerToken::Command(Command::Describe) => {
 			info!("{:#?}", stack.raw_peek());
 			no_action()
+		},
+		InnerToken::Command(Command::Switch) => {
+			const SWITCH_MARKER: LazyCell<Identifier> = LazyCell::new(|| Identifier::new("switch::"));
+			let default_case = stack.pop(mc, token.span)?;
+			let mut cases = SwitchCases(SmallVec::new());
+			loop {
+				let maybe_next_conditional = stack.pop(mc, token.span)?;
+				if let Stackable::Identifier(ref ident) = maybe_next_conditional {
+					if *ident == *SWITCH_MARKER {
+						break;
+					}
+				}
+				let body = stack.pop(mc, token.span)?;
+				cases.0.push(SwitchCase { conditional: maybe_next_conditional, body });
+			}
+			let mut utility = stack.utility.borrow_mut(mc);
+			if cases.0.is_empty() {
+				default_case.enter_call(mc, stack, token.span)
+			} else {
+				let SwitchCase { conditional, body } = cases.0.remove(0);
+				utility.push(UtilityData::Switch {
+					remaining_cases: cases,
+					default_case,
+					next_body: body,
+				});
+				stack.push(mc, conditional);
+				Ok(smallvec![InterpreterAction::ExecuteCall {
+					code:            vec![
+						Token { inner: InnerToken::Command(Command::Call), span: token.span },
+						Token { inner: InnerToken::SwitchBody, span: token.span },
+					]
+					.into(),
+					return_behavior: CallReturnBehavior::BlockCall,
+				}])
+			}
+		},
+		InnerToken::SwitchBody => {
+			let should_execute_body = stack.pop(mc, token.span)?;
+			let mut utility = stack.utility.borrow_mut(mc);
+			let Some(UtilityData::Switch { remaining_cases, default_case, next_body }) =
+				utility.last_mut()
+			else {
+				panic!("incorrect switch data")
+			};
+			// found a true case, remove the utility data and call the next body
+			if matches!(should_execute_body, Stackable::Boolean(true)) {
+					trace!("    found true switch case, entering body");
+				let result = next_body.enter_call(mc, stack, token.span);
+				utility.pop();
+				result
+			} else {
+				// if possible, grab next case data, update next body, and call callable
+				if let Some(SwitchCase { conditional, body }) = remaining_cases.0.first() {
+					*next_body = body.clone();
+					stack.push(mc, conditional.clone());
+					remaining_cases.0.remove(0);
+					// run the SwitchBody logic again after the conditional call, to evaluate the next body we just prepared
+					Ok(smallvec![InterpreterAction::ExecuteCall {
+						code:            vec![
+							Token { inner: InnerToken::Command(Command::Call), span: token.span },
+							Token { inner: InnerToken::SwitchBody, span: token.span },
+						]
+						.into(),
+						return_behavior: CallReturnBehavior::BlockCall,
+					}])
+				} else {
+					trace!("    falling back to default switch body");
+					// call default body
+					default_case.enter_call(mc, stack, token.span)
+				}
+			}
 		},
 		InnerToken::Command(_) => todo!(),
 	}

@@ -367,19 +367,23 @@ public class Interpreter implements Serializable {
 			// loop until throw or switch end marker
 			while (true) {
 				// get case and corresponding body
-				final Stackable _case = this.stack.popSafe(), body = this.stack.popSafe();
+				final Stackable _case = this.stack.popSafe();
+				// if this is the end marker already, we only have a default case, so run that
+				if (_case instanceof Identifier maybeSwitchEnd && maybeSwitchEnd.getValue().equals("switch::")) {
+					return this.doCall(defaultCallable);
+				}
+				final Stackable body = this.stack.popSafe();
 				// execute case
 				this.doCall(_case);
 				final var result = this.stack.popSafe();
 				// ... and check if successful; if so, run body and exit
 				if (result.isTrue()) {
-					// properly propagate the return flag
-					final var retflag = this.doCall(body);
 					// remove elements until identifier "switch"
 					var elt = this.stack.popSafe();
 					while (!(elt instanceof Identifier && ((Identifier) elt).getValue().equals("switch::")))
 						elt = this.stack.popSafe();
-					return retflag;
+					// call body after removing remainder data, to allow bodies to modify the stack as usual
+					return this.doCall(body);
 				} else {
 					final var elt = this.stack.popSafe();
 					if (elt instanceof Identifier maybeSwitchEnd && maybeSwitchEnd.getValue().equals("switch::")) {

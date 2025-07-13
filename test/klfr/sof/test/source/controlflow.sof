@@ -49,6 +49,46 @@ switch:: {
 	true assert
 } switch
 
+switch::
+{ true assert }
+switch
+
+switch:: {
+	false assert
+} { false }
+{
+	true assert
+} switch
+
+0 {
+	1 + 
+
+	switch:: {
+		false assert
+	} { false }
+	{
+		true assert
+	} { true }
+	{
+		false assert
+	} switch
+
+} { dup 10 < } dowhile
+
+# leave data on the stack from within a body
+0
+switch:: {
+	false assert
+} { false }
+{
+	1
+} { true }
+{
+	false assert
+} switch
+
+1 = assert
+
 # The SOF programming language interpreter.
 # Copyright (C) 2019-2020  kleinesfilmröllchen
 
