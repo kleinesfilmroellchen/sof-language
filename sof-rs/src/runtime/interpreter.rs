@@ -121,7 +121,7 @@ pub fn run_on_arena(arena: &mut StackArena, tokens: TokenVec) -> Result<Metrics,
 		});
 
 		// only check debt occasionally, as it is expensive to just request it
-		if metrics.token_count % 128 == 0 {
+		if metrics.token_count.is_multiple_of(128) {
 			// perform garbage collection if necessary
 			if arena.metrics().allocation_debt() >= COLLECTION_THRESHOLD {
 				debug!(
@@ -493,10 +493,10 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 			let mut cases = SwitchCases(SmallVec::new());
 			loop {
 				let maybe_next_conditional = stack.pop(token.span)?;
-				if let Stackable::Identifier(ref ident) = maybe_next_conditional {
-					if *ident == *SWITCH_MARKER {
-						break;
-					}
+				if let Stackable::Identifier(ref ident) = maybe_next_conditional
+					&& *ident == *SWITCH_MARKER
+				{
+					break;
 				}
 				let body = stack.pop(token.span)?;
 				cases.0.push(SwitchCase { conditional: maybe_next_conditional, body });

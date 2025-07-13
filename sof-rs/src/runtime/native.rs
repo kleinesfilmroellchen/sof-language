@@ -61,7 +61,7 @@ impl From<NativeFunction5> for NativeFunction {
 }
 
 impl NativeFunction {
-	pub fn call<'gc>(&self, stack: &mut Stack<'gc>, span: SourceSpan) -> Result<(), Error> {
+	pub fn call(&self, stack: &mut Stack<'_>, span: SourceSpan) -> Result<(), Error> {
 		if let Some(result) = match self {
 			NativeFunction::Args1(function) => {
 				let argument = stack.pop(span)?;
@@ -111,12 +111,7 @@ impl NativeFunctionRegistry {
 	}
 
 	#[inline]
-	pub fn call_function<'gc>(
-		&self,
-		name: &str,
-		stack: &mut Stack<'gc>,
-		span: SourceSpan,
-	) -> Result<(), Error> {
+	pub fn call_function(&self, name: &str, stack: &mut Stack<'_>, span: SourceSpan) -> Result<(), Error> {
 		if let Some(function) = self.functions.get(name) {
 			debug!("calling native function {name}: {function:?}");
 			function.call(stack, span)

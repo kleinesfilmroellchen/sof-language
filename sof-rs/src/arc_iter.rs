@@ -1,5 +1,6 @@
-//! Generic iterator over `Arc<Vec<T>>` that allows usage of [`Iterator`] (with cloning of inner values) without having to
-//! re-allocate the reference-counted vector (which is what happens if you just call `.into_iter` on an `Arc<Vec<T>>`).
+//! Generic iterator over `Arc<Vec<T>>` that allows usage of [`Iterator`] (with cloning of inner values) without having
+//! to re-allocate the reference-counted vector (which is what happens if you just call `.into_iter` on an
+//! `Arc<Vec<T>>`).
 
 use std::marker::PhantomData;
 use std::ptr::NonNull;

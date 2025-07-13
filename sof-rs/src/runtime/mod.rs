@@ -193,7 +193,7 @@ impl<'gc> Stack<'gc> {
 		debug_assert!(!stack.is_empty());
 		// Drop correctness is guaranteed as the pointer read takes ownership without moving and set_len discards the
 		// value without Drop. SAFETY: Caller guarantees len() >= 1
-		let value = unsafe { stack.as_mut_ptr().offset((stack.len() - 1) as isize).read() };
+		let value = unsafe { stack.as_mut_ptr().add(stack.len() - 1).read() };
 		// SAFETY: Decreasing the length is always safe.
 		unsafe { stack.set_len(stack.len() - 1) };
 		value

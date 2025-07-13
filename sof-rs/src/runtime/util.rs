@@ -11,7 +11,7 @@ pub struct SwitchCase<'gc> {
 }
 
 #[derive(Debug, Clone)]
-pub struct SwitchCases<'gc>(pub(super) SmallVec<[SwitchCase<'gc>; 8]>);
+pub struct SwitchCases<'gc>(pub(super) SmallVec<[SwitchCase<'gc>; 4]>);
 
 unsafe impl Collect for SwitchCases<'_> {
 	fn needs_trace() -> bool
@@ -29,15 +29,15 @@ unsafe impl Collect for SwitchCases<'_> {
 #[collect(no_drop)]
 pub enum UtilityData<'gc> {
 	While {
-		body:               Stackable<'gc>,
-		conditional_callable:        Stackable<'gc>,
-		conditional_result: bool,
+		body:                 Stackable<'gc>,
+		conditional_callable: Stackable<'gc>,
+		conditional_result:   bool,
 	},
 	Switch {
 		/// cases that have been not touched so far
-		remaining_cases:    SwitchCases<'gc>,
-		default_case:       Stackable<'gc>,
+		remaining_cases: SwitchCases<'gc>,
+		default_case:    Stackable<'gc>,
 		/// body of case that will be run if the conditional succeeds
-		next_body:          Stackable<'gc>,
+		next_body:       Stackable<'gc>,
 	},
 }
