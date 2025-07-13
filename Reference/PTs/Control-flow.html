@@ -145,10 +145,9 @@
 <p>Executes the first callable if <code>condition</code> is true. Otherwise, executes the second callable.</p>
 <h2 id="switch-multi-ifelse-conditional-execution-operator"><a class="header" href="#switch-multi-ifelse-conditional-execution-operator"><code>switch</code> (multi-ifelse conditional execution operator)</a></h2>
 <p><strong>Arguments</strong> &lt; &quot;<code>switch::</code>&quot; (Identifier) &lt; ( case body: Callable &lt; case condition: Callable ) * any number of times &lt; default body: Callable</p>
-<p>Compact alternative to nested <code>ifelse</code>'s. The behavior if this Method is as follows:</p>
+<p>Compact alternative to nested <code>ifelse</code>'s. The behavior of this is as follows:</p>
 <p>The default body, the element last on the stack, is stored for later use. Then, the entire stack is traversed two elements at a time. If the first element is the identifier &quot;<code>switch::</code>&quot;, the beginning/end of the switch has been reached; this special identifier serves as a sort of label to delineate the statement from the other, likely important stuff on the stack. As no case has been executed yet, the default body is executed.</p>
 <p>If, however, the first element is a Callable, it is executed and the algorithm expects a Boolean value to be situated on top of the stack afterward. If this Boolean is true, the second element, the corresponding case body, is executed. Otherwise, the search continues.</p>
-<p>After any body was executed, the stack has all elements up to the switch:: label removed, meaning that the bodies cannot store values onto the stack, but should use <code>def</code>s to save them to the NT.</p>
 <h2 id="while-loop-function"><a class="header" href="#while-loop-function"><code>while</code> (loop function)</a></h2>
 <p><strong>Arguments</strong> &lt; body: Callable &lt; condition: Callable</p>
 <p>For every iteration of executing the body, executes the condition callable, which should place a Boolean value onto the stack. If the boolean value is true, the body will be executed once and the cycle repeats, if it is false, the loop will end.</p>
