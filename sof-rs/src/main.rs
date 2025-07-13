@@ -1,3 +1,5 @@
+//! SOF interpreter written in Rust.
+
 #![cfg_attr(feature = "nightly", feature(test))]
 
 use std::path::{Path, PathBuf};
@@ -9,16 +11,15 @@ use miette::{NamedSource, miette};
 use rustyline::Config;
 use rustyline::error::ReadlineError;
 
-use crate::interpreter::{new_arena, run, run_on_arena};
 use crate::runtime::StackArena;
+use crate::runtime::interpreter::{new_arena, run, run_on_arena};
 
 mod arc_iter;
 mod error;
 mod identifier;
-mod interpreter;
-mod lexer;
 mod parser;
 mod runtime;
+mod token;
 
 #[cfg(test)] mod test;
 
@@ -87,7 +88,7 @@ fn main() -> miette::Result<()> {
 		})?;
 		let result = sof_main(&code);
 		match result {
-			Ok(_) => Ok(()),
+			Ok(()) => Ok(()),
 			Err(why) => Err(why.with_source_code(NamedSource::new(readable_filename, code))),
 		}
 	} else {
@@ -120,16 +121,16 @@ fn main() -> miette::Result<()> {
 }
 
 fn run_code_on_arena(code: impl AsRef<str>, arena: &mut StackArena) -> miette::Result<()> {
-	let result = lexer::lex(code)?;
+	let result = parser::lexer::lex(code)?;
 	let parsed = Arc::new(parser::parse(result.iter().collect())?);
 	debug!("parsed code as {parsed:#?}");
 	run_on_arena(arena, parsed)?;
 	Ok(())
 }
 
-pub fn sof_main(code: impl AsRef<str>) -> miette::Result<()> {
+fn sof_main(code: impl AsRef<str>) -> miette::Result<()> {
 	let start_time = time::Instant::now();
-	let lexed = lexer::lex(code)?;
+	let lexed = parser::lexer::lex(code)?;
 	debug!(target: "sof::lexer", "lexed: {lexed:#?}");
 	let parsed = Arc::new(parser::parse(lexed.iter().collect())?);
 	debug!(target: "sof::parser", "parsed: {parsed:#?}");

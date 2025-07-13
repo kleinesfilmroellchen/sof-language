@@ -28,3 +28,20 @@ nightly = []
 
 [profile.release]
 debug = true
+
+[lints.clippy]
+all = { level = "deny", priority = -10 }
+pedantic = { level = "warn", priority = -10 }
+unnecessary_wraps = "deny"
+cast_precision_loss = "allow"
+cast_sign_loss = "allow"
+missing_errors_doc = "allow"
+inline_always = "allow"
+too_many_lines = "allow"
+
+[lints.rust]
+unused = "deny"
+missing_docs = "deny"
+
+[lints.rustdoc]
+all = "deny"

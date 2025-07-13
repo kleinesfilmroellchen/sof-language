@@ -1,5 +1,5 @@
-//! Generic iterator over Arc<Vec<T>> that allows usage of IntoIter (with cloning of inner values) without having to
-//! re-allocate the reference-counted vector (which is what happens if you just call .into_iter on an Arc<Vec<T>>).
+//! Generic iterator over `Arc<Vec<T>>` that allows usage of [`Iterator`] (with cloning of inner values) without having to
+//! re-allocate the reference-counted vector (which is what happens if you just call `.into_iter` on an `Arc<Vec<T>>`).
 
 use std::marker::PhantomData;
 use std::ptr::NonNull;
@@ -15,18 +15,18 @@ pub(crate) struct ArcVecIter<'a, T> {
 	end: *const T,
 }
 
-impl<'a, T> ArcVecIter<'a, T> {
+impl<T> ArcVecIter<'_, T> {
 	pub fn new(vec: Arc<Vec<T>>) -> Self {
 		let range = vec.as_ptr_range();
 		// SAFETY: as_ptr_range() guarantees pointer is non-null (but possibly dangling).
 		//         We guarantee to never write to the NonNull, as we only copy out of it.
-		let buf = unsafe { NonNull::new_unchecked(range.start as *mut _) };
-		let begin = buf.as_ptr() as *const T;
+		let buf = unsafe { NonNull::new_unchecked(range.start.cast_mut()) };
+		let begin = buf.as_ptr().cast_const();
 		let end = if size_of::<T>() == 0 { begin.wrapping_byte_add(vec.len()) } else { range.end };
 		Self { vec, ptr: buf, end, data: PhantomData }
 	}
 
-	/// Straightforward next() implementation that’s a bit slow.
+	/// Straightforward `next()` implementation that’s a bit slow.
 	#[allow(unused)]
 	fn next_simple(&mut self) -> Option<&T> {
 		let mut index = 0; // iteration index
@@ -54,7 +54,7 @@ impl<'a, T> Iterator for ArcVecIter<'a, T> {
 			self.ptr
 		} else {
 			// SAFETY: self.end is guaranteed to be dangling or valid. We never read from the pointer returned.
-			if self.ptr == unsafe { NonNull::new_unchecked(self.end as *mut _) } {
+			if self.ptr == unsafe { NonNull::new_unchecked(self.end.cast_mut()) } {
 				return None;
 			}
 			let old = self.ptr;

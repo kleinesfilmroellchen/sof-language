@@ -217,7 +217,7 @@ pub fn lex(string: impl AsRef<str>) -> Result<Vec<Token>, Error> {
 					},
 				});
 			},
-			c if c.is_whitespace() => continue,
+			c if c.is_whitespace() => {},
 			'+' | '-' | '*' | '/' | '%' | '=' | '>' | '<' | '.' | ',' | ';' | ':' | '[' | ']' | '|' | '{' | '}'
 				if char_iter.peek().is_none_or(|(_, c)| c.is_whitespace()) =>
 			{
@@ -262,11 +262,11 @@ pub fn lex(string: impl AsRef<str>) -> Result<Vec<Token>, Error> {
 				tokens.push(Token {
 					span:  SourceSpan::new(next_offset, string.chars().count()),
 					token: RawToken::String(string.into()),
-				})
+				});
 			},
 			'0' ..= '9' | '+' | '-' => {
 				let (token, length) = parse_number(next_offset, next_char, &mut char_iter)?;
-				tokens.push(Token { span: SourceSpan::new(next_offset, length), token })
+				tokens.push(Token { span: SourceSpan::new(next_offset, length), token });
 			},
 			_ => {
 				return Err(Error::InvalidCharacter { chr: next_char, span: SourceSpan::new(next_offset, 1) });

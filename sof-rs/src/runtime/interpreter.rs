@@ -8,11 +8,13 @@ use smallvec::{SmallVec, smallvec};
 
 use crate::arc_iter::ArcVecIter;
 use crate::error::Error;
-use crate::parser::{Command, InnerToken, Token};
-use crate::runtime::{CodeBlock, Function, Stack, StackArena, Stackable, TokenVec};
+use crate::runtime::stackable::{CodeBlock, Function, TokenVec};
+use crate::runtime::{Stack, StackArena, Stackable};
+use crate::token::{Command, InnerToken, Token};
 
 #[derive(Default, Clone, Copy)]
 #[non_exhaustive]
+#[allow(clippy::struct_field_names)] // may in the future contain other data not called `count`
 pub struct Metrics {
 	pub token_count: usize,
 	pub gc_count:    usize,
@@ -32,7 +34,7 @@ pub fn new_arena() -> StackArena {
 pub const COLLECTION_THRESHOLD: f64 = 0.2;
 
 pub fn run_on_arena(arena: &mut StackArena, tokens: TokenVec) -> Result<Metrics, Error> {
-	let token_iter = ArcVecIter::new(tokens.clone());
+	let token_iter = ArcVecIter::new(tokens);
 	// Use a stack of token lists to be executed. At the end of each list is some kind of call return.
 	let mut token_execution_stack = Vec::new();
 	token_execution_stack.push((token_iter, CallReturnBehavior::BlockCall));
@@ -184,7 +186,7 @@ pub(crate) enum InterpreterAction {
 }
 
 impl From<()> for InterpreterAction {
-	fn from(_: ()) -> Self {
+	fn from((): ()) -> Self {
 		Self::None
 	}
 }
@@ -209,6 +211,7 @@ pub(crate) enum CallReturnBehavior {
 }
 
 #[inline]
+#[allow(clippy::unnecessary_wraps)] // must have this signature
 fn no_action() -> Result<ActionVec, Error> {
 	Ok(smallvec![InterpreterAction::None])
 }
@@ -218,11 +221,11 @@ macro_rules! binary_op {
 		let rhs = $stack.pop($mc, $token.span)?;
 		let lhs = $stack.pop($mc, $token.span)?;
 		if let Stackable::Identifier(lhs_ident) = &lhs {
-			let left_value = $stack.lookup(lhs_ident.clone(), $token.span)?;
-			let result = left_value.$op(rhs, $token.span)?;
+			let left_value = $stack.lookup(lhs_ident, $token.span)?;
+			let result = left_value.$op(&rhs, $token.span)?;
 			$stack.top_nametable().borrow_mut($mc).define(lhs_ident.clone(), result);
 		} else {
-			let result = lhs.$op(rhs, $token.span)?;
+			let result = lhs.$op(&rhs, $token.span)?;
 			$stack.push($mc, result);
 		}
 		no_action()
@@ -266,7 +269,7 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 		) => {
 			let rhs = stack.pop(mc, token.span)?;
 			let lhs = stack.pop(mc, token.span)?;
-			let result = lhs.compare(rhs, *command, token.span)?;
+			let result = lhs.compare(&rhs, *command, token.span)?;
 			stack.push(mc, Stackable::Boolean(*command == result));
 			no_action()
 		},
@@ -377,7 +380,7 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 			utility_stack.push(loop_body);
 			utility_stack.push(conditional_callable);
 			utility_stack.push(Stackable::Boolean(true));
-			#[allow(clippy::declare_interior_mutable_const)]
+			#[allow(clippy::declare_interior_mutable_const, clippy::items_after_statements)]
 			const EMPTY_VEC: LazyCell<TokenVec> = LazyCell::new(TokenVec::default);
 
 			// insert the while body logic at the start so it is executed after the initial loop body action(s)
@@ -480,6 +483,6 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 			info!("{:#?}", stack.raw_peek());
 			no_action()
 		},
-		_ => todo!(),
+		InnerToken::Command(_) => todo!(),
 	}
 }

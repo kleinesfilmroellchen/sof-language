@@ -5,7 +5,7 @@ use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 
 use crate::identifier::Identifier;
-use crate::parser::Command;
+use crate::token::Command;
 
 #[derive(Error, Diagnostic, Debug)]
 pub enum Error {

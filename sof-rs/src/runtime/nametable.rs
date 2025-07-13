@@ -12,6 +12,7 @@ use crate::runtime::Stackable;
 pub enum NametableType {
 	Global,
 	Function,
+	#[allow(unused)]
 	Object,
 }
 
@@ -32,8 +33,8 @@ impl<'gc> Nametable<'gc> {
 		self.entries.insert(name, value);
 	}
 
-	pub fn lookup(&self, name: Identifier, span: SourceSpan) -> Result<Stackable<'gc>, Error> {
-		self.entries.get(&name).ok_or(Error::UndefinedValue { name: name.clone(), span }).cloned()
+	pub fn lookup(&self, name: &Identifier, span: SourceSpan) -> Result<Stackable<'gc>, Error> {
+		self.entries.get(name).ok_or_else(|| Error::UndefinedValue { name: name.clone(), span }).cloned()
 	}
 
 	pub fn set_return_value(&mut self, value: Stackable<'gc>) {
