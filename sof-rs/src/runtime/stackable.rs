@@ -245,7 +245,7 @@ impl<'gc> Stackable<'gc> {
 		match self {
 			Stackable::Identifier(identifier) => {
 				let value = stack.lookup(identifier, span)?;
-				stack.main.borrow_mut(mc).push(value);
+				stack.main.push(value);
 				Ok(smallvec![])
 			},
 			Stackable::CodeBlock(codeblock) => Ok(smallvec![InterpreterAction::ExecuteCall {
@@ -260,18 +260,18 @@ impl<'gc> Stackable<'gc> {
 					);
 					// function is being curried
 					let function_copy = *function;
-					let arguments = stack.pop_n(mc, curried_argument_count);
-					let _ = stack.raw_pop(mc);
+					let arguments = stack.pop_n(curried_argument_count);
+					let _ = stack.raw_pop();
 					let curried_function =
 						CurriedFunction { curried_arguments: arguments, function: function_copy };
-					stack.push(mc, Stackable::CurriedFunction(GcRefLock::new(mc, RefLock::new(curried_function))));
+					stack.push(Stackable::CurriedFunction(GcRefLock::new(mc, RefLock::new(curried_function))));
 					Ok(smallvec![])
 				} else {
 					let function = function.borrow();
 					assert!(!function.is_constructor, "constructor not implemented");
 					// insert nametable below arguments
 					let function_nametable = GcRefLock::new(mc, RefLock::new(Nametable::new(NametableType::Function)));
-					stack.insert_nametable_at(mc, function.arguments, function_nametable, span)?;
+					stack.insert_nametable_at(function.arguments, function_nametable, span)?;
 					Ok(smallvec![InterpreterAction::ExecuteCall {
 						code:            function.code.clone(),
 						return_behavior: CallReturnBehavior::FunctionCall,
@@ -283,11 +283,11 @@ impl<'gc> Stackable<'gc> {
 					stack.next_currying_marker(curried_function.borrow().remaining_arguments())
 				{
 					// function is being curried (again)
-					let arguments = stack.pop_n(mc, curried_argument_count);
-					let _ = stack.raw_pop(mc);
+					let arguments = stack.pop_n(curried_argument_count);
+					let _ = stack.raw_pop();
 					let mut mut_function = curried_function.borrow_mut(mc);
 					mut_function.curried_arguments.insert_many(0, arguments);
-					stack.push(mc, Stackable::CurriedFunction(*curried_function));
+					stack.push(Stackable::CurriedFunction(*curried_function));
 					Ok(smallvec![])
 				} else {
 					let curried_function = curried_function.borrow();
@@ -295,11 +295,11 @@ impl<'gc> Stackable<'gc> {
 					assert!(!function.is_constructor, "constructor not implemented");
 					// push arguments to the stack
 					for argument in &curried_function.curried_arguments {
-						stack.push(mc, argument.clone());
+						stack.push(argument.clone());
 					}
 					// insert nametable below arguments
 					let function_nametable = GcRefLock::new(mc, RefLock::new(Nametable::new(NametableType::Function)));
-					stack.insert_nametable_at(mc, function.arguments, function_nametable, span)?;
+					stack.insert_nametable_at(function.arguments, function_nametable, span)?;
 					Ok(smallvec![InterpreterAction::ExecuteCall {
 						code:            function.code.clone(),
 						return_behavior: CallReturnBehavior::FunctionCall,

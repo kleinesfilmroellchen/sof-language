@@ -12,9 +12,9 @@ use crate::runtime::util::UtilityData;
 
 pub mod interpreter;
 pub mod nametable;
+pub mod native;
 pub mod stackable;
 mod util;
-pub mod native;
 
 pub use stackable::Stackable;
 
@@ -24,34 +24,31 @@ pub type InnerStack<'gc> = Vec<Stackable<'gc>>;
 #[derive(Debug, Collect)]
 #[collect(no_drop)]
 pub struct Stack<'gc> {
-	main:        GcRefLock<'gc, InnerStack<'gc>>,
+	main:        InnerStack<'gc>,
 	/// Utility stack not visible for the program, currently only used by while loops.
-	pub utility: GcRefLock<'gc, Vec<UtilityData<'gc>>>,
+	pub utility: Vec<UtilityData<'gc>>,
 
 	top_nametable: usize,
 }
 
 impl<'gc> Stack<'gc> {
 	pub fn new(mc: &Mutation<'gc>) -> Self {
-		let mut me = Self {
-			main:          GcRefLock::new(mc, RefLock::new(Vec::with_capacity(64))),
-			utility:       GcRefLock::new(mc, RefLock::new(Vec::with_capacity(64))),
-			top_nametable: 0,
-		};
+		let mut me =
+			Self { main: Vec::with_capacity(64), utility: Vec::with_capacity(64), top_nametable: 0 };
 
-		me.push_nametable(mc, GcRefLock::new(mc, RefLock::new(Nametable::new(NametableType::Global))));
+		me.push_nametable(GcRefLock::new(mc, RefLock::new(Nametable::new(NametableType::Global))));
 		me
 	}
 
 	pub fn top_nametable(&self) -> GcRefLock<'gc, Nametable<'gc>> {
-		match self.main.borrow()[self.top_nametable] {
+		match self.main[self.top_nametable] {
 			Stackable::Nametable(nt) => nt,
 			_ => unreachable!("missing nametable"),
 		}
 	}
 
 	pub fn global_nametable(&self) -> GcRefLock<'gc, Nametable<'gc>> {
-		match self.main.borrow()[0] {
+		match self.main[0] {
 			Stackable::Nametable(nt) => nt,
 			_ => unreachable!("missing nametable"),
 		}
@@ -59,12 +56,12 @@ impl<'gc> Stack<'gc> {
 
 	pub fn lookup(&self, name: &Identifier, span: SourceSpan) -> Result<Stackable<'gc>, Error> {
 		// fast path for top nametable
-		match self.main.borrow()[self.top_nametable] {
+		match self.main[self.top_nametable] {
 			Stackable::Nametable(nt) => nt.borrow().lookup(name, span).ok(),
 			_ => None,
 		}
 		.or_else(|| {
-			self.main.borrow().iter().rev().find_map(|stackable| match stackable {
+			self.main.iter().rev().find_map(|stackable| match stackable {
 				Stackable::Nametable(nt) => nt.borrow().lookup(name, span).ok(),
 				_ => None,
 			})
@@ -73,32 +70,29 @@ impl<'gc> Stack<'gc> {
 	}
 
 	/// Value must not be a nametable.
-	pub fn push(&self, mc: &Mutation<'gc>, value: Stackable<'gc>) {
-		self.main.borrow_mut(mc).push(value);
+	pub fn push(&mut self, value: Stackable<'gc>) {
+		self.main.push(value);
 	}
 
-	pub fn push_nametable(&mut self, mc: &Mutation<'gc>, nametable: GcRefLock<'gc, Nametable<'gc>>) {
-		self.push(mc, Stackable::Nametable(nametable));
-		self.top_nametable = self.main.borrow().len() - 1;
+	pub fn push_nametable(&mut self, nametable: GcRefLock<'gc, Nametable<'gc>>) {
+		self.push(Stackable::Nametable(nametable));
+		self.top_nametable = self.main.len() - 1;
 	}
 
 	pub fn insert_nametable_at(
 		&mut self,
-		mc: &Mutation<'gc>,
 		position: usize,
 		nametable: GcRefLock<'gc, Nametable<'gc>>,
 		span: SourceSpan,
 	) -> Result<(), Error> {
-		let stack = self.main.borrow();
-		if position > stack.len() {
+		if position > self.main.len() {
 			return Err(Error::NotEnoughArguments { span, argument_count: position });
 		}
-		let insert_position = stack.len() - position;
-		if stack[insert_position ..].iter().any(|v| matches!(v, Stackable::Nametable(_))) {
+		let insert_position = self.main.len() - position;
+		if self.main[insert_position ..].iter().any(|v| matches!(v, Stackable::Nametable(_))) {
 			return Err(Error::NotEnoughArguments { span, argument_count: position });
 		}
-		drop(stack);
-		self.main.borrow_mut(mc).insert(insert_position, Stackable::Nametable(nametable));
+		self.main.insert(insert_position, Stackable::Nametable(nametable));
 		self.top_nametable = insert_position;
 		Ok(())
 	}
@@ -108,13 +102,12 @@ impl<'gc> Stack<'gc> {
 	/// reports whether the function would be curried thanks to a currying marker (returning how many arguments are
 	/// above the currying marker), or not (`None`).
 	pub fn next_currying_marker(&self, max_arguments: usize) -> Option<usize> {
-		let stack = self.main.borrow();
-		if stack.len() < max_arguments {
+		if self.main.len() < max_arguments {
 			return None;
 		}
 
 		// Limit search to either max_arguments from the back, or the position of the top nametable.
-		stack[(stack.len() - max_arguments).max(self.top_nametable + 1) ..]
+		self.main[(self.main.len() - max_arguments).max(self.top_nametable + 1) ..]
 			.iter()
 			.rev()
 			.enumerate()
@@ -128,64 +121,59 @@ impl<'gc> Stack<'gc> {
 	///
 	/// If you need to pop nametables, use [`Self::pop_nametable`] instead.
 	#[inline]
-	pub fn pop(&self, mc: &Mutation<'gc>, span: SourceSpan) -> Result<Stackable<'gc>, Error> {
-		let mut mut_stack = self.main.borrow_mut(mc);
+	pub fn pop(&mut self, span: SourceSpan) -> Result<Stackable<'gc>, Error> {
 		// SAFETY: We have one value at the start, and that is a nametable.
 		//         Below, we check that we never pop nametables, so this one value will remain.
-		let value = Self::unchecked_pop(&mut mut_stack);
-		// TODO: tell the compiler that this is unlikely
-		if matches!(value, Stackable::Curry) {
-			debug!("ignoring curry marker on stack");
-			drop(mut_stack);
-			// some recursion for this slow path, might be tail-call optimized even
-			self.pop(mc, span)
-		} else if mut_stack.len() >= self.top_nametable {
-			// fast path: did not reach top nametable, therefore cannot be a nametable
-			Ok(value)
-		} else if matches!(value, Stackable::Nametable(_)) {
-			mut_stack.push(value);
-			Err(Error::MissingValue { span })
-		} else {
-			Ok(value)
+		let value = Self::unchecked_pop(&mut self.main);
+		match value {
+			Stackable::Curry => {
+				debug!("ignoring curry marker on stack");
+				// some recursion for this slow path, might be tail-call optimized even
+				self.pop(span)
+			},
+			Stackable::Nametable(_) => {
+				self.main.push(value);
+				Err(Error::MissingValue { span })
+			},
+			_ if self.main.len() >= self.top_nametable => {
+				// fast path: did not reach top nametable, therefore cannot be a nametable
+				Ok(value)
+			},
+			_ => Ok(value),
 		}
 	}
 
 	/// Peeks the topmost value on the stack for debugging purposes. This does not follow language rules.
 	pub fn raw_peek(&self) -> Option<Stackable<'gc>> {
-		self.main.borrow().last().cloned()
+		self.main.last().cloned()
 	}
 
 	/// Pops a value from the stack, disregarding language rules. This means that this function can pop nametables and
 	/// curry markers. This function does not update the top nametable pointer and will leave the stack in an
 	/// inconsistent state if used to pop a nametable. Use [`Self::pop_nametable`] instead.
-	pub fn raw_pop(&mut self, mc: &Mutation<'gc>) -> Stackable<'gc> {
-		self.main.borrow_mut(mc).pop().expect("missing nametable")
+	pub fn raw_pop(&mut self) -> Stackable<'gc> {
+		self.main.pop().expect("missing nametable")
 	}
 
 	/// Caller must guarantee that `count` elements are available to pop, and that all of them are no nametables or
 	/// currying markers.
 	#[inline]
-	pub fn pop_n(&self, mc: &Mutation<'gc>, count: usize) -> CurriedArguments<'gc> {
-		let mut mut_stack = self.main.borrow_mut(mc);
-		debug_assert!(mut_stack.len() >= count, "at least {count} elements must be available to pop");
-		
-		Self::unchecked_pop_n(&mut mut_stack, count)
+	pub fn pop_n(&mut self, count: usize) -> CurriedArguments<'gc> {
+		debug_assert!(self.main.len() >= count, "at least {count} elements must be available to pop");
+
+		Self::unchecked_pop_n(&mut self.main, count)
 	}
 
 	/// Pops everything above and including the topmost nametable. Never pops the global nametable.
-	pub fn pop_nametable(
-		&mut self,
-		mc: &Mutation<'gc>,
-		span: SourceSpan,
-	) -> Result<GcRefLock<'gc, Nametable<'gc>>, Error> {
-		let mut mut_stack = self.main.borrow_mut(mc);
+	pub fn pop_nametable(&mut self, span: SourceSpan) -> Result<GcRefLock<'gc, Nametable<'gc>>, Error> {
 		loop {
-			let top_value = Self::unchecked_pop(&mut mut_stack);
-			if mut_stack.is_empty() {
-				mut_stack.push(top_value);
+			let top_value = Self::unchecked_pop(&mut self.main);
+			if self.main.is_empty() {
+				self.main.push(top_value);
 				return Err(Error::MissingNametable { span });
 			} else if let Stackable::Nametable(nt) = top_value {
-				self.top_nametable = mut_stack
+				self.top_nametable = self
+					.main
 					.iter()
 					.enumerate()
 					.rev()
@@ -203,8 +191,8 @@ impl<'gc> Stack<'gc> {
 	#[inline(always)]
 	fn unchecked_pop(stack: &mut InnerStack<'gc>) -> Stackable<'gc> {
 		debug_assert!(!stack.is_empty());
-		// Drop correctness is guaranteed as the pointer read takes ownership without moving and set_len discards the value without Drop.
-		// SAFETY: Caller guarantees len() >= 1
+		// Drop correctness is guaranteed as the pointer read takes ownership without moving and set_len discards the
+		// value without Drop. SAFETY: Caller guarantees len() >= 1
 		let value = unsafe { stack.as_mut_ptr().offset((stack.len() - 1) as isize).read() };
 		// SAFETY: Decreasing the length is always safe.
 		unsafe { stack.set_len(stack.len() - 1) };

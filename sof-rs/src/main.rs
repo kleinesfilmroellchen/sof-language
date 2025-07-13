@@ -1,6 +1,6 @@
 //! SOF interpreter written in Rust.
 
-#![cfg_attr(feature = "nightly", feature(test))]
+#![cfg_attr(feature = "nightly", feature(test, likely_unlikely))]
 #![allow(special_module_name)]
 
 use std::path::{Path, PathBuf};
