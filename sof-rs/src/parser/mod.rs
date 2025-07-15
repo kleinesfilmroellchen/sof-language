@@ -1,7 +1,7 @@
 use miette::SourceSpan;
 
 use crate::error::Error;
-use crate::token::{Command, InnerToken, Literal, Token};
+use crate::token::{Command, InnerToken, Token};
 
 pub mod lexer;
 
@@ -11,19 +11,18 @@ pub fn parse(tokens: Vec<&lexer::Token>) -> Result<Vec<Token>, Error> {
 	while let Some(lexer::Token { token, span }) = token_iter.next() {
 		match token {
 			lexer::RawToken::Keyword(lexer::Keyword::ListStart) =>
-				output.push(Token { inner: InnerToken::Literal(Literal::ListStart), span: *span }),
+				output.push(Token { inner: InnerToken::ListStart, span: *span }),
 			lexer::RawToken::Keyword(lexer::Keyword::Curry) =>
-				output.push(Token { inner: InnerToken::Literal(Literal::Curry), span: *span }),
+				output.push(Token { inner: InnerToken::Curry, span: *span }),
 			lexer::RawToken::Decimal(decimal) =>
-				output.push(Token { inner: InnerToken::Literal(Literal::Decimal(*decimal)), span: *span }),
-			lexer::RawToken::Integer(int) =>
-				output.push(Token { inner: InnerToken::Literal(Literal::Integer(*int)), span: *span }),
+				output.push(Token { inner: InnerToken::Decimal(*decimal), span: *span }),
+			lexer::RawToken::Integer(int) => output.push(Token { inner: InnerToken::Integer(*int), span: *span }),
 			lexer::RawToken::String(string) =>
-				output.push(Token { inner: InnerToken::Literal(Literal::String(string.clone())), span: *span }),
+				output.push(Token { inner: InnerToken::String(string.clone()), span: *span }),
 			lexer::RawToken::Boolean(boolean) =>
-				output.push(Token { inner: InnerToken::Literal(Literal::Boolean(*boolean)), span: *span }),
+				output.push(Token { inner: InnerToken::Boolean(*boolean), span: *span }),
 			lexer::RawToken::Identifier(identifier) =>
-				output.push(Token { inner: InnerToken::Literal(Literal::Identifier(identifier.clone())), span: *span }),
+				output.push(Token { inner: InnerToken::Identifier(identifier.clone()), span: *span }),
 			lexer::RawToken::Keyword(lexer::Keyword::CodeBlockStart) => {
 				let mut depth = 1usize;
 				let mut inner_tokens = Vec::new();

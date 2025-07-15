@@ -12,7 +12,7 @@ use crate::error::Error;
 use crate::identifier::Identifier;
 use crate::lib::DEFAULT_REGISTRY;
 use crate::runtime::list::List;
-use crate::runtime::stackable::{BuiltinType, CodeBlock, Function, TokenVec};
+use crate::runtime::stackable::{BuiltinType, Function, TokenVec};
 use crate::runtime::util::{SwitchCase, SwitchCases, UtilityData};
 use crate::runtime::{Stack, StackArena, Stackable};
 use crate::token::{Command, InnerToken, Token};
@@ -242,14 +242,6 @@ macro_rules! binary_op {
 
 fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) -> Result<ActionVec, Error> {
 	match &token.inner {
-		InnerToken::Literal(literal) => {
-			stack.push(literal.as_stackable());
-			no_action()
-		},
-		InnerToken::CodeBlock(tokens) => {
-			stack.push(Stackable::CodeBlock(GcRefLock::new(mc, CodeBlock { code: tokens.clone() }.into())));
-			no_action()
-		},
 		InnerToken::Command(Command::CreateList) => {
 			let mut values = SmallVec::new();
 			loop {
@@ -666,5 +658,9 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 			no_action()
 		},
 		InnerToken::Command(cmd) => todo!("{cmd:?} is unimplemented"),
+		literal => {
+			stack.push(literal.as_stackable(mc));
+			no_action()
+		},
 	}
 }

@@ -2,44 +2,46 @@ use std::cmp::Ordering;
 use std::fmt::{Debug, Display};
 
 use flexstr::SharedStr;
+use gc_arena::Mutation;
+use gc_arena::lock::{GcRefLock, RefLock};
 use miette::SourceSpan;
 
 use crate::identifier::Identifier;
 use crate::parser::lexer;
-use crate::runtime::stackable::{Stackable, TokenVec};
+use crate::runtime::stackable::{CodeBlock, Stackable, TokenVec};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum InnerToken {
 	Command(Command),
-	Literal(Literal),
-	CodeBlock(TokenVec),
 	/// Special token only used internally to support while loops.
 	WhileBody,
 	/// Special token only used internally to support switch cases.
 	SwitchBody,
-}
 
-#[derive(Debug, PartialEq, Clone)]
-pub enum Literal {
+	// literals
 	Integer(i64),
 	Decimal(f64),
 	Identifier(Identifier),
 	String(SharedStr),
 	Boolean(bool),
+	CodeBlock(TokenVec),
 	ListStart,
 	Curry,
 }
 
-impl Literal {
-	pub fn as_stackable<'gc>(&self) -> Stackable<'gc> {
+impl InnerToken {
+	pub fn as_stackable<'gc>(&self, mc: &Mutation<'gc>) -> Stackable<'gc> {
 		match self {
-			Literal::Integer(int) => Stackable::Integer(*int),
-			Literal::Decimal(decimal) => Stackable::Decimal(*decimal),
-			Literal::Identifier(identifier) => Stackable::Identifier(identifier.clone()),
-			Literal::String(string) => Stackable::String(string.clone()),
-			Literal::Boolean(boolean) => Stackable::Boolean(*boolean),
-			Literal::ListStart => Stackable::ListStart,
-			Literal::Curry => Stackable::Curry,
+			Self::Integer(int) => Stackable::Integer(*int),
+			Self::Decimal(decimal) => Stackable::Decimal(*decimal),
+			Self::Identifier(identifier) => Stackable::Identifier(identifier.clone()),
+			Self::String(string) => Stackable::String(string.clone()),
+			Self::Boolean(boolean) => Stackable::Boolean(*boolean),
+			Self::ListStart => Stackable::ListStart,
+			Self::Curry => Stackable::Curry,
+			Self::CodeBlock(code) =>
+				Stackable::CodeBlock(GcRefLock::new(mc, RefLock::new(CodeBlock { code: code.clone() }))),
+			_ => unreachable!(),
 		}
 	}
 }
@@ -232,8 +234,14 @@ impl Debug for Token {
 		f.write_str("Token { ")?;
 		match &self.inner {
 			InnerToken::Command(arg0) => f.debug_tuple("Command").field(arg0).finish(),
-			InnerToken::Literal(arg0) => f.debug_tuple("Literal").field(arg0).finish(),
 			InnerToken::CodeBlock(arg0) => f.debug_tuple("CodeBlock").field(arg0).finish(),
+			InnerToken::Integer(arg0) => f.debug_tuple("Integer").field(arg0).finish(),
+			InnerToken::Decimal(arg0) => f.debug_tuple("Decimal").field(arg0).finish(),
+			InnerToken::Identifier(arg0) => f.debug_tuple("Identifier").field(arg0).finish(),
+			InnerToken::String(arg0) => f.debug_tuple("String").field(arg0).finish(),
+			InnerToken::Boolean(arg0) => f.debug_tuple("Boolean").field(arg0).finish(),
+			InnerToken::ListStart => f.debug_tuple("ListStart").finish(),
+			InnerToken::Curry => f.debug_tuple("Curry").finish(),
 			InnerToken::WhileBody => f.debug_tuple("WhileBody").finish(),
 			InnerToken::SwitchBody => f.debug_tuple("SwitchBody").finish(),
 		}?;
