@@ -2,7 +2,7 @@
 
 [ 2 3 55 ]
 
-[ 89 "string" blah ] describe
+[ 89 "string" blah ]
 
 /= assert
 
@@ -16,6 +16,49 @@
 3 sequence . idx ; 4 = assert
 
 length ; 4 = assert
+
+# todo: should just live in the standard library list.sof
+{
+	swap filterFunc def
+
+	0 currentIndex def
+
+	[ ] swap
+	# ( -- newlist list )
+	{
+		# ( newlist list -- newlist list element element )
+		currentIndex . swap idx ; dup
+		{
+			# ( newlist list element -- list newlist newlist+element )
+			rot push ;
+			# ( -- newlist list )
+			swap pop swap
+		}
+		swap filterFunc : 
+		{ pop }
+		ifelse
+		currentIndex 1 +
+	}
+	{ length ; currentIndex . > } while
+	
+	pop return
+} 2 function filter def
+
+{ } [ false true false true true ] filter :
+
+[ true true true ] = assert
+
+[
+	1 2 3 4 5 6 7 8 9 10
+
+	0 rep def
+	{ 7 8 3 4 5 6 7 8 9 10 }
+	{ rep 1 + rep . 10000 < } while
+]
+
+{ 3 < } swap filter :
+
+[ 1 2 ] =  assert
 
 100000 repetitions def
 0 i def

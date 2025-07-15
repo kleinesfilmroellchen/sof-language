@@ -32,9 +32,6 @@
 { swap } stackSwap dexport
 { dup } stackDuplicate dexport
 
-{ } id dexport
-{ pop return } 2 function const dexport
-
 # The SOF programming language interpreter.
 # Copyright (C) 2019-2022  kleinesfilmröllchen
 

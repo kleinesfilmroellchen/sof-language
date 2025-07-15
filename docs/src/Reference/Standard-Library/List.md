@@ -76,7 +76,7 @@ Inverse of `take`; returns the elements that `take` dropped from the list. For p
 
 **Return value** < element: Any value
 
-Returns the first element in the list, equivalent to `list 1 take`. This is intended for use with tuple-like lists.
+Returns the first element in the list, equivalent to `0 list idx`. This is intended for use with tuple-like lists.
 
 ## `second`: Second element of a list
 
@@ -84,12 +84,12 @@ Returns the first element in the list, equivalent to `list 1 take`. This is inte
 
 **Return value** < second element: Any value
 
-Returns the second element of the list, similar to `fst`, and equivalent to `list 2 take`.
+Returns the second element of the list, similar to `first`, and equivalent to `1 list idx`.
 
-## `filter`: Filter a list
+## `push`: Add to list
 
-**Arguments** < filter predicate: Callable < list: List
+**Arguments** < element: Any value < list: List
 
-**Return value** < filtered list: List
+**Return value** < new list: List
 
-This is the first of the higher-order list processing functions. `filter` takes a list and a callable. The callable is then provided with each element at a time in order (the element is placed on the stack and the callable is invoked, therefore at least both functions and codeblocks will work). For each element where the callable returns a truthy value, the element is retained in the resulting list. For each element where the callable returns a falsy value, the element is discarded. The result is a list where only the elements that the filtering function deemed necessary are retained.
+Appends the given element to the end of the list.

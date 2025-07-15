@@ -1,5 +1,8 @@
 # Standard library preamble. This file is subject to the SOF language project copyright.
 
+{ } id dexport
+{ pop return } 2 function const dexport
+
 { "klfr.sof.lib.Builtins#convertInt(Stackable)" nativecall return } 1 function convert:int globaldef
 
 { "klfr.sof.lib.Builtins#convertFloat(Stackable)" nativecall return } 1 function convert:float globaldef

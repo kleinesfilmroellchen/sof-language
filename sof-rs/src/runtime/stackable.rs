@@ -6,7 +6,7 @@ use std::sync::Arc;
 use ahash::HashMap;
 use flexstr::SharedStr;
 use gc_arena::lock::{GcRefLock, RefLock};
-use gc_arena::{Collect, Mutation};
+use gc_arena::{Collect, Gc, Mutation};
 use log::debug;
 use miette::SourceSpan;
 use smallvec::{SmallVec, smallvec};
@@ -41,7 +41,8 @@ pub enum Stackable<'gc> {
 	Object(GcRefLock<'gc, Object<'gc>>),
 	Nametable(GcRefLock<'gc, Nametable<'gc>>),
 	ListStart,
-	List(GcRefLock<'gc, List<'gc>>),
+	/// lists are immutable, therefore no lock here
+	List(Gc<'gc, List<'gc>>),
 	Curry,
 }
 
@@ -157,11 +158,11 @@ macro_rules! logic_op {
 /// Call a builtin function on a builtin type, using the syntax
 ///
 /// ```rust,no-run
-/// call_builtin_function!(SomeBuiltin(id, span, stack))
+/// call_builtin_function!(SomeBuiltin(id, span, stack, mc))
 /// ```
 #[macro_export]
 macro_rules! call_builtin_function {
-	($builtin_type:ident($id:expr, $span:expr, $stack:expr)) => {{
+	($builtin_type:ident($id:expr, $span:expr, $stack:expr, $mc:expr)) => {{
 		// automatically adds the .borrow() no-op method to any trivial type
 		#[allow(unused_imports)]
 		use std::borrow::Borrow;
@@ -180,7 +181,7 @@ macro_rules! call_builtin_function {
 				span:      $span,
 			});
 		};
-		let result = method(&(*inner).borrow(), $stack, $span)?;
+		let result = method(&(*inner).borrow(), $stack, $mc, $span)?;
 		$stack.push(value);
 		if let Some(result) = result {
 			$stack.push(result);
@@ -351,11 +352,11 @@ impl<'gc> Stackable<'gc> {
 				}
 			},
 			Stackable::BuiltinFunction { target_type, id } => match target_type {
-				BuiltinType::List => call_builtin_function!(List(id, span, stack)),
-				BuiltinType::Integer => call_builtin_function!(Integer(id, span, stack)),
-				BuiltinType::Decimal => call_builtin_function!(Decimal(id, span, stack)),
-				BuiltinType::Boolean => call_builtin_function!(Boolean(id, span, stack)),
-				BuiltinType::String => call_builtin_function!(String(id, span, stack)),
+				BuiltinType::List => call_builtin_function!(List(id, span, stack, mc)),
+				BuiltinType::Integer => call_builtin_function!(Integer(id, span, stack, mc)),
+				BuiltinType::Decimal => call_builtin_function!(Decimal(id, span, stack, mc)),
+				BuiltinType::Boolean => call_builtin_function!(Boolean(id, span, stack, mc)),
+				BuiltinType::String => call_builtin_function!(String(id, span, stack, mc)),
 			},
 			_ => Err(Error::InvalidType { operation: Command::Call, value: self.to_string().into(), span }),
 		}
@@ -389,7 +390,7 @@ impl Display for Stackable<'_> {
 			Stackable::Curry => write!(f, "|"),
 			Stackable::List(list) => {
 				write!(f, "[ ")?;
-				for element in &list.borrow().list {
+				for element in &list.list {
 					write!(f, "{element}, ")?;
 				}
 				write!(f, " ]")
@@ -435,8 +436,12 @@ pub enum BuiltinType {
 /// This type is generic over the GC arena lifetime (early-bound), but must accept any lifetime for the borrows of the
 /// receiver and stack (late-bound).
 #[allow(type_alias_bounds)]
-pub type BuiltinMethod<'gc, This: 'gc> =
-	for<'a, 'b> fn(&'a This, &'b mut Stack<'gc>, SourceSpan) -> Result<Option<Stackable<'gc>>, Error>;
+pub type BuiltinMethod<'gc, This: 'gc> = for<'a, 'b, 'c> fn(
+	&'a This,
+	&'b mut Stack<'gc>,
+	&'c Mutation<'gc>,
+	SourceSpan,
+) -> Result<Option<Stackable<'gc>>, Error>;
 
 /// Registry for builtin methods belonging to a primitive type.
 #[allow(type_alias_bounds)]

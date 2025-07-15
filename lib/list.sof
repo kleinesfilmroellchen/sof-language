@@ -1,0 +1,26 @@
+
+{
+	swap filterFunc def
+
+	0 currentIndex def
+
+	[ ] swap
+	# ( -- newlist list )
+	{
+		# ( newlist list -- newlist list element element )
+		currentIndex . swap idx ; dup
+		{
+			# ( newlist list element -- list newlist newlist+element )
+			rot push ;
+			# ( -- newlist list )
+			swap pop swap
+		}
+		swap filterFunc : 
+		{ pop }
+		ifelse
+		currentIndex 1 +
+	}
+	{ length ; currentIndex . > } while
+	
+	pop return
+} 2 function filter def

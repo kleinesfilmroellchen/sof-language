@@ -338,6 +338,23 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 			stack.push(second);
 			no_action()
 		},
+		InnerToken::Command(Command::Rot) => {
+			let c = stack.pop(token.span)?;
+			let b = stack.pop(token.span)?;
+			let a = stack.pop(token.span)?;
+			stack.push(b);
+			stack.push(c);
+			stack.push(a);
+			no_action()
+		},
+		InnerToken::Command(Command::Over) => {
+			let first = stack.pop(token.span)?;
+			let second = stack.pop(token.span)?;
+			stack.push(second.clone());
+			stack.push(first);
+			stack.push(second);
+			no_action()
+		},
 		InnerToken::Command(Command::Call) => {
 			// make sure to end mutable stack borrow before call occurs, which will likely borrow mutably again
 			let callable = stack.pop(token.span)?;
@@ -392,23 +409,23 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 				match object {
 					Stackable::Integer(_) => {
 						stack.push(object);
-						let _ = call_builtin_function!(Integer(id, token.span, stack))?;
+						let _ = call_builtin_function!(Integer(id, token.span, stack, mc))?;
 					},
 					Stackable::Boolean(_) => {
 						stack.push(object);
-						let _ = call_builtin_function!(Boolean(id, token.span, stack))?;
+						let _ = call_builtin_function!(Boolean(id, token.span, stack, mc))?;
 					},
 					Stackable::Decimal(_) => {
 						stack.push(object);
-						let _ = call_builtin_function!(Decimal(id, token.span, stack))?;
+						let _ = call_builtin_function!(Decimal(id, token.span, stack, mc))?;
 					},
 					Stackable::String(_) => {
 						stack.push(object);
-						let _ = call_builtin_function!(String(id, token.span, stack))?;
+						let _ = call_builtin_function!(String(id, token.span, stack, mc))?;
 					},
 					Stackable::List(_) => {
 						stack.push(object);
-						let _ = call_builtin_function!(List(id, token.span, stack))?;
+						let _ = call_builtin_function!(List(id, token.span, stack, mc))?;
 					},
 					Stackable::CodeBlock(_) => todo!("code block builtins???"),
 					Stackable::Function(_) => todo!("function builtins???"),
