@@ -9,7 +9,7 @@ pub struct Identifier(FlexStrBase<ArcIntern<str>>);
 
 impl Identifier {
 	// force the compiler to check the size constraint at compile-time
-	const __CHECK_SIZE: usize = if size_of::<ArcIntern<str>>() == size_of::<*const u8>() * 2 {
+	const __CHECK_SIZE: usize = if size_of::<ArcIntern<str>>() == size_of::<*const ()>() * 2 {
 		0
 	} else {
 		panic!("ArcIntern has invalid size on this platform, must be exactly two pointers")

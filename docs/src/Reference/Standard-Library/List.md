@@ -1,10 +1,8 @@
-# `list` (Not implemented)
+# `list`
 
-List functions are prefixed with `list_`; this prefix is omitted here. These functions are method-like functions to be called on a list.
+## `idx`: Index into a list
 
-## `element`: Index into a list
-
-**Arguments** < list: List < index: Integer
+**Arguments** < index: Integer < list: List
 
 **Return value** < element: the value at index `index` in the `list`
 
@@ -50,7 +48,7 @@ Returns the empty list for the empty list.
 
 ## `split`: Split up a list
 
-**Arguments** < list: List < index: Integer
+**Arguments** < index: Integer < list: List
 
 **Return value** < A two-element list with the first and second portion of the list, in that order.
 
@@ -58,7 +56,7 @@ This function splits up a list into two halves. The first half contains all elem
 
 ## `take`: First n elements of a list
 
-**Arguments** < list: List < n: Integer
+**Arguments** < n: Integer < list: List
 
 **Return value** < List of length n: List
 
@@ -66,7 +64,7 @@ Returns a new list that contains the elements of the given list up to the given 
 
 ## `after`: Elements after an index
 
-**Arguments** < list: List < n: Integer
+**Arguments** < n: Integer < list: List
 
 **Return value** < List with elmts after n: List
 
@@ -88,17 +86,9 @@ Returns the first element in the list, equivalent to `list 1 take`. This is inte
 
 Returns the second element of the list, similar to `fst`, and equivalent to `list 2 take`.
 
-## `pair`: Create a tuple
-
-**Arguments** < a: Any value < b: Any value
-
-**Return value** < [ a, b ] : List
-
-Creates a two-element list from the two arguments. Main function for creating tuple-like lists (short lists of known length) and returning two values.
-
 ## `filter`: Filter a list
 
-**Arguments** < list: List < filter predicate: Callable
+**Arguments** < filter predicate: Callable < list: List
 
 **Return value** < filtered list: List
 

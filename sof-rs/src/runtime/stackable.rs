@@ -1,8 +1,9 @@
 use std::cmp::Ordering;
-use std::fmt::Display;
+use std::fmt::{Debug, Display};
 use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Rem, Sub};
 use std::sync::Arc;
 
+use ahash::HashMap;
 use flexstr::SharedStr;
 use gc_arena::lock::{GcRefLock, RefLock};
 use gc_arena::{Collect, Mutation};
@@ -12,12 +13,13 @@ use smallvec::{SmallVec, smallvec};
 
 use super::Stack;
 use super::interpreter::{ActionVec, CallReturnBehavior, InterpreterAction};
+use super::list::List;
 use super::nametable::{Nametable, NametableType};
 use crate::error::Error;
 use crate::identifier::Identifier;
 use crate::token::{Command, Token};
 
-#[derive(Debug, Collect, Clone)]
+#[derive(Clone, Debug, Collect)]
 #[collect(no_drop)]
 pub enum Stackable<'gc> {
 	Integer(i64),
@@ -29,10 +31,17 @@ pub enum Stackable<'gc> {
 	CodeBlock(GcRefLock<'gc, CodeBlock>),
 	Function(GcRefLock<'gc, Function>),
 	CurriedFunction(GcRefLock<'gc, CurriedFunction<'gc>>),
+	BuiltinFunction {
+		#[collect(require_static)]
+		target_type: BuiltinType,
+		#[collect(require_static)]
+		id:          Identifier,
+	},
 	#[allow(unused)]
 	Object(GcRefLock<'gc, Object<'gc>>),
 	Nametable(GcRefLock<'gc, Nametable<'gc>>),
 	ListStart,
+	List(GcRefLock<'gc, List<'gc>>),
 	Curry,
 }
 
@@ -143,6 +152,41 @@ macro_rules! logic_op {
 			}
 		}
 	};
+}
+
+/// Call a builtin function on a builtin type, using the syntax
+///
+/// ```rust,no-run
+/// call_builtin_function!(SomeBuiltin(id, span, stack))
+/// ```
+#[macro_export]
+macro_rules! call_builtin_function {
+	($builtin_type:ident($id:expr, $span:expr, $stack:expr)) => {{
+		// automatically adds the .borrow() no-op method to any trivial type
+		#[allow(unused_imports)]
+		use std::borrow::Borrow;
+
+		use $crate::error::Error;
+		use $crate::runtime::stackable::RegistryExt;
+		#[allow(unused)]
+		use $crate::runtime::stackable::builtins::{Boolean, Decimal, Integer, String};
+
+		let method = $builtin_type::REGISTRY.get_builtin_method(&$id, $span)?;
+		let value = $stack.pop($span)?;
+		let Stackable::$builtin_type(ref inner) = value else {
+			return Err(Error::InvalidType {
+				operation: Command::Call,
+				value:     value.to_string().into(),
+				span:      $span,
+			});
+		};
+		let result = method(&(*inner).borrow(), $stack, $span)?;
+		$stack.push(value);
+		if let Some(result) = result {
+			$stack.push(result);
+		}
+		$crate::runtime::interpreter::no_action()
+	}};
 }
 
 impl<'gc> Stackable<'gc> {
@@ -306,6 +350,13 @@ impl<'gc> Stackable<'gc> {
 					}])
 				}
 			},
+			Stackable::BuiltinFunction { target_type, id } => match target_type {
+				BuiltinType::List => call_builtin_function!(List(id, span, stack)),
+				BuiltinType::Integer => call_builtin_function!(Integer(id, span, stack)),
+				BuiltinType::Decimal => call_builtin_function!(Decimal(id, span, stack)),
+				BuiltinType::Boolean => call_builtin_function!(Boolean(id, span, stack)),
+				BuiltinType::String => call_builtin_function!(String(id, span, stack)),
+			},
 			_ => Err(Error::InvalidType { operation: Command::Call, value: self.to_string().into(), span }),
 		}
 	}
@@ -336,6 +387,14 @@ impl Display for Stackable<'_> {
 			Stackable::Nametable(nt) => write!(f, "NT[{}]", nt.borrow().entries.len()),
 			Stackable::ListStart => write!(f, "["),
 			Stackable::Curry => write!(f, "|"),
+			Stackable::List(list) => {
+				write!(f, "[ ")?;
+				for element in &list.borrow().list {
+					write!(f, "{element}, ")?;
+				}
+				write!(f, " ]")
+			},
+			Stackable::BuiltinFunction { id, target_type } => write!(f, "[{target_type:?}.{id}]"),
 		}
 	}
 }
@@ -354,8 +413,89 @@ impl PartialEq for Stackable<'_> {
 			(Self::Function(l0), Self::Function(r0)) => l0 == r0,
 			(Self::Object(l0), Self::Object(r0)) => l0 == r0,
 			(Self::Nametable(l0), Self::Nametable(r0)) => l0 == r0,
+			(Self::List(left), Self::List(right)) => left == right,
 			(Self::ListStart, Self::ListStart) => true,
 			_ => false,
 		}
+	}
+}
+
+/// All builtin types that have methods defined on them.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BuiltinType {
+	List,
+	Integer,
+	Decimal,
+	Boolean,
+	String,
+}
+
+/// Builtin method for a primitive type.
+///
+/// This type is generic over the GC arena lifetime (early-bound), but must accept any lifetime for the borrows of the
+/// receiver and stack (late-bound).
+#[allow(type_alias_bounds)]
+pub type BuiltinMethod<'gc, This: 'gc> =
+	for<'a, 'b> fn(&'a This, &'b mut Stack<'gc>, SourceSpan) -> Result<Option<Stackable<'gc>>, Error>;
+
+/// Registry for builtin methods belonging to a primitive type.
+#[allow(type_alias_bounds)]
+pub type BuiltinMethodRegistry<'gc, This: 'gc> = HashMap<Identifier, BuiltinMethod<'gc, This>>;
+
+pub trait RegistryExt<'gc, This> {
+	fn get_builtin_method(&self, id: &Identifier, span: SourceSpan) -> Result<BuiltinMethod<'gc, This>, Error>
+	where
+		Self: 'gc;
+}
+
+impl<'gc, This> RegistryExt<'gc, This> for BuiltinMethodRegistry<'gc, This> {
+	fn get_builtin_method(&self, id: &Identifier, span: SourceSpan) -> Result<BuiltinMethod<'gc, This>, Error> {
+		self.get(&id).ok_or_else(|| Error::UndefinedValue { name: id.clone(), span }).cloned()
+	}
+}
+
+pub(crate) mod builtins {
+	use std::marker::PhantomData;
+
+	use ahash::HashMapExt;
+
+	// HACK: since BuiltinMethodRegistry must take a lifetime parameter, we must have a REGISTRY constant that is valid
+	// for *any* lifetime 'gc, not just for 'static (even though these types are all 'static). Therefore, introduce
+	// something like a higher-ranked trait bound by making some dummy structs with lifetime parameters and defining the
+	// constant in their impl (which is generic over all lifetimes). Ideally there would only be small modules here, one
+	// for each builtin.
+	pub(crate) struct Decimal<'gc>(PhantomData<&'gc ()>);
+	pub(crate) struct Integer<'gc>(PhantomData<&'gc ()>);
+	pub(crate) struct Boolean<'gc>(PhantomData<&'gc ()>);
+	pub(crate) struct String<'gc>(PhantomData<&'gc ()>);
+
+	impl<'gc> Decimal<'gc> {
+		pub const REGISTRY: std::cell::LazyCell<super::BuiltinMethodRegistry<'gc, f64>> =
+			std::cell::LazyCell::new(|| {
+				let registry = super::BuiltinMethodRegistry::new();
+				registry
+			});
+	}
+	impl<'gc> Integer<'gc> {
+		pub const REGISTRY: std::cell::LazyCell<super::BuiltinMethodRegistry<'gc, i64>> =
+			std::cell::LazyCell::new(|| {
+				let registry = super::BuiltinMethodRegistry::new();
+				registry
+			});
+	}
+	impl<'gc> Boolean<'gc> {
+		pub const REGISTRY: std::cell::LazyCell<super::BuiltinMethodRegistry<'gc, bool>> =
+			std::cell::LazyCell::new(|| {
+				let registry = super::BuiltinMethodRegistry::new();
+				registry
+			});
+	}
+
+	impl<'gc> String<'gc> {
+		pub const REGISTRY: std::cell::LazyCell<super::BuiltinMethodRegistry<'gc, flexstr::SharedStr>> =
+			std::cell::LazyCell::new(|| {
+				let registry = super::BuiltinMethodRegistry::new();
+				registry
+			});
 	}
 }

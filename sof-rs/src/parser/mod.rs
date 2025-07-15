@@ -62,12 +62,6 @@ pub fn parse(tokens: Vec<&lexer::Token>) -> Result<Vec<Token>, Error> {
 					span:  *span,
 				}]);
 			},
-			lexer::RawToken::Keyword(lexer::Keyword::MethodCall) => {
-				output.extend_from_slice(&[
-					Token { inner: InnerToken::Command(Command::FieldAccess), span: *span },
-					Token { inner: InnerToken::Command(Command::Call), span: *span },
-				]);
-			},
 			lexer::RawToken::Keyword(keyword) =>
 				output.push(Token { inner: InnerToken::Command(Command::from_keyword_checked(*keyword)), span: *span }),
 		}

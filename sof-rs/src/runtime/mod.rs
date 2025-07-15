@@ -11,6 +11,7 @@ use crate::runtime::stackable::CurriedArguments;
 use crate::runtime::util::UtilityData;
 
 pub mod interpreter;
+pub mod list;
 pub mod nametable;
 pub mod native;
 pub mod stackable;

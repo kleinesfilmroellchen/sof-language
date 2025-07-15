@@ -10,7 +10,6 @@ These functions are always available to the user, and part of the `prelude` file
 
 Converts the argument to a Boolean. If the value is not already a Boolean, it uses the "truthyness" of the argument, which is almost always true. When the argument is 0 or 0.0, it is false.
 
-
 ## `convert:float`
 
 **Arguments** < toConvert
@@ -45,10 +44,10 @@ Converts the argument to its callable equivalent. This has the following result:
 
 - "Real" callables are unchanged. This affects functions, code blocks and identifiers.
 - Primitives are converted to a [Church encoding](https://en.wikipedia.org/wiki/Church_encoding) version of themselves. (Not implemented) This means:
-    - Natural numbers `n >= 0` are converted to a callable that when called with another callable `f`, will call `f` `n` times. If `f` returns a value and receives an argument, this is exactly equivalent to the notion of Church numerals.
-    - Booleans are converted to a callable that when called with two arguments, will return the first (stack-lowest) argument if it is `true`, otherwise, it will return the second argument. This also means that `ca cb`**`cond if`** (`ca`, `cb` Callables, `cond` Boolean) is equivalent to `ca cb cond`**`convert:callable : .`**
-    - Other Integers `x` are converted to a two-element list `[a, b]` where `a, b ∈ ℕ` are Church numerals as described above and `x = a - b`.
-    - Floats `x` are first converted to the most accurate rational representation. Then, a two-element list `[k, a]` is created where `k` is a Church numeral (integer), `a` is a Church-encoded natural number and `x = k / ( 1 + a )`.
+  - Natural numbers `n >= 0` are converted to a callable that when called with another callable `f`, will call `f` `n` times. If `f` returns a value and receives an argument, this is exactly equivalent to the notion of Church numerals.
+  - Booleans are converted to a callable that when called with two arguments, will return the first (stack-lowest) argument if it is `true`, otherwise, it will return the second argument. This also means that `ca cb`**`cond if`** (`ca`, `cb` Callables, `cond` Boolean) is equivalent to `ca cb cond`**`convert:callable : .`**
+  - Other Integers `x` are converted to a two-element list `[a, b]` where `a, b ∈ ℕ` are Church numerals as described above and `x = a - b`.
+  - Floats `x` are first converted to the most accurate rational representation. Then, a two-element list `[k, a]` is created where `k` is a Church numeral (integer), `a` is a Church-encoded natural number and `x = k / ( 1 + a )`.
 
 The conversion fails on Strings and other more complex types and throws a TypeError.
 
@@ -81,3 +80,11 @@ Floating-point variant of `random:int` with equivalent behavior. Returns any flo
 **Return value**: formatted: String
 
 Formats a string with a number of format arguments. `fmt'x` is just a placeholder name; the actual functions are called `fmt'0` through `fmt'9` with 0-9 arguments, respectively. The exact format specificer format is not well-documented and can be found with the relevant native implementations. It's similar to Java's format string syntax though, and some tests exist for it.
+
+## `pair`: Create a tuple
+
+**Arguments** < a: Any value < b: Any value
+
+**Return value** < [ a, b ] : List
+
+Creates a two-element list from the two arguments. Main function for creating tuple-like lists (short lists of known length) and returning two values.

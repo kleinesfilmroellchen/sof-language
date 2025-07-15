@@ -141,4 +141,12 @@ pub enum Error {
 		#[label]
 		span: SourceSpan,
 	},
+	#[error("index {index} is out of bounds for list of length {len}")]
+	#[diagnostic(code(NativeError))]
+	IndexOutOfBounds {
+		index: usize,
+		len:   usize,
+		#[label]
+		span:  SourceSpan,
+	},
 }

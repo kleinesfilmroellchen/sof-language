@@ -10,7 +10,7 @@ This documentation, like all of SOF, is a Work In Progress (WIP). As much as pos
 
 ## License
 
-Copyright (C) 2019-2021 kleines Filmröllchen.
+Copyright (C) 2019-2025 kleines Filmröllchen.
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3
 or any later version published by the Free Software Foundation;

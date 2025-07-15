@@ -7,10 +7,12 @@ use log::{debug, info, trace};
 use smallvec::{SmallVec, smallvec};
 
 use crate::arc_iter::ArcVecIter;
+use crate::call_builtin_function;
 use crate::error::Error;
 use crate::identifier::Identifier;
 use crate::lib::DEFAULT_REGISTRY;
-use crate::runtime::stackable::{CodeBlock, Function, TokenVec};
+use crate::runtime::list::List;
+use crate::runtime::stackable::{BuiltinType, CodeBlock, Function, TokenVec};
 use crate::runtime::util::{SwitchCase, SwitchCases, UtilityData};
 use crate::runtime::{Stack, StackArena, Stackable};
 use crate::token::{Command, InnerToken, Token};
@@ -218,7 +220,7 @@ pub(crate) enum CallReturnBehavior {
 
 #[inline]
 #[allow(clippy::unnecessary_wraps)] // must have this signature
-fn no_action() -> Result<ActionVec, Error> {
+pub fn no_action() -> Result<ActionVec, Error> {
 	Ok(smallvec![InterpreterAction::None])
 }
 
@@ -246,6 +248,19 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 		},
 		InnerToken::CodeBlock(tokens) => {
 			stack.push(Stackable::CodeBlock(GcRefLock::new(mc, CodeBlock { code: tokens.clone() }.into())));
+			no_action()
+		},
+		InnerToken::Command(Command::CreateList) => {
+			let mut values = SmallVec::new();
+			loop {
+				let value = stack.pop(token.span)?;
+				if matches!(value, Stackable::ListStart) {
+					break;
+				}
+				values.push(value);
+			}
+			values.reverse();
+			stack.push(Stackable::List(List::new(values, mc)));
 			no_action()
 		},
 		InnerToken::Command(Command::Plus) => binary_op!(add, stack, mc, token),
@@ -333,8 +348,92 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 		},
 		InnerToken::Command(Command::Call) => {
 			// make sure to end mutable stack borrow before call occurs, which will likely borrow mutably again
-			let callable = { stack.pop(token.span)? };
+			let callable = stack.pop(token.span)?;
 			callable.enter_call(mc, stack, token.span)
+		},
+		InnerToken::Command(Command::FieldAccess) => {
+			let callable = stack.pop(token.span)?;
+			let object = stack.pop(token.span)?;
+			debug!("{object}");
+			// fast path and special-cases to handle builtins
+			if let Stackable::Identifier(id) = callable {
+				// handle both builtin method retrievals and object field accesses
+				match object {
+					Stackable::String(_) => {
+						stack.push(Stackable::BuiltinFunction { target_type: BuiltinType::String, id });
+					},
+					Stackable::Integer(_) => {
+						stack.push(Stackable::BuiltinFunction { target_type: BuiltinType::Integer, id });
+					},
+					Stackable::Boolean(_) => {
+						stack.push(Stackable::BuiltinFunction { target_type: BuiltinType::Boolean, id });
+					},
+					Stackable::Decimal(_) => {
+						stack.push(Stackable::BuiltinFunction { target_type: BuiltinType::Decimal, id });
+					},
+					Stackable::List(_) => {
+						stack.push(Stackable::BuiltinFunction { target_type: BuiltinType::List, id });
+					},
+					Stackable::CodeBlock(_) => todo!("code block builtins???"),
+					Stackable::Function(_) => todo!("function builtins???"),
+					Stackable::Object(_) => todo!("object field access"),
+					_ =>
+						return Err(Error::InvalidType {
+							operation: Command::FieldAccess,
+							value:     object.to_string().into(),
+							span:      token.span,
+						}),
+				}
+				no_action()
+			} else {
+				// TODO: put object nametable on the stack above the object, then call callable, then remove just
+				// nametable (leaving anything above it)
+				todo!()
+			}
+		},
+		InnerToken::Command(Command::MethodCall) => {
+			let callable = stack.pop(token.span)?;
+			let object = stack.pop(token.span)?;
+			// fast path and special-cases to handle builtins
+			if let Stackable::Identifier(id) = callable {
+				// handle both builtin method calls and object method calls
+				match object {
+					Stackable::Integer(_) => {
+						stack.push(object);
+						let _ = call_builtin_function!(Integer(id, token.span, stack))?;
+					},
+					Stackable::Boolean(_) => {
+						stack.push(object);
+						let _ = call_builtin_function!(Boolean(id, token.span, stack))?;
+					},
+					Stackable::Decimal(_) => {
+						stack.push(object);
+						let _ = call_builtin_function!(Decimal(id, token.span, stack))?;
+					},
+					Stackable::String(_) => {
+						stack.push(object);
+						let _ = call_builtin_function!(String(id, token.span, stack))?;
+					},
+					Stackable::List(_) => {
+						stack.push(object);
+						let _ = call_builtin_function!(List(id, token.span, stack))?;
+					},
+					Stackable::CodeBlock(_) => todo!("code block builtins???"),
+					Stackable::Function(_) => todo!("function builtins???"),
+					Stackable::Object(_) => todo!("object field access"),
+					_ =>
+						return Err(Error::InvalidType {
+							operation: Command::FieldAccess,
+							value:     object.to_string().into(),
+							span:      token.span,
+						}),
+				}
+				no_action()
+			} else {
+				// TODO: put object nametable on the stack above the object, then call callable, then remove just
+				// nametable (leaving anything above it)
+				todo!()
+			}
 		},
 		InnerToken::Command(Command::If) => {
 			let conditional = stack.pop(token.span)?;
@@ -566,6 +665,6 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 			DEFAULT_REGISTRY.call_function(&name, stack, token.span)?;
 			no_action()
 		},
-		InnerToken::Command(_) => todo!(),
+		InnerToken::Command(cmd) => todo!("{cmd:?} is unimplemented"),
 	}
 }
