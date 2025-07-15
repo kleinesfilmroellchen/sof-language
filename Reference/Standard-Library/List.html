@@ -173,15 +173,15 @@
 <h2 id="first-first-element-of-the-list"><a class="header" href="#first-first-element-of-the-list"><code>first</code>: First element of the list</a></h2>
 <p><strong>Arguments</strong> &lt; list: List</p>
 <p><strong>Return value</strong> &lt; element: Any value</p>
-<p>Returns the first element in the list, equivalent to <code>list 1 take</code>. This is intended for use with tuple-like lists.</p>
+<p>Returns the first element in the list, equivalent to <code>0 list idx</code>. This is intended for use with tuple-like lists.</p>
 <h2 id="second-second-element-of-a-list"><a class="header" href="#second-second-element-of-a-list"><code>second</code>: Second element of a list</a></h2>
 <p><strong>Arguments</strong> &lt; list: List</p>
 <p><strong>Return value</strong> &lt; second element: Any value</p>
-<p>Returns the second element of the list, similar to <code>fst</code>, and equivalent to <code>list 2 take</code>.</p>
-<h2 id="filter-filter-a-list"><a class="header" href="#filter-filter-a-list"><code>filter</code>: Filter a list</a></h2>
-<p><strong>Arguments</strong> &lt; filter predicate: Callable &lt; list: List</p>
-<p><strong>Return value</strong> &lt; filtered list: List</p>
-<p>This is the first of the higher-order list processing functions. <code>filter</code> takes a list and a callable. The callable is then provided with each element at a time in order (the element is placed on the stack and the callable is invoked, therefore at least both functions and codeblocks will work). For each element where the callable returns a truthy value, the element is retained in the resulting list. For each element where the callable returns a falsy value, the element is discarded. The result is a list where only the elements that the filtering function deemed necessary are retained.</p>
+<p>Returns the second element of the list, similar to <code>first</code>, and equivalent to <code>1 list idx</code>.</p>
+<h2 id="push-add-to-list"><a class="header" href="#push-add-to-list"><code>push</code>: Add to list</a></h2>
+<p><strong>Arguments</strong> &lt; element: Any value &lt; list: List</p>
+<p><strong>Return value</strong> &lt; new list: List</p>
+<p>Appends the given element to the end of the list.</p>
 
                     </main>
 
