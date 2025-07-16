@@ -1,10 +1,12 @@
 # Types
 
-SOF currently has the following types:
+Any value that is contained on the stack and visible to the SOF program has one of a few types. Types form a hierarchy, with certain types being considered subtypes of others. This means that any operation allowed on the parent type is also allowed on the subtype, with possibly diverging behavior.
+
+Some types are considered **hidden**. This means the user cannot fully interact with them.
 
 ## Value
 
-Base type of all other types; the reference implementation calls this `Stackable` (because it can sit on the stack).
+Base type of all other types.
 
 ## Callable
 

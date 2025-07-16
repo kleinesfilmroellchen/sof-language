@@ -1,6 +1,6 @@
-# Getting started
+# SOF Language tutorial and guide
 
-This section is a tutorial and a more user-focused guide of SOF's features. It's recommended that you have some experience programming in common paradigms (imperative/OOP, functional).
+This section is a tutorial and a more user-focused guide of SOF's features. It's recommended that you have some experience programming in common paradigms.
 
 ## Basics
 
