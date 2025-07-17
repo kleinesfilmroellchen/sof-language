@@ -20,7 +20,7 @@ Given this detailed description, the method of resolving modules is unambiguous 
 
 ## Names
 
-As SOF has no namespaces like C, care needs to be taken when naming functions and other exports of a module. As they overwrite all GNT entries of the same name upon import, duplicate definitions are technically allowed (though the interpreter might issue a warning). The convention [as outlined in the programming conventions](Programming-conventions) is to use underscores for separating pseudo-namespaces where necessary.
+As SOF has no namespaces like C, care needs to be taken when naming functions and other exports of a module. As they overwrite all GNT entries of the same name upon import, duplicate definitions are technically allowed (though the interpreter might issue a warning). The convention [as outlined in the programming conventions](../Programming-conventions.md) is to use underscores for separating pseudo-namespaces where necessary.
 
 ## The `use`, `export` and `dexport` primitive tokens
 

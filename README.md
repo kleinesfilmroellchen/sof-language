@@ -60,6 +60,12 @@ The documentation is browsable in-repo in [docs](./docs) or online [here](https:
 cd docs; mdbook build
 ```
 
+Note that for the docs you need the mdbook-spec preprocessor from the Rust Language Reference, which can easily be installed with
+
+```command
+cargo install --git https://github.com/rust-lang/reference mdbook-spec
+```
+
 ## 1. What is SOF?
 
 ```sof

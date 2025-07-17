@@ -1,98 +1,129 @@
+r[type]
 # Types
 
 Any value that is contained on the stack and visible to the SOF program has one of a few types. Types form a hierarchy, with certain types being considered subtypes of others. This means that any operation allowed on the parent type is also allowed on the subtype, with possibly diverging behavior.
 
+r[type.error]
+Any operation may specify the operand types on which it is valid. Supplying any operation with an operand of a different type causes a [TypeError](Errors.md).
+
+r[type.hidden]
 Some types are considered **hidden**. This means the user cannot fully interact with them.
 
+r[type.value]
 ## Value
 
-Base type of all other types.
+**Value** or **Any** is used to refer to any type, or the union of all types.
 
+r[type.callable]
 ## Callable
 
-Technically speaking: Any type that can be operated on with the call operator `.`. But as this applies to every type, Callable is mostly used as a term to mean more complex types that actually execute logic when called. The most important callables are Identifier (performs nametable lookup), CodeBlock, and Function.
+**Subtype of:** Value
 
-## Identifier
+Any type that can be operated on with the call operator `.`.
 
-A specialized string-like type that can only contain specific characters (mostly letters and numbers). Used for name binding, i.e. the def and call operator families.
+r[type.identifier]
+### Identifier
 
-## Primitive
+**Subtype of:** Callable
 
-Any type that returns itself when called and can be specified with a simple literal. All the following basic data types are primitives.
+A string-like type for textual identifiers used in name binding.
 
+r[type.identifier.call]
+Invoking a call on an identifier performs name lookup.
+
+> [!NOTE]
+> Identifiers provide almost none of the functionality of strings. They are not intended to be used as an alternative string type.
+
+r[type.primitive]
+### Primitive
+
+**Subtype of:** Callable
+
+Any type that can be specified with a simple literal.
+
+r[type.primitive.call]
+Invoking a call on a primitive performs the identity operation, i.e. it returns the primitive’s value. `Boolean` is an exception to this.
+
+r[type.number]
 ### Number
 
-Base type for number types. Arithmetic operations only operate on Numbers.
+**Subtype of:** Primitive
 
+Any numeric type. Arithmetic operations only operate on numbers.
+
+r[type.integer]
 #### Integer
 
-Normal integral positive/negative Number. The reference implementation uses 64-bit storage, but this is not mandatory. Ideally, Integers have no limit on their size other than memory.
+**Subtype of:** Number
 
-#### Float/Decimal
+Integral signed number type. MUST be represented in two’s-complement. All operations perform wrapping arithmetic by default, discarding any carries. Minimum representable range must be $\[ -2^{63} ; 2^{63}-1 \]$, i.e. 64 bits.
 
-Floating-point Number, 64 bits in the reference implementation. May be indefinitely precise.
+r[type.decimal]
+#### Decimal
 
+**Subtype of:** Number
+
+Real number type. The precision required should either match DEC64[^dec64], or IEEE 754-2019[^float] double-precision floating-point. Higher precision is allowed.
+
+r[type.decimal.nan]
+A *NaN* value of unspecified representation MUST be available. Infinite values may be available and may have specific behavior in certain operations in interpreters that support them. Otherwise, infinities have the behavior of NaN.
+
+r[type.boolean]
 ### Boolean
 
-Truth value, either `true` or `false`, the basis of program control flow. When called (future) it takes two elements from the stack and returns the lower one if it is `true`, or the higher one if it is `false`.
+**Subtype of:** Primitive
 
+Truth value, either `true` or `false`.
+
+r[type.boolean.call]
+When called, it takes two elements from the stack and returns the lower one if it is `true`, or the higher one if it is `false`.
+
+r[type.string]
 ### String
 
-Piece of text, infinitely long (memory-limited), all Unicode characters/code points supported.
+**Subtype of:** Primitive
 
+A string is a sequence of Unicode code points, represented in UTF-8. Its maximum length may be arbitrarily large.
+
+r[type.codeblock]
 ## CodeBlock
 
-A code block created with curly braces; contains SOF code to be executed without a safe environment or arguments/return values. The most basic Callable that has user-definable behavior; therefore, it is often used to compose operations and Callables that require other Callables.
+**Subtype of:** Callable
 
+A code block is a list of tokens, created by enclosing these tokens in a pair of braces `{` and `}`.
+
+r[type.codeblock.call]
+When called, it executes the list of tokens.
+
+r[type.function]
 ## Function
 
-A combination of a CodeBlock to be executed and a positive integer amount of arguments, possibly 0. When called, protects its internals through the use of an FD and places its arguments above that on the stack to be used by its code.
+**Subtype of:** Callable
 
+A function is a combination of a list of tokens to be executed and a positive (or zero) integer amount of arguments.
+
+r[type.function.call]
+When a function is called, it retrieves a number of values from the stack equal to the number of arguments. Then, it places a Function Nametable on the stack. Then, it places the arguments back on the stack, in the same order.
+
+r[type.object]
 ## Object
 
-A data collection like a nametable, with the difference that objects are user-creatable and do not serve the role of stack delineation or as targets for `def`.
+**Subtype of:** Value
 
+An object is a key-value store that the user can freely modify. When a method is called on the object, the object is used as a nametable, allowing easy modification via normal definition operations.
+
+r[type.constructor]
 ## Constructor
 
-A special kind of function that, when called, creates a new object and is able to initialize that object.
+**Subtype of:** Callable
 
-# Errors
+A constructor is a special kind of function responsible for object creation.
 
-SOF throws a variety of errors when you mess something up. Currently, errors cannot be caught; for the possibility of adding this feature later, the `except` PT is reserved.
+r[type.constructor.call]
+When called, it creates a new object and is able to initialize that object.
 
-## SyntaxError
+---
 
-The input is not correct SOF syntax. This will occur:
+[^dec64]: Douglas Crockford: *DEC64*. <https://www.crockford.com/dec64.html>
+[^float]: "IEEE Standard for Floating-Point Arithmetic," in IEEE Std 754-2019 (Revision of IEEE 754-2008), vol., no., pp.1-84, 22 July 2019, doi: 10.1109/IEEESTD.2019.8766229.
 
-- on unclosed strings, block comments and braces
-- on too many closing braces
-- on wrong Integer, Boolean and Decimal literals
-- on invalid identifiers
-
-Syntax errors are unrecoverable, that is, they may never be caught.
-
-## TypeError
-
-An operation was attempted on incompatible or unsupported types. This will occur:
-
-- on any native operation that has typed arguments.
-- on PTs that require specific types. E.g.: `def`, call operator.
-
-## NameError
-
-It was attempted to retrieve the value of an identifier that is not defined in the current scope(s).
-
-## ArithmeticError
-
-An illegal mathematical operation was attempted: mostly divide by zero or its derivatives.
-
-## StackAccessError
-
-An operation attempted an illegal modification of the Stack:
-
-- The end of the stack was reached; accessing the GNT/NNT is not allowed.
-- An FD was reached; Stack access beyond it is not allowed.
-
-## StackSizeError
-
-(future) The Stack has reached the maximum feasible size. This will most likely only occur on recursive programs with deep recursion levels.

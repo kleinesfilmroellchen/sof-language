@@ -11,7 +11,7 @@
   - [Programming conventions](Programming-conventions.md)
 - [Standard library](Standard-Library.md)
   - [List methods](Standard-Library/List.md)
-  - [Float methods]()
+  - [Decimal methods]()
   - [Integer methods]()
   - [String methods]()
   - [math](Standard-Library/math.md)
@@ -21,6 +21,7 @@
 # Language Reference
 
 - [Language specification](Reference/Language-Specification.md)
+  - [Errors](Reference/Errors.md)
   - [Types](Reference/Types.md)
   - [Primitive Tokens](Reference/PTs.md)
     - [Arithmetic](Reference/PTs/Arithmetic-Logic.md)

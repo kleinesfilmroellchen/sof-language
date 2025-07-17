@@ -38,7 +38,7 @@ Creates a function with `argcount` arguments. Usually, it is then `def`'d or `gl
 
 **Return value** < any
 
-Calls a function defined natively in the interpreter. [Learn more](Language-internals#native-calls).
+Calls a function defined natively in the interpreter. [Learn more](../Language-internals.md#native-calls).
 
 ## `return` (function return operator)
 

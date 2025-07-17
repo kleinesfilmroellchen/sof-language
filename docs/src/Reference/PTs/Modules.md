@@ -16,4 +16,4 @@ Exports the value bound to name in the LNT. Exporting is the method of making da
 
 **Arguments** < module name: String
 
-This PT is part of the module system, documented [here](Module-System). It executes modules and imports their exported definitions into the global namespace.
+This PT is part of the module system, documented [here](../Module-System.md). It executes modules and imports their exported definitions into the global namespace.

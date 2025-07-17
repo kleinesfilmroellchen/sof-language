@@ -78,7 +78,7 @@ If the arguments aren't of the same type, upcasting is done, where Booleans upca
 
 **Return value** < result of the operation: Boolean
 
-Compares the two operators according to their Boolean value. The algorithm of finding the boolean value is the exact same as [`convert:bool`](Builtin-functions) uses.
+Compares the two operators according to their Boolean value. The algorithm of finding the boolean value is the exact same as [`convert:bool`](../Builtin-functions.md) uses.
 
 ## `not` (negation operator)
 

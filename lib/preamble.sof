@@ -5,7 +5,7 @@
 
 { "klfr.sof.lib.Builtins#convertInt(Stackable)" nativecall return } 1 function convert:int globaldef
 
-{ "klfr.sof.lib.Builtins#convertFloat(Stackable)" nativecall return } 1 function convert:float globaldef
+{ "klfr.sof.lib.Builtins#convertFloat(Stackable)" nativecall return } 1 function convert:decimal globaldef
 
 { "klfr.sof.lib.Builtins#convertCallable(Stackable)" nativecall return } 1 function convert:callable globaldef
 

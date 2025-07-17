@@ -4,3 +4,9 @@ language = "en"
 multilingual = false
 src = "src"
 title = "SOF Programming Language Documentation"
+
+[output.html]
+additional-css = ["reference.css"]
+
+[preprocessor.spec]
+command = "mdbook-spec"

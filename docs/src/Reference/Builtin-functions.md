@@ -10,11 +10,11 @@ These functions are always available to the user, and part of the `prelude` file
 
 Converts the argument to a Boolean. If the value is not already a Boolean, it uses the "truthyness" of the argument, which is almost always true. When the argument is 0 or 0.0, it is false.
 
-## `convert:float`
+## `convert:decimal`
 
 **Arguments** < toConvert
 
-**Return value**: converted: Float
+**Return value**: converted: Decimal
 
 Converts the argument to a float. The argument can either be a string containing a valid SOF float literal (plus any leading/trailing whitespace), an integer or a float already. The result is the corresponding float value; the function fails with a TypeError if conversion fails, e.g. wrong number format, unsupported origin type.
 
@@ -47,13 +47,13 @@ Converts the argument to its callable equivalent. This has the following result:
   - Natural numbers `n >= 0` are converted to a callable that when called with another callable `f`, will call `f` `n` times. If `f` returns a value and receives an argument, this is exactly equivalent to the notion of Church numerals.
   - Booleans are converted to a callable that when called with two arguments, will return the first (stack-lowest) argument if it is `true`, otherwise, it will return the second argument. This also means that `ca cb`**`cond if`** (`ca`, `cb` Callables, `cond` Boolean) is equivalent to `ca cb cond`**`convert:callable : .`**
   - Other Integers `x` are converted to a two-element list `[a, b]` where `a, b ∈ ℕ` are Church numerals as described above and `x = a - b`.
-  - Floats `x` are first converted to the most accurate rational representation. Then, a two-element list `[k, a]` is created where `k` is a Church numeral (integer), `a` is a Church-encoded natural number and `x = k / ( 1 + a )`.
+  - Decimals `x` are first converted to the most accurate rational representation. Then, a two-element list `[k, a]` is created where `k` is a Church numeral (integer), `a` is a Church-encoded natural number and `x = k / ( 1 + a )`.
 
 The conversion fails on Strings and other more complex types and throws a TypeError.
 
 ## `random:01`
 
-**Return value**: random number: Float
+**Return value**: random number: Decimal
 
 Generates a pseudo-random number between 0 (inclusive) and 1 (exclusive), optimally using a system-provided RNG (such as `/dev/urandom` on Linux). **THIS PSEUDO-RANDOM NUMBER GENERATOR IS NOT GUARANTEED TO BE CRYPTOGRAPHICALLY SAFE.**
 
@@ -65,11 +65,11 @@ Generates a pseudo-random number between 0 (inclusive) and 1 (exclusive), optima
 
 Generates a pseudo-random number between start and end, inclusive. Uses `random01` as the initial source of randomness (and, therefore, is NOT CRYPTOGRAPHICALLY SAFE).
 
-## `random:float`
+## `random:decimal`
 
-**Arguments** < start: Float < end: Float
+**Arguments** < start: Decimal < end: Decimal
 
-**Return value**: random number: Float
+**Return value**: random number: Decimal
 
 Floating-point variant of `random:int` with equivalent behavior. Returns any floating point number between start and end, inclusive.
 
@@ -85,6 +85,6 @@ Formats a string with a number of format arguments. `fmt'x` is just a placeholde
 
 **Arguments** < a: Any value < b: Any value
 
-**Return value** < [ a, b ] : List
+**Return value** < \[ a, b \] : List
 
 Creates a two-element list from the two arguments. Main function for creating tuple-like lists (short lists of known length) and returning two values.
