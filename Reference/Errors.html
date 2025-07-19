@@ -135,28 +135,36 @@
 
                 <div id="content" class="content">
                     <main>
-                        <p>r[error]</p>
+                        <div class="rule" id="r-error"><a class="rule-link" href="#r-error" title="error"><span>[error]</span/></a>
+</div>
 <h1 id="errors"><a class="header" href="#errors">Errors</a></h1>
-<p>r[error.intro]
-When a problem is encountered with the user-supplied SOF programs or their state during execution, the interpreter MUST throw an error.</p>
+<div class="rule" id="r-error.intro"><a class="rule-link" href="#r-error.intro" title="error.intro"><span>[error<wbr>.intro]</span/></a>
+</div>
+<p>When a problem is encountered with the user-supplied SOF programs or their state during execution, the interpreter MUST throw an error.</p>
+<div class="alert alert-note">
 <blockquote>
-<p>[!NOTE]
-Currently, errors cannot be caught. A feature for catching errors may be added later via the <code>except</code> token.</p>
+<p class="alert-title"><svg viewBox="0 0 16 16" width="18" height="18"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>Note</p>
+<p>Currently, errors cannot be caught. A feature for catching errors may be added later via the <code>except</code> token.</p>
 </blockquote>
+</div>
 <p>Some errors may not happen in certain interpreters, as there are no strict conditions causing them. These errors MAY be not implemented in the interpreter.</p>
-<p>r[error.termination]
-The action of throwing an error terminates the program.</p>
-<p>r[error.order]
-When, during execution, any operation fulfils multiple error conditions, and therefore many different errors may be thrown, the exact error thrown (first) is unspecified.</p>
-<p>r[error.ui]
-Interpreters MUST inform the user of the fact that an error has occurred. They SHOULD provide further information, such as (but not limited to):</p>
+<div class="rule" id="r-error.termination"><a class="rule-link" href="#r-error.termination" title="error.termination"><span>[error<wbr>.termination]</span/></a>
+</div>
+<p>The action of throwing an error terminates the program.</p>
+<div class="rule" id="r-error.order"><a class="rule-link" href="#r-error.order" title="error.order"><span>[error<wbr>.order]</span/></a>
+</div>
+<p>When, during execution, any operation fulfils multiple error conditions, and therefore many different errors may be thrown, the exact error thrown (first) is unspecified.</p>
+<div class="rule" id="r-error.ui"><a class="rule-link" href="#r-error.ui" title="error.ui"><span>[error<wbr>.ui]</span/></a>
+</div>
+<p>Interpreters MUST inform the user of the fact that an error has occurred. They SHOULD provide further information, such as (but not limited to):</p>
 <ul>
 <li>Where the error occurred in the program. This includes (if applicable) the current token that was executed when the error occurred, the call stack of functions and other callables that were in progress at the time, and the state of the main stack itself.</li>
 <li>The exact condition which caused the error. For example, for an ArithmeticError, the interpreter SHOULD report what operation was invoked with which exact operands.</li>
 <li>Resources to learn about the error and how to prevent it, such as documentation links.</li>
 </ul>
-<p>r[error.kinds]
-Several kinds of errors exist. The following listing contains all the errors defined by and used in the reference. Implementations MAY add additional errors as subtypes of the predefined ones. The conditions under which errors are throw are defined throughout the reference in the context of specific operations and descriptions of SOF execution.</p>
+<div class="rule" id="r-error.kinds"><a class="rule-link" href="#r-error.kinds" title="error.kinds"><span>[error<wbr>.kinds]</span/></a>
+</div>
+<p>Several kinds of errors exist. The following listing contains all the errors defined by and used in the reference. Implementations MAY add additional errors as subtypes of the predefined ones. The conditions under which errors are throw are defined throughout the reference in the context of specific operations and descriptions of SOF execution.</p>
 <ul>
 <li>SyntaxError</li>
 <li>TypeError</li>

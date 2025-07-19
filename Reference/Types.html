@@ -135,82 +135,107 @@
 
                 <div id="content" class="content">
                     <main>
-                        <p>r[type]</p>
+                        <div class="rule" id="r-type"><a class="rule-link" href="#r-type" title="type"><span>[type]</span/></a>
+</div>
 <h1 id="types"><a class="header" href="#types">Types</a></h1>
 <p>Any value that is contained on the stack and visible to the SOF program has one of a few types. Types form a hierarchy, with certain types being considered subtypes of others. This means that any operation allowed on the parent type is also allowed on the subtype, with possibly diverging behavior.</p>
-<p>r[type.error]
-Any operation may specify the operand types on which it is valid. Supplying any operation with an operand of a different type causes a <a href="Errors.html">TypeError</a>.</p>
-<p>r[type.hidden]
-Some types are considered <strong>hidden</strong>. This means the user cannot fully interact with them.</p>
-<p>r[type.value]</p>
+<div class="rule" id="r-type.error"><a class="rule-link" href="#r-type.error" title="type.error"><span>[type<wbr>.error]</span/></a>
+</div>
+<p>Any operation may specify the operand types on which it is valid. Supplying any operation with an operand of a different type causes a <a href="Errors.html">TypeError</a>.</p>
+<div class="rule" id="r-type.hidden"><a class="rule-link" href="#r-type.hidden" title="type.hidden"><span>[type<wbr>.hidden]</span/></a>
+</div>
+<p>Some types are considered <strong>hidden</strong>. This means the user cannot fully interact with them.</p>
+<div class="rule" id="r-type.value"><a class="rule-link" href="#r-type.value" title="type.value"><span>[type<wbr>.value]</span/></a>
+</div>
 <h2 id="value"><a class="header" href="#value">Value</a></h2>
 <p><strong>Value</strong> or <strong>Any</strong> is used to refer to any type, or the union of all types.</p>
-<p>r[type.callable]</p>
+<div class="rule" id="r-type.callable"><a class="rule-link" href="#r-type.callable" title="type.callable"><span>[type<wbr>.callable]</span/></a>
+</div>
 <h2 id="callable"><a class="header" href="#callable">Callable</a></h2>
 <p><strong>Subtype of:</strong> Value</p>
 <p>Any type that can be operated on with the call operator <code>.</code>.</p>
-<p>r[type.identifier]</p>
+<div class="rule" id="r-type.identifier"><a class="rule-link" href="#r-type.identifier" title="type.identifier"><span>[type<wbr>.identifier]</span/></a>
+</div>
 <h3 id="identifier"><a class="header" href="#identifier">Identifier</a></h3>
 <p><strong>Subtype of:</strong> Callable</p>
 <p>A string-like type for textual identifiers used in name binding.</p>
-<p>r[type.identifier.call]
-Invoking a call on an identifier performs name lookup.</p>
+<div class="rule" id="r-type.identifier.call"><a class="rule-link" href="#r-type.identifier.call" title="type.identifier.call"><span>[type<wbr>.identifier<wbr>.call]</span/></a>
+</div>
+<p>Invoking a call on an identifier performs name lookup.</p>
+<div class="alert alert-note">
 <blockquote>
-<p>[!NOTE]
-Identifiers provide almost none of the functionality of strings. They are not intended to be used as an alternative string type.</p>
+<p class="alert-title"><svg viewBox="0 0 16 16" width="18" height="18"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>Note</p>
+<p>Identifiers provide almost none of the functionality of strings. They are not intended to be used as an alternative string type.</p>
 </blockquote>
-<p>r[type.primitive]</p>
+</div>
+<div class="rule" id="r-type.primitive"><a class="rule-link" href="#r-type.primitive" title="type.primitive"><span>[type<wbr>.primitive]</span/></a>
+</div>
 <h3 id="primitive"><a class="header" href="#primitive">Primitive</a></h3>
 <p><strong>Subtype of:</strong> Callable</p>
 <p>Any type that can be specified with a simple literal.</p>
-<p>r[type.primitive.call]
-Invoking a call on a primitive performs the identity operation, i.e. it returns the primitive’s value. <code>Boolean</code> is an exception to this.</p>
-<p>r[type.number]</p>
+<div class="rule" id="r-type.primitive.call"><a class="rule-link" href="#r-type.primitive.call" title="type.primitive.call"><span>[type<wbr>.primitive<wbr>.call]</span/></a>
+</div>
+<p>Invoking a call on a primitive performs the identity operation, i.e. it returns the primitive’s value. <code>Boolean</code> is an exception to this.</p>
+<div class="rule" id="r-type.number"><a class="rule-link" href="#r-type.number" title="type.number"><span>[type<wbr>.number]</span/></a>
+</div>
 <h3 id="number"><a class="header" href="#number">Number</a></h3>
 <p><strong>Subtype of:</strong> Primitive</p>
 <p>Any numeric type. Arithmetic operations only operate on numbers.</p>
-<p>r[type.integer]</p>
+<div class="rule" id="r-type.integer"><a class="rule-link" href="#r-type.integer" title="type.integer"><span>[type<wbr>.integer]</span/></a>
+</div>
 <h4 id="integer"><a class="header" href="#integer">Integer</a></h4>
 <p><strong>Subtype of:</strong> Number</p>
 <p>Integral signed number type. MUST be represented in two’s-complement. All operations perform wrapping arithmetic by default, discarding any carries. Minimum representable range must be $[ -2^{63} ; 2^{63}-1 ]$, i.e. 64 bits.</p>
-<p>r[type.decimal]</p>
+<div class="rule" id="r-type.decimal"><a class="rule-link" href="#r-type.decimal" title="type.decimal"><span>[type<wbr>.decimal]</span/></a>
+</div>
 <h4 id="decimal"><a class="header" href="#decimal">Decimal</a></h4>
 <p><strong>Subtype of:</strong> Number</p>
 <p>Real number type. The precision required should either match DEC64<sup class="footnote-reference"><a href="#dec64">1</a></sup>, or IEEE 754-2019<sup class="footnote-reference"><a href="#float">2</a></sup> double-precision floating-point. Higher precision is allowed.</p>
-<p>r[type.decimal.nan]
-A <em>NaN</em> value of unspecified representation MUST be available. Infinite values may be available and may have specific behavior in certain operations in interpreters that support them. Otherwise, infinities have the behavior of NaN.</p>
-<p>r[type.boolean]</p>
+<div class="rule" id="r-type.decimal.nan"><a class="rule-link" href="#r-type.decimal.nan" title="type.decimal.nan"><span>[type<wbr>.decimal<wbr>.nan]</span/></a>
+</div>
+<p>A <em>NaN</em> value of unspecified representation MUST be available. Infinite values may be available and may have specific behavior in certain operations in interpreters that support them. Otherwise, infinities have the behavior of NaN.</p>
+<div class="rule" id="r-type.boolean"><a class="rule-link" href="#r-type.boolean" title="type.boolean"><span>[type<wbr>.boolean]</span/></a>
+</div>
 <h3 id="boolean"><a class="header" href="#boolean">Boolean</a></h3>
 <p><strong>Subtype of:</strong> Primitive</p>
 <p>Truth value, either <code>true</code> or <code>false</code>.</p>
-<p>r[type.boolean.call]
-When called, it takes two elements from the stack and returns the lower one if it is <code>true</code>, or the higher one if it is <code>false</code>.</p>
-<p>r[type.string]</p>
+<div class="rule" id="r-type.boolean.call"><a class="rule-link" href="#r-type.boolean.call" title="type.boolean.call"><span>[type<wbr>.boolean<wbr>.call]</span/></a>
+</div>
+<p>When called, it takes two elements from the stack and returns the lower one if it is <code>true</code>, or the higher one if it is <code>false</code>.</p>
+<div class="rule" id="r-type.string"><a class="rule-link" href="#r-type.string" title="type.string"><span>[type<wbr>.string]</span/></a>
+</div>
 <h3 id="string"><a class="header" href="#string">String</a></h3>
 <p><strong>Subtype of:</strong> Primitive</p>
 <p>A string is a sequence of Unicode code points, represented in UTF-8. Its maximum length may be arbitrarily large.</p>
-<p>r[type.codeblock]</p>
+<div class="rule" id="r-type.codeblock"><a class="rule-link" href="#r-type.codeblock" title="type.codeblock"><span>[type<wbr>.codeblock]</span/></a>
+</div>
 <h2 id="codeblock"><a class="header" href="#codeblock">CodeBlock</a></h2>
 <p><strong>Subtype of:</strong> Callable</p>
 <p>A code block is a list of tokens, created by enclosing these tokens in a pair of braces <code>{</code> and <code>}</code>.</p>
-<p>r[type.codeblock.call]
-When called, it executes the list of tokens.</p>
-<p>r[type.function]</p>
+<div class="rule" id="r-type.codeblock.call"><a class="rule-link" href="#r-type.codeblock.call" title="type.codeblock.call"><span>[type<wbr>.codeblock<wbr>.call]</span/></a>
+</div>
+<p>When called, it executes the list of tokens.</p>
+<div class="rule" id="r-type.function"><a class="rule-link" href="#r-type.function" title="type.function"><span>[type<wbr>.function]</span/></a>
+</div>
 <h2 id="function"><a class="header" href="#function">Function</a></h2>
 <p><strong>Subtype of:</strong> Callable</p>
 <p>A function is a combination of a list of tokens to be executed and a positive (or zero) integer amount of arguments.</p>
-<p>r[type.function.call]
-When a function is called, it retrieves a number of values from the stack equal to the number of arguments. Then, it places a Function Nametable on the stack. Then, it places the arguments back on the stack, in the same order.</p>
-<p>r[type.object]</p>
+<div class="rule" id="r-type.function.call"><a class="rule-link" href="#r-type.function.call" title="type.function.call"><span>[type<wbr>.function<wbr>.call]</span/></a>
+</div>
+<p>When a function is called, it retrieves a number of values from the stack equal to the number of arguments. Then, it places a Function Nametable on the stack. Then, it places the arguments back on the stack, in the same order.</p>
+<div class="rule" id="r-type.object"><a class="rule-link" href="#r-type.object" title="type.object"><span>[type<wbr>.object]</span/></a>
+</div>
 <h2 id="object"><a class="header" href="#object">Object</a></h2>
 <p><strong>Subtype of:</strong> Value</p>
 <p>An object is a key-value store that the user can freely modify. When a method is called on the object, the object is used as a nametable, allowing easy modification via normal definition operations.</p>
-<p>r[type.constructor]</p>
+<div class="rule" id="r-type.constructor"><a class="rule-link" href="#r-type.constructor" title="type.constructor"><span>[type<wbr>.constructor]</span/></a>
+</div>
 <h2 id="constructor"><a class="header" href="#constructor">Constructor</a></h2>
 <p><strong>Subtype of:</strong> Callable</p>
 <p>A constructor is a special kind of function responsible for object creation.</p>
-<p>r[type.constructor.call]
-When called, it creates a new object and is able to initialize that object.</p>
+<div class="rule" id="r-type.constructor.call"><a class="rule-link" href="#r-type.constructor.call" title="type.constructor.call"><span>[type<wbr>.constructor<wbr>.call]</span/></a>
+</div>
+<p>When called, it creates a new object and is able to initialize that object.</p>
 <hr />
 <div class="footnote-definition" id="dec64"><sup class="footnote-definition-label">1</sup>
 <p>Douglas Crockford: <em>DEC64</em>. <a href="https://www.crockford.com/dec64.html">https://www.crockford.com/dec64.html</a>
