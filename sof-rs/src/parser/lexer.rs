@@ -258,7 +258,28 @@ pub fn lex(string: impl AsRef<str>) -> Result<Vec<Token>, Error> {
 							let (_, escaped) = char_iter
 								.next()
 								.ok_or(Error::UnclosedString { span: SourceSpan::new(pos.into(), 0) })?;
-							string.push(escaped);
+							match escaped {
+								't' => string.push('\t'),
+								'r' => string.push('\r'),
+								'n' => string.push('\n'),
+								'u' => {
+									let mut hex_chars = String::with_capacity(6);
+									while let Some((_, hex_char)) = char_iter.next_if(|(_, c)| c.is_ascii_hexdigit()) {
+										hex_chars.push(hex_char);
+										if hex_chars.len() >= 6 {
+											break;
+										}
+									}
+									let value =
+										u32::from_str_radix(&hex_chars, 16).map_err(|inner| Error::InvalidInteger {
+											span: (next_position, next_position + 2 + hex_chars.len()).into(),
+											number_text: hex_chars.into(),
+											inner,
+										})?;
+									string.push(char::from_u32(value).unwrap());
+								},
+								_ => string.push(escaped),
+							}
 						},
 						_ => string.push(string_char),
 					}
