@@ -32,10 +32,12 @@ public class LanguageTests extends SofTestSuper {
 	/**
 	 * Directory or package where the SOF source files for the language tests reside.
 	 */
-	public static final String		SOURCE_FOLDER			= "build/out/testbins/klfr/sof/test/source/";
-	public static final Charset	TEST_SOURCE_CHARSET	= Charset.forName("utf-8");
+	public static final String			SOURCE_FOLDER			= "build/out/testbins/klfr/sof/test/source/";
+	public static final Charset		TEST_SOURCE_CHARSET	= Charset.forName("utf-8");
 
-	public static final Logger		log						= Logger.getLogger(LanguageTests.class.getCanonicalName());
+	public static final Set<String>	EXCLUDED_FILES			= Set.of("list.sof");
+
+	public static final Logger			log						= Logger.getLogger(LanguageTests.class.getCanonicalName());
 
 	@DisplayName("SOF language tests from test files")
 	@TestFactory
@@ -49,7 +51,7 @@ public class LanguageTests extends SofTestSuper {
 
 		final var files = Arrays.asList(new File(SOURCE_FOLDER).listFiles());
 		log.log(Level.INFO, () -> String.format("Test source directory contents: %s", files));
-		final var sofFiles = files.stream().map(cs -> cs.toString()).filter(f -> f.toString().endsWith(".sof")).collect(Collectors.toSet());
+		final var sofFiles = files.stream().filter(f -> f.getName().endsWith(".sof") && !EXCLUDED_FILES.contains(f.getName())).collect(Collectors.toSet());
 		log.log(Level.INFO, () -> String.format("SOF source files for testing: %s", sofFiles));
 		final var sofFileIterator = sofFiles.iterator();
 
@@ -64,7 +66,7 @@ public class LanguageTests extends SofTestSuper {
 			public DynamicTest next() {
 				final var file = sofFileIterator.next();
 				try {
-					final var codeReader = new FileReader(new File(file), TEST_SOURCE_CHARSET);
+					final var codeReader = new FileReader(file, TEST_SOURCE_CHARSET);
 					// TODO: magic number 1KiB?
 					final var out = new StringWriter(1024);
 					codeReader.transferTo(out);
@@ -76,7 +78,7 @@ public class LanguageTests extends SofTestSuper {
 							log.info(String.format("Source test %s initializing...", file));
 							final IOInterface iface = new IOInterface(InputStream.nullInputStream(), System.out);
 							final var engine = new Interpreter(iface, nfRegistry);
-							final var codeUnit = Parser.parse(new File(file), code);
+							final var codeUnit = Parser.parse(file, code);
 							final var time = System.nanoTime();
 							CLI.runPreamble(engine);
 							engine.run(codeUnit);
