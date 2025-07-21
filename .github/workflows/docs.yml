@@ -27,7 +27,7 @@ jobs:
             ~/.cargo/git/db/
           key: ${{ runner.os }}
       - name: Install mdbook-spec
-        run: cargo install --git https://github.com/rust-lang/reference mdbook-spec
+        run: cargo install --force --git https://github.com/rust-lang/reference mdbook-spec
       - name: Build documentation
         run: cd docs && mdbook build
       - name: Deploy to GitHub Pages
