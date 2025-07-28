@@ -2,7 +2,6 @@ package klfr.sof.lang.primitive;
 
 import klfr.sof.exceptions.*;
 import klfr.sof.lang.*;
-import klfr.sof.lib.ChurchNumeral;
 
 /**
  * Integer, i.e. whole positive or negative number primitive type.
@@ -127,7 +126,7 @@ public final class IntPrimitive extends Primitive {
     */
    public final IntPrimitive modulus(IntPrimitive other) throws ArithmeticException {
       if (other.value == 0) {
-         throw new ArithmeticException(String.format("Modulus by zero: %f mod %f", this.value, other.value));
+         throw new ArithmeticException(String.format("Modulus by zero: %d mod %d", this.value, other.value));
       }
       return this.value == 0 ? this : createIntPrimitive(this.value % other.value);
    }
@@ -171,8 +170,6 @@ public final class IntPrimitive extends Primitive {
    public boolean equals(Stackable other) {
       if (other instanceof IntPrimitive otherInt) {
          return otherInt.value == this.value;
-      } else if (other instanceof ChurchNumeral numeral) {
-         return this.value == numeral.value();
       }
       return false;
    }

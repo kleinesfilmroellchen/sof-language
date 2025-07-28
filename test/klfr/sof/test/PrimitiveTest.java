@@ -10,7 +10,6 @@ import klfr.sof.lang.BuiltinOperations;
 import klfr.sof.lang.Nametable;
 import klfr.sof.lang.Stackable.DebugStringExtensiveness;
 import klfr.sof.lang.primitive.*;
-import klfr.sof.lib.ChurchNumeral;
 import klfr.sof.exceptions.*;
 
 @DisplayName("Test SOF primitives")
@@ -149,37 +148,14 @@ class PrimitiveTest extends SofTestSuper {
 		final var intPrimitive = IntPrimitive.createIntPrimitive(78l);
 		final var stringPrimitive = StringPrimitive.createStringPrimitive("test");
 		final var boolPrimitive = BoolPrimitive.createBoolPrimitive(true);
-		final var churchNumeral = new ChurchNumeral(89l);
 		assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.add(floatPrimitive, stringPrimitive));
-		assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.divide(intPrimitive, churchNumeral));
 		assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.subtract(boolPrimitive, stringPrimitive));
 		assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.multiply(intPrimitive, boolPrimitive));
 		assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.modulus(floatPrimitive, boolPrimitive));
-		assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.lessThan(churchNumeral, stringPrimitive));
 		assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.lessEqualThan(intPrimitive, stringPrimitive));
 		assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.greaterThan(boolPrimitive, stringPrimitive));
 		assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.greaterEqualThan(intPrimitive, boolPrimitive));
 	}
-
-	@DisplayName("Test Church numerals")
-	@Test
-	void testChurchNumeral() {
-		final var churchNumeral = new ChurchNumeral(17l);
-		assertFalse(IntPrimitive.createIntPrimitive(57l).equals(churchNumeral));
-		assertTrue(churchNumeral.equals(churchNumeral));
-		assertFalse(churchNumeral.equals(new ChurchNumeral(0l)));
-		assertFalse(churchNumeral.equals(new Nametable()));
-		assertTrue(churchNumeral.copy().equals(churchNumeral));
-		assertTrue(churchNumeral.equals(IntPrimitive.createIntPrimitive(churchNumeral.value())));
-		assertFalse(churchNumeral.equals(IntPrimitive.createIntPrimitive(0l)));
-		assertTrue(churchNumeral.compareTo(IntPrimitive.createIntPrimitive(10l)) > 0);
-		assertTrue(churchNumeral.compareTo(new ChurchNumeral(200)) < 0);
-		assertTrue(churchNumeral.isTrue());
-		assertFalse(churchNumeral.isFalse());
-		assertFalse(new ChurchNumeral(0l).isTrue());
-		assertTrue(new ChurchNumeral(0l).isFalse());
-	}
-
 }
 
 /*  

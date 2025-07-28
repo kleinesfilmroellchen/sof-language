@@ -161,23 +161,6 @@ public final class Builtins {
 	}
 
 	/**
-	 * Implements SOF's convert:callable builtin function.
-	 * 
-	 * @param toConvert The value to convert to callable.
-	 * @return An callable that was converted from the given value.
-	 * @throws IncompleteCompilerException If the value cannot be converted.
-	 */
-	public static Stackable convertCallable(Stackable toConvert) throws IncompleteCompilerException {
-		if (toConvert instanceof CodeBlock || toConvert instanceof Function) {
-			return toConvert;
-		} else if (toConvert instanceof IntPrimitive integer) {
-			return new ChurchNumeral(integer.value());
-		}
-
-		throw new IncompleteCompilerException("type");
-	}
-
-	/**
 	 * Implements SOF's convert:string builtin function.
 	 * 
 	 * @param toConvert The value to convert to string.

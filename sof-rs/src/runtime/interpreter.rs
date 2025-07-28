@@ -1,6 +1,7 @@
 use std::cell::LazyCell;
 use std::sync::Arc;
 
+use flexstr::SharedStr;
 use gc_arena::lock::{GcRefLock, RefLock};
 use gc_arena::{Arena, Mutation};
 use log::{debug, info, trace};
@@ -313,6 +314,20 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 			stack.push(result);
 			no_action()
 		},
+		InnerToken::Command(Command::Cat) => {
+			let rhs = stack.pop(token.span)?;
+			let lhs = stack.pop(token.span)?;
+			let (Stackable::String(lhs), Stackable::String(rhs)) = (&rhs, &lhs) else {
+				return Err(Error::InvalidTypes {
+					operation: Command::Cat,
+					lhs:       lhs.to_string().into(),
+					rhs:       rhs.to_string().into(),
+					span:      token.span,
+				});
+			};
+			stack.push(Stackable::String(SharedStr::from(format!("{rhs}{lhs}"))));
+			no_action()
+		},
 		InnerToken::Command(Command::Assert) => {
 			let value = stack.pop(token.span)?;
 			if matches!(value, Stackable::Boolean(false)) {
@@ -593,6 +608,16 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 		},
 		InnerToken::Command(Command::Describe) => {
 			info!("{:#?}", stack.raw_peek());
+			no_action()
+		},
+		InnerToken::Command(Command::Write) => {
+			let printable = stack.pop(token.span)?;
+			print!("{printable}");
+			no_action()
+		},
+		InnerToken::Command(Command::Writeln) => {
+			let printable = stack.pop(token.span)?;
+			println!("{printable}");
 			no_action()
 		},
 		InnerToken::Command(Command::Switch) => {

@@ -21,7 +21,7 @@ public class SofTestSuper {
    private static boolean       hasRunInit = false;
 
    @BeforeAll
-   public static void hyperSetup() throws Exception {
+   public static void superSetup() throws Exception {
       if (hasRunInit)
          return;
 

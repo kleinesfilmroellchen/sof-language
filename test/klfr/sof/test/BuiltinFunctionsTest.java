@@ -70,6 +70,48 @@ class BuiltinFunctionsTest extends SofTestSuper {
 	}
 
 	@Test
+	@DisplayName("Test type-incompatible operations")
+	void testInvalidOperations() {
+		final var decimal = FloatPrimitive.createFloatPrimitive(2.0);
+		final var integer = IntPrimitive.createIntPrimitive(2l);
+		final var string = StringPrimitive.createStringPrimitive("null");
+		final var bool = BoolPrimitive.createBoolPrimitive(true);
+		final var list = new ListPrimitive(List.of());
+
+		final var primitives = List.of(decimal, integer, string, bool, list);
+		for (final var lhs : primitives) {
+			for (final var rhs : primitives) {
+				if (lhs == rhs)
+					continue;
+				// arithmetic across numeric types is allowed
+				if (!((lhs instanceof FloatPrimitive || lhs instanceof IntPrimitive) && (rhs instanceof FloatPrimitive || rhs instanceof IntPrimitive))) {
+					assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.add(rhs, lhs), "+");
+					assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.subtract(rhs, lhs), "-");
+					assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.divide(rhs, lhs), "/");
+					assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.multiply(rhs, lhs), "*");
+					assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.modulus(rhs, lhs), "%");
+					assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.lessThan(rhs, lhs), "<");
+					assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.greaterThan(rhs, lhs), ">");
+					assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.greaterEqualThan(rhs, lhs), ">=");
+					assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.lessEqualThan(rhs, lhs), "<=");
+				}
+
+				assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.bitShiftLeft(rhs, lhs), "<<");
+				assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.bitShiftRight(rhs, lhs), ">>");
+			}
+		}
+	}
+
+	@Test
+	@DisplayName("Test divide by zero")
+	void testDivByZero() {
+		assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.divide(FloatPrimitive.createFloatPrimitive(2.0), FloatPrimitive.createFloatPrimitive(0.0)));
+		assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.modulus(FloatPrimitive.createFloatPrimitive(2.0), FloatPrimitive.createFloatPrimitive(0.0)));
+		assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.divide(IntPrimitive.createIntPrimitive(2l), IntPrimitive.createIntPrimitive(0l)));
+		assertThrows(IncompleteCompilerException.class, () -> BuiltinOperations.modulus(IntPrimitive.createIntPrimitive(2l), IntPrimitive.createIntPrimitive(0l)));
+	}
+
+	@Test
 	@DisplayName("Test formatting helper function fullDoubleToString()")
 	void testDoubleToString() {
 		assertEquals("0.000000000000", fullDoubleToString(0d), "Zero tostring");
@@ -157,17 +199,6 @@ class BuiltinFunctionsTest extends SofTestSuper {
 	@DisplayName("Test formatting functions - Newline")
 	void testFmtNewline() {
 		assertEquals(System.lineSeparator(), Formatting.handleFormatter("%n", 0, new Stackable[] {}).getRight(), "Newline format specifier");
-	}
-
-	@Test
-	@DisplayName("Test Callable conversion function")
-	void testConvertCallable() {
-		final var cb = new CodeBlock(new TokenListNode(List.of(), 0, new SOFFile(new File("."), "mock", null)));
-		final var function = Function.fromCodeBlock(cb, 0, new Nametable());
-		final var cbAgain = assertDoesNotThrow(() -> Builtins.convertCallable(cb));
-		assertEquals(cb, cbAgain);
-		final var functionAgain = assertDoesNotThrow(() -> Builtins.convertCallable(function));
-		assertEquals(function, functionAgain);
 	}
 
 	@Test

@@ -709,6 +709,23 @@ public class Interpreter implements Serializable {
 				throw new IncompleteCompilerException("name", id);
 			this.stack.push(val);
 			return true;
+		} else if (toCall instanceof IntPrimitive numeral) {
+			final var callCount = numeral.value();
+			final var toCallRepeatedly = this.stack.pop();
+			for (int i = 0; i < callCount; ++i) {
+				final var result = this.doCall(toCallRepeatedly, scope);
+				if (!result)
+					return false;
+			}
+			return true;
+		} else if (toCall instanceof BoolPrimitive bool) {
+			final var trueCallable = this.stack.pop();
+			final var falseCallable = this.stack.pop();
+			if (bool.value()) {
+				return this.doCall(trueCallable, scope);
+			} else {
+				return this.doCall(falseCallable, scope);
+			}
 		} else if (toCall instanceof Primitive) {
 			this.stack.push(toCall);
 			return true;
@@ -801,15 +818,6 @@ public class Interpreter implements Serializable {
 			final var subProgram = codeblock.code;
 			// just run, no return value, no stack protect
 			return subProgram.forEach((Node.ForEachType) this::handle);
-		} else if (toCall instanceof ChurchNumeral numeral) {
-			final var callCount = numeral.value();
-			final var toCallRepeatedly = this.stack.pop();
-			for (int i = 0; i < callCount; ++i) {
-				final var result = this.doCall(toCallRepeatedly, scope);
-				if (!result)
-					return false;
-			}
-			return true;
 		} else
 			throw new IncompleteCompilerException("call", "type.call", toCall.typename());
 	}

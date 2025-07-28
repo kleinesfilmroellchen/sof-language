@@ -7,8 +7,6 @@
 
 { "klfr.sof.lib.Builtins#convertFloat(Stackable)" nativecall return } 1 function convert:decimal globaldef
 
-{ "klfr.sof.lib.Builtins#convertCallable(Stackable)" nativecall return } 1 function convert:callable globaldef
-
 { "klfr.sof.lib.Builtins#convertString(Stackable)" nativecall return } 1 function convert:string globaldef
 
 { "klfr.sof.lib.Builtins#random01()" nativecall return } 0 function random:01 globaldef

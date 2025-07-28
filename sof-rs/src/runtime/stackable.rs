@@ -370,7 +370,7 @@ impl Display for Stackable<'_> {
 			Stackable::Decimal(dec) => write!(f, "{dec}"),
 			Stackable::Boolean(boolean) => write!(f, "{boolean}"),
 			Stackable::Identifier(identifier) => write!(f, "{identifier}"),
-			Stackable::String(string) => write!(f, "\"{string}\""),
+			Stackable::String(string) => write!(f, "{string}"),
 			Stackable::CodeBlock(cb) => write!(f, "[CodeBlock {}n ]", cb.borrow().code.len()),
 			Stackable::Function(func) => {
 				write!(f, "[Function/{} {}n ]", func.borrow().arguments, func.borrow().code.len())

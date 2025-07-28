@@ -102,7 +102,10 @@ public final class FloatPrimitive extends Primitive {
 	 * @see BuiltinOperations#divide(Stackable, Stackable)
 	 */
 	public final FloatPrimitive divide(FloatPrimitive other) throws ArithmeticException {
-		return other.v == 0 ? this : createFloatPrimitive(this.v / other.v);
+		if (other.v == 0) {
+			throw new ArithmeticException("divide by zero");
+		}
+		return createFloatPrimitive(this.v / other.v);
 	}
 
 	/**

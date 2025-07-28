@@ -34,19 +34,19 @@ macro_rules! file_tests {
 file_tests! {
 	arithmetic,
 	boolean,
+	callability,
 	codeblock,
 	comparison,
 	controlflow,
-	convert_callable,
 	define,
 	function,
 	list,
 	miscellaneous,
 	modules,
+	nativecall,
 	objects,
 	string,
 	test_preamble,
-	nativecall,
 }
 
 mod bench {

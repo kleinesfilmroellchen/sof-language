@@ -41,6 +41,9 @@
 69.420 42 >= assert # *greater equal
 69.0 69.0 >= assert # greater *equal
 
+[ 1 2 3 ] [ 1 2 3 ] = assert
+[ 1 2 3 ] [ 2 3 ] /= assert
+
 # The SOF programming language interpreter.
 # Copyright (C) 2019-2020  kleinesfilmröllchen
 

@@ -272,10 +272,7 @@ public final class BuiltinOperations {
 		try {
 			return BoolPrimitive.createBoolPrimitive(a.compareTo(b) < 0);
 		} catch (RuntimeException e) {
-			if (IncompleteCompilerException.class.isAssignableFrom(e.getCause().getClass())) {
-				throw (IncompleteCompilerException) e.getCause();
-			}
-			throw e;
+			throw (IncompleteCompilerException) e.getCause();
 		}
 	}
 
@@ -292,10 +289,7 @@ public final class BuiltinOperations {
 		try {
 			return BoolPrimitive.createBoolPrimitive(a.compareTo(b) > 0);
 		} catch (RuntimeException e) {
-			if (IncompleteCompilerException.class.isAssignableFrom(e.getCause().getClass())) {
-				throw (IncompleteCompilerException) e.getCause();
-			}
-			throw e;
+			throw (IncompleteCompilerException) e.getCause();
 		}
 	}
 
@@ -312,10 +306,7 @@ public final class BuiltinOperations {
 		try {
 			return BoolPrimitive.createBoolPrimitive(a.compareTo(b) >= 0);
 		} catch (RuntimeException e) {
-			if (IncompleteCompilerException.class.isAssignableFrom(e.getCause().getClass())) {
-				throw (IncompleteCompilerException) e.getCause();
-			}
-			throw e;
+			throw (IncompleteCompilerException) e.getCause();
 		}
 	}
 
@@ -332,10 +323,7 @@ public final class BuiltinOperations {
 		try {
 			return BoolPrimitive.createBoolPrimitive(a.compareTo(b) <= 0);
 		} catch (RuntimeException e) {
-			if (IncompleteCompilerException.class.isAssignableFrom(e.getCause().getClass())) {
-				throw (IncompleteCompilerException) e.getCause();
-			}
-			throw e;
+			throw (IncompleteCompilerException) e.getCause();
 		}
 	}
 
