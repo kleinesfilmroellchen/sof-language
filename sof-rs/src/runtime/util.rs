@@ -27,6 +27,7 @@ unsafe impl Collect for SwitchCases<'_> {
 }
 #[derive(Collect, Debug, Clone)]
 #[collect(no_drop)]
+#[allow(clippy::large_enum_variant)]
 pub enum UtilityData<'gc> {
 	While {
 		body:                 Stackable<'gc>,

@@ -1,4 +1,4 @@
-use std::cell::LazyCell;
+use std::sync::LazyLock;
 
 use ahash::HashMapExt;
 use gc_arena::{Collect, Gc, Mutation};
@@ -7,7 +7,7 @@ use smallvec::{SmallVec, smallvec};
 
 use crate::error::Error;
 use crate::identifier::Identifier;
-use crate::runtime::stackable::BuiltinMethodRegistry;
+use crate::runtime::stackable::{BuiltinMethod, BuiltinMethodRegistry, RegistryExt};
 use crate::runtime::{Stack, Stackable};
 
 pub type ListVec<'gc> = SmallVec<[Stackable<'gc>; 15]>;
@@ -17,7 +17,7 @@ pub struct List<'gc> {
 	pub(crate) list: ListVec<'gc>,
 }
 
-unsafe impl<'gc> Collect for List<'gc> {
+unsafe impl Collect for List<'_> {
 	fn needs_trace() -> bool
 	where
 		Self: Sized,
@@ -33,34 +33,52 @@ unsafe impl<'gc> Collect for List<'gc> {
 }
 
 impl<'gc> List<'gc> {
-	pub const REGISTRY: LazyCell<BuiltinMethodRegistry<'gc, List<'gc>>> = LazyCell::new(|| {
-		let mut registry = BuiltinMethodRegistry::new();
-		registry.insert(Identifier::new("idx"), idx);
-		registry.insert(Identifier::new("length"), length);
-		registry.insert(Identifier::new("head"), head);
-		registry.insert(Identifier::new("first"), head);
-		registry.insert(Identifier::new("second"), second);
-		registry.insert(Identifier::new("tail"), tail);
-		registry.insert(Identifier::new("take"), take);
-		registry.insert(Identifier::new("after"), after);
-		registry.insert(Identifier::new("reverse"), reverse);
-		registry.insert(Identifier::new("split"), split);
-		registry.insert(Identifier::new("push"), push);
-		registry
-	});
-
 	pub fn new(list: ListVec<'gc>, mc: &Mutation<'gc>) -> Gc<'gc, Self> {
 		Gc::new(mc, Self { list })
 	}
 }
 
-fn get_index<'gc>(stack: &mut Stack<'gc>, len: usize, span: SourceSpan) -> Result<usize, Error> {
+type FuckedListFunction<'gc> = for<'a, 'b, 'c> fn(
+	this: &'a List<'gc>,
+	stack: &'b mut Stack<'gc>,
+	_mc: &'c Mutation<'gc>,
+	span: SourceSpan,
+) -> Result<Option<Stackable<'gc>>, Error>;
+
+fn unfuck_list_function(func: FuckedListFunction<'_>) -> BuiltinMethod<List<'_>> {
+	// SAFETY: Early and late bound lifetimes do not matter for static functions. ABIs are compatible.
+	unsafe { std::mem::transmute(func) }
+}
+
+impl List<'_> {
+	pub fn get_builtin_method<'gc>(id: &Identifier, span: SourceSpan) -> Result<BuiltinMethod<List<'gc>>, Error> {
+		static REGISTRY: LazyLock<BuiltinMethodRegistry<List<'_>>> = LazyLock::new(|| {
+			let mut registry = BuiltinMethodRegistry::new();
+			registry.insert(Identifier::new("idx"), unfuck_list_function(idx));
+			registry.insert(Identifier::new("length"), unfuck_list_function(length));
+			registry.insert(Identifier::new("head"), unfuck_list_function(head));
+			registry.insert(Identifier::new("first"), unfuck_list_function(head));
+			registry.insert(Identifier::new("second"), unfuck_list_function(second));
+			registry.insert(Identifier::new("tail"), unfuck_list_function(tail));
+			registry.insert(Identifier::new("take"), unfuck_list_function(take));
+			registry.insert(Identifier::new("after"), unfuck_list_function(after));
+			registry.insert(Identifier::new("reverse"), unfuck_list_function(reverse));
+			registry.insert(Identifier::new("split"), unfuck_list_function(split));
+			registry.insert(Identifier::new("push"), unfuck_list_function(push));
+			registry
+		});
+		// SAFETY: Early and late bound lifetimes do not matter for static functions.
+		unsafe { std::mem::transmute(REGISTRY.get_builtin_method(id, span)) }
+	}
+}
+
+fn get_index(stack: &mut Stack<'_>, len: usize, span: SourceSpan) -> Result<usize, Error> {
 	let index = stack.pop(span)?;
 	let Stackable::Integer(mut index) = index else {
 		return Err(Error::InvalidTypeNative { name: "list index".into(), value: index.to_string().into(), span });
 	};
 	if index < 0 {
-		index = len as i64 + index;
+		index += len as i64;
 	}
 	if index < 0 || index as usize >= len {
 		return Err(Error::IndexOutOfBounds { index: index as usize, len, span });
@@ -112,7 +130,7 @@ fn second<'gc>(
 	_mc: &Mutation<'gc>,
 	span: SourceSpan,
 ) -> Result<Option<Stackable<'gc>>, Error> {
-	Ok(Some(this.list.iter().nth(1).cloned().ok_or_else(|| Error::IndexOutOfBounds { index: 0, len: 0, span })?))
+	Ok(Some(this.list.get(1).cloned().ok_or_else(|| Error::IndexOutOfBounds { index: 0, len: 0, span })?))
 }
 
 fn take<'gc>(

@@ -168,11 +168,10 @@ macro_rules! call_builtin_function {
 		use std::borrow::Borrow;
 
 		use $crate::error::Error;
-		use $crate::runtime::stackable::RegistryExt;
 		#[allow(unused)]
 		use $crate::runtime::stackable::builtins::{Boolean, Decimal, Integer, String};
 
-		let method = $builtin_type::REGISTRY.get_builtin_method(&$id, $span)?;
+		let method = $builtin_type::get_builtin_method(&$id, $span)?;
 		let value = $stack.pop($span)?;
 		let Stackable::$builtin_type(ref inner) = value else {
 			return Err(Error::InvalidType {
@@ -436,7 +435,7 @@ pub enum BuiltinType {
 /// This type is generic over the GC arena lifetime (early-bound), but must accept any lifetime for the borrows of the
 /// receiver and stack (late-bound).
 #[allow(type_alias_bounds)]
-pub type BuiltinMethod<'gc, This: 'gc> = for<'a, 'b, 'c> fn(
+pub type BuiltinMethod<This> = for<'a, 'b, 'c, 'gc> fn(
 	&'a This,
 	&'b mut Stack<'gc>,
 	&'c Mutation<'gc>,
@@ -445,62 +444,76 @@ pub type BuiltinMethod<'gc, This: 'gc> = for<'a, 'b, 'c> fn(
 
 /// Registry for builtin methods belonging to a primitive type.
 #[allow(type_alias_bounds)]
-pub type BuiltinMethodRegistry<'gc, This: 'gc> = HashMap<Identifier, BuiltinMethod<'gc, This>>;
+pub type BuiltinMethodRegistry<This> = HashMap<Identifier, BuiltinMethod<This>>;
 
-pub trait RegistryExt<'gc, This> {
-	fn get_builtin_method(&self, id: &Identifier, span: SourceSpan) -> Result<BuiltinMethod<'gc, This>, Error>
-	where
-		Self: 'gc;
+pub trait RegistryExt<This> {
+	fn get_builtin_method(&self, id: &Identifier, span: SourceSpan) -> Result<BuiltinMethod<This>, Error>;
 }
 
-impl<'gc, This> RegistryExt<'gc, This> for BuiltinMethodRegistry<'gc, This> {
-	fn get_builtin_method(&self, id: &Identifier, span: SourceSpan) -> Result<BuiltinMethod<'gc, This>, Error> {
-		self.get(&id).ok_or_else(|| Error::UndefinedValue { name: id.clone(), span }).cloned()
+impl<This> RegistryExt<This> for BuiltinMethodRegistry<This> {
+	fn get_builtin_method(&self, id: &Identifier, span: SourceSpan) -> Result<BuiltinMethod<This>, Error> {
+		self.get(id).ok_or_else(|| Error::UndefinedValue { name: id.clone(), span }).cloned()
 	}
 }
 
+#[allow(non_snake_case)]
 pub(crate) mod builtins {
-	use std::marker::PhantomData;
 
-	use ahash::HashMapExt;
+	pub mod Decimal {
+		use ahash::HashMapExt;
 
-	// HACK: since BuiltinMethodRegistry must take a lifetime parameter, we must have a REGISTRY constant that is valid
-	// for *any* lifetime 'gc, not just for 'static (even though these types are all 'static). Therefore, introduce
-	// something like a higher-ranked trait bound by making some dummy structs with lifetime parameters and defining the
-	// constant in their impl (which is generic over all lifetimes). Ideally there would only be small modules here, one
-	// for each builtin.
-	pub(crate) struct Decimal<'gc>(PhantomData<&'gc ()>);
-	pub(crate) struct Integer<'gc>(PhantomData<&'gc ()>);
-	pub(crate) struct Boolean<'gc>(PhantomData<&'gc ()>);
-	pub(crate) struct String<'gc>(PhantomData<&'gc ()>);
-
-	impl<'gc> Decimal<'gc> {
-		pub const REGISTRY: std::cell::LazyCell<super::BuiltinMethodRegistry<'gc, f64>> =
-			std::cell::LazyCell::new(|| {
-				let registry = super::BuiltinMethodRegistry::new();
-				registry
-			});
+		use crate::runtime::stackable::{BuiltinMethod, BuiltinMethodRegistry, RegistryExt};
+		use crate::{error, identifier};
+		pub fn get_builtin_method(
+			id: &identifier::Identifier,
+			span: miette::SourceSpan,
+		) -> Result<BuiltinMethod<f64>, error::Error> {
+			pub static REGISTRY: std::sync::LazyLock<BuiltinMethodRegistry<f64>> =
+				std::sync::LazyLock::new(|| BuiltinMethodRegistry::new());
+			REGISTRY.get_builtin_method(id, span)
+		}
 	}
-	impl<'gc> Integer<'gc> {
-		pub const REGISTRY: std::cell::LazyCell<super::BuiltinMethodRegistry<'gc, i64>> =
-			std::cell::LazyCell::new(|| {
-				let registry = super::BuiltinMethodRegistry::new();
-				registry
-			});
+	pub mod Integer {
+		use ahash::HashMapExt;
+
+		use crate::identifier;
+		use crate::runtime::stackable::{BuiltinMethod, BuiltinMethodRegistry, Error, RegistryExt};
+		pub fn get_builtin_method(
+			id: &identifier::Identifier,
+			span: miette::SourceSpan,
+		) -> Result<BuiltinMethod<i64>, Error> {
+			pub static REGISTRY: std::sync::LazyLock<BuiltinMethodRegistry<i64>> =
+				std::sync::LazyLock::new(|| BuiltinMethodRegistry::new());
+			REGISTRY.get_builtin_method(id, span)
+		}
 	}
-	impl<'gc> Boolean<'gc> {
-		pub const REGISTRY: std::cell::LazyCell<super::BuiltinMethodRegistry<'gc, bool>> =
-			std::cell::LazyCell::new(|| {
-				let registry = super::BuiltinMethodRegistry::new();
-				registry
-			});
+	pub mod Boolean {
+		use ahash::HashMapExt;
+
+		use crate::identifier;
+		use crate::runtime::stackable::{BuiltinMethod, BuiltinMethodRegistry, Error, RegistryExt};
+		pub fn get_builtin_method(
+			id: &identifier::Identifier,
+			span: miette::SourceSpan,
+		) -> Result<BuiltinMethod<bool>, Error> {
+			pub static REGISTRY: std::sync::LazyLock<BuiltinMethodRegistry<bool>> =
+				std::sync::LazyLock::new(|| BuiltinMethodRegistry::new());
+			REGISTRY.get_builtin_method(id, span)
+		}
 	}
 
-	impl<'gc> String<'gc> {
-		pub const REGISTRY: std::cell::LazyCell<super::BuiltinMethodRegistry<'gc, flexstr::SharedStr>> =
-			std::cell::LazyCell::new(|| {
-				let registry = super::BuiltinMethodRegistry::new();
-				registry
-			});
+	pub mod String {
+		use ahash::HashMapExt;
+
+		use crate::identifier;
+		use crate::runtime::stackable::{BuiltinMethod, BuiltinMethodRegistry, Error, RegistryExt};
+		pub fn get_builtin_method(
+			id: &identifier::Identifier,
+			span: miette::SourceSpan,
+		) -> Result<BuiltinMethod<flexstr::SharedStr>, Error> {
+			pub static REGISTRY: std::sync::LazyLock<BuiltinMethodRegistry<flexstr::SharedStr>> =
+				std::sync::LazyLock::new(|| BuiltinMethodRegistry::new());
+			REGISTRY.get_builtin_method(id, span)
+		}
 	}
 }

@@ -1,5 +1,5 @@
 use std::cell::LazyCell;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 
 use flexstr::SharedStr;
 use gc_arena::lock::{GcRefLock, RefLock};
@@ -621,7 +621,7 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 			no_action()
 		},
 		InnerToken::Command(Command::Switch) => {
-			const SWITCH_MARKER: LazyCell<Identifier> = LazyCell::new(|| Identifier::new("switch::"));
+			static SWITCH_MARKER: LazyLock<Identifier> = LazyLock::new(|| Identifier::new("switch::"));
 			let default_case = stack.pop(token.span)?;
 			let mut cases = SwitchCases(SmallVec::new());
 			loop {
