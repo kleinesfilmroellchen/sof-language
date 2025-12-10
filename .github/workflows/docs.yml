@@ -31,7 +31,7 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-          key: ${{ steps.toolchain.outputs.cachekey }}
+          key: ${{ runner.os }}-${{ steps.toolchain.outputs.cachekey }}
       - name: Install mdbook-spec
         run: cargo install --force --git 'https://github.com/rust-lang/reference' mdbook-spec
       - name: Build documentation
