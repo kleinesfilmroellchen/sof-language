@@ -79,6 +79,19 @@ fn main() -> miette::Result<()> {
 	}))?;
 	env_logger::Builder::from_default_env().filter_level(log::LevelFilter::Info).init();
 
+	let cwd = std::env::current_dir().map_err(|err| {
+		miette! {
+			code = "IOError",
+			"could not determine current directory: {err}"
+		}
+	})?;
+	let library_path = cwd.join("../lib").canonicalize().map_err(|err| {
+		miette! {
+			code = "IOError",
+			"could not determine standard library path: {err}"
+		}
+	})?;
+
 	if let Some(filename) = std::env::args().nth(1) {
 		let readable_filename = file_name_for(Path::new(filename.as_str()));
 		info!("sof version {} (sof-rs), main file is {readable_filename}", env!("CARGO_PKG_VERSION"),);
@@ -88,18 +101,12 @@ fn main() -> miette::Result<()> {
 				"could not read source file {readable_filename}: {err}"
 			}
 		})?;
-		let result = sof_main(&code, Path::new(&filename));
+		let result = sof_main(&code, Path::new(&filename), library_path);
 		match result {
 			Ok(()) => Ok(()),
 			Err(why) => Err(why.with_source_code(NamedSource::new(readable_filename, code))),
 		}
 	} else {
-		let cwd = std::env::current_dir().map_err(|err| {
-			miette! {
-				code = "IOError",
-				"could not determine current directory: {err}"
-			}
-		})?;
 		let fake_filename = cwd.join(".repl-input.sof");
 
 		let mut rl =
@@ -107,13 +114,13 @@ fn main() -> miette::Result<()> {
 				.unwrap();
 		println!("sof version {} (sof-rs)", env!("CARGO_PKG_VERSION"));
 
-		let mut arena = new_arena();
+		let mut arena = new_arena(&library_path);
 
 		loop {
 			let readline = rl.readline(">>> ");
 			match readline {
 				Ok(line) => {
-					let result = run_code_on_arena(line, &fake_filename, &mut arena);
+					let result = run_code_on_arena(line, &fake_filename, &mut arena, &library_path);
 					if let Err(why) = result {
 						println!("{why:?}");
 					}
@@ -130,21 +137,26 @@ fn main() -> miette::Result<()> {
 	}
 }
 
-fn run_code_on_arena(code: impl AsRef<str>, path: &Path, arena: &mut StackArena) -> miette::Result<()> {
+fn run_code_on_arena(
+	code: impl AsRef<str>,
+	path: &Path,
+	arena: &mut StackArena,
+	library_path: impl Into<PathBuf>,
+) -> miette::Result<()> {
 	let result = parser::lexer::lex(code)?;
 	let parsed = Arc::new(parser::parse(result)?);
 	debug!("parsed code as {parsed:#?}");
-	run_on_arena(arena, parsed, path)?;
+	run_on_arena(arena, parsed, path, library_path)?;
 	Ok(())
 }
 
-fn sof_main(code: impl AsRef<str>, path: &Path) -> miette::Result<()> {
+fn sof_main(code: impl AsRef<str>, path: &Path, library_path: impl Into<PathBuf>) -> miette::Result<()> {
 	let start_time = time::Instant::now();
 	let lexed = parser::lexer::lex(code)?;
 	debug!(target: "sof::lexer", "lexed: {lexed:#?}");
 	let parsed = Arc::new(parser::parse(lexed)?);
 	debug!(target: "sof::parser", "parsed: {parsed:#?}");
-	let metrics = run(parsed, path)?;
+	let metrics = run(parsed, path, &library_path.into())?;
 	let end_time = time::Instant::now();
 
 	info!(

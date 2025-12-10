@@ -29,7 +29,7 @@ pub enum Stackable<'gc> {
 	Identifier(#[collect(require_static)] Identifier),
 	String(#[collect(require_static)] SharedStr),
 	CodeBlock(Gc<'gc, CodeBlock>),
-	Function(Gc<'gc, Function>),
+	Function(Gc<'gc, Function<'gc>>),
 	CurriedFunction(GcRefLock<'gc, CurriedFunction<'gc>>),
 	BuiltinFunction {
 		#[collect(require_static)]
@@ -55,16 +55,18 @@ pub struct CodeBlock {
 }
 
 #[derive(Debug, Collect, PartialEq, Clone)]
-#[collect(require_static)]
-pub struct Function {
-	arguments:      usize,
-	is_constructor: bool,
-	code:           TokenVec,
+#[collect(no_drop)]
+pub struct Function<'gc> {
+	arguments:                      usize,
+	is_constructor:                 bool,
+	#[collect(require_static)]
+	code:                           TokenVec,
+	global_nametable_at_definition: GcRefLock<'gc, Nametable<'gc>>,
 }
 
-impl Function {
-	pub fn new(arguments: usize, code: TokenVec) -> Self {
-		Self { arguments, is_constructor: false, code }
+impl<'gc> Function<'gc> {
+	pub fn new(arguments: usize, code: TokenVec, current_global_nametable: GcRefLock<'gc, Nametable<'gc>>) -> Self {
+		Self { arguments, is_constructor: false, code, global_nametable_at_definition: current_global_nametable }
 	}
 }
 
@@ -73,7 +75,7 @@ pub type CurriedArguments<'gc> = SmallVec<[Stackable<'gc>; 8]>;
 #[derive(Debug, Clone)]
 pub struct CurriedFunction<'gc> {
 	curried_arguments: CurriedArguments<'gc>,
-	function:          Gc<'gc, Function>,
+	function:          Gc<'gc, Function<'gc>>,
 }
 
 impl CurriedFunction<'_> {
@@ -311,14 +313,27 @@ impl<'gc> Stackable<'gc> {
 					stack.push(Stackable::CurriedFunction(GcRefLock::new(mc, RefLock::new(curried_function))));
 					Ok(smallvec![])
 				} else {
-					assert!(!function.is_constructor, "constructor not implemented");
-					// insert nametable below arguments
-					let function_nametable = GcRefLock::new(mc, RefLock::new(Nametable::new(NametableType::Function)));
-					stack.insert_nametable_at(function.arguments, function_nametable, span)?;
-					Ok(smallvec![InterpreterAction::ExecuteCall {
-						code:            function.code.clone(),
-						return_behavior: CallReturnBehavior::FunctionCall,
-					}])
+					// TODO: try block
+					(|| {
+						if function.is_constructor {
+							todo!("constructor functions");
+						}
+						// insert nametable below arguments
+						let function_nametable =
+							GcRefLock::new(mc, RefLock::new(Nametable::new(NametableType::Function)));
+						stack.insert_nametable_at(function.arguments, function_nametable)?;
+						// additionally insert function’s global nametable temporarily.
+						// TOOD: only do this if function is from a module; shouldn’t impact performance much tho.
+						stack.insert_function_specific_global_nametable(
+							function.arguments + 1,
+							function.global_nametable_at_definition,
+						);
+						Ok(smallvec![InterpreterAction::ExecuteCall {
+							code:            function.code.clone(),
+							return_behavior: CallReturnBehavior::FunctionCall,
+						}])
+					})()
+					.map_err(|()| Error::NotEnoughArguments { argument_count: function.arguments, span })
 				}
 			},
 			Stackable::CurriedFunction(curried_function) => {
@@ -342,7 +357,14 @@ impl<'gc> Stackable<'gc> {
 					}
 					// insert nametable below arguments
 					let function_nametable = GcRefLock::new(mc, RefLock::new(Nametable::new(NametableType::Function)));
-					stack.insert_nametable_at(function.arguments, function_nametable, span)?;
+					stack
+						.insert_nametable_at(function.arguments, function_nametable)
+						.map_err(|_| Error::NotEnoughArguments { argument_count: function.arguments, span })?;
+					// additionally insert function’s global nametable temporarily.
+					stack.insert_function_specific_global_nametable(
+						function.arguments + 1,
+						function.global_nametable_at_definition,
+					);
 					Ok(smallvec![InterpreterAction::ExecuteCall {
 						code:            function.code.clone(),
 						return_behavior: CallReturnBehavior::FunctionCall,
@@ -383,7 +405,7 @@ impl Display for Stackable<'_> {
 				)
 			},
 			Stackable::Object(_) => write!(f, "[Object]"),
-			Stackable::Nametable(nt) => write!(f, "NT[{}]", nt.borrow().entries.len()),
+			Stackable::Nametable(nt) => Display::fmt(&nt.borrow(), f),
 			Stackable::ListStart => write!(f, "["),
 			Stackable::Curry => write!(f, "|"),
 			Stackable::List(list) => {

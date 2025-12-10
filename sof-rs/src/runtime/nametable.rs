@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::Display;
 
 use gc_arena_derive::Collect;
 use miette::SourceSpan;
@@ -57,6 +58,20 @@ impl<'gc> Nametable<'gc> {
 		debug_assert!(module_nametable.kind == NametableType::Module);
 		for (k, v) in &module_nametable.exported_names {
 			self.entries.insert(k.clone(), v.clone());
+		}
+	}
+}
+
+impl Display for Nametable<'_> {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		if f.alternate() {
+			write!(f, "NT[{}] [", self.entries.len())?;
+			for (name, value) in &self.entries {
+				write!(f, "\n\t{name} -> {value}")?;
+			}
+			write!(f, "\n]")
+		} else {
+			write!(f, "NT[{}]", self.entries.len())
 		}
 	}
 }

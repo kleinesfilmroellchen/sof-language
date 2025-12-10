@@ -59,6 +59,7 @@ where
 			lexer::RawToken::Keyword(lexer::Keyword::CodeBlockEnd) => {
 				return Err(Error::UnclosedCodeBlock { start_span: span, end_span: None });
 			},
+
 			// desugar convenience commands into two separate tokens to simplify interpreter
 			lexer::RawToken::Keyword(lexer::Keyword::DoubleCall) => {
 				output.extend_from_slice(&[Token { inner: InnerToken::Command(Command::Call), span }, Token {
@@ -66,6 +67,7 @@ where
 					span,
 				}]);
 			},
+
 			lexer::RawToken::Keyword(keyword) =>
 				output.push(Token { inner: InnerToken::Command(Command::from_keyword_checked(*keyword)), span }),
 		}

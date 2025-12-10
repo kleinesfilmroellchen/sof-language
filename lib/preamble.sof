@@ -3,27 +3,27 @@
 { } id dexport
 { pop return } 2 function const dexport
 
-{ "klfr.sof.lib.Builtins#convertInt(Stackable)" nativecall return } 1 function convert:int globaldef
+{ "klfr.sof.lib.Builtins#convertInt(Stackable)" nativecall return } 1 function convert:int dexport
 
-{ "klfr.sof.lib.Builtins#convertFloat(Stackable)" nativecall return } 1 function convert:decimal globaldef
+{ "klfr.sof.lib.Builtins#convertFloat(Stackable)" nativecall return } 1 function convert:decimal dexport
 
-{ "klfr.sof.lib.Builtins#convertString(Stackable)" nativecall return } 1 function convert:string globaldef
+{ "klfr.sof.lib.Builtins#convertString(Stackable)" nativecall return } 1 function convert:string dexport
 
-{ "klfr.sof.lib.Builtins#random01()" nativecall return } 0 function random:01 globaldef
+{ "klfr.sof.lib.Builtins#random01()" nativecall return } 0 function random:01 dexport
 
-{ "klfr.sof.lib.Builtins#random(IntPrimitive,IntPrimitive)" nativecall return } 2 function random:int globaldef
+{ "klfr.sof.lib.Builtins#random(IntPrimitive,IntPrimitive)" nativecall return } 2 function random:int dexport
 
-{ "klfr.sof.lib.Builtins#random(FloatPrimitive,FloatPrimitive)" nativecall return } 2 function random:decimal globaldef
+{ "klfr.sof.lib.Builtins#random(FloatPrimitive,FloatPrimitive)" nativecall return } 2 function random:decimal dexport
 
-{ "klfr.sof.lib.Formatting#fmt(StringPrimitive)" nativecall return } 1 function fmt'0 globaldef
-{ "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable)" nativecall return } 2 function fmt'1 globaldef
-{ "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable)" nativecall return } 3 function fmt'2 globaldef
-{ "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable,Stackable)" nativecall return } 4 function fmt'3 globaldef
-{ "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable,Stackable,Stackable)" nativecall return } 5 function fmt'4 globaldef
-{ "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable,Stackable,Stackable,Stackable)" nativecall return } 6 function fmt'5 globaldef
-{ "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable,Stackable,Stackable,Stackable,Stackable)" nativecall return } 7 function fmt'6 globaldef
-{ "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable,Stackable,Stackable,Stackable,Stackable,Stackable)" nativecall return } 8 function fmt'7 globaldef
-{ "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable,Stackable,Stackable,Stackable,Stackable,Stackable,Stackable)" nativecall return } 9 function fmt'8 globaldef
+{ "klfr.sof.lib.Formatting#fmt(StringPrimitive)" nativecall return } 1 function fmt'0 dexport
+{ "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable)" nativecall return } 2 function fmt'1 dexport
+{ "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable)" nativecall return } 3 function fmt'2 dexport
+{ "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable,Stackable)" nativecall return } 4 function fmt'3 dexport
+{ "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable,Stackable,Stackable)" nativecall return } 5 function fmt'4 dexport
+{ "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable,Stackable,Stackable,Stackable)" nativecall return } 6 function fmt'5 dexport
+{ "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable,Stackable,Stackable,Stackable,Stackable)" nativecall return } 7 function fmt'6 dexport
+{ "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable,Stackable,Stackable,Stackable,Stackable,Stackable)" nativecall return } 8 function fmt'7 dexport
+{ "klfr.sof.lib.Formatting#fmt(StringPrimitive,Stackable,Stackable,Stackable,Stackable,Stackable,Stackable,Stackable,Stackable)" nativecall return } 9 function fmt'8 dexport
 
 
 # The SOF programming language interpreter.

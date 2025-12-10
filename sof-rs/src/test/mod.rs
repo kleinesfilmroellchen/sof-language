@@ -8,11 +8,12 @@ use crate::sof_main;
 extern crate test;
 
 const BASE_TEST_FILE_PATH: &str = "../test/klfr/sof/test/source";
+const LIBRARY_FILE_PATH: &str = "../lib";
 
 fn run_file_test(name: impl AsRef<Path>) -> Result<()> {
 	let full_path = Path::new(BASE_TEST_FILE_PATH).join(name);
 	let code = std::fs::read_to_string(&full_path).map_err(|e| miette::miette!("i/o error: {e}"))?;
-	sof_main(code, &full_path)
+	sof_main(code, &full_path, Path::new(LIBRARY_FILE_PATH))
 }
 
 macro_rules! file_tests {

@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use gc_arena::lock::{GcRefLock, RefLock};
 use gc_arena::{Arena, Collect, Mutation, Rootable};
 use log::debug;
@@ -23,7 +25,7 @@ pub use stackable::Stackable;
 /// Inner stack type that is the actual raw data structure of the stack.
 pub type InnerStack<'gc> = Vec<Stackable<'gc>>;
 /// Stack type and GC root.
-#[derive(Debug, Collect)]
+#[derive(Collect)]
 #[collect(no_drop)]
 pub struct Stack<'gc> {
 	main:        InnerStack<'gc>,
@@ -94,22 +96,47 @@ impl<'gc> Stack<'gc> {
 		self.module_nametable = self.top_nametable;
 	}
 
+	/// Inserts the nametable below a certain number of elements on top of the stack, especially to set a function
+	/// nametable before a call.
+	///
+	/// `allow_below_other_nametable` optionally allows to insert the new nametable below any other nametable (i.e. at
+	/// any position in the stack), which is not the normal function-call behavior.
 	pub fn insert_nametable_at(
 		&mut self,
 		position: usize,
 		nametable: GcRefLock<'gc, Nametable<'gc>>,
-		span: SourceSpan,
-	) -> Result<(), Error> {
+	) -> Result<(), ()> {
 		if position > self.main.len() {
-			return Err(Error::NotEnoughArguments { span, argument_count: position });
+			return Err(());
 		}
 		let insert_position = self.main.len() - position;
 		if self.main[insert_position ..].iter().any(|v| matches!(v, Stackable::Nametable(_))) {
-			return Err(Error::NotEnoughArguments { span, argument_count: position });
+			return Err(());
 		}
+
 		self.main.insert(insert_position, Stackable::Nametable(nametable));
 		self.top_nametable = insert_position;
 		Ok(())
+	}
+
+	pub fn insert_function_specific_global_nametable(
+		&mut self,
+		position: usize,
+		global_nametable: GcRefLock<'gc, Nametable<'gc>>,
+	) {
+		if position > self.main.len() {
+			panic!("invalid position for function global nt");
+		}
+		debug_assert!([NametableType::Module, NametableType::Global].contains(&global_nametable.borrow().kind));
+
+		let insert_position = self.main.len() - position;
+		// shift top nametable pointer if necessary
+		if self.top_nametable >= insert_position {
+			self.top_nametable += 1;
+		}
+
+		self.main.insert(insert_position, Stackable::Nametable(global_nametable));
+		self.module_nametable = insert_position;
 	}
 
 	/// Returns the next currying marker, if the marker is up to `max_arguments` places from the stack top. In other
@@ -246,6 +273,31 @@ impl<'gc> Stack<'gc> {
 		// SAFETY: Decreasing the length is always safe as we had >= count element.
 		unsafe { stack.set_len(stack.len() - count) };
 		values
+	}
+}
+
+impl<'gc> Debug for Stack<'gc> {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		write!(f, "Stack {{ ")?;
+		if f.alternate() {
+			write!(f, "\n")?;
+		}
+		for (i, s) in self.main.iter().enumerate().rev() {
+			write!(
+				f,
+				"\n\t{}{}{}",
+				s,
+				if i == self.top_nametable { " (top)" } else { "" },
+				if i == self.module_nametable { " (module)" } else { "" }
+			)?;
+		}
+		write!(f, "\n\t---\n")?;
+		if f.alternate() {
+			write!(f, "util: {:#?}\n", self.utility)?;
+		} else {
+			write!(f, "util: {:?}", self.utility)?;
+		}
+		write!(f, "}}")
 	}
 }
 

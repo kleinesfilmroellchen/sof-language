@@ -17,32 +17,7 @@
 
 length ; 4 = assert
 
-# todo: should just live in the standard library list.sof
-{
-	swap filterFunc def
-
-	0 currentIndex def
-
-	[ ] swap
-	# ( -- newlist list )
-	{
-		# ( newlist list -- newlist list element element )
-		currentIndex . swap idx ; dup
-		{
-			# ( newlist list element -- list newlist newlist+element )
-			rot push ;
-			# ( -- newlist list )
-			swap pop swap
-		}
-		swap filterFunc : 
-		{ pop }
-		ifelse
-		currentIndex 1 +
-	}
-	{ length ; currentIndex . > } while
-	
-	pop return
-} 2 function filter def
+"list" use
 
 { } [ false true false true true ] filter :
 
@@ -63,17 +38,17 @@ length ; 4 = assert
 100000 repetitions def
 0 i def
 
-# {
-# 	sequence .
-# 	0 swap idx ; 1 = assert
-# 	1 swap idx ; 2 = assert
-# 	2 swap idx ; 3 = assert
-# 	3 swap idx ; 4 = assert
+{
+	sequence .
+	0 swap idx ; 1 = assert
+	1 swap idx ; 2 = assert
+	2 swap idx ; 3 = assert
+	3 swap idx ; 4 = assert
 
-# 	length ; 4 = assert
-# }
-# 	{
-# 		i . 1 + dup i def
-# 		repetitions . <
-# 	} while
+	length ; 4 = assert
+}
+	{
+		i . 1 + dup i def
+		repetitions . <
+	} while
 

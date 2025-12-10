@@ -1,5 +1,5 @@
 use std::cell::LazyCell;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, LazyLock};
 
 use flexstr::SharedStr;
@@ -7,6 +7,7 @@ use gc_arena::lock::GcRefLock;
 use gc_arena::{Arena, Gc, Mutation};
 use internment::ArcIntern;
 use log::{debug, info, trace};
+use miette::SourceSpan;
 use smallvec::{SmallVec, smallvec};
 
 use crate::arc_iter::ArcVecIter;
@@ -31,13 +32,28 @@ pub struct Metrics {
 	pub call_count:  usize,
 }
 
-pub fn run(tokens: TokenVec, file_path: impl Into<PathBuf>) -> Result<Metrics, Error> {
-	let mut arena: StackArena = new_arena();
-	run_on_arena(&mut arena, tokens, file_path)
+pub fn run(tokens: TokenVec, file_path: impl Into<PathBuf>, library_path: &Path) -> Result<Metrics, Error> {
+	let mut arena: StackArena = new_arena(&library_path);
+	run_on_arena(&mut arena, tokens, file_path, library_path)
 }
 
-pub fn new_arena() -> StackArena {
-	Arena::new(|mc| Stack::new(mc))
+/// Shortest token sequence that runs the preamble:
+/// `"preamble" use`
+static RUN_PREAMBLE: LazyLock<[Token; 2]> = LazyLock::new(|| {
+	[Token { inner: InnerToken::String("preamble".into()), span: SourceSpan::new(0.into(), 0) }, Token {
+		inner: InnerToken::Command(Command::Use),
+		span:  SourceSpan::new(0.into(), 0),
+	}]
+});
+
+/// Constructs a new arena and runs the preamble on it.
+pub fn new_arena(library_path: impl Into<PathBuf>) -> StackArena {
+	let mut arena = Arena::new(|mc| Stack::new(mc));
+
+	run_on_arena(&mut arena, Arc::new(RUN_PREAMBLE.clone().into()), "<preamble entry>", library_path)
+		.expect("preamble errored out");
+
+	arena
 }
 
 // TODO: tune this
@@ -76,17 +92,30 @@ impl<'a> CallStackEntry<'a> {
 	) {
 		stack.push(Self { tokens: token_iter, module_path, return_behavior: CallReturnBehavior::ExitModule });
 	}
+
+	/// Create and push a new entry for the initial code (entry point code, root module).
+	pub fn push_root<'call>(
+		token_iter: ArcVecIter<'a, Token>,
+		module_path: ArcIntern<PathBuf>,
+		stack: &'call mut Vec<CallStackEntry<'a>>,
+	) {
+		stack.push(Self { tokens: token_iter, module_path, return_behavior: CallReturnBehavior::BlockCall });
+	}
 }
 
-pub fn run_on_arena(arena: &mut StackArena, tokens: TokenVec, file_path: impl Into<PathBuf>) -> Result<Metrics, Error> {
+pub fn run_on_arena(
+	arena: &mut StackArena,
+	tokens: TokenVec,
+	file_path: impl Into<PathBuf>,
+	library_path: impl Into<PathBuf>,
+) -> Result<Metrics, Error> {
 	let token_iter = ArcVecIter::new(tokens);
 
 	// Use a stack of token lists to be executed. At the end of each list is some kind of call return.
 	let mut token_execution_stack = Vec::new();
-	// FIXME: get the real module name
-	CallStackEntry::push_new_module(token_iter, ArcIntern::new(file_path.into()), &mut token_execution_stack);
+	CallStackEntry::push_root(token_iter, ArcIntern::new(file_path.into()), &mut token_execution_stack);
 	let mut metrics = Metrics::default();
-	let mut registry = ModuleRegistry::default();
+	let mut registry = ModuleRegistry::new(library_path);
 
 	// true if we’re currently in the process of unwinding a return call up to the next function
 	let mut is_unwinding_return = false;
@@ -113,6 +142,8 @@ pub fn run_on_arena(arena: &mut StackArena, tokens: TokenVec, file_path: impl In
 					token_execution_stack.pop();
 					arena.mutate_root(|_mc, stack| {
 						let value = stack.pop_nametable((0, 0).into())?;
+						// pop function’s global nametable
+						stack.pop_nametable((0, 0).into())?;
 						if let Some(return_value) = &value.borrow().return_value {
 							stack.push(return_value.clone());
 						}
@@ -682,6 +713,7 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 						.try_into()
 						.map_err(|_| Error::InvalidArgumentCount { argument_count, span: token.span })?,
 					body.code.clone(),
+					stack.global_nametable().clone(),
 				),
 			)));
 			no_action()
@@ -699,7 +731,7 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 			no_action()
 		},
 		InnerToken::Command(Command::Describe) => {
-			info!("{:#?}", stack.raw_peek());
+			info!("{:#}", stack.raw_peek().unwrap());
 			no_action()
 		},
 		InnerToken::Command(Command::Write) => {
@@ -815,6 +847,22 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 			// note that the global nametable will always refer to the module nametable in a module (and to the global
 			// nametable in the root module, as a fallback)
 			stack.global_nametable().borrow_mut(mc).export(exported_name, exported_value);
+
+			no_action()
+		},
+		InnerToken::Command(Command::Dexport) => {
+			let exported_name = stack.pop(token.span)?;
+			let value = stack.pop(token.span)?;
+			let Stackable::Identifier(exported_name) = exported_name else {
+				return Err(Error::InvalidType {
+					operation: Command::Use,
+					value:     exported_name.to_string().into(),
+					span:      token.span,
+				});
+			};
+			let mut gnt = stack.global_nametable().borrow_mut(mc);
+			gnt.define(exported_name.clone(), value.clone());
+			gnt.export(exported_name, value);
 
 			no_action()
 		},

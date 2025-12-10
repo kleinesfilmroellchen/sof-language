@@ -38,8 +38,7 @@ impl InnerToken {
 			Self::Boolean(boolean) => Stackable::Boolean(*boolean),
 			Self::ListStart => Stackable::ListStart,
 			Self::Curry => Stackable::Curry,
-			Self::CodeBlock(code) =>
-				Stackable::CodeBlock(Gc::new(mc, CodeBlock { code: code.clone() })),
+			Self::CodeBlock(code) => Stackable::CodeBlock(Gc::new(mc, CodeBlock { code: code.clone() })),
 			_ => unreachable!(),
 		}
 	}

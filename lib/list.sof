@@ -23,4 +23,4 @@
 	{ length ; currentIndex . > } while
 	
 	pop return
-} 2 function filter def
+} 2 function filter dexport

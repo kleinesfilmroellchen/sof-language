@@ -5,6 +5,7 @@ use std::sync::Arc;
 
 use ahash::HashMap;
 use internment::ArcIntern;
+use log::debug;
 
 use crate::error::Error;
 use crate::parser::{self, lexer};
@@ -30,13 +31,17 @@ pub fn path_to_module(module_name: &str, calling_directory: &Path, standard_libr
 	}
 }
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct ModuleRegistry {
 	parsed_modules:        HashMap<ArcIntern<PathBuf>, TokenVec>,
 	standard_library_path: PathBuf,
 }
 
 impl ModuleRegistry {
+	pub fn new(standard_library_path: impl Into<PathBuf>) -> Self {
+		Self { parsed_modules: HashMap::default(), standard_library_path: standard_library_path.into() }
+	}
+
 	/// Look up the module in the registry, and if not available, lex and parse it after loading it from disk.
 	pub fn lookup_module(
 		&mut self,
@@ -47,6 +52,7 @@ impl ModuleRegistry {
 		let module_path = ArcIntern::new(path_to_module(module_name, calling_directory, &self.standard_library_path));
 
 		if let Some(already_parsed_module) = self.parsed_modules.get(&module_path) {
+			debug!("{} was already parsed", module_path.display());
 			return Ok((module_path, already_parsed_module.clone()));
 		}
 
