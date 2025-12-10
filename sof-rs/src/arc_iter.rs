@@ -7,10 +7,11 @@ use std::ptr::NonNull;
 use std::sync::Arc;
 
 /// A generic iterator over [`Arc`]<[`Vec`]>. Takes ownership of the given [`Vec`].
-/// 
+///
 /// Note that the lifetime parameter is only there to satisfy the [`Iterator`] implementation.
-/// Technically, ArcVecIter always borrows from itself, so values returned from the iterator may only live as long as the ArcVecIter.
-/// Since the borrow checker can usually extend the lifetime of ArcVecIter as needed, this isn’t normally a problem.
+/// Technically, `ArcVecIter` always borrows from itself, so values returned from the iterator may only live as long as
+/// the `ArcVecIter`. Since the borrow checker can usually extend the lifetime of `ArcVecIter` as needed, this isn’t
+/// normally a problem.
 pub(crate) struct ArcVecIter<'a, T> {
 	/// mainly used so that we keep alive a reference to the vector and the below pointers stay valid for our lifetime
 	/// borrow order considerations: data, ptr and end do not implement [`Drop`] and vec’s drop cannot access them

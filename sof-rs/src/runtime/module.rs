@@ -25,9 +25,9 @@ fn module_name_to_file_path(name: &str) -> PathBuf {
 /// never used with the file system (especially when there is no file system).
 pub fn path_to_module(module_name: &str, calling_directory: &Path, standard_library_path: &Path) -> PathBuf {
 	match module_name.strip_prefix('.') {
-		None => standard_library_path.join(&module_name_to_file_path(module_name)),
+		None => standard_library_path.join(module_name_to_file_path(module_name)),
 		// FIXME: relative-upwards imports are not handled in the Java implementation either
-		Some(relative_module) => calling_directory.join(&module_name_to_file_path(relative_module)),
+		Some(relative_module) => calling_directory.join(module_name_to_file_path(relative_module)),
 	}
 }
 

@@ -110,6 +110,13 @@ pub enum Error {
 		#[label]
 		span: SourceSpan,
 	},
+	#[error("overflow occurred while converting {original} to integer")]
+	#[diagnostic(code(ArithmeticError))]
+	Overflow {
+		original: SharedStr,
+		#[label]
+		span:     SourceSpan,
+	},
 	#[error("non-comparable values: {lhs} and {rhs}")]
 	#[diagnostic(code(ArithmeticError))]
 	Incomparable {
@@ -153,10 +160,15 @@ pub enum Error {
 		#[label]
 		span:  SourceSpan,
 	},
+	#[error("index {index} is out of bounds for list of length {len}")]
+	#[diagnostic(code(IndexError))]
+	NegativeIndexOutOfBounds {
+		index: i64,
+		len:   usize,
+		#[label]
+		span:  SourceSpan,
+	},
 	#[error("file {path} is not readable: {inner}")]
 	#[diagnostic(code(ModuleError))]
-	ModuleFileNotReadable {
-		path: PathBuf,
-		inner: io::Error,
-	}
+	ModuleFileNotReadable { path: PathBuf, inner: io::Error },
 }

@@ -6,6 +6,7 @@ use crate::runtime::Stackable;
 pub fn to_integer(value: Stackable<'_>) -> Result<Option<Stackable<'_>>, Error> {
 	Ok(Some(Stackable::Integer(match value {
 		Stackable::Integer(i) => i,
+		#[allow(clippy::cast_possible_truncation)]
 		Stackable::Decimal(d) => d.round() as i64,
 		Stackable::Boolean(b) => i64::from(b),
 		Stackable::String(string) =>

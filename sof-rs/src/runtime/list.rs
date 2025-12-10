@@ -1,3 +1,5 @@
+#![allow(clippy::unnecessary_wraps)] // false positive, the builtins need to have specific signatures
+
 use std::sync::LazyLock;
 
 use ahash::HashMapExt;
@@ -77,13 +79,19 @@ fn get_index(stack: &mut Stack<'_>, len: usize, span: SourceSpan) -> Result<usiz
 	let Stackable::Integer(mut index) = index else {
 		return Err(Error::InvalidTypeNative { name: "list index".into(), value: index.to_string().into(), span });
 	};
+	#[allow(clippy::cast_possible_wrap)]
 	if index < 0 {
 		index += len as i64;
 	}
-	if index < 0 || index as usize >= len {
-		return Err(Error::IndexOutOfBounds { index: index as usize, len, span });
+	// still < 0 -> programming bug
+	if index < 0 {
+		return Err(Error::NegativeIndexOutOfBounds { index, len, span });
 	}
-	Ok(index as usize)
+	let index = index.try_into().map_err(|_| Error::Overflow { span, original: index.to_string().into() })?;
+	if index >= len {
+		return Err(Error::IndexOutOfBounds { index, len, span });
+	}
+	Ok(index)
 }
 
 fn idx<'gc>(
@@ -101,9 +109,14 @@ fn length<'gc>(
 	this: &List<'gc>,
 	_stack: &mut Stack<'gc>,
 	_mc: &Mutation<'gc>,
-	_span: SourceSpan,
+	span: SourceSpan,
 ) -> Result<Option<Stackable<'gc>>, Error> {
-	Ok(Some(Stackable::Integer(this.list.len() as i64)))
+	Ok(Some(Stackable::Integer(
+		this.list
+			.len()
+			.try_into()
+			.map_err(|_| Error::Overflow { span, original: this.list.len().to_string().into() })?,
+	)))
 }
 
 fn tail<'gc>(

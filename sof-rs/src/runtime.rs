@@ -124,9 +124,7 @@ impl<'gc> Stack<'gc> {
 		position: usize,
 		global_nametable: GcRefLock<'gc, Nametable<'gc>>,
 	) {
-		if position > self.main.len() {
-			panic!("invalid position for function global nt");
-		}
+		assert!(position <= self.main.len(), "invalid position for function global nt");
 		debug_assert!([NametableType::Module, NametableType::Global].contains(&global_nametable.borrow().kind));
 
 		let insert_position = self.main.len() - position;
@@ -276,11 +274,11 @@ impl<'gc> Stack<'gc> {
 	}
 }
 
-impl<'gc> Debug for Stack<'gc> {
+impl Debug for Stack<'_> {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		write!(f, "Stack {{ ")?;
 		if f.alternate() {
-			write!(f, "\n")?;
+			writeln!(f)?;
 		}
 		for (i, s) in self.main.iter().enumerate().rev() {
 			write!(
@@ -293,7 +291,7 @@ impl<'gc> Debug for Stack<'gc> {
 		}
 		write!(f, "\n\t---\n")?;
 		if f.alternate() {
-			write!(f, "util: {:#?}\n", self.utility)?;
+			writeln!(f, "util: {:#?}", self.utility)?;
 		} else {
 			write!(f, "util: {:?}", self.utility)?;
 		}

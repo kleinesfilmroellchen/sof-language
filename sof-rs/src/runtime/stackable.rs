@@ -359,7 +359,7 @@ impl<'gc> Stackable<'gc> {
 					let function_nametable = GcRefLock::new(mc, RefLock::new(Nametable::new(NametableType::Function)));
 					stack
 						.insert_nametable_at(function.arguments, function_nametable)
-						.map_err(|_| Error::NotEnoughArguments { argument_count: function.arguments, span })?;
+						.map_err(|()| Error::NotEnoughArguments { argument_count: function.arguments, span })?;
 					// additionally insert function’s global nametable temporarily.
 					stack.insert_function_specific_global_nametable(
 						function.arguments + 1,

@@ -33,7 +33,7 @@ pub struct Metrics {
 }
 
 pub fn run(tokens: TokenVec, file_path: impl Into<PathBuf>, library_path: &Path) -> Result<Metrics, Error> {
-	let mut arena: StackArena = new_arena(&library_path);
+	let mut arena: StackArena = new_arena(library_path);
 	run_on_arena(&mut arena, tokens, file_path, library_path)
 }
 
@@ -284,7 +284,7 @@ pub fn run_on_arena(
 					)?;
 
 					arena.mutate_root(|mc, stack| {
-						stack.push_module_nametable(GcRefLock::new(mc, Nametable::new(NametableType::Module).into()))
+						stack.push_module_nametable(GcRefLock::new(mc, Nametable::new(NametableType::Module).into()));
 					});
 
 					CallStackEntry::push_new_module(
@@ -331,7 +331,7 @@ pub(crate) enum CallReturnBehavior {
 	/// Pop nametable and push return value if available.
 	FunctionCall,
 	/// Exit the current module, pop everything including the fake global nametable, ignore return value. Otherwise
-	/// similar to FunctionCall.
+	/// similar to `FunctionCall`.
 	ExitModule,
 	/// The call was a loop iteration.
 	///
@@ -713,7 +713,7 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 						.try_into()
 						.map_err(|_| Error::InvalidArgumentCount { argument_count, span: token.span })?,
 					body.code.clone(),
-					stack.global_nametable().clone(),
+					stack.global_nametable(),
 				),
 			)));
 			no_action()
