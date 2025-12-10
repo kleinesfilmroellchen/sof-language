@@ -68,7 +68,7 @@ Returns a new list that contains the elements of the given list up to the given 
 
 **Return value** < List with elmts after n: List
 
-Inverse of `take`; returns the elements that `take` dropped from the list. For positive n, this is equivalent to dropping the first n elements from the list, for negative n, it is equivalent to taking `|n|` elements from the end of the list (possibly the entire list if `|n| > length(list)`. For n=0, the entire list is returned. For n greater than list length, the empty list is returned.
+Inverse of `take`; returns the elements that `take` dropped from the list. For positive n, this is equivalent to dropping the first n elements from the list, for negative n, it is equivalent to taking `|n|` elements from the end of the list (possibly the entire list if `|n| > length(list)`). For n=0, the entire list is returned. For n greater than list length, the empty list is returned.
 
 ## `first`: First element of the list
 

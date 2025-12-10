@@ -23,6 +23,7 @@
 - [Language specification](Reference/Language-Specification.md)
   - [Errors](Reference/Errors.md)
   - [Types](Reference/Types.md)
+  - [Naming](Reference/Naming.md)
   - [Primitive Tokens](Reference/PTs.md)
     - [Arithmetic](Reference/PTs/Arithmetic-Logic.md)
     - [Control flow](Reference/PTs/Control-flow.md)

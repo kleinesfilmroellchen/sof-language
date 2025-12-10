@@ -3,7 +3,27 @@
 r[intro]
 This section specifies the Stack with Objects and Functions programming language.
 
+> [!WARNING]
+> The reference is in the process of being rewritten in a combined axiomatic + operational semantics (opsem) style to accurately specify all intended behavior of SOF. This rewrite is not yet complete; this is roughly the current state:
+>
+> - [x] Introduction, lexing and parsing, baseline definitions, high-level opsem – done
+> - [x] Errors – done
+> - [x] Types – largely complete, may need some more cross-references and elaboration
+> - [ ] Naming – missing; some behavior specified elsewhere
+> - [ ] Primitive tokens – largely still in old style which is missing opsem descriptions
+>   - [ ] Arithmetic
+>   - [ ] Control Flow
+>   - [ ] Stack & Naming
+>   - [ ] Functional
+>   - [ ] Typing
+>   - [x] Modules – complete
+> - [ ] Builtin functions – still in old style which is missing opsem descriptions
+> - [x] Module system – complete
+> - [ ] Language internals – will be merged into other sections, especially naming
+> - [x] Glossary – needs minor fixes
+
 r[definition]
+
 ## Definitions
 
 r[definition.rfc2119]
@@ -20,6 +40,7 @@ r[definition.tool]
 An SOF **tool** is any other program that deals with SOF source files. Their behaviors are not prescribed in this specification, and they MAY intentionally go beyond or against the specification to serve a certain purpose. For instance, tools may decide to introspect source code comments for a variety of purposes, while comments must be ignored by interpreters.
 
 r[source-file]
+
 ## Source Files
 
 An SOF source file is a program or part of a program in the SOF programming language. Source files are plain text files using UTF-8 [^unicode] character encoding. Newline sequences consist of an optional carriage return followed by a line feed.
@@ -76,7 +97,7 @@ Comment = ( "#" { ?any? } ?Unicode line break/newline? )
 r[source-file.syntax.error]
 Any violation of this syntax by a program MUST raise a [SyntaxError](Errors.md) when given as input to an interpreter.
 
-`SofProgram` is the syntax specification for an entire SOF source file. The source file consists of two types of syntactical constructs: *Comments* and *Tokens*.
+`SofProgram` is the syntax specification for an entire SOF source file. The source file consists of two types of syntactical constructs: _Comments_ and _Tokens_.
 
 r[source-file.comments]
 Comments are purely for the benefit of the programmer and MUST NOT have meaning to an SOF interpreter.
@@ -85,19 +106,28 @@ Comments are purely for the benefit of the programmer and MUST NOT have meaning 
 > Tokens are the core of the SOF program. The tokens are ordered in a linear sequence. The only exception is the code block token: A code block recursively nests another sequence of tokens. The major other differentiation in the token type is between the **Literal Tokens** that behave and look like the literals in other programming languages, as well as the **Primitive Tokens** aka. keywords that execute program logic. The phrase **Primitive Token** is used to distinguish atomic keywords from the non-atomic `{` and `}` keywords.
 
 r[state]
+
 ## Program state
 
 For semantic purposes, the program state of a running SOF program consists mainly of two things:
 
 r[state.stack]
+
 - A stack of values visible to the program. The stack is a LIFO stack/queue (last in, first out) that can contain any kind of value. Of these values, there are types that the user can place and read via the use of certain tokens, and there are the "hidden types" that are used to make the program execute correctly. Hidden types are specified less precisely, and the user is not generally allowed to interact with them.
+
 r[state.call-stack]
+
 - A stack of token lists that are being executed, with associated information about where these lists come from and what should happen after they finish executing.
 
 r[execution]
+
 ## Executing
 
+r[execution.opsem]
 An SOF program consists of a list of tokens. Executing the program consists of running the action of each token in the order it appears in the list of tokens.
+
+> [!NOTE]
+> This reference specifies the behavior of each token in the form of [*operational semantics*](https://en.wikipedia.org/wiki/Operational_semantics) (opsem), that is: the steps which need to be taken to execute a token correctly.
 
 Each token may have an effect on the SOF program environment, modifying it to a new state. Tokens may change the execution state of the program, by modifying the token list stack. For instance:
 
@@ -116,6 +146,7 @@ The SOF program exits when:
 - the program is aborted by any other, lower-level means, such as a system call requesting process termination (`exit()`)
 
 r[defined-behavior]
+
 ## Defined Behavior
 
 r[defined-behavior.intro]
@@ -132,4 +163,4 @@ The literal tokens are all used to specify a value of a built-in type literally.
 
 For code blocks, the code block's contained tokens must be stored in the data type in some form such that the contained tokens, and even additional code blocks, may be fully reconstructed by the implementation when the code block is later needed. This internal representation is deliberately kept unspecified so that implementations can choose any representation (or even multiple) that is most efficient in their circumstance. The code block, despite its appearance, therefore also just puts a data object on the stack that can later be executed or transformed as specified by the code block semantics. Most of these are given with the PTs that manipulate code blocks and can be found in the language reference. Because code blocks are considered to be immutable, implementations can take appropriate data-sharing measures to reduce these large on-stack data structures in size. -->
 
-[^unicode]: RFC3629: *UTF-8, a transformation format of ISO 10646.* <https://www.rfc-editor.org/rfc/rfc3629.html>
+[^unicode]: RFC3629: _UTF-8, a transformation format of ISO 10646._ <https://www.rfc-editor.org/rfc/rfc3629.html>

@@ -1,33 +1,96 @@
+r[modules]
 # The SOF Module System
 
-SOF's module system is intended to be simple, but flexible and practical. It is very reminiscent of Python's module system.
+r[modules.files]
+Each SOF source code file ending in `.sof` is a separate module.
 
-## Modules, files, and folders
+r[modules.nesting]
+Sub-folders can be used to define sub-modules, where all the modules in the folder are considered children of the module with the same name as the folder.
 
-Each SOF source code file is a separate module. Folders are not special, they can just serve to group modules and avoid naming conflicts. There are no special module names such as __init__ or __main__ in Python, all files ending in `.sof` are accessible equivalent modules.
+r[modules.errors]
+## Errors
 
-Modules are named hierarchically with familiar dot syntax. Modules starting with a dot `.` are relative modules, and modules starting with any other character are absolute modules.
+r[modules.errors.circular-import]
+It is an error to import a module that is already currently executing. In other words, the module import graph must be acyclic.
 
-Relative modules import relative to the file location. Single dots (except the leading dot) are used to import one directory lower, i.e. the name between this dot and the one before it is considered a directory in with to look for the module. Double dots `..` are used to import a directory higher (cf. directory navigation in all major operating systems). The highest directory possible is the directory of the base module of the program if the relative import chain originates from the base module, or the directory of the libraries if the relative import chain originates from a library module that was imported absolutely. This distinction prevents nonsensical and dangerous "upwards" imports while allowing for useful features like sibling folder importing.
+r[modules.naming]
+## Module names
 
-Absolute modules import in the library directory. This is a runtime-constant directory which will later be accessible with command-line arguments and/or environment variables. It usually sits in a related directory to the SOF executable itself. The library directory contains not only the SOF standard library modules but also any modules added manually by the user or by package managers. Modules imported absolutely can import relatively themselves, which again allows for submodule structures even in the libraries. Within an absolute module, single dots can also be used to import in sub-directories of the library directory.
+The name of a module can consist of any Unicode code points from the following set:
+- ASCII Alphabetic (code points `U+0041`-`U+005A` and `U+0061`-`U+007A`)
+- ASCII Numeric (code points `U+0030`-`U+0039`)
+- The characters `_` and `.`.
 
-The module name, i.e. the name after the final dot, never contains the `.sof` ending. This allows for the alternative endings and special file formats which are treated specially by the module system, like `.soflib`.
+r[modules.naming.absolute]
+Absolute modules do not start with a dot `.`. They are resolved using [library module resolution].
 
-Each naming segment in any module specification, which represents either folders or the final file, can contain all characters except the two slash characters (used by the operating systems for directory structure) and dots, of course.
+r[modules.naming.relative]
+Relative modules start with a `.`. They are resolved using relative resolution.
 
-Given this detailed description, the method of resolving modules is unambiguous and straightforward. Modules are always treated with UTF-8 encoding, just as all SOF files are.
+r[modules.resolution]
+## Module resolution
 
-## Names
+The purpose of module resolution is to resolve a module name that has been specified in a source module to a path which should be loaded as the corresponding target module. The result of module resolution depends only on the interpreter’s library configuration, the current module, and the target module name. Interpreters MAY cache previously-loaded modules by path.
 
-As SOF has no namespaces like C, care needs to be taken when naming functions and other exports of a module. As they overwrite all GNT entries of the same name upon import, duplicate definitions are technically allowed (though the interpreter might issue a warning). The convention [as outlined in the programming conventions](../Programming-conventions.md) is to use underscores for separating pseudo-namespaces where necessary.
+r[modules.resolution.common]
+A module name can be resolved to a path by replacing all single dots except leading dots with the system path separator, and appending the `.sof` extension. Double dots are not replaced.
 
-## The `use`, `export` and `dexport` primitive tokens
+> [!NOTE]
+> The system path separator is `/` on Unix-like systems, and `\` on Microsoft Windows. Other systems may have other separators, and `/` is used as a fallback if there is no concept of files, such as in WebAssembly.
 
-The `use` primitive token is used to import a module. The module specification, its behavior explained above in detail, is given by a string. The SOF module system imports the specified module, which may come from the internal cache if it was already imported. Then, all of the bindings defined by `export` or `dexport` are imported into the importing file's global namespace. This means that you don't have to worry about cluttering global namespaces with unnecessary names: only the names you export in a module are visible to `use`rs of that module.
+Interpreters MAY allow alternative extensions for modules, but files with the `.sof` extension MUST take priority over any other files with the same base name during module resolution.
 
-Note that of course, `use` is recursive. SOF code that is currently executed as part of a module import can `use` other modules without any different rules or exceptions. The only impossible module connection is any sort of circular import. The reason is equivalent to Python's reason: Because module importing always involves executing the entire imported module's source code. However, given the huge ecosystem of Python libraries, it is clear that this is not a limitation and all circular dependencies can be reworked to strict hierarchical dependencies.
+The resulting path is a relative path. Further resolution to a canonical absolute path depends on whether the module is relative or absolute.
 
-## Running functions in other modules
+r[modules.resolution.relative]
+### Relative modules
 
-There is special treatment given to exported functions, which technically is a special rule about all functions but only becomes relevant with cross-module functions. All functions store the global nametable at the time of definition; i.e. the global nametable of their module or file. As each module gets its own global nametable, this means that functions in different modules refer to different GNTs, but functions in the same module refer to the same GNT. When a function is run, the global nametable is in fact temporarily replaced with the function's global nametable at defintion time (if necessary) and restored afterwards. This means that a function can access global values of its module like one would expect. To keep the orthagonality, the global nametable exchanging can be thought of as a stack of global nametables at the very bottom of the real stack. The actual global nametable is just the top of this sub-stack, and global nametables are pushed to and popped from the stack on function entry and exit.
+Relative module names are resolved relative to the current module’s location. For this purpose, the relative path formed by the common module resolution procedure is appended to the directory of the current module.
+
+r[modules.resolution.relative.up]
+In relative module imports only, double dots `..` are used to import a directory higher. Each `..` causes the remaining module path to be interpreted at the next-higher directory instead.
+
+r[modules.resolution.relative.up.limits]
+The highest directory possible is the directory of the root module of the program if the relative import chain originates from the root module, or the directory of the libraries if the relative import chain originates from a library module that was imported absolutely.
+
+r[modules.resolution.absolute]
+### Absolute modules
+
+Absolute modules import modules in the library directory. This is a runtime-constant directory. Interpreters SHOULD allow the user to change this directory at startup, but MUST NOT allow it to be changed during runtime.
+
+r[modules.resolution.absolute.contents]
+The library directory contains the SOF standard library. It MAY also contain modules added manually by the user or by package managers.
+
+r[modules.resolution.absolute.use-relative]
+Modules imported absolutely are allowed to perform relative imports. 
+
+r[modules.pts]
+## Module primitive tokens
+
+[`use`], [`export`], and [`dexport`] are the only primitive tokens that directly interact with the module system.
+
+r[modules.export]
+## Exporting bindings from modules
+
+Each module maintains an associated list, similar to a [nametable], of **exports**.
+
+When exporting a (name, value) binding from a module, this binding is stored in that list.
+
+If a binding for the same name already exists, that binding is overwritten.
+
+r[modules.import]
+## Importing module bindings
+
+After a target module finishes executing, its exported bindings are **imported** into the source module that loaded it.
+
+r[modules.import.opsem]
+To import module bindings, all exported bindings are individually stored the source module’s global nametable. Existing bindings in the global nametable are overwritten with new bindings from the target module’s exports.
+
+> [!NOTE]
+> This behavior is exactly the same as if every exported item was `globaldef`’d in the source module.
+
+[library module resolution]: #r-modules.resolution.absolute
+[`use`]: PTs/Modules.md#r-pt.use
+[`export`]: PTs/Modules.md#r-pt.export
+[`dexport`]: PTs/Modules.md#r-pt.dexport
+[nametable]: ../Naming.md#r-naming.nametable

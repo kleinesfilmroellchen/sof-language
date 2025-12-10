@@ -26,10 +26,10 @@ r[type.identifier]
 
 **Subtype of:** Callable
 
-A string-like type for textual identifiers used in name binding.
+A string-like type for textual identifiers used in [name binding].
 
 r[type.identifier.call]
-Invoking a call on an identifier performs name lookup.
+Invoking a call on an identifier performs [name lookup].
 
 > [!NOTE]
 > Identifiers provide almost none of the functionality of strings. They are not intended to be used as an alternative string type.
@@ -122,8 +122,8 @@ A constructor is a special kind of function responsible for object creation.
 r[type.constructor.call]
 When called, it creates a new object and is able to initialize that object.
 
----
-
 [^dec64]: Douglas Crockford: *DEC64*. <https://www.crockford.com/dec64.html>
 [^float]: "IEEE Standard for Floating-Point Arithmetic," in IEEE Std 754-2019 (Revision of IEEE 754-2008), vol., no., pp.1-84, 22 July 2019, doi: 10.1109/IEEESTD.2019.8766229.
 
+[name binding]: Naming.md#r-naming.binding
+[name lookup]: Naming.md#r-naming.lookup
