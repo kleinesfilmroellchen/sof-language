@@ -1,9 +1,11 @@
 use std::cell::LazyCell;
+use std::path::PathBuf;
 use std::sync::{Arc, LazyLock};
 
 use flexstr::SharedStr;
-use gc_arena::lock::{GcRefLock, RefLock};
-use gc_arena::{Arena, Mutation};
+use gc_arena::lock::GcRefLock;
+use gc_arena::{Arena, Gc, Mutation};
+use internment::ArcIntern;
 use log::{debug, info, trace};
 use smallvec::{SmallVec, smallvec};
 
@@ -13,6 +15,8 @@ use crate::error::Error;
 use crate::identifier::Identifier;
 use crate::lib::DEFAULT_REGISTRY;
 use crate::runtime::list::List;
+use crate::runtime::module::ModuleRegistry;
+use crate::runtime::nametable::{Nametable, NametableType};
 use crate::runtime::stackable::{BuiltinType, Function, TokenVec};
 use crate::runtime::util::{SwitchCase, SwitchCases, UtilityData};
 use crate::runtime::{Stack, StackArena, Stackable};
@@ -27,9 +31,9 @@ pub struct Metrics {
 	pub call_count:  usize,
 }
 
-pub fn run(tokens: TokenVec) -> Result<Metrics, Error> {
+pub fn run(tokens: TokenVec, file_path: impl Into<PathBuf>) -> Result<Metrics, Error> {
 	let mut arena: StackArena = new_arena();
-	run_on_arena(&mut arena, tokens)
+	run_on_arena(&mut arena, tokens, file_path)
 }
 
 pub fn new_arena() -> StackArena {
@@ -39,16 +43,56 @@ pub fn new_arena() -> StackArena {
 // TODO: tune this
 pub const COLLECTION_THRESHOLD: f64 = 50.;
 
-pub fn run_on_arena(arena: &mut StackArena, tokens: TokenVec) -> Result<Metrics, Error> {
+/// An entry in the call stack (token execution stack).
+///
+/// This contains all the tokens to be executed, with the context to determine how to load modules and what to do after
+/// the tokens have been exhausted.
+struct CallStackEntry<'a> {
+	/// Which module path this call stack entry belongs to.
+	module_path:     ArcIntern<PathBuf>,
+	/// Remaining tokens to be executed.
+	tokens:          ArcVecIter<'a, Token>,
+	/// What to do after the tokens have been exhausted.
+	return_behavior: CallReturnBehavior,
+}
+
+impl<'a> CallStackEntry<'a> {
+	/// Create and push a new entry using the given return behavior.
+	/// This only works on non-empty stacks, as it copies the last element’s module path.
+	pub fn push<'call>(
+		token_iter: ArcVecIter<'a, Token>,
+		return_behavior: CallReturnBehavior,
+		stack: &'call mut Vec<CallStackEntry<'a>>,
+	) {
+		let module_path = stack.last().expect("empty stack passed to push_plain").module_path.clone();
+		stack.push(Self { module_path, tokens: token_iter, return_behavior });
+	}
+
+	/// Create and push a new entry for a new module.
+	pub fn push_new_module<'call>(
+		token_iter: ArcVecIter<'a, Token>,
+		module_path: ArcIntern<PathBuf>,
+		stack: &'call mut Vec<CallStackEntry<'a>>,
+	) {
+		stack.push(Self { tokens: token_iter, module_path, return_behavior: CallReturnBehavior::ExitModule });
+	}
+}
+
+pub fn run_on_arena(arena: &mut StackArena, tokens: TokenVec, file_path: impl Into<PathBuf>) -> Result<Metrics, Error> {
 	let token_iter = ArcVecIter::new(tokens);
+
 	// Use a stack of token lists to be executed. At the end of each list is some kind of call return.
 	let mut token_execution_stack = Vec::new();
-	token_execution_stack.push((token_iter, CallReturnBehavior::BlockCall));
+	// FIXME: get the real module name
+	CallStackEntry::push_new_module(token_iter, ArcIntern::new(file_path.into()), &mut token_execution_stack);
 	let mut metrics = Metrics::default();
+	let mut registry = ModuleRegistry::default();
 
 	// true if we’re currently in the process of unwinding a return call up to the next function
 	let mut is_unwinding_return = false;
-	while let Some((current_stack, stack_action)) = token_execution_stack.last_mut() {
+	while let Some(CallStackEntry { tokens: current_stack, return_behavior: stack_action, .. }) =
+		token_execution_stack.last_mut()
+	{
 		let Some(token) = current_stack.next() else {
 			match *stack_action {
 				CallReturnBehavior::BlockCall => {
@@ -75,6 +119,29 @@ pub fn run_on_arena(arena: &mut StackArena, tokens: TokenVec) -> Result<Metrics,
 						Ok(())
 					})?;
 				},
+				CallReturnBehavior::ExitModule => {
+					debug!(
+						"[{}] exiting module, remaining call stack depth {}",
+						metrics.token_count,
+						token_execution_stack.len() - 1
+					);
+					is_unwinding_return = false;
+					token_execution_stack.pop();
+					arena.mutate_root(|mc, stack| {
+						stack.pop_module_nametable((0, 0).into()).map_or_else(
+							|e| match e {
+								// This *must* happen for the toplevel module. We ignore it.
+								Error::MissingNametable { .. } => Ok(()),
+								_ => Err(e),
+							},
+							|module_nametable| {
+								stack.global_nametable().borrow_mut(mc).import_from_module(&module_nametable.borrow());
+								Ok(())
+							},
+						)?;
+						Ok(())
+					})?;
+				},
 				CallReturnBehavior::Loop => {
 					arena.mutate_root(|_mc, stack| {
 						let utility_stack = &mut stack.utility;
@@ -98,8 +165,9 @@ pub fn run_on_arena(arena: &mut StackArena, tokens: TokenVec) -> Result<Metrics,
 							stack.push(conditional_callable);
 							// remove the loop element
 							token_execution_stack.pop();
+
 							// push another round of loop execution to the stack
-							token_execution_stack.push((
+							CallStackEntry::push(
 								ArcVecIter::new(
 									vec![
 										Token { inner: InnerToken::Command(Command::Call), span: (0, 0).into() },
@@ -108,7 +176,8 @@ pub fn run_on_arena(arena: &mut StackArena, tokens: TokenVec) -> Result<Metrics,
 									.into(),
 								),
 								CallReturnBehavior::Loop,
-							));
+								&mut token_execution_stack,
+							);
 						}
 					});
 				},
@@ -119,6 +188,7 @@ pub fn run_on_arena(arena: &mut StackArena, tokens: TokenVec) -> Result<Metrics,
 		metrics.token_count += 1;
 		trace!("[{}] executing token {token:?}", metrics.token_count);
 		let actions: ActionVec = arena.mutate_root(|mc, stack| execute_token(token, mc, stack))?;
+		#[cfg(debug_assertions)]
 		arena.mutate(|_, stack| {
 			trace!("[{}] stack: {:?}", metrics.token_count, stack);
 		});
@@ -150,7 +220,7 @@ pub fn run_on_arena(arena: &mut StackArena, tokens: TokenVec) -> Result<Metrics,
 						token_execution_stack.len() + 1
 					);
 					metrics.call_count += 1;
-					token_execution_stack.push((ArcVecIter::new(code), return_behavior));
+					CallStackEntry::push(ArcVecIter::new(code), return_behavior, &mut token_execution_stack);
 				},
 				InterpreterAction::Return => {
 					debug!(
@@ -165,15 +235,32 @@ pub fn run_on_arena(arena: &mut StackArena, tokens: TokenVec) -> Result<Metrics,
 					// unconditionally.
 					let mut stack_position = token_execution_stack.len() - 1;
 					loop {
-						let (list, behavior) = &mut token_execution_stack[stack_position];
-						*list = ArcVecIter::new(Arc::default());
+						let CallStackEntry { tokens, return_behavior, .. } = &mut token_execution_stack[stack_position];
+						*tokens = ArcVecIter::new(Arc::default());
 						// this was our function call, stop here; and failsafe for global token list
-						if *behavior == CallReturnBehavior::FunctionCall || stack_position == 0 {
+						if *return_behavior == CallReturnBehavior::FunctionCall || stack_position == 0 {
 							break;
 						}
 						stack_position -= 1;
 					}
 					is_unwinding_return = true;
+				},
+				InterpreterAction::InvokeModule { module_name } => {
+					debug!("[{}] loading module {module_name}…", metrics.token_count);
+					let (module_path, module_tokens) = registry.lookup_module(
+						&module_name,
+						&token_execution_stack.last().expect("empty execution stack").module_path,
+					)?;
+
+					arena.mutate_root(|mc, stack| {
+						stack.push_module_nametable(GcRefLock::new(mc, Nametable::new(NametableType::Module).into()))
+					});
+
+					CallStackEntry::push_new_module(
+						ArcVecIter::new(module_tokens),
+						module_path,
+						&mut token_execution_stack,
+					);
 				},
 			}
 		}
@@ -192,6 +279,8 @@ pub(crate) enum InterpreterAction {
 	ExecuteCall { code: TokenVec, return_behavior: CallReturnBehavior },
 	/// Return from current function scope.
 	Return,
+	/// Run a module identified by the given module name.
+	InvokeModule { module_name: SharedStr },
 }
 
 impl From<()> for InterpreterAction {
@@ -210,6 +299,9 @@ pub(crate) enum CallReturnBehavior {
 	BlockCall,
 	/// Pop nametable and push return value if available.
 	FunctionCall,
+	/// Exit the current module, pop everything including the fake global nametable, ignore return value. Otherwise
+	/// similar to FunctionCall.
+	ExitModule,
 	/// The call was a loop iteration.
 	///
 	/// Read conditional and loop body from the utility stack and copy them to the main stack.
@@ -583,14 +675,14 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 					span:      token.span,
 				});
 			};
-			stack.push(Stackable::Function(GcRefLock::new(
+			stack.push(Stackable::Function(Gc::new(
 				mc,
-				RefLock::new(Function::new(
+				Function::new(
 					argument_count
 						.try_into()
 						.map_err(|_| Error::InvalidArgumentCount { argument_count, span: token.span })?,
-					body.borrow().code.clone(),
-				)),
+					body.code.clone(),
+				),
 			)));
 			no_action()
 		},
@@ -697,6 +789,33 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 				});
 			};
 			DEFAULT_REGISTRY.call_function(&name, stack, token.span)?;
+			no_action()
+		},
+		InnerToken::Command(Command::Use) => {
+			let module_name = stack.pop(token.span)?;
+			let Stackable::String(module_name) = module_name else {
+				return Err(Error::InvalidType {
+					operation: Command::Use,
+					value:     module_name.to_string().into(),
+					span:      token.span,
+				});
+			};
+			Ok(smallvec![InterpreterAction::InvokeModule { module_name }])
+		},
+		InnerToken::Command(Command::Export) => {
+			let exported_name = stack.pop(token.span)?;
+			let Stackable::Identifier(exported_name) = exported_name else {
+				return Err(Error::InvalidType {
+					operation: Command::Use,
+					value:     exported_name.to_string().into(),
+					span:      token.span,
+				});
+			};
+			let exported_value = stack.lookup(&exported_name, token.span)?;
+			// note that the global nametable will always refer to the module nametable in a module (and to the global
+			// nametable in the root module, as a fallback)
+			stack.global_nametable().borrow_mut(mc).export(exported_name, exported_value);
+
 			no_action()
 		},
 		InnerToken::Command(cmd) => todo!("{cmd:?} is unimplemented"),

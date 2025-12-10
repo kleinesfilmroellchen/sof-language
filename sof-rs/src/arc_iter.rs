@@ -5,10 +5,19 @@
 use std::marker::PhantomData;
 use std::ptr::NonNull;
 use std::sync::Arc;
+
+/// A generic iterator over [`Arc`]<[`Vec`]>. Takes ownership of the given [`Vec`].
+/// 
+/// Note that the lifetime parameter is only there to satisfy the [`Iterator`] implementation.
+/// Technically, ArcVecIter always borrows from itself, so values returned from the iterator may only live as long as the ArcVecIter.
+/// Since the borrow checker can usually extend the lifetime of ArcVecIter as needed, this isn’t normally a problem.
 pub(crate) struct ArcVecIter<'a, T> {
 	/// mainly used so that we keep alive a reference to the vector and the below pointers stay valid for our lifetime
+	/// borrow order considerations: data, ptr and end do not implement [`Drop`] and vec’s drop cannot access them
+	/// (only the inverse, in theory), so the drop order does not matter for soundness.
 	vec:  Arc<Vec<T>>,
-	/// emulates borrowing from the Vec, such that the lifetime makes sense and the borrow checker is happy
+	/// emulates borrowing from the Vec, such that the lifetime makes sense and the borrow checker is happy.
+	/// Only relevant for the [`Iterator`] implementation below.
 	data: PhantomData<&'a T>,
 
 	// Stolen from Rust standard library Vec’s into_iter.

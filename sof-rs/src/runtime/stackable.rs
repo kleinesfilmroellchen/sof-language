@@ -28,8 +28,8 @@ pub enum Stackable<'gc> {
 	// both pseudo-string-types are allocated off-GC-heap
 	Identifier(#[collect(require_static)] Identifier),
 	String(#[collect(require_static)] SharedStr),
-	CodeBlock(GcRefLock<'gc, CodeBlock>),
-	Function(GcRefLock<'gc, Function>),
+	CodeBlock(Gc<'gc, CodeBlock>),
+	Function(Gc<'gc, Function>),
 	CurriedFunction(GcRefLock<'gc, CurriedFunction<'gc>>),
 	BuiltinFunction {
 		#[collect(require_static)]
@@ -73,12 +73,12 @@ pub type CurriedArguments<'gc> = SmallVec<[Stackable<'gc>; 8]>;
 #[derive(Debug, Clone)]
 pub struct CurriedFunction<'gc> {
 	curried_arguments: CurriedArguments<'gc>,
-	function:          GcRefLock<'gc, Function>,
+	function:          Gc<'gc, Function>,
 }
 
 impl CurriedFunction<'_> {
 	pub fn remaining_arguments(&self) -> usize {
-		self.function.borrow().arguments - self.curried_arguments.len()
+		self.function.arguments - self.curried_arguments.len()
 	}
 }
 
@@ -293,11 +293,11 @@ impl<'gc> Stackable<'gc> {
 				Ok(smallvec![])
 			},
 			Stackable::CodeBlock(codeblock) => Ok(smallvec![InterpreterAction::ExecuteCall {
-				code:            codeblock.borrow().code.clone(),
+				code:            codeblock.code.clone(),
 				return_behavior: CallReturnBehavior::BlockCall,
 			}]),
 			Stackable::Function(function) => {
-				if let Some(curried_argument_count) = stack.next_currying_marker(function.borrow().arguments) {
+				if let Some(curried_argument_count) = stack.next_currying_marker(function.arguments) {
 					debug!(
 						"found curry marker during function call of {}, will curry {curried_argument_count} arguments",
 						Stackable::Function(*function)
@@ -311,7 +311,6 @@ impl<'gc> Stackable<'gc> {
 					stack.push(Stackable::CurriedFunction(GcRefLock::new(mc, RefLock::new(curried_function))));
 					Ok(smallvec![])
 				} else {
-					let function = function.borrow();
 					assert!(!function.is_constructor, "constructor not implemented");
 					// insert nametable below arguments
 					let function_nametable = GcRefLock::new(mc, RefLock::new(Nametable::new(NametableType::Function)));
@@ -335,7 +334,7 @@ impl<'gc> Stackable<'gc> {
 					Ok(smallvec![])
 				} else {
 					let curried_function = curried_function.borrow();
-					let function = curried_function.function.borrow();
+					let function = curried_function.function;
 					assert!(!function.is_constructor, "constructor not implemented");
 					// push arguments to the stack
 					for argument in &curried_function.curried_arguments {
@@ -370,17 +369,17 @@ impl Display for Stackable<'_> {
 			Stackable::Boolean(boolean) => write!(f, "{boolean}"),
 			Stackable::Identifier(identifier) => write!(f, "{identifier}"),
 			Stackable::String(string) => write!(f, "{string}"),
-			Stackable::CodeBlock(cb) => write!(f, "[CodeBlock {}n ]", cb.borrow().code.len()),
+			Stackable::CodeBlock(cb) => write!(f, "[CodeBlock {}n ]", cb.code.len()),
 			Stackable::Function(func) => {
-				write!(f, "[Function/{} {}n ]", func.borrow().arguments, func.borrow().code.len())
+				write!(f, "[Function/{} {}n ]", func.arguments, func.code.len())
 			},
 			Stackable::CurriedFunction(func) => {
 				write!(
 					f,
 					"[CurriedFunction({})/{} {}n ]",
 					func.borrow().curried_arguments.len(),
-					func.borrow().function.borrow().arguments,
-					func.borrow().function.borrow().code.len()
+					func.borrow().function.arguments,
+					func.borrow().function.code.len()
 				)
 			},
 			Stackable::Object(_) => write!(f, "[Object]"),
@@ -468,7 +467,7 @@ pub(crate) mod builtins {
 			id: &identifier::Identifier,
 			span: miette::SourceSpan,
 		) -> Result<BuiltinMethod<f64>, error::Error> {
-			pub static REGISTRY: std::sync::LazyLock<BuiltinMethodRegistry<f64>> =
+			static REGISTRY: std::sync::LazyLock<BuiltinMethodRegistry<f64>> =
 				std::sync::LazyLock::new(|| BuiltinMethodRegistry::new());
 			REGISTRY.get_builtin_method(id, span)
 		}
@@ -482,7 +481,7 @@ pub(crate) mod builtins {
 			id: &identifier::Identifier,
 			span: miette::SourceSpan,
 		) -> Result<BuiltinMethod<i64>, Error> {
-			pub static REGISTRY: std::sync::LazyLock<BuiltinMethodRegistry<i64>> =
+			static REGISTRY: std::sync::LazyLock<BuiltinMethodRegistry<i64>> =
 				std::sync::LazyLock::new(|| BuiltinMethodRegistry::new());
 			REGISTRY.get_builtin_method(id, span)
 		}
@@ -496,7 +495,7 @@ pub(crate) mod builtins {
 			id: &identifier::Identifier,
 			span: miette::SourceSpan,
 		) -> Result<BuiltinMethod<bool>, Error> {
-			pub static REGISTRY: std::sync::LazyLock<BuiltinMethodRegistry<bool>> =
+			static REGISTRY: std::sync::LazyLock<BuiltinMethodRegistry<bool>> =
 				std::sync::LazyLock::new(|| BuiltinMethodRegistry::new());
 			REGISTRY.get_builtin_method(id, span)
 		}
@@ -511,7 +510,7 @@ pub(crate) mod builtins {
 			id: &identifier::Identifier,
 			span: miette::SourceSpan,
 		) -> Result<BuiltinMethod<flexstr::SharedStr>, Error> {
-			pub static REGISTRY: std::sync::LazyLock<BuiltinMethodRegistry<flexstr::SharedStr>> =
+			static REGISTRY: std::sync::LazyLock<BuiltinMethodRegistry<flexstr::SharedStr>> =
 				std::sync::LazyLock::new(|| BuiltinMethodRegistry::new());
 			REGISTRY.get_builtin_method(id, span)
 		}

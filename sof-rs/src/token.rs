@@ -2,8 +2,7 @@ use std::cmp::Ordering;
 use std::fmt::{Debug, Display};
 
 use flexstr::SharedStr;
-use gc_arena::Mutation;
-use gc_arena::lock::{GcRefLock, RefLock};
+use gc_arena::{Gc, Mutation};
 use miette::SourceSpan;
 
 use crate::identifier::Identifier;
@@ -40,7 +39,7 @@ impl InnerToken {
 			Self::ListStart => Stackable::ListStart,
 			Self::Curry => Stackable::Curry,
 			Self::CodeBlock(code) =>
-				Stackable::CodeBlock(GcRefLock::new(mc, RefLock::new(CodeBlock { code: code.clone() }))),
+				Stackable::CodeBlock(Gc::new(mc, CodeBlock { code: code.clone() })),
 			_ => unreachable!(),
 		}
 	}

@@ -1,4 +1,8 @@
+#![allow(unused_assignments)]
+
+use std::io;
 use std::num::{ParseFloatError, ParseIntError};
+use std::path::PathBuf;
 
 use flexstr::SharedStr;
 use miette::{Diagnostic, SourceSpan};
@@ -149,4 +153,10 @@ pub enum Error {
 		#[label]
 		span:  SourceSpan,
 	},
+	#[error("file {path} is not readable: {inner}")]
+	#[diagnostic(code(ModuleError))]
+	ModuleFileNotReadable {
+		path: PathBuf,
+		inner: io::Error,
+	}
 }

@@ -12,6 +12,7 @@ use crate::runtime::util::UtilityData;
 
 pub mod interpreter;
 pub mod list;
+mod module;
 pub mod nametable;
 pub mod native;
 pub mod stackable;
@@ -29,13 +30,19 @@ pub struct Stack<'gc> {
 	/// Utility stack not visible for the program, currently only used by while loops.
 	pub utility: Vec<UtilityData<'gc>>,
 
-	top_nametable: usize,
+	/// Index into stack where the top nametable lives. This is largely an optimization.
+	top_nametable:    usize,
+	module_nametable: usize,
 }
 
 impl<'gc> Stack<'gc> {
 	pub fn new(mc: &Mutation<'gc>) -> Self {
-		let mut me =
-			Self { main: Vec::with_capacity(64), utility: Vec::with_capacity(64), top_nametable: 0 };
+		let mut me = Self {
+			main:             Vec::with_capacity(64),
+			utility:          Vec::with_capacity(64),
+			top_nametable:    0,
+			module_nametable: 0,
+		};
 
 		me.push_nametable(GcRefLock::new(mc, RefLock::new(Nametable::new(NametableType::Global))));
 		me
@@ -48,8 +55,9 @@ impl<'gc> Stack<'gc> {
 		}
 	}
 
+	/// Returns the global nametable in the root module, and the module nametable otherwise.
 	pub fn global_nametable(&self) -> GcRefLock<'gc, Nametable<'gc>> {
-		match self.main[0] {
+		match self.main[self.module_nametable] {
 			Stackable::Nametable(nt) => nt,
 			_ => unreachable!("missing nametable"),
 		}
@@ -78,6 +86,12 @@ impl<'gc> Stack<'gc> {
 	pub fn push_nametable(&mut self, nametable: GcRefLock<'gc, Nametable<'gc>>) {
 		self.push(Stackable::Nametable(nametable));
 		self.top_nametable = self.main.len() - 1;
+	}
+
+	pub fn push_module_nametable(&mut self, nametable: GcRefLock<'gc, Nametable<'gc>>) {
+		debug_assert!(nametable.borrow().kind == NametableType::Module);
+		self.push_nametable(nametable);
+		self.module_nametable = self.top_nametable;
 	}
 
 	pub fn insert_nametable_at(
@@ -183,30 +197,53 @@ impl<'gc> Stack<'gc> {
 						_ => None,
 					})
 					.unwrap_or(0);
+				// Only relevant for restarting after some failures: make sure the module nametable index is not OOB
+				self.module_nametable = self.top_nametable.min(self.module_nametable);
 				return Ok(nt);
 			}
 		}
 	}
 
+	/// Pops everything above and including the module nametable. Never pops the global nametable.
+	pub fn pop_module_nametable(&mut self, span: SourceSpan) -> Result<GcRefLock<'gc, Nametable<'gc>>, Error> {
+		loop {
+			let next_nametable = self.pop_nametable(span)?;
+			if next_nametable.borrow().kind == NametableType::Module {
+				self.module_nametable = self
+					.main
+					.iter()
+					.enumerate()
+					.rev()
+					.find_map(|(i, el)| match el {
+						Stackable::Nametable(nt) if nt.borrow().kind == NametableType::Module => Some(i),
+						_ => None,
+					})
+					.unwrap_or(0);
+
+				return Ok(next_nametable);
+			}
+		}
+	}
+
 	/// Caller must guarantee that there is at least one element on the stack.
-	#[inline(always)]
+	#[inline]
 	fn unchecked_pop(stack: &mut InnerStack<'gc>) -> Stackable<'gc> {
 		debug_assert!(!stack.is_empty());
 		// Drop correctness is guaranteed as the pointer read takes ownership without moving and set_len discards the
 		// value without Drop. SAFETY: Caller guarantees len() >= 1
 		let value = unsafe { stack.as_mut_ptr().add(stack.len() - 1).read() };
-		// SAFETY: Decreasing the length is always safe.
+		// SAFETY: Decreasing the length is always safe as we had >= 1 element.
 		unsafe { stack.set_len(stack.len() - 1) };
 		value
 	}
 
 	/// Caller must guarantee that there is at least `count` elements on the stack.
-	#[inline(always)]
+	#[inline]
 	fn unchecked_pop_n(stack: &mut InnerStack<'gc>, count: usize) -> CurriedArguments<'gc> {
 		debug_assert!(stack.len() >= count);
 		// SAFETY: Caller guarantees len() >= count.
 		let values = unsafe { stack.get_unchecked(stack.len() - count ..) }.iter().cloned().collect();
-		// SAFETY: Decreasing the length is always safe.
+		// SAFETY: Decreasing the length is always safe as we had >= count element.
 		unsafe { stack.set_len(stack.len() - count) };
 		values
 	}

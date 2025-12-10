@@ -88,12 +88,20 @@ fn main() -> miette::Result<()> {
 				"could not read source file {readable_filename}: {err}"
 			}
 		})?;
-		let result = sof_main(&code);
+		let result = sof_main(&code, Path::new(&filename));
 		match result {
 			Ok(()) => Ok(()),
 			Err(why) => Err(why.with_source_code(NamedSource::new(readable_filename, code))),
 		}
 	} else {
+		let cwd = std::env::current_dir().map_err(|err| {
+			miette! {
+				code = "IOError",
+				"could not determine current directory: {err}"
+			}
+		})?;
+		let fake_filename = cwd.join(".repl-input.sof");
+
 		let mut rl =
 			rustyline::DefaultEditor::with_config(Config::builder().auto_add_history(true).indent_size(4).build())
 				.unwrap();
@@ -105,7 +113,7 @@ fn main() -> miette::Result<()> {
 			let readline = rl.readline(">>> ");
 			match readline {
 				Ok(line) => {
-					let result = run_code_on_arena(line, &mut arena);
+					let result = run_code_on_arena(line, &fake_filename, &mut arena);
 					if let Err(why) = result {
 						println!("{why:?}");
 					}
@@ -122,21 +130,21 @@ fn main() -> miette::Result<()> {
 	}
 }
 
-fn run_code_on_arena(code: impl AsRef<str>, arena: &mut StackArena) -> miette::Result<()> {
+fn run_code_on_arena(code: impl AsRef<str>, path: &Path, arena: &mut StackArena) -> miette::Result<()> {
 	let result = parser::lexer::lex(code)?;
-	let parsed = Arc::new(parser::parse(result.iter().collect())?);
+	let parsed = Arc::new(parser::parse(result)?);
 	debug!("parsed code as {parsed:#?}");
-	run_on_arena(arena, parsed)?;
+	run_on_arena(arena, parsed, path)?;
 	Ok(())
 }
 
-fn sof_main(code: impl AsRef<str>) -> miette::Result<()> {
+fn sof_main(code: impl AsRef<str>, path: &Path) -> miette::Result<()> {
 	let start_time = time::Instant::now();
 	let lexed = parser::lexer::lex(code)?;
 	debug!(target: "sof::lexer", "lexed: {lexed:#?}");
-	let parsed = Arc::new(parser::parse(lexed.iter().collect())?);
+	let parsed = Arc::new(parser::parse(lexed)?);
 	debug!(target: "sof::parser", "parsed: {parsed:#?}");
-	let metrics = run(parsed)?;
+	let metrics = run(parsed, path)?;
 	let end_time = time::Instant::now();
 
 	info!(
