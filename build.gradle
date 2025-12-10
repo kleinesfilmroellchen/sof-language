@@ -24,7 +24,7 @@ version = '0.1'
 
 java {
 	modularity.inferModulePath = true
-	toolchain.languageVersion = JavaLanguageVersion.of(24)
+	toolchain.languageVersion = JavaLanguageVersion.of(21)
 }
 
 compileJava {
