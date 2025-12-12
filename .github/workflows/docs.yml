@@ -12,9 +12,9 @@ jobs:
     name: Deploy with mdbook and GitHub Pages
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: https://github.com/actions/checkout@v2
         name: Checkout repo
-      - uses: actions-rs/toolchain@v1
+      - uses: https://github.com/actions-rs/toolchain@v1
         name: Install toolchain
         id: toolchain
         with:
@@ -24,14 +24,14 @@ jobs:
           mkdir mdbook
           curl -sSL https://github.com/rust-lang/mdBook/releases/download/v${MDBOOK_VERSION}/mdbook-v${MDBOOK_VERSION}-x86_64-unknown-linux-gnu.tar.gz | tar -xz --directory=./mdbook
           echo `pwd`/mdbook >> $GITHUB_PATH
-      - uses: actions/cache@v4
+      - uses: https://github.com/actions/cache@v4
         with:
           path: |
             ~/.cargo/bin/
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-          key: ${{ runner.os }}-${{ steps.toolchain.outputs.cachekey }}
+          key: docs-${{ runner.os }}-${{ steps.toolchain.outputs.cachekey }}
       - name: Install mdbook-spec
         run: cargo install --force --git 'https://github.com/rust-lang/reference' mdbook-spec
       - name: Build documentation
