@@ -17,9 +17,9 @@ jobs:
           distribution: "temurin"
           cache: "gradle"
       - name: Setup Gradle
-        uses: https://github.com/gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v4
       - name: Validate Gradle wrapper
-        uses: https://github.com/gradle/actions/wrapper-validation@v3
+        uses: gradle/actions/wrapper-validation@v3
       - name: Build
         run: ./gradlew build
       - name: Test and generate coverage information
