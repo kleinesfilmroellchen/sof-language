@@ -9,9 +9,9 @@ jobs:
     name: Build and test Java (sof-language)
     runs-on: ubuntu-latest
     steps:
-      - uses: https://github.com/actions/checkout@v4
+      - uses: actions/checkout@v4
       - name: Set up JDK 21
-        uses: https://github.com/actions/setup-java@v5
+        uses: actions/setup-java@v5
         with:
           java-version: "21"
           distribution: "temurin"
@@ -25,7 +25,7 @@ jobs:
       - name: Test and generate coverage information
         run: ./gradlew coverage
       - name: Upload coverage information to codecov
-        uses: https://github.com/codecov/codecov-action@v5
+        uses: codecov/codecov-action@v5
         with:
           files: build/jcc-report/test/jacocoTestReport.xml
           name: sof-coverage-upload
@@ -37,13 +37,13 @@ jobs:
     name: Build and test Rust (sof-rs)
     runs-on: ubuntu-latest
     steps:
-      - uses: https://github.com/actions/checkout@v4
+      - uses: actions/checkout@v4
       - name: Install Rust
         id: toolchain
-        uses: https://github.com/dtolnay/rust-toolchain@v1
+        uses: dtolnay/rust-toolchain@v1
         with:
           toolchain: stable
-      - uses: https://github.com/actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/bin/
