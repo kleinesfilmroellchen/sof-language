@@ -12,10 +12,12 @@ use miette::{NamedSource, miette};
 use rustyline::Config;
 use rustyline::error::ReadlineError;
 
+use crate::cli::{Args, DebugOption};
 use crate::runtime::StackArena;
 use crate::runtime::interpreter::{new_arena, run, run_on_arena};
 
 mod arc_iter;
+mod cli;
 mod error;
 mod identifier;
 mod lib;
@@ -77,7 +79,12 @@ fn main() -> miette::Result<()> {
 				.build(),
 		)
 	}))?;
-	env_logger::Builder::from_default_env().filter_level(log::LevelFilter::Info).init();
+	let args: Args = argh::from_env();
+
+	let mut builder = env_logger::Builder::new();
+	builder.parse_default_env();
+	args.configure_env_logger(&mut builder);
+	builder.init();
 
 	let cwd = std::env::current_dir().map_err(|err| {
 		miette! {
@@ -85,15 +92,15 @@ fn main() -> miette::Result<()> {
 			"could not determine current directory: {err}"
 		}
 	})?;
-	let library_path = cwd.join("../lib").canonicalize().map_err(|err| {
+	let library_path = cwd.join(&args.library_path).canonicalize().map_err(|err| {
 		miette! {
 			code = "IOError",
-			"could not determine standard library path: {err}"
+			"standard library path {} invalid: {err}", args.library_path.display()
 		}
 	})?;
 
-	if let Some(filename) = std::env::args().nth(1) {
-		let readable_filename = file_name_for(Path::new(filename.as_str()));
+	if let Some(filename) = &args.input {
+		let readable_filename = file_name_for(filename);
 		info!("sof version {} (sof-rs), main file is {readable_filename}", env!("CARGO_PKG_VERSION"),);
 		let code = std::fs::read_to_string(&readable_filename).map_err(|err| {
 			miette! {
@@ -101,12 +108,13 @@ fn main() -> miette::Result<()> {
 				"could not read source file {readable_filename}: {err}"
 			}
 		})?;
-		let result = sof_main(&code, Path::new(&filename), library_path);
-		match result {
-			Ok(()) => Ok(()),
-			Err(why) => Err(why.with_source_code(NamedSource::new(readable_filename, code))),
+		let result = sof_main(&code, filename, &library_path);
+		if let Err(why) = result {
+			return Err(why.with_source_code(NamedSource::new(readable_filename, code)));
 		}
-	} else {
+	}
+
+	if args.should_open_repl() {
 		let fake_filename = cwd.join(".repl-input.sof");
 
 		let mut rl =
@@ -126,15 +134,31 @@ fn main() -> miette::Result<()> {
 					}
 				},
 				Err(ReadlineError::Interrupted | ReadlineError::Eof) => {
-					break Ok(());
+					break;
 				},
 				Err(err) => {
 					println!("error: {err:#?}");
-					break Ok(());
+					break;
 				},
 			}
 		}
 	}
+
+	// Finalize.
+
+	if let Some(snapshot_filename) = args
+		.debug_options
+		.iter()
+		.filter_map(|d| match d {
+			DebugOption::ExportSnapshot { target_filename } => Some(target_filename),
+			_ => None,
+		})
+		.next()
+	{
+		info!("Output snapshot to {}", snapshot_filename.display());
+	}
+
+	Ok(())
 }
 
 fn run_code_on_arena(

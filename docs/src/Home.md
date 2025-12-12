@@ -2,7 +2,7 @@
 
 This documentation details the Stack with Objects and Functions programming language, an experimental stack-based reverse-polish-notation functional programming language created by kleines Filmröllchen.
 
-- [Source code](https://github.com/kleinesfilmroellchen/sof-language)
+[Source code](https://github.com/kleinesfilmroellchen/sof-language)
 
 While the README is comprehensive on basic concepts and a good starting point for interested people (like you), the docs shall provide the most thorough information on SOF, including a full language description/specification and a from-scratch tutorial (no programming knowledge required).
 
