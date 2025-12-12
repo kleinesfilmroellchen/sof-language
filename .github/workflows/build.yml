@@ -60,4 +60,4 @@ jobs:
         run: cargo build --verbose --bins --tests
       - name: Run tests
         working-directory: sof-rs
-        run: cargo nextest run --verbose
+        run: cargo nextest run --verbose --no-fail-fast
