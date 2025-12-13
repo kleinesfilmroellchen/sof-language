@@ -88,9 +88,14 @@ impl<'gc> Stack<'gc> {
 	pub fn push_n(&mut self, values: impl ExactSizeIterator<Item = Stackable<'gc>>) {
 		let needed_size = values.len();
 		self.main.reserve(needed_size);
-		for value in values {
-			// FIXME: could be some kind of unchecked push since reserve guarantees space
-			self.main.push(value);
+		for (i, value) in values.enumerate() {
+			unsafe {
+				let end = self.main.as_mut_ptr().add(self.main.len() + i);
+				end.write(value);
+			}
+		}
+		unsafe {
+			self.main.set_len(self.main.len() + needed_size);
 		}
 	}
 
