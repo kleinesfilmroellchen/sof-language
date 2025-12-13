@@ -21,6 +21,7 @@ mod cli;
 mod error;
 mod identifier;
 mod lib;
+mod optimizer;
 mod parser;
 mod runtime;
 mod token;
@@ -146,15 +147,11 @@ fn main() -> miette::Result<()> {
 
 	// Finalize.
 
-	if let Some(snapshot_filename) = args
-		.debug_options
-		.iter()
-		.filter_map(|d| match d {
-			DebugOption::ExportSnapshot { target_filename } => Some(target_filename),
-			_ => None,
-		})
-		.next()
-	{
+	#[allow(clippy::match_wildcard_for_single_variants)]
+	if let Some(snapshot_filename) = args.debug_options.iter().find_map(|d| match d {
+		DebugOption::ExportSnapshot { target_filename } => Some(target_filename),
+		_ => None,
+	}) {
 		info!("Output snapshot to {}", snapshot_filename.display());
 	}
 
@@ -168,8 +165,9 @@ fn run_code_on_arena(
 	library_path: impl Into<PathBuf>,
 ) -> miette::Result<()> {
 	let result = parser::lexer::lex(code)?;
-	let parsed = Arc::new(parser::parse(result)?);
+	let mut parsed = Arc::new(parser::parse(result)?);
 	debug!("parsed code as {parsed:#?}");
+	optimizer::run_passes(&mut parsed);
 	run_on_arena(arena, parsed, path, library_path)?;
 	Ok(())
 }

@@ -85,6 +85,15 @@ impl<'gc> Stack<'gc> {
 		self.main.push(value);
 	}
 
+	pub fn push_n(&mut self, values: impl ExactSizeIterator<Item = Stackable<'gc>>) {
+		let needed_size = values.len();
+		self.main.reserve(needed_size);
+		for value in values {
+			// FIXME: could be some kind of unchecked push since reserve guarantees space
+			self.main.push(value);
+		}
+	}
+
 	pub fn push_nametable(&mut self, nametable: GcRefLock<'gc, Nametable<'gc>>) {
 		self.push(Stackable::Nametable(nametable));
 		self.top_nametable = self.main.len() - 1;

@@ -1,9 +1,10 @@
 use std::borrow::Borrow;
 
 use miette::SourceSpan;
+use smallvec::smallvec;
 
 use crate::error::Error;
-use crate::token::{Command, InnerToken, Token};
+use crate::token::{Command, InnerToken, Literal, Token};
 
 pub mod lexer;
 
@@ -18,14 +19,19 @@ where
 		let span = t.borrow().span;
 		match token {
 			lexer::RawToken::Keyword(lexer::Keyword::ListStart) =>
-				output.push(Token { inner: InnerToken::ListStart, span }),
-			lexer::RawToken::Keyword(lexer::Keyword::Curry) => output.push(Token { inner: InnerToken::Curry, span }),
-			lexer::RawToken::Decimal(decimal) => output.push(Token { inner: InnerToken::Decimal(*decimal), span }),
-			lexer::RawToken::Integer(int) => output.push(Token { inner: InnerToken::Integer(*int), span }),
-			lexer::RawToken::String(string) => output.push(Token { inner: InnerToken::String(string.clone()), span }),
-			lexer::RawToken::Boolean(boolean) => output.push(Token { inner: InnerToken::Boolean(*boolean), span }),
-			lexer::RawToken::Identifier(identifier) =>
-				output.push(Token { inner: InnerToken::Identifier(identifier.clone()), span }),
+				output.push(Token { inner: InnerToken::Literals(smallvec![Literal::ListStart]), span }),
+			lexer::RawToken::Keyword(lexer::Keyword::Curry) =>
+				output.push(Token { inner: InnerToken::Literals(smallvec![Literal::Curry]), span }),
+			lexer::RawToken::Decimal(decimal) =>
+				output.push(Token { inner: InnerToken::Literals(smallvec![Literal::Decimal(*decimal)]), span }),
+			lexer::RawToken::Integer(int) =>
+				output.push(Token { inner: InnerToken::Literals(smallvec![Literal::Integer(*int)]), span }),
+			lexer::RawToken::String(string) =>
+				output.push(Token { inner: InnerToken::Literals(smallvec![Literal::String(string.clone())]), span }),
+			lexer::RawToken::Boolean(boolean) =>
+				output.push(Token { inner: InnerToken::Literals(smallvec![Literal::Boolean(*boolean)]), span }),
+			lexer::RawToken::Identifier(identifier) => output
+				.push(Token { inner: InnerToken::Literals(smallvec![Literal::Identifier(identifier.clone())]), span }),
 			lexer::RawToken::Keyword(lexer::Keyword::CodeBlockStart) => {
 				let mut depth = 1usize;
 				let mut inner_tokens = Vec::new();

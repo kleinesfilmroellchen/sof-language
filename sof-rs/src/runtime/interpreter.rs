@@ -11,17 +11,17 @@ use miette::SourceSpan;
 use smallvec::{SmallVec, smallvec};
 
 use crate::arc_iter::ArcVecIter;
-use crate::call_builtin_function;
 use crate::error::Error;
 use crate::identifier::Identifier;
 use crate::lib::DEFAULT_REGISTRY;
 use crate::runtime::list::List;
 use crate::runtime::module::ModuleRegistry;
 use crate::runtime::nametable::{Nametable, NametableType};
-use crate::runtime::stackable::{BuiltinType, Function, TokenVec};
+use crate::runtime::stackable::{BuiltinType, CodeBlock, Function, TokenVec};
 use crate::runtime::util::{SwitchCase, SwitchCases, UtilityData};
 use crate::runtime::{Stack, StackArena, Stackable};
-use crate::token::{Command, InnerToken, Token};
+use crate::token::{Command, InnerToken, Literal, Token};
+use crate::{call_builtin_function, optimizer};
 
 #[derive(Default, Clone, Copy)]
 #[non_exhaustive]
@@ -32,18 +32,22 @@ pub struct Metrics {
 	pub call_count:  usize,
 }
 
-pub fn run(tokens: TokenVec, file_path: impl Into<PathBuf>, library_path: &Path) -> Result<Metrics, Error> {
+pub fn run(mut tokens: TokenVec, file_path: impl Into<PathBuf>, library_path: &Path) -> Result<Metrics, Error> {
 	let mut arena: StackArena = new_arena(library_path);
+	optimizer::run_passes(&mut tokens);
 	run_on_arena(&mut arena, tokens, file_path, library_path)
 }
 
 /// Shortest token sequence that runs the preamble:
 /// `"preamble" use`
 static RUN_PREAMBLE: LazyLock<[Token; 2]> = LazyLock::new(|| {
-	[Token { inner: InnerToken::String("preamble".into()), span: SourceSpan::new(0.into(), 0) }, Token {
-		inner: InnerToken::Command(Command::Use),
-		span:  SourceSpan::new(0.into(), 0),
-	}]
+	[
+		Token {
+			inner: InnerToken::Literals(smallvec![Literal::String("preamble".into())]),
+			span:  SourceSpan::new(0.into(), 0),
+		},
+		Token { inner: InnerToken::Command(Command::Use), span: SourceSpan::new(0.into(), 0) },
+	]
 });
 
 /// Constructs a new arena and runs the preamble on it.
@@ -867,8 +871,12 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 			no_action()
 		},
 		InnerToken::Command(cmd) => todo!("{cmd:?} is unimplemented"),
-		literal => {
-			stack.push(literal.as_stackable(mc));
+		InnerToken::Literals(literals) => {
+			stack.push_n(literals.into_iter().map(Literal::as_stackable));
+			no_action()
+		},
+		InnerToken::CodeBlock(cb) => {
+			stack.push(Stackable::CodeBlock(Gc::new(mc, CodeBlock { code: cb.clone() })));
 			no_action()
 		},
 	}

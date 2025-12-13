@@ -2,12 +2,11 @@ use std::cmp::Ordering;
 use std::fmt::{Debug, Display};
 
 use flexstr::SharedStr;
-use gc_arena::{Gc, Mutation};
 use miette::SourceSpan;
 
 use crate::identifier::Identifier;
 use crate::parser::lexer;
-use crate::runtime::stackable::{CodeBlock, Stackable, TokenVec};
+use crate::runtime::stackable::{Stackable, TokenVec};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum InnerToken {
@@ -17,19 +16,25 @@ pub enum InnerToken {
 	/// Special token only used internally to support switch cases.
 	SwitchBody,
 
-	// literals
+	Literals(smallvec::SmallVec<[Literal; 3]>),
+
+	CodeBlock(TokenVec),
+}
+
+/// Nonrecursive literals.
+#[derive(Debug, PartialEq, Clone)]
+pub enum Literal {
 	Integer(i64),
 	Decimal(f64),
 	Identifier(Identifier),
 	String(SharedStr),
 	Boolean(bool),
-	CodeBlock(TokenVec),
 	ListStart,
 	Curry,
 }
 
-impl InnerToken {
-	pub fn as_stackable<'gc>(&self, mc: &Mutation<'gc>) -> Stackable<'gc> {
+impl Literal {
+	pub fn as_stackable<'gc>(&self) -> Stackable<'gc> {
 		match self {
 			Self::Integer(int) => Stackable::Integer(*int),
 			Self::Decimal(decimal) => Stackable::Decimal(*decimal),
@@ -38,8 +43,6 @@ impl InnerToken {
 			Self::Boolean(boolean) => Stackable::Boolean(*boolean),
 			Self::ListStart => Stackable::ListStart,
 			Self::Curry => Stackable::Curry,
-			Self::CodeBlock(code) => Stackable::CodeBlock(Gc::new(mc, CodeBlock { code: code.clone() })),
-			_ => unreachable!(),
 		}
 	}
 }
@@ -239,13 +242,7 @@ impl Debug for Token {
 		match &self.inner {
 			InnerToken::Command(arg0) => f.debug_tuple("Command").field(arg0).finish(),
 			InnerToken::CodeBlock(arg0) => f.debug_tuple("CodeBlock").field(arg0).finish(),
-			InnerToken::Integer(arg0) => f.debug_tuple("Integer").field(arg0).finish(),
-			InnerToken::Decimal(arg0) => f.debug_tuple("Decimal").field(arg0).finish(),
-			InnerToken::Identifier(arg0) => f.debug_tuple("Identifier").field(arg0).finish(),
-			InnerToken::String(arg0) => f.debug_tuple("String").field(arg0).finish(),
-			InnerToken::Boolean(arg0) => f.debug_tuple("Boolean").field(arg0).finish(),
-			InnerToken::ListStart => f.debug_tuple("ListStart").finish(),
-			InnerToken::Curry => f.debug_tuple("Curry").finish(),
+			InnerToken::Literals(arg0) => f.debug_list().entries(arg0).finish(),
 			InnerToken::WhileBody => f.debug_tuple("WhileBody").finish(),
 			InnerToken::SwitchBody => f.debug_tuple("SwitchBody").finish(),
 		}?;

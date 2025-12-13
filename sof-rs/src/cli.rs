@@ -32,12 +32,13 @@ impl Args {
 	/// - if --interactive, always open REPL
 	/// - otherwise, only open REPL if neither input file nor inline command was used.
 	pub fn should_open_repl(&self) -> bool {
-		self.interactive || (!self.input.is_some() && !self.command.is_some())
+		self.interactive || (self.input.is_none() && self.command.is_none())
 	}
 
 	/// Configure the logger with the options that control logging behavior.
 	pub fn configure_env_logger(&self, builder: &mut env_logger::Builder) {
 		let mut should_apply_default = true;
+		#[allow(clippy::match_wildcard_for_single_variants)]
 		for log_level in self.debug_options.iter().filter_map(|f| match f {
 			DebugOption::LogLevel(log_level) => Some(log_level),
 			_ => None,
@@ -74,7 +75,7 @@ pub enum LogLevel {
 }
 
 impl LogLevel {
-	pub fn configure_env_logger(&self, builder: &mut env_logger::Builder) {
+	pub fn configure_env_logger(self, builder: &mut env_logger::Builder) {
 		match self {
 			Self::Off => builder.filter_level(log::LevelFilter::Off),
 			Self::SelfDebug => builder.filter_module("sof", log::LevelFilter::Debug),
