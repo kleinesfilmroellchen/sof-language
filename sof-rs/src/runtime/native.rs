@@ -1,5 +1,5 @@
 use ahash::HashMap;
-use flexstr::SharedStr;
+use lean_string::LeanString;
 use log::debug;
 use miette::SourceSpan;
 
@@ -61,6 +61,7 @@ impl From<NativeFunction5> for NativeFunction {
 }
 
 impl NativeFunction {
+	// TODO: dynamic dispatch candidate
 	pub fn call(&self, stack: &mut Stack<'_>, span: SourceSpan) -> Result<(), Error> {
 		if let Some(result) = match self {
 			NativeFunction::Args1(function) => {
@@ -102,12 +103,12 @@ impl NativeFunction {
 
 #[derive(Clone, Default)]
 pub struct NativeFunctionRegistry {
-	pub functions: HashMap<SharedStr, NativeFunction>,
+	pub functions: HashMap<LeanString, NativeFunction>,
 }
 
 impl NativeFunctionRegistry {
-	pub fn register_function(&mut self, name: &str, function: impl Into<NativeFunction>) {
-		self.functions.insert(SharedStr::from_ref(name), function.into());
+	pub fn register_function(&mut self, name: &'static str, function: impl Into<NativeFunction>) {
+		self.functions.insert(LeanString::from_static_str(name), function.into());
 	}
 
 	#[inline]

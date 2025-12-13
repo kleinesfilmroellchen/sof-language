@@ -9,10 +9,11 @@ argh = { version = "0.1", default-features = false }
 env_logger = { version = "0.11", default-features = false, features = [
 	"auto-color",
 ] }
-flexstr = { version = "0.9", features = ["fp_convert", "int_convert"] }
 gc-arena = "0.5"
 gc-arena-derive = "0.5"
+heapless = "0.9.2"
 internment = { version = "0.8", default-features = false, features = ["arc"] }
+lean_string = "0.5.1"
 log = { version = "0.4", features = ["release_max_level_info"] }
 miette = { version = "7", features = ["fancy-no-backtrace"] }
 rustyline = { version = "16", default-features = false }
@@ -28,7 +29,10 @@ rustversion = "1"
 nightly = []
 
 [profile.release]
-debug = true
+lto = "fat"
+codegen-units = 1
+debug = "full"
+panic = "abort"
 
 [lints.clippy]
 all = { level = "deny", priority = -10 }

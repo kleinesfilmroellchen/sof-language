@@ -185,13 +185,13 @@ impl<'gc> Stack<'gc> {
 				// some recursion for this slow path, might be tail-call optimized even
 				self.pop(span)
 			},
-			Stackable::Nametable(_) => {
-				self.main.push(value);
-				Err(Error::MissingValue { span })
-			},
 			_ if self.main.len() >= self.top_nametable => {
 				// fast path: did not reach top nametable, therefore cannot be a nametable
 				Ok(value)
+			},
+			Stackable::Nametable(_) => {
+				self.main.push(value);
+				Err(Error::MissingValue { span })
 			},
 			_ => Ok(value),
 		}

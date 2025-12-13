@@ -1,12 +1,13 @@
 use std::cmp::Ordering;
 use std::fmt::{Debug, Display};
 
-use flexstr::SharedStr;
+use lean_string::LeanString;
+use gc_arena::{Gc, Mutation};
 use miette::SourceSpan;
 
 use crate::identifier::Identifier;
 use crate::parser::lexer;
-use crate::runtime::stackable::{Stackable, TokenVec};
+use crate::runtime::stackable::{CodeBlock, Stackable, TokenVec};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum InnerToken {
@@ -16,9 +17,10 @@ pub enum InnerToken {
 	/// Special token only used internally to support switch cases.
 	SwitchBody,
 
+	// optimization: single literals are faster to handle without a generic list-based stack push.
+	// since they are the most common case, this saves ~10% runtime.
+	Literal(Literal),
 	Literals(smallvec::SmallVec<[Literal; 3]>),
-
-	CodeBlock(TokenVec),
 }
 
 /// Nonrecursive literals.
@@ -27,14 +29,15 @@ pub enum Literal {
 	Integer(i64),
 	Decimal(f64),
 	Identifier(Identifier),
-	String(SharedStr),
+	String(LeanString),
 	Boolean(bool),
 	ListStart,
 	Curry,
+	CodeBlock(TokenVec),
 }
 
 impl Literal {
-	pub fn as_stackable<'gc>(&self) -> Stackable<'gc> {
+	pub fn as_stackable<'gc>(&self, mc: &Mutation<'gc>) -> Stackable<'gc> {
 		match self {
 			Self::Integer(int) => Stackable::Integer(*int),
 			Self::Decimal(decimal) => Stackable::Decimal(*decimal),
@@ -43,6 +46,7 @@ impl Literal {
 			Self::Boolean(boolean) => Stackable::Boolean(*boolean),
 			Self::ListStart => Stackable::ListStart,
 			Self::Curry => Stackable::Curry,
+			Self::CodeBlock(cb) => Stackable::CodeBlock(Gc::new(mc, CodeBlock { code: cb.clone() })),
 		}
 	}
 }
@@ -241,8 +245,8 @@ impl Debug for Token {
 		f.write_str("Token { ")?;
 		match &self.inner {
 			InnerToken::Command(arg0) => f.debug_tuple("Command").field(arg0).finish(),
-			InnerToken::CodeBlock(arg0) => f.debug_tuple("CodeBlock").field(arg0).finish(),
 			InnerToken::Literals(arg0) => f.debug_list().entries(arg0).finish(),
+			InnerToken::Literal(arg0) => f.debug_list().entry(arg0).finish(),
 			InnerToken::WhileBody => f.debug_tuple("WhileBody").finish(),
 			InnerToken::SwitchBody => f.debug_tuple("SwitchBody").finish(),
 		}?;

@@ -1,42 +1,44 @@
 #![allow(clippy::unnecessary_wraps)] // false positive, the builtins need to have specific signatures
 
+use std::mem::MaybeUninit;
 use std::sync::LazyLock;
 
 use ahash::HashMapExt;
 use gc_arena::{Collect, Gc, Mutation};
 use miette::SourceSpan;
-use smallvec::{SmallVec, smallvec};
 
 use crate::error::Error;
 use crate::identifier::Identifier;
 use crate::runtime::stackable::{BuiltinMethod, BuiltinMethodRegistry, RegistryExt};
 use crate::runtime::{Stack, Stackable};
 
-pub type ListVec<'gc> = SmallVec<[Stackable<'gc>; 15]>;
-
-#[derive(Debug, Default, Clone, PartialEq)]
+/// Underlying list object. Always heap-allocated, as it is not Sized.
+#[derive(Debug, PartialEq, Collect)]
+#[collect(no_drop)]
 pub struct List<'gc> {
-	pub(crate) list: ListVec<'gc>,
-}
-
-unsafe impl Collect for List<'_> {
-	fn needs_trace() -> bool
-	where
-		Self: Sized,
-	{
-		true
-	}
-
-	fn trace(&self, cc: &gc_arena::Collection) {
-		for el in &self.list {
-			el.trace(cc);
-		}
-	}
+	pub(crate) list: Box<[Stackable<'gc>]>,
 }
 
 impl<'gc> List<'gc> {
-	pub fn new(list: ListVec<'gc>, mc: &Mutation<'gc>) -> Gc<'gc, Self> {
+	pub fn new_from_ref(list: &[Stackable<'gc>], mc: &Mutation<'gc>) -> Gc<'gc, Self> {
+		Self::new_from_box(list.into(), mc)
+	}
+
+	pub fn new_from_box(list: Box<[Stackable<'gc>]>, mc: &Mutation<'gc>) -> Gc<'gc, Self> {
 		Gc::new(mc, Self { list })
+	}
+
+	/// Creates a copy of the list with a new element pushed.
+	pub fn with_pushed(&self, new_element: Stackable<'gc>, mc: &Mutation<'gc>) -> Gc<'gc, Self> {
+		let Some(new_size) = self.list.len().checked_add(1) else {
+			panic!("maximum list size exceeded");
+		};
+		let mut new_storage = Box::new_uninit_slice(new_size);
+		new_storage[.. self.list.len()].write_clone_of_slice(self.list.as_ref());
+		new_storage[self.list.len()] = MaybeUninit::new(new_element);
+		// SAFETY: [0..old_size] was written by write_clone_of_slice, and [old_size] (the new element) was written by
+		// the assignment. Therefore, the entire storage is now initialized.
+		unsafe { Gc::new(mc, Self { list: new_storage.assume_init() }) }
 	}
 }
 
@@ -56,17 +58,17 @@ impl List<'_> {
 	pub fn get_builtin_method<'gc>(id: &Identifier, span: SourceSpan) -> Result<BuiltinMethod<List<'gc>>, Error> {
 		static REGISTRY: LazyLock<BuiltinMethodRegistry<List<'_>>> = LazyLock::new(|| {
 			let mut registry = BuiltinMethodRegistry::new();
-			registry.insert(Identifier::new("idx"), unfuck_list_function(idx));
-			registry.insert(Identifier::new("length"), unfuck_list_function(length));
-			registry.insert(Identifier::new("head"), unfuck_list_function(head));
-			registry.insert(Identifier::new("first"), unfuck_list_function(head));
-			registry.insert(Identifier::new("second"), unfuck_list_function(second));
-			registry.insert(Identifier::new("tail"), unfuck_list_function(tail));
-			registry.insert(Identifier::new("take"), unfuck_list_function(take));
-			registry.insert(Identifier::new("after"), unfuck_list_function(after));
-			registry.insert(Identifier::new("reverse"), unfuck_list_function(reverse));
-			registry.insert(Identifier::new("split"), unfuck_list_function(split));
-			registry.insert(Identifier::new("push"), unfuck_list_function(push));
+			registry.insert(Identifier::new_static("idx"), unfuck_list_function(idx));
+			registry.insert(Identifier::new_static("length"), unfuck_list_function(length));
+			registry.insert(Identifier::new_static("head"), unfuck_list_function(head));
+			registry.insert(Identifier::new_static("first"), unfuck_list_function(head));
+			registry.insert(Identifier::new_static("second"), unfuck_list_function(second));
+			registry.insert(Identifier::new_static("tail"), unfuck_list_function(tail));
+			registry.insert(Identifier::new_static("take"), unfuck_list_function(take));
+			registry.insert(Identifier::new_static("after"), unfuck_list_function(after));
+			registry.insert(Identifier::new_static("reverse"), unfuck_list_function(reverse));
+			registry.insert(Identifier::new_static("split"), unfuck_list_function(split));
+			registry.insert(Identifier::new_static("push"), unfuck_list_function(push));
 			registry
 		});
 		// SAFETY: Early and late bound lifetimes do not matter for static functions.
@@ -153,7 +155,7 @@ fn take<'gc>(
 	span: SourceSpan,
 ) -> Result<Option<Stackable<'gc>>, Error> {
 	let index = get_index(stack, this.list.len(), span)?;
-	let prefix = List::new(this.list[.. index].into(), mc);
+	let prefix = List::new_from_ref(this.list[.. index].into(), mc);
 	Ok(Some(Stackable::List(prefix)))
 }
 
@@ -164,7 +166,7 @@ fn after<'gc>(
 	span: SourceSpan,
 ) -> Result<Option<Stackable<'gc>>, Error> {
 	let index = get_index(stack, this.list.len(), span)?;
-	let suffix = List::new(this.list[index ..].into(), mc);
+	let suffix = List::new_from_ref(this.list[index ..].into(), mc);
 	Ok(Some(Stackable::List(suffix)))
 }
 
@@ -175,7 +177,7 @@ fn reverse<'gc>(
 	_span: SourceSpan,
 ) -> Result<Option<Stackable<'gc>>, Error> {
 	let list_copy = this.list.iter().rev().cloned().collect();
-	Ok(Some(Stackable::List(List::new(list_copy, mc))))
+	Ok(Some(Stackable::List(List::new_from_box(list_copy, mc))))
 }
 
 fn split<'gc>(
@@ -186,9 +188,13 @@ fn split<'gc>(
 ) -> Result<Option<Stackable<'gc>>, Error> {
 	let index = get_index(stack, this.list.len(), span)?;
 	let (first, second) = this.list.split_at(index);
-	let first_list = List::new(first.into(), mc);
-	let second_list = List::new(second.into(), mc);
-	Ok(Some(Stackable::List(List::new(smallvec![Stackable::List(first_list), Stackable::List(second_list)], mc))))
+	let first_list = List::new_from_ref(first.into(), mc);
+	let second_list = List::new_from_ref(second.into(), mc);
+	// FIXME: should perform in-place init
+	Ok(Some(Stackable::List(List::new_from_box(
+		Box::new([Stackable::List(first_list), Stackable::List(second_list)]),
+		mc,
+	))))
 }
 
 fn push<'gc>(
@@ -197,7 +203,6 @@ fn push<'gc>(
 	mc: &Mutation<'gc>,
 	span: SourceSpan,
 ) -> Result<Option<Stackable<'gc>>, Error> {
-	let mut list_copy = this.list.clone();
-	list_copy.push(stack.pop(span)?);
-	Ok(Some(Stackable::List(List::new(list_copy, mc))))
+	let list_copy = this.with_pushed(stack.pop(span)?, mc);
+	Ok(Some(Stackable::List(list_copy)))
 }

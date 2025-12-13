@@ -43,31 +43,43 @@ mod passes {
 		let mut idx = 0;
 		while idx < tokens.len() {
 			let current = &tokens[idx];
-			if let InnerToken::Literals(literals) = &current.inner {
-				// Set start span via first token.
-				if previous_literal_tokens.is_empty() {
-					start_span = current.span;
-					start_index = idx;
-				}
-				end_span = current.span;
-				previous_literal_tokens.extend(literals.clone());
-			} else {
-				if idx > start_index + 1 && !previous_literal_tokens.is_empty() {
-					// End the literal list
-					trace!("combining literals in range [{start_index}; {}]", idx - 1);
-					let previous_lit_tokens = previous_literal_tokens;
+			match &current.inner {
+				InnerToken::Literals(literals) => {
+					// Set start span via first token.
+					if previous_literal_tokens.is_empty() {
+						start_span = current.span;
+						start_index = idx;
+					}
+					end_span = current.span;
+					previous_literal_tokens.extend(literals.clone());
+				},
+				InnerToken::Literal(literal) => {
+					// Set start span via first token.
+					if previous_literal_tokens.is_empty() {
+						start_span = current.span;
+						start_index = idx;
+					}
+					end_span = current.span;
+					previous_literal_tokens.push(literal.clone());
+				},
+				_ => {
+					if idx > start_index + 1 && !previous_literal_tokens.is_empty() {
+						// End the literal list
+						trace!("combining literals in range [{start_index}; {}]", idx - 1);
+						let previous_lit_tokens = previous_literal_tokens;
+						previous_literal_tokens = SmallVec::new();
+						tokens.splice(start_index .. idx, [Token {
+							inner: InnerToken::Literals(previous_lit_tokens),
+							span:  SourceSpan::new(
+								start_span.offset().into(),
+								end_span.offset() + end_span.len() - start_span.offset(),
+							),
+						}]);
+						idx = start_index + 1;
+						continue;
+					}
 					previous_literal_tokens = SmallVec::new();
-					tokens.splice(start_index .. idx, [Token {
-						inner: InnerToken::Literals(previous_lit_tokens),
-						span:  SourceSpan::new(
-							start_span.offset().into(),
-							end_span.offset() + end_span.len() - start_span.offset(),
-						),
-					}]);
-					idx = start_index + 1;
-					continue;
-				}
-				previous_literal_tokens = SmallVec::new();
+				},
 			}
 			idx += 1;
 		}

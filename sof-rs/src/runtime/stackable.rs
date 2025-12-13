@@ -4,12 +4,12 @@ use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Rem, Sub};
 use std::sync::Arc;
 
 use ahash::HashMap;
-use flexstr::SharedStr;
 use gc_arena::lock::{GcRefLock, RefLock};
 use gc_arena::{Collect, Gc, Mutation};
+use lean_string::LeanString;
 use log::debug;
 use miette::SourceSpan;
-use smallvec::{SmallVec, smallvec};
+use smallvec::SmallVec;
 
 use super::Stack;
 use super::interpreter::{ActionVec, CallReturnBehavior, InterpreterAction};
@@ -22,12 +22,12 @@ use crate::token::{Command, Token};
 #[derive(Clone, Debug, Collect)]
 #[collect(no_drop)]
 pub enum Stackable<'gc> {
-	Integer(i64),
-	Decimal(f64),
-	Boolean(bool),
+	Integer(#[collect(require_static)] i64),
+	Decimal(#[collect(require_static)] f64),
+	Boolean(#[collect(require_static)] bool),
 	// both pseudo-string-types are allocated off-GC-heap
 	Identifier(#[collect(require_static)] Identifier),
-	String(#[collect(require_static)] SharedStr),
+	String(#[collect(require_static)] LeanString),
 	CodeBlock(Gc<'gc, CodeBlock>),
 	Function(Gc<'gc, Function<'gc>>),
 	CurriedFunction(GcRefLock<'gc, CurriedFunction<'gc>>),
@@ -292,12 +292,12 @@ impl<'gc> Stackable<'gc> {
 			Stackable::Identifier(identifier) => {
 				let value = stack.lookup(identifier, span)?;
 				stack.main.push(value);
-				Ok(smallvec![])
+				Ok(heapless::Vec::new())
 			},
-			Stackable::CodeBlock(codeblock) => Ok(smallvec![InterpreterAction::ExecuteCall {
+			Stackable::CodeBlock(codeblock) => Ok(heapless::Vec::from_array([InterpreterAction::ExecuteCall {
 				code:            codeblock.code.clone(),
 				return_behavior: CallReturnBehavior::BlockCall,
-			}]),
+			}])),
 			Stackable::Function(function) => {
 				if let Some(curried_argument_count) = stack.next_currying_marker(function.arguments) {
 					debug!(
@@ -311,7 +311,7 @@ impl<'gc> Stackable<'gc> {
 					let curried_function =
 						CurriedFunction { curried_arguments: arguments, function: function_copy };
 					stack.push(Stackable::CurriedFunction(GcRefLock::new(mc, RefLock::new(curried_function))));
-					Ok(smallvec![])
+					Ok(heapless::Vec::new())
 				} else {
 					// TODO: try block
 					(|| {
@@ -328,10 +328,10 @@ impl<'gc> Stackable<'gc> {
 							function.arguments + 1,
 							function.global_nametable_at_definition,
 						);
-						Ok(smallvec![InterpreterAction::ExecuteCall {
+						Ok(heapless::Vec::from_array([InterpreterAction::ExecuteCall {
 							code:            function.code.clone(),
 							return_behavior: CallReturnBehavior::FunctionCall,
-						}])
+						}]))
 					})()
 					.map_err(|()| Error::NotEnoughArguments { argument_count: function.arguments, span })
 				}
@@ -346,7 +346,7 @@ impl<'gc> Stackable<'gc> {
 					let mut mut_function = curried_function.borrow_mut(mc);
 					mut_function.curried_arguments.insert_many(0, arguments);
 					stack.push(Stackable::CurriedFunction(*curried_function));
-					Ok(smallvec![])
+					Ok(heapless::Vec::new())
 				} else {
 					let curried_function = curried_function.borrow();
 					let function = curried_function.function;
@@ -365,10 +365,10 @@ impl<'gc> Stackable<'gc> {
 						function.arguments + 1,
 						function.global_nametable_at_definition,
 					);
-					Ok(smallvec![InterpreterAction::ExecuteCall {
+					Ok(heapless::Vec::from_array([InterpreterAction::ExecuteCall {
 						code:            function.code.clone(),
 						return_behavior: CallReturnBehavior::FunctionCall,
-					}])
+					}]))
 				}
 			},
 			Stackable::BuiltinFunction { target_type, id } => match target_type {
@@ -531,8 +531,8 @@ pub(crate) mod builtins {
 		pub fn get_builtin_method(
 			id: &identifier::Identifier,
 			span: miette::SourceSpan,
-		) -> Result<BuiltinMethod<flexstr::SharedStr>, Error> {
-			static REGISTRY: std::sync::LazyLock<BuiltinMethodRegistry<flexstr::SharedStr>> =
+		) -> Result<BuiltinMethod<lean_string::LeanString>, Error> {
+			static REGISTRY: std::sync::LazyLock<BuiltinMethodRegistry<lean_string::LeanString>> =
 				std::sync::LazyLock::new(|| BuiltinMethodRegistry::new());
 			REGISTRY.get_builtin_method(id, span)
 		}

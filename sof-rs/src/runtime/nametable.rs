@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use std::fmt::Display;
 
+use ahash::HashMap;
 use gc_arena_derive::Collect;
 use miette::SourceSpan;
 
@@ -21,11 +21,11 @@ pub enum NametableType {
 #[derive(Debug, Collect, PartialEq)]
 #[collect(no_drop)]
 pub struct Nametable<'gc> {
-	pub entries:        HashMap<Identifier, Stackable<'gc>, ahash::RandomState>,
+	pub entries:        HashMap<Identifier, Stackable<'gc>>,
 	pub kind:           NametableType,
 	pub return_value:   Option<Stackable<'gc>>,
 	/// For modules: contains the exported symbols of the module that is using this nametable.
-	pub exported_names: HashMap<Identifier, Stackable<'gc>, ahash::RandomState>,
+	pub exported_names: HashMap<Identifier, Stackable<'gc>>,
 }
 
 impl<'gc> Nametable<'gc> {

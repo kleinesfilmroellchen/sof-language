@@ -1,7 +1,6 @@
 use std::borrow::Borrow;
 
 use miette::SourceSpan;
-use smallvec::smallvec;
 
 use crate::error::Error;
 use crate::token::{Command, InnerToken, Literal, Token};
@@ -19,19 +18,19 @@ where
 		let span = t.borrow().span;
 		match token {
 			lexer::RawToken::Keyword(lexer::Keyword::ListStart) =>
-				output.push(Token { inner: InnerToken::Literals(smallvec![Literal::ListStart]), span }),
+				output.push(Token { inner: InnerToken::Literal(Literal::ListStart), span }),
 			lexer::RawToken::Keyword(lexer::Keyword::Curry) =>
-				output.push(Token { inner: InnerToken::Literals(smallvec![Literal::Curry]), span }),
+				output.push(Token { inner: InnerToken::Literal(Literal::Curry), span }),
 			lexer::RawToken::Decimal(decimal) =>
-				output.push(Token { inner: InnerToken::Literals(smallvec![Literal::Decimal(*decimal)]), span }),
+				output.push(Token { inner: InnerToken::Literal(Literal::Decimal(*decimal)), span }),
 			lexer::RawToken::Integer(int) =>
-				output.push(Token { inner: InnerToken::Literals(smallvec![Literal::Integer(*int)]), span }),
+				output.push(Token { inner: InnerToken::Literal(Literal::Integer(*int)), span }),
 			lexer::RawToken::String(string) =>
-				output.push(Token { inner: InnerToken::Literals(smallvec![Literal::String(string.clone())]), span }),
+				output.push(Token { inner: InnerToken::Literal(Literal::String(string.clone())), span }),
 			lexer::RawToken::Boolean(boolean) =>
-				output.push(Token { inner: InnerToken::Literals(smallvec![Literal::Boolean(*boolean)]), span }),
-			lexer::RawToken::Identifier(identifier) => output
-				.push(Token { inner: InnerToken::Literals(smallvec![Literal::Identifier(identifier.clone())]), span }),
+				output.push(Token { inner: InnerToken::Literal(Literal::Boolean(*boolean)), span }),
+			lexer::RawToken::Identifier(identifier) =>
+				output.push(Token { inner: InnerToken::Literal(Literal::Identifier(identifier.clone())), span }),
 			lexer::RawToken::Keyword(lexer::Keyword::CodeBlockStart) => {
 				let mut depth = 1usize;
 				let mut inner_tokens = Vec::new();
@@ -60,7 +59,7 @@ where
 
 				let span = SourceSpan::new(span.offset().into(), last_span.offset() - span.offset() + last_span.len());
 				let parsed = parse(inner_tokens)?;
-				output.push(Token { inner: InnerToken::CodeBlock(parsed.into()), span });
+				output.push(Token { inner: InnerToken::Literal(Literal::CodeBlock(parsed.into())), span });
 			},
 			lexer::RawToken::Keyword(lexer::Keyword::CodeBlockEnd) => {
 				return Err(Error::UnclosedCodeBlock { start_span: span, end_span: None });

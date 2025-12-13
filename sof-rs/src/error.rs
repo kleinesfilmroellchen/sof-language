@@ -4,7 +4,7 @@ use std::io;
 use std::num::{ParseFloatError, ParseIntError};
 use std::path::PathBuf;
 
-use flexstr::SharedStr;
+use lean_string::LeanString;
 use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 
@@ -24,14 +24,14 @@ pub enum Error {
 	#[diagnostic(code(SyntaxError))]
 	InvalidIdentifier {
 		chr:   char,
-		ident: SharedStr,
+		ident: LeanString,
 		#[label = "invalid"]
 		span:  SourceSpan,
 	},
 	#[error("invalid number \"{number_text}\"")]
 	#[diagnostic(code(SyntaxError))]
 	InvalidInteger {
-		number_text: SharedStr,
+		number_text: LeanString,
 		inner:       ParseIntError,
 		#[label("{inner}")]
 		span:        SourceSpan,
@@ -39,7 +39,7 @@ pub enum Error {
 	#[error("invalid number \"{number_text}\"")]
 	#[diagnostic(code(SyntaxError))]
 	InvalidFloat {
-		number_text: SharedStr,
+		number_text: LeanString,
 		inner:       ParseFloatError,
 		#[label("{inner}")]
 		span:        SourceSpan,
@@ -81,8 +81,8 @@ pub enum Error {
 	#[diagnostic(code(TypeError))]
 	InvalidTypes {
 		operation: Command,
-		lhs:       SharedStr,
-		rhs:       SharedStr,
+		lhs:       LeanString,
+		rhs:       LeanString,
 		#[label]
 		span:      SourceSpan,
 	},
@@ -90,38 +90,38 @@ pub enum Error {
 	#[diagnostic(code(TypeError))]
 	InvalidType {
 		operation: Command,
-		value:     SharedStr,
+		value:     LeanString,
 		#[label]
 		span:      SourceSpan,
 	},
 	#[error("invalid type in {name}: {value}")]
 	#[diagnostic(code(TypeError))]
 	InvalidTypeNative {
-		name:  SharedStr,
-		value: SharedStr,
+		name:  LeanString,
+		value: LeanString,
 		#[label]
 		span:  SourceSpan,
 	},
 	#[error("divide by zero: {lhs} / {rhs}")]
 	#[diagnostic(code(ArithmeticError))]
 	DivideByZero {
-		lhs:  SharedStr,
-		rhs:  SharedStr,
+		lhs:  LeanString,
+		rhs:  LeanString,
 		#[label]
 		span: SourceSpan,
 	},
 	#[error("overflow occurred while converting {original} to integer")]
 	#[diagnostic(code(ArithmeticError))]
 	Overflow {
-		original: SharedStr,
+		original: LeanString,
 		#[label]
 		span:     SourceSpan,
 	},
 	#[error("non-comparable values: {lhs} and {rhs}")]
 	#[diagnostic(code(ArithmeticError))]
 	Incomparable {
-		lhs:  SharedStr,
-		rhs:  SharedStr,
+		lhs:  LeanString,
+		rhs:  LeanString,
 		#[label]
 		span: SourceSpan,
 	},
@@ -148,7 +148,7 @@ pub enum Error {
 	#[error("native function {name} not found")]
 	#[diagnostic(code(NativeError))]
 	UnknownNativeFunction {
-		name: SharedStr,
+		name: LeanString,
 		#[label]
 		span: SourceSpan,
 	},

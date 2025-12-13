@@ -1,6 +1,6 @@
 use std::iter::Peekable;
 
-use flexstr::SharedStr;
+use lean_string::LeanString;
 use miette::{SourceOffset, SourceSpan};
 use unicode_ident::{is_xid_continue, is_xid_start};
 
@@ -12,7 +12,7 @@ pub enum RawToken {
 	Keyword(Keyword),
 	Decimal(f64),
 	Integer(i64),
-	String(SharedStr),
+	String(LeanString),
 	Boolean(bool),
 	Identifier(Identifier),
 }

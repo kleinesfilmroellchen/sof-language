@@ -1,28 +1,23 @@
-use flexstr::FlexStrBase;
 use gc_arena_derive::Collect;
-use internment::ArcIntern;
+use lean_string::LeanString;
 
 #[derive(Clone, Eq, PartialEq, Hash, Collect)]
 #[collect(require_static)]
 #[repr(transparent)]
-pub struct Identifier(FlexStrBase<ArcIntern<str>>);
+pub struct Identifier(LeanString);
 
 impl Identifier {
-	// force the compiler to check the size constraint at compile-time
-	const __CHECK_SIZE: usize = if size_of::<ArcIntern<str>>() == size_of::<*const ()>() * 2 {
-		0
-	} else {
-		panic!("ArcIntern has invalid size on this platform, must be exactly two pointers")
-	};
-
 	pub fn new(ident: &str) -> Self {
-		let _ = Self::__CHECK_SIZE;
-		Self(FlexStrBase::from(ident))
+		Self(LeanString::from(ident))
+	}
+
+	pub const fn new_static(ident: &'static str) -> Self {
+		Self(LeanString::from_static_str(ident))
 	}
 }
 
 impl std::ops::Deref for Identifier {
-	type Target = FlexStrBase<ArcIntern<str>>;
+	type Target = LeanString;
 
 	fn deref(&self) -> &Self::Target {
 		&self.0

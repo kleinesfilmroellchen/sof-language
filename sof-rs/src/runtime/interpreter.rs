@@ -2,10 +2,10 @@ use std::cell::LazyCell;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, LazyLock};
 
-use flexstr::SharedStr;
 use gc_arena::lock::GcRefLock;
 use gc_arena::{Arena, Gc, Mutation};
 use internment::ArcIntern;
+use lean_string::LeanString;
 use log::{debug, info, trace};
 use miette::SourceSpan;
 use smallvec::{SmallVec, smallvec};
@@ -17,7 +17,7 @@ use crate::lib::DEFAULT_REGISTRY;
 use crate::runtime::list::List;
 use crate::runtime::module::ModuleRegistry;
 use crate::runtime::nametable::{Nametable, NametableType};
-use crate::runtime::stackable::{BuiltinType, CodeBlock, Function, TokenVec};
+use crate::runtime::stackable::{BuiltinType, Function, TokenVec};
 use crate::runtime::util::{SwitchCase, SwitchCases, UtilityData};
 use crate::runtime::{Stack, StackArena, Stackable};
 use crate::token::{Command, InnerToken, Literal, Token};
@@ -61,7 +61,7 @@ pub fn new_arena(library_path: impl Into<PathBuf>) -> StackArena {
 }
 
 // TODO: tune this
-pub const COLLECTION_THRESHOLD: f64 = 50.;
+pub const COLLECTION_THRESHOLD: f64 = 100. * 1024.;
 
 /// An entry in the call stack (token execution stack).
 ///
@@ -315,7 +315,7 @@ pub(crate) enum InterpreterAction {
 	/// Return from current function scope.
 	Return,
 	/// Run a module identified by the given module name.
-	InvokeModule { module_name: SharedStr },
+	InvokeModule { module_name: LeanString },
 }
 
 impl From<()> for InterpreterAction {
@@ -324,7 +324,7 @@ impl From<()> for InterpreterAction {
 	}
 }
 
-pub type ActionVec = SmallVec<[InterpreterAction; 2]>;
+pub type ActionVec = heapless::Vec<InterpreterAction, 3>;
 
 /// Different possible behaviors after a call return, each corresponding to a kind of call that SOF can do.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -349,7 +349,7 @@ pub(crate) enum CallReturnBehavior {
 #[inline]
 #[allow(clippy::unnecessary_wraps)] // must have this signature
 pub fn no_action() -> Result<ActionVec, Error> {
-	Ok(smallvec![InterpreterAction::None])
+	Ok(heapless::Vec::from_array([InterpreterAction::None]))
 }
 
 macro_rules! binary_op {
@@ -371,7 +371,7 @@ macro_rules! binary_op {
 fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) -> Result<ActionVec, Error> {
 	match &token.inner {
 		InnerToken::Command(Command::CreateList) => {
-			let mut values = SmallVec::new();
+			let mut values = Vec::new();
 			loop {
 				let value = stack.pop(token.span)?;
 				if matches!(value, Stackable::ListStart) {
@@ -380,7 +380,7 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 				values.push(value);
 			}
 			values.reverse();
-			stack.push(Stackable::List(List::new(values, mc)));
+			stack.push(Stackable::List(List::new_from_box(values.into_boxed_slice(), mc)));
 			no_action()
 		},
 		InnerToken::Command(Command::Plus) => binary_op!(add, stack, mc, token),
@@ -452,7 +452,7 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 					span:      token.span,
 				});
 			};
-			stack.push(Stackable::String(SharedStr::from(format!("{rhs}{lhs}"))));
+			stack.push(Stackable::String(LeanString::from(format!("{rhs}{lhs}"))));
 			no_action()
 		},
 		InnerToken::Command(Command::Assert) => {
@@ -619,14 +619,14 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 			trace!("    starting while");
 			// add back conditional callable, which will immediately be called by our token sequence below
 			stack.push(conditional_callable);
-			Ok(smallvec![InterpreterAction::ExecuteCall {
+			Ok(heapless::Vec::from_array([InterpreterAction::ExecuteCall {
 				code:            vec![Token { inner: InnerToken::Command(Command::Call), span: token.span }, Token {
 					inner: InnerToken::WhileBody,
 					span:  token.span,
-				},]
+				}]
 				.into(),
 				return_behavior: CallReturnBehavior::Loop,
-			}])
+			}]))
 		},
 		InnerToken::Command(Command::DoWhile) => {
 			let conditional_callable = stack.pop(token.span)?;
@@ -646,7 +646,7 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 				#[allow(clippy::borrow_interior_mutable_const)]
 				code:                                                 EMPTY_VEC.clone(),
 				return_behavior:                                      CallReturnBehavior::Loop,
-			});
+			}).expect("interpreter actions grew too large");
 			Ok(actions)
 		},
 		// almost like if, but with the special utility stack
@@ -726,9 +726,9 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 			let return_value = stack.pop(token.span)?;
 			let top_nametable = stack.top_nametable();
 			top_nametable.borrow_mut(mc).set_return_value(return_value);
-			Ok(smallvec![InterpreterAction::Return])
+			Ok(heapless::Vec::from_array([InterpreterAction::Return]))
 		},
-		InnerToken::Command(Command::ReturnNothing) => Ok(smallvec![InterpreterAction::Return]),
+		InnerToken::Command(Command::ReturnNothing) => Ok(heapless::Vec::from_array([InterpreterAction::Return])),
 		InnerToken::Command(Command::DescribeS) => {
 			// TODO: make this a bit nicer
 			info!("{stack:#?}");
@@ -749,13 +749,13 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 			no_action()
 		},
 		InnerToken::Command(Command::Switch) => {
-			static SWITCH_MARKER: LazyLock<Identifier> = LazyLock::new(|| Identifier::new("switch::"));
+			static SWITCH_MARKER: Identifier = Identifier::new_static("switch::");
 			let default_case = stack.pop(token.span)?;
 			let mut cases = SwitchCases(SmallVec::new());
 			loop {
 				let maybe_next_conditional = stack.pop(token.span)?;
 				if let Stackable::Identifier(ref ident) = maybe_next_conditional
-					&& *ident == *SWITCH_MARKER
+					&& *ident == SWITCH_MARKER
 				{
 					break;
 				}
@@ -768,14 +768,14 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 				let SwitchCase { conditional, body } = cases.0.remove(0);
 				stack.utility.push(UtilityData::Switch { remaining_cases: cases, default_case, next_body: body });
 				stack.push(conditional);
-				Ok(smallvec![InterpreterAction::ExecuteCall {
+				Ok(heapless::Vec::from_array([InterpreterAction::ExecuteCall {
 					code:            vec![
 						Token { inner: InnerToken::Command(Command::Call), span: token.span },
 						Token { inner: InnerToken::SwitchBody, span: token.span },
 					]
 					.into(),
 					return_behavior: CallReturnBehavior::BlockCall,
-				}])
+				}]))
 			}
 		},
 		InnerToken::SwitchBody => {
@@ -800,14 +800,14 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 					stack.push(conditional_clone);
 					// run the SwitchBody logic again after the conditional call, to evaluate the next body we just
 					// prepared
-					Ok(smallvec![InterpreterAction::ExecuteCall {
+					Ok(heapless::Vec::from_array([InterpreterAction::ExecuteCall {
 						code:            vec![
 							Token { inner: InnerToken::Command(Command::Call), span: token.span },
 							Token { inner: InnerToken::SwitchBody, span: token.span },
 						]
 						.into(),
 						return_behavior: CallReturnBehavior::BlockCall,
-					}])
+					}]))
 				} else {
 					trace!("    falling back to default switch body");
 					// call default body
@@ -836,7 +836,7 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 					span:      token.span,
 				});
 			};
-			Ok(smallvec![InterpreterAction::InvokeModule { module_name }])
+			Ok(heapless::Vec::from_array([InterpreterAction::InvokeModule { module_name }]))
 		},
 		InnerToken::Command(Command::Export) => {
 			let exported_name = stack.pop(token.span)?;
@@ -872,11 +872,11 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 		},
 		InnerToken::Command(cmd) => todo!("{cmd:?} is unimplemented"),
 		InnerToken::Literals(literals) => {
-			stack.push_n(literals.into_iter().map(Literal::as_stackable));
+			stack.push_n(literals.into_iter().map(|l| l.as_stackable(mc)));
 			no_action()
 		},
-		InnerToken::CodeBlock(cb) => {
-			stack.push(Stackable::CodeBlock(Gc::new(mc, CodeBlock { code: cb.clone() })));
+		InnerToken::Literal(literal) => {
+			stack.push(literal.as_stackable(mc));
 			no_action()
 		},
 	}
