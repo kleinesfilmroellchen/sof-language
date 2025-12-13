@@ -176,21 +176,36 @@ fn sof_main(code: impl AsRef<str>, path: &Path, library_path: impl Into<PathBuf>
 	let start_time = time::Instant::now();
 	let lexed = parser::lexer::lex(code)?;
 	debug!(target: "sof::lexer", "lexed: {lexed:#?}");
-	let parsed = Arc::new(parser::parse(lexed)?);
+	let mut parsed = Arc::new(parser::parse(lexed)?);
 	debug!(target: "sof::parser", "parsed: {parsed:#?}");
+	let optimizer_start_time = time::Instant::now();
+	optimizer::run_passes(&mut parsed);
+	let optimizer_end_time = time::Instant::now();
 	let metrics = run(parsed, path, &library_path.into())?;
 	let end_time = time::Instant::now();
 
+	let parse_time = optimizer_start_time - start_time;
+	let optimize_time = optimizer_end_time - optimizer_start_time;
+	let execution_time = end_time - optimizer_end_time;
+
 	info!(
 		"Performance metrics:
-total time:   {:>13.2}μs
-tokens run:   {:>10}
-time / token: {:>13.2?}μs
-calls:        {:>10}
-GC runs:      {:>10}",
+time:             {:>13.2}μs
+  * parser:       {:>13.2}μs
+  * optimizer:    {:>13.2}μs
+  * execution:    {:>13.2}μs
+exe time / token: {:>13.2}μs
+  * optimizer:    {:>13.2}μs
+tokens run:       {:>10}
+calls:            {:>10}
+GC runs:          {:>10}",
 		(end_time - start_time).as_nanos() as f64 / 1_000.,
+		parse_time.as_nanos() as f64 / 1_000.,
+		optimize_time.as_nanos() as f64 / 1_000.,
+		execution_time.as_nanos() as f64 / 1_000.,
+		(execution_time.as_nanos() as f64 / 1000.) / metrics.token_count as f64,
+		(optimize_time.as_nanos() as f64 / 1000.) / metrics.token_count as f64,
 		metrics.token_count,
-		(end_time - start_time).as_micros() as f64 / metrics.token_count as f64,
 		metrics.call_count,
 		metrics.gc_count,
 	);

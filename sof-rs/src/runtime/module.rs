@@ -8,6 +8,7 @@ use internment::ArcIntern;
 use log::debug;
 
 use crate::error::Error;
+use crate::optimizer;
 use crate::parser::{self, lexer};
 use crate::runtime::stackable::TokenVec;
 
@@ -59,7 +60,8 @@ impl ModuleRegistry {
 		let code = std::fs::read_to_string(&*module_path)
 			.map_err(|err| Error::ModuleFileNotReadable { path: module_path.to_path_buf(), inner: err })?;
 		let lexed = lexer::lex(code)?;
-		let parsed = Arc::new(parser::parse(lexed)?);
+		let mut parsed = Arc::new(parser::parse(lexed)?);
+		optimizer::run_passes(&mut parsed);
 
 		self.parsed_modules.insert(module_path.clone(), parsed.clone());
 		Ok((module_path, parsed))

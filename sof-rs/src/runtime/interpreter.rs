@@ -11,6 +11,7 @@ use miette::SourceSpan;
 use smallvec::{SmallVec, smallvec};
 
 use crate::arc_iter::ArcVecIter;
+use crate::call_builtin_function;
 use crate::error::Error;
 use crate::identifier::Identifier;
 use crate::lib::DEFAULT_REGISTRY;
@@ -21,7 +22,6 @@ use crate::runtime::stackable::{BuiltinType, Function, TokenVec};
 use crate::runtime::util::{SwitchCase, SwitchCases, UtilityData};
 use crate::runtime::{Stack, StackArena, Stackable};
 use crate::token::{Command, InnerToken, Literal, Token};
-use crate::{call_builtin_function, optimizer};
 
 #[derive(Default, Clone, Copy)]
 #[non_exhaustive]
@@ -32,9 +32,8 @@ pub struct Metrics {
 	pub call_count:  usize,
 }
 
-pub fn run(mut tokens: TokenVec, file_path: impl Into<PathBuf>, library_path: &Path) -> Result<Metrics, Error> {
+pub fn run(tokens: TokenVec, file_path: impl Into<PathBuf>, library_path: &Path) -> Result<Metrics, Error> {
 	let mut arena: StackArena = new_arena(library_path);
-	optimizer::run_passes(&mut tokens);
 	run_on_arena(&mut arena, tokens, file_path, library_path)
 }
 
@@ -502,6 +501,15 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 			let callable = stack.pop(token.span)?;
 			callable.enter_call(mc, stack, token.span)
 		},
+		InnerToken::CallName(id) => {
+			let value = stack.lookup(id, token.span)?;
+			value.enter_call(mc, stack, token.span)
+		},
+		InnerToken::LookupName(id) => {
+			let value = stack.lookup(id, token.span)?;
+			stack.push(value);
+			no_action()
+		},
 		InnerToken::Command(Command::FieldAccess) => {
 			let callable = stack.pop(token.span)?;
 			let object = stack.pop(token.span)?;
@@ -642,11 +650,13 @@ fn execute_token<'a>(token: &Token, mc: &Mutation<'a>, stack: &mut Stack<'a>) ->
 			// insert the while body logic at the start so it is executed after the initial loop body action(s)
 			// the body action is *empty* so the return behavior is immediately run and it figures out the state of
 			// things from the utility stack setup
-			actions.insert(0, InterpreterAction::ExecuteCall {
-				#[allow(clippy::borrow_interior_mutable_const)]
-				code:                                                 EMPTY_VEC.clone(),
-				return_behavior:                                      CallReturnBehavior::Loop,
-			}).expect("interpreter actions grew too large");
+			actions
+				.insert(0, InterpreterAction::ExecuteCall {
+					#[allow(clippy::borrow_interior_mutable_const)]
+					code:                                                 EMPTY_VEC.clone(),
+					return_behavior:                                      CallReturnBehavior::Loop,
+				})
+				.expect("interpreter actions grew too large");
 			Ok(actions)
 		},
 		// almost like if, but with the special utility stack

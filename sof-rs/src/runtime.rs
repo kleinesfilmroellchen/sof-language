@@ -69,7 +69,7 @@ impl<'gc> Stack<'gc> {
 		// fast path for top nametable
 		match self.main[self.top_nametable] {
 			Stackable::Nametable(nt) => nt.borrow().lookup(name, span).ok(),
-			_ => None,
+			_ => unreachable!("missing nametable"),
 		}
 		.or_else(|| {
 			self.main.iter().rev().find_map(|stackable| match stackable {

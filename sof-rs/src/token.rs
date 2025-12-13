@@ -1,8 +1,8 @@
 use std::cmp::Ordering;
 use std::fmt::{Debug, Display};
 
-use lean_string::LeanString;
 use gc_arena::{Gc, Mutation};
+use lean_string::LeanString;
 use miette::SourceSpan;
 
 use crate::identifier::Identifier;
@@ -21,6 +21,10 @@ pub enum InnerToken {
 	// since they are the most common case, this saves ~10% runtime.
 	Literal(Literal),
 	Literals(smallvec::SmallVec<[Literal; 3]>),
+
+	// optimizer-generated tokens
+	LookupName(Identifier),
+	CallName(Identifier),
 }
 
 /// Nonrecursive literals.
@@ -249,6 +253,8 @@ impl Debug for Token {
 			InnerToken::Literal(arg0) => f.debug_list().entry(arg0).finish(),
 			InnerToken::WhileBody => f.debug_tuple("WhileBody").finish(),
 			InnerToken::SwitchBody => f.debug_tuple("SwitchBody").finish(),
+			InnerToken::CallName(name) => f.debug_tuple("Call").field(name).finish(),
+			InnerToken::LookupName(name) => f.debug_tuple("Lookup").field(name).finish(),
 		}?;
 		write!(f, ", {:?} }}", (self.span.offset(), self.span.len()))
 	}
