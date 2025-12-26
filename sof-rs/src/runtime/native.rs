@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use ahash::HashMap;
 use lean_string::LeanString;
 use log::debug;
@@ -7,6 +9,7 @@ use super::Stackable;
 use crate::error::Error;
 use crate::runtime::Stack;
 
+pub type NativeFunction0 = for<'gc> fn(PhantomData<&'gc ()>) -> Result<Option<Stackable<'gc>>, Error>;
 pub type NativeFunction1 = for<'gc> fn(Stackable<'gc>) -> Result<Option<Stackable<'gc>>, Error>;
 pub type NativeFunction2 = for<'gc> fn(Stackable<'gc>, Stackable<'gc>) -> Result<Option<Stackable<'gc>>, Error>;
 pub type NativeFunction3 =
@@ -27,6 +30,7 @@ pub type NativeFunction5 = for<'gc> fn(
 
 #[derive(Debug, Copy, Clone)]
 pub enum NativeFunction {
+	Args0(NativeFunction0),
 	Args1(NativeFunction1),
 	Args2(NativeFunction2),
 	Args3(NativeFunction3),
@@ -34,6 +38,11 @@ pub enum NativeFunction {
 	Args5(NativeFunction5),
 }
 
+impl From<NativeFunction0> for NativeFunction {
+	fn from(value: NativeFunction0) -> Self {
+		Self::Args0(value)
+	}
+}
 impl From<NativeFunction1> for NativeFunction {
 	fn from(value: NativeFunction1) -> Self {
 		Self::Args1(value)
@@ -64,6 +73,9 @@ impl NativeFunction {
 	// TODO: dynamic dispatch candidate
 	pub fn call(&self, stack: &mut Stack<'_>, span: SourceSpan) -> Result<(), Error> {
 		if let Some(result) = match self {
+			NativeFunction::Args0(function) => {
+				function(PhantomData)
+			}
 			NativeFunction::Args1(function) => {
 				let argument = stack.pop(span)?;
 				function(argument)

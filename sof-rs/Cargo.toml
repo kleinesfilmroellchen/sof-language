@@ -20,6 +20,7 @@ rustyline = { version = "16", default-features = false }
 smallvec = { version = "1", features = ["const_generics"] }
 thiserror = "2"
 unicode-ident = "1"
+rand = "0.9"
 
 [build-dependencies]
 rustversion = "1"
