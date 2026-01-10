@@ -1,9 +1,0 @@
-# Factorial sample program.
-
-{
-	dup dup # n*3 on the stack
-	{ 1 return } swap 2 < if # return 1 if n < 2, n*2 on the stack
-	1 - fact : * return # return factorial of n-1 times n
-} 1 function fact def
-
-"enter a number: " write input convert:int : fact : writeln

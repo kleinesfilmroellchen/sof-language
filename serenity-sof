@@ -1,3 +1,0 @@
-#!/bin/Shell
-export LD_LIBRARY_PATH=/usr/Ports/java/jdk/lib
-/usr/Ports/java/jdk/bin/java "-Dfile.encoding=UTF-8" "-classpath" "/usr/Ports/sof-language/lib/javassist-3.28.0-GA.jar:/usr/Ports/sof-language/lib/jsr305-3.0.2.jar" "--module-path" "/usr/Ports/sof-language/lib/sof-language-0.1.jar:/usr/Ports/sof-language/lib/slf4j-nop-1.7.36.jar:/usr/Ports/sof-language/lib/reflections-0.10.2.jar:/usr/Ports/sof-language/lib/slf4j-api-1.7.36.jar" "--module" "sof/klfr.sof.cli.CLI" $*
